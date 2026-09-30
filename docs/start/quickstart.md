@@ -8,8 +8,8 @@ Get AoA running locally, then complete the guided founder setup.
 ## Quick Start
 
 ```sh
-git clone https://github.com/MeteoriteLabs/AoA.git
-cd AoA
+git clone https://github.com/tandavkrishna27/Army-of-Agents.git
+cd Army-of-Agents
 pnpm install
 pnpm aoa onboard --yes
 ```
@@ -25,7 +25,7 @@ The quickstart is environment-aware. Variables such as `AOA_DEPLOYMENT_MODE`,
 corresponding defaults, so review inherited environment variables before using
 `--yes`.
 
-> The MeteoriteLabs AoA CLI is not currently published to npm. The package
+> The Army of Agents CLI is not currently published to npm. The package
 > unscoped `aoa` does not identify this repository, so do not use
 > `npx aoa` for AoA. Until a scoped release is published
 > and smoke-tested, use `pnpm aoa` from this repository.

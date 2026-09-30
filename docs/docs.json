@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "name": "AoA",
-  "description": "The control plane for autonomous AI companies",
+  "name": "Army of Agents",
+  "description": "The organizational harness for human and AI teams",
   "theme": "mint",
   "colors": {
     "primary": "#2563EB",
@@ -16,7 +16,7 @@
   "topbarLinks": [
     {
       "name": "GitHub",
-      "url": "https://github.com/meteoritelabs/aoa"
+      "url": "https://github.com/tandavkrishna27/Army-of-Agents"
     }
   ],
   "navigation": {
@@ -177,6 +177,6 @@
     ]
   },
   "footerSocials": {
-    "github": "https://github.com/meteoritelabs/aoa"
+    "github": "https://github.com/tandavkrishna27/Army-of-Agents"
   }
 }
