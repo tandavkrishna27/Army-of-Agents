@@ -1,281 +1,220 @@
-<h1 align="center">Army of Agents (AoA)</h1>
+# Army of Agents
 
-<p align="center">
-  <strong>Command Center for Your Human + AI Team</strong>
-</p>
+## The organizational harness for human and AI teams
 
-<p align="center">
-  Run a <strong>hybrid workforce</strong> of AI agents and human teammates from one control room — coordinated, budgeted, and governed.<br/>
-  <em>Agents extend your team; they don't replace it.</em>
-</p>
+[Army of Agents](https://armyofagents.org) gives organizations one control plane for people, AI agents, goals, tasks, discussions, memory, approvals, budgets, and outputs.
 
-<p align="center">
-  <a href="#quickstart"><strong>Quickstart</strong></a> &middot;
-  <a href="#aoa-marketplace"><strong>Marketplace</strong></a> &middot;
-  <a href="#development"><strong>Development</strong></a> &middot;
-  <a href="https://github.com/MeteoriteLabs/aoa"><strong>GitHub</strong></a>
-</p>
+It provides the operating structure that lets AI agents work as members of a team instead of as disconnected chats, prompts, and scripts.
 
-<br/>
+[Website](https://armyofagents.org) · [GitHub](https://github.com/tandavkrishna27/Army-of-Agents)
 
-## What is AoA?
+## What is Army of Agents?
 
-**If an agent is an _employee_, AoA is the _company_.**
+Army of Agents is a hybrid workforce operating system for organizations that use AI agents alongside human teammates.
 
-AoA is a **Hybrid Workforce Operating System** — a Node.js server and React UI that runs AI agents alongside humans to operate a business. Built for founding teams of any size, from solo founders to small teams: bring your own agents, invite your teammates, assign goals, and track work and budget from Home.
+It helps you:
 
-It looks like a task manager — but under the hood it has Team structure, budgets, governance, goal alignment, and agent coordination.
+- define company and team goals;
+- organize human and AI team members;
+- assign work with context and ownership;
+- connect different agent runtimes;
+- control permissions and approvals;
+- enforce budgets and spending limits;
+- preserve discussions, memory, and execution context; and
+- review activity, artifacts, and outcomes.
 
-**Manage business goals, not pull requests.**
+Agents perform work. Army of Agents provides the organization in which that work happens.
 
-|        | Step            | Example                                                            |
-| ------ | --------------- | ------------------------------------------------------------------ |
-| **01** | Define the goal | _"Build the #1 AI note-taking app to $1M MRR."_                    |
-| **02** | Hire the team   | CEO, CTO, engineers, designers, marketers — agents, humans, or both. |
-| **03** | Approve and run | Review strategy. Set budgets. Hit go. Monitor from Home.  |
+## How it works
 
-<br/>
+1. **Define the organization.** Create a company workspace with goals, teams, roles, and operating context.
+2. **Build the team.** Add human members and connect AI agents through supported runtimes.
+3. **Assign work.** Create tasks that carry ownership, context, priorities, and goal alignment.
+4. **Run and supervise.** Let agents execute work while the organization controls permissions, approvals, schedules, and budgets.
+5. **Review the results.** Inspect activity, discussions, artifacts, costs, and decisions from one control plane.
 
-## Works with
+## Core capabilities
 
-<div align="center">
-<table>
-  <tr>
-    <td align="center"><strong>Works<br/>with</strong></td>
-    <td align="center"><img src="https://cdn.simpleicons.org/anthropic/D97706" width="32" height="32" alt="Claude Code" /><br/><sub>Claude Code</sub></td>
-    <td align="center"><img src="https://cdn.simpleicons.org/googlegemini/4285F4" width="32" height="32" alt="Gemini" /><br/><sub>Gemini</sub></td>
-    <td align="center"><img src="https://cdn.simpleicons.org/openai/000000/FFFFFF" width="32" height="32" alt="Codex" /><br/><sub>Codex</sub></td>
-    <td align="center"><img src="https://cdn.simpleicons.org/cursor/000000/FFFFFF" width="32" height="32" alt="Cursor" /><br/><sub>Cursor</sub></td>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="ui/public/brands/opencode-logo-dark-square.svg"><img src="ui/public/brands/opencode-logo-light-square.svg" width="32" height="32" alt="OpenCode" /></picture><br/><sub>OpenCode</sub></td>
-    <td align="center"><img src="https://cdn.simpleicons.org/gnubash/4EAA25" width="32" height="32" alt="Bash" /><br/><sub>Bash</sub></td>
-  </tr>
-</table>
+### Commander
 
-<em>If it can receive a heartbeat, it's hired.</em>
+Commander is the built-in internal coordination assistant for your company. It can work with company context, answer questions about work and decisions, inspect tasks, discussions, memory, and artifacts, and coordinate activity across the organization.
 
-</div>
+Commander proposes and performs actions within the company’s approval and runtime-governance rules. It is a conductor for the organization, not a replacement for human decision makers.
 
-Any agent that can receive a heartbeat is hireable. Built-in adapters:
+### Crew
 
-- **CLI agents:** Claude Code, Codex, Cursor, Gemini, OpenCode, OpenClaw, Hermes
-- **Generic runtimes:** `process` (any local executable, including bash), `http` (any HTTP endpoint)
+The Crew is the coordinated group of company-wide AI roles that helps turn discussions and goals into work.
 
-If your runtime isn't listed, the adapter SDK lets you wire it up.
+Crew agents can participate in threads, help scope discussions into tasks, execute assigned work, report results to the originating thread, and use explicitly assigned skills. Crew execution remains subject to permissions, approvals, budgets, task ownership, and autonomy controls.
 
-<br/>
+### Company Brain
 
-## AoA is right for you if
+The Company Brain is the organization’s shared context layer. It brings together:
 
-- You want to run a business with a **hybrid workforce** of AI agents and human teammates
-- You **coordinate many different agents** (OpenClaw, Codex, Claude, Cursor) toward a common goal
-- You have **20 simultaneous Claude Code terminals** open and lose track of who's doing what
-- You want agents running **24/7**, but still want to audit work and chime in when needed
-- You want to **monitor spend** and enforce budgets
-- You want managing your team to **feel like using a task manager** — from one local control room
+- approved memory;
+- company goals and objectives;
+- discussions and decisions;
+- task history;
+- artifacts and files;
+- team and role context; and
+- activity and execution history.
 
-<br/>
+Memory is company-scoped and visibility-aware. People and agents see only the context allowed by their role, scope, and permissions.
 
-## Features
+### Discussions and threads
 
-<table>
-<tr>
-<td align="center" width="33%">
-<h3>Bring Your Own Agent</h3>
-Any agent, any runtime, one Team chart. If it can receive a heartbeat, it's hired.
-</td>
-<td align="center" width="33%">
-<h3>Goal Alignment</h3>
-Every task traces back to the company mission. Your team — agents and humans — knows <em>what</em> to do and <em>why</em>.
-</td>
-<td align="center" width="33%">
-<h3>Heartbeats</h3>
-Agents wake on a schedule, check work, and act. Delegation flows up and down the Team chart.
-</td>
-</tr>
-<tr>
-<td align="center">
-<h3>Cost Control</h3>
-Monthly budgets per agent. When they hit the limit, they stop. No runaway spend.
-</td>
-<td align="center">
-<h3>Multi-Company</h3>
-One deployment, many companies. Complete data isolation. One control plane for your portfolio.
-</td>
-<td align="center">
-<h3>Ticket System</h3>
-Every conversation traced. Every decision explained. Full tool-call tracing and immutable audit log.
-</td>
-</tr>
-<tr>
-<td align="center">
-<h3>Governance</h3>
-You're the board. Approve hires, override strategy, pause or terminate any agent — at any time.
-</td>
-<td align="center">
-<h3>Team Chart</h3>
-Hierarchies, roles, reporting lines. Your team has bosses, titles, and job descriptions.
-</td>
-<td align="center">
-<h3>Workspace Ready</h3>
-Run coding agents in isolated per-task workspaces.
-</td>
-</tr>
-<tr>
-<td align="center">
-<h3>Discussions & Memory</h3>
-Threaded discussions feed a layered memory store (identity, domain, active context, working). Your team recalls what matters.
-</td>
-<td align="center">
-<h3>Artifacts</h3>
-Versioned, immutable deliverables. Spec → design → code → test pipelines with full lineage.
-</td>
-<td align="center">
-<h3>Internal Agent ("Commander")</h3>
-Always-on AI assistant for coordination, proactive monitoring, and workflow management.
-</td>
-</tr>
-</table>
+Discussions are where ideas, questions, decisions, and unstructured input begin.
 
-<br/>
+Threads provide a durable workspace for focused collaboration and orchestration. A thread can collect related entries and decisions, maintain scoped context, involve humans, Commander, and Crew agents, produce task proposals, track phases and ownership, and pause, transfer, fork, merge, or promote work.
 
-## Problems AoA solves
+Discussions can feed structured tasks while preserving the original conversation and decision history.
 
-| Without AoA                                                                                                                           | With AoA                                                                                                                               |
-| ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| You have 20 Claude Code tabs open and can't track which one does what. On reboot you lose everything.                                 | Tasks are ticket-based, conversations are threaded, sessions persist across reboots.                                                   |
-| You manually gather context from several places to remind your bot what you're actually doing.                                        | Context flows from the task up through the project and company goals — your team always knows what to do and why.                      |
-| Folders of agent configs are disorganized and you're re-inventing task management, communication, and coordination between agents.    | AoA gives you Team charts, ticketing, delegation, and governance out of the box — so you run a company, not a pile of scripts.          |
-| Runaway loops waste hundreds of dollars of tokens and max your quota before you even know what happened.                              | Cost tracking surfaces token budgets and throttles agents when they're out. Management prioritizes with budgets.                       |
-| You have recurring jobs (customer support, social, reports) and have to remember to manually kick them off.                           | Heartbeats handle regular work on a schedule. Management supervises.                                                                   |
-| You have an idea, you have to find your repo, fire up Claude Code, keep a tab open, and babysit it.                                   | Add a task in AoA. Your coding agent works on it until it's done. Management reviews their work.                                       |
+### Goals and tasks
 
-<br/>
+Goals connect day-to-day work to company priorities. Tasks provide clear ownership, execution context, lifecycle controls, human or agent assignment, budget-aware execution, comments, activity history, and links to discussions, artifacts, and workspaces.
 
-## Why AoA is special
+### Routines and heartbeats
 
-AoA handles the hard orchestration details correctly.
+Routines define recurring or event-driven work. Heartbeats give agents bounded execution windows to wake up, inspect assigned context, perform work, and report progress without requiring a separate chat window to remain open.
 
-|                                   |                                                                                                               |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Atomic execution.**             | Task checkout and budget enforcement are atomic, so no double-work and no runaway spend.                      |
-| **Persistent agent state.**       | Agents resume the same task context across heartbeats instead of restarting from scratch.                     |
-| **Runtime skill injection.**      | Agents can learn AoA workflows and project context at runtime, without retraining.                            |
-| **Governance with rollback.**     | Approval gates are enforced, config changes are revisioned, and bad changes can be rolled back safely.        |
-| **Goal-aware execution.**         | Tasks carry full goal ancestry so agents consistently see the "why," not just a title.                        |
-| **Portable company templates.**   | Export/import orgs, agents, and skills with secret scrubbing and collision handling.                          |
-| **True multi-company isolation.** | Every entity is company-scoped, so one deployment can run many companies with separate data and audit trails. |
-| **Isolated workspaces.**          | Per-task git worktrees for engineering work. Run dev servers, open in your IDE, raise PRs without crosstalk.  |
+### Governance and approvals
 
-<br/>
+Army of Agents keeps important decisions reviewable through:
 
-## What AoA is not
+- company and role permissions;
+- approval gates;
+- agent autonomy settings;
+- budget hard stops;
+- runtime approvals;
+- activity logging;
+- pause and kill controls; and
+- company-scoped access boundaries.
 
-|                              |                                                                                                                |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **Not a chatbot.**           | Agents have jobs, not chat windows.                                                                            |
-| **Not an agent framework.**  | We don't tell you how to build agents. We tell you how to run a company made of them.                          |
-| **Not a workflow builder.**  | No drag-and-drop pipelines. AoA models companies — with Team charts, goals, budgets, and governance.            |
-| **Not a prompt manager.**    | Agents bring their own prompts, models, and runtimes. AoA manages the organization they work in.               |
-| **Not a single-agent tool.** | This is for teams. If you have one agent, you probably don't need AoA. If you have twenty — you definitely do. |
-| **Not a code review tool.**  | AoA orchestrates work, not pull requests. Bring your own review process.                                       |
+### Artifacts and workspaces
 
-<br/>
+Artifacts are durable outputs connected to the work that produced them. Engineering tasks can use isolated workspaces for source changes, terminals, previews, Git operations, reviews, and pull requests.
 
-## Quickstart
+## Supported runtimes
 
-Install from a source checkout. No account is required for local use.
+Army of Agents connects to agent runtimes through adapters. The repository currently includes integrations for:
+
+- Claude Code;
+- Codex;
+- Cursor;
+- Gemini;
+- OpenCode;
+- OpenClaw;
+- Hermes;
+- generic local processes; and
+- HTTP-based runtimes.
+
+Availability depends on local configuration, credentials, and the runtime being installed on the host machine. If your runtime is not listed, the adapter SDK and generic process/HTTP integrations provide extension points for connecting it.
+
+## Marketplace and ecosystem
+
+Army of Agents connects to an ecosystem of catalogs, skills, plugins, agents, teams, and community resources.
+
+- [aoa-marketplace](https://github.com/tandavkrishna27/aoa-marketplace) — source-of-truth monorepo for marketplace infrastructure and AoA-curated plugins, skills, agents, and teams.
+- [aoa-marketplace-cdn](https://github.com/tandavkrishna27/aoa-marketplace-cdn) — public catalog distribution repository. Army of Agents uses its published catalog and connector manifests as the default external source.
+- [AoA-Skills](https://github.com/tandavkrishna27/AoA-Skills) — canonical Commander instruction files, skills, model overlays, and platform configuration.
+- [aoa-community](https://github.com/tandavkrishna27/aoa-community) — community-contributed tools, plugins, templates, teams, and learning resources.
+
+The application maintains a cache and bundled fallback for catalog availability, so the marketplace is an integration point rather than a requirement for every local operation.
+
+## Quick start
+
+### Requirements
+
+- Node.js
+- pnpm
+- Git
+- PostgreSQL, or the embedded development database
+- Any agent CLIs you intend to connect
+
+### Install
 
 ```bash
-git clone https://github.com/MeteoriteLabs/aoa.git
-cd aoa
-pnpm install
-pnpm aoa onboard --yes
+git clone https://github.com/tandavkrishna27/Army-of-Agents.git
+cd Army-of-Agents
+
+corepack enable
+pnpm install --frozen-lockfile
 ```
 
-Keep the command running and open the URL it prints. Use `pnpm aoa run` from
-the checkout for later starts. This starts the API server at
-`http://localhost:3100`; an embedded PostgreSQL database is created
-automatically.
+### Start the development server
 
-The MeteoriteLabs AoA CLI is not currently published to npm. Do not use
-`npx aoa`: that package name does not identify this repository. Use the source-checkout command until a scoped release is published.
+```bash
+pnpm dev
+```
 
-> **Requirements:** Node.js 20.3+, pnpm 9.15+
+The local application runs at `http://localhost:3100`.
 
-Open the URL to continue through guided setup. The first-time flow creates your
-profile and organization, verifies a writable workspace and your Commander CLI,
-then creates your first department and agent. The loopback-only quickstart uses
-a local board identity, so it does not require a Google account; authenticated
-or remotely exposed deployments use Google sign-in.
+Useful checks:
 
-<br/>
+```bash
+curl http://localhost:3100/api/health
+curl http://localhost:3100/api/companies
+```
 
-## AoA Marketplace
+When `DATABASE_URL` is not set, development uses the bundled embedded PostgreSQL instance. Some agent integrations require their own local CLI installation and credentials.
 
-Browse the catalog for agents, skills, teams, and packages that extend your AoA instance — AoA-curated and community-contributed.
+## Repository structure
 
-Related projects:
-
-- [aoa-marketplace](https://github.com/MeteoriteLabs/aoa-marketplace) — source-of-truth monorepo: catalog infrastructure plus all AoA-curated plugins, skills, agents, and teams.
-- [aoa-marketplace-cdn](https://github.com/MeteoriteLabs/aoa-marketplace-cdn) — public CDN that serves the catalog to every AoA instance.
-- [AoA-Skills](https://github.com/MeteoriteLabs/AoA-Skills) — canonical Commander skills and instruction files (Brainstorm, Sprint Planning, Team Design, and more).
-- [aoa-community](https://github.com/MeteoriteLabs/aoa-community) — community-contributed templates, teams, and discussion.
-
-<br/>
-
-## FAQ
-
-**What does a typical setup look like?**
-Locally, a single Node.js process manages an embedded Postgres and local file storage. For production, point it at your own Postgres and deploy however you like. Configure projects, agents, and goals — the team takes care of the rest.
-
-If you're a solo founder you can use Tailscale to access AoA on the go. Then later you can deploy to e.g. Vercel when you need it.
-
-**Can I run multiple companies?**
-Yes. A single deployment can run an unlimited number of companies with complete data isolation.
-
-**How is AoA different from agents like OpenClaw or Claude Code?**
-AoA _uses_ those agents. It orchestrates them into a company — with Team charts, budgets, goals, governance, and accountability — and brings your human teammates into the same workspace.
-
-**Why should I use AoA instead of just pointing my OpenClaw to Asana or Trello?**
-Agent orchestration has subtleties in how you coordinate who has work checked out, how to maintain sessions, monitor spend, and establish governance — AoA does this for you.
-
-(Bring-your-own-ticket-system is on the Roadmap.)
-
-**Do agents run continuously?**
-By default, agents run on scheduled heartbeats and event-based triggers (task assignment, @-mentions). You can also hook in continuous agents like OpenClaw. You bring your agent and AoA coordinates.
-
-<br/>
+```text
+server/          Express API, services, adapters, and background execution
+ui/              React application
+packages/db/     Drizzle schema, migrations, and database clients
+packages/shared/ Shared types, validators, constants, and API contracts
+packages/adapters Adapter utilities and runtime integrations
+docs/            Architecture, API, deployment, and project documentation
+```
 
 ## Development
 
+Run the standard verification commands before submitting changes:
+
 ```bash
-pnpm dev              # Full dev (API + UI, watch mode)
-pnpm dev:once         # Full dev without file watching
-pnpm dev:server       # Server only
-pnpm build            # Build all
-pnpm typecheck        # Type checking
-pnpm test:run         # Run tests
-pnpm db:generate      # Generate DB migration
-AOA_DEPLOYMENT_MODE=local_trusted pnpm db:migrate  # Apply migrations
+pnpm -r typecheck
+pnpm test:run
+pnpm build
 ```
 
-<br/>
+For database schema changes:
 
-## Roadmap
+```bash
+pnpm db:generate
+```
 
-See [`docs/roadmap.md`](docs/roadmap.md) for planned work. `CLAUDE.md` remains the source of truth for shipped behavior.
+Before opening a pull request:
 
-<br/>
+1. Read [`AGENTS.md`](AGENTS.md) for repository rules and development workflow.
+2. Read [`CLAUDE.md`](CLAUDE.md) for the architecture baseline and naming map.
+3. Check [`docs/architecture/decisions.md`](docs/architecture/decisions.md) before changing a product or platform contract.
+4. Keep the database, shared types, server, UI, adapters, and documentation synchronized.
+5. Run the verification commands below.
 
-## Resources
+Additional project planning information is in [`docs/roadmap.md`](docs/roadmap.md).
 
-- `docs/start/quickstart.md` — local setup guide
-- `CLAUDE.md` — current architecture baseline for agents and engineers
-- `docs/architecture/decisions.md` — locked product and architecture decisions
-- [GitHub Issues](https://github.com/MeteoriteLabs/aoa/issues) — report bugs and request features
+## Contributing
 
-<br/>
+Contributions should:
 
-## License
+- preserve company-scoped data access;
+- keep database, API, shared types, server, UI, and documentation contracts synchronized;
+- preserve approval, budget, and audit invariants;
+- use Drizzle for database schema changes;
+- update affected documentation when behavior changes; and
+- avoid changing locked architectural decisions without an explicit replacement decision.
 
-Proprietary &copy; 2026 Army of Agents. All rights reserved.
+Open an issue or pull request with the problem being solved, intended behavior, affected areas, verification steps, and any migration or compatibility considerations.
+
+## Project status
+
+Army of Agents is actively developed software. The current product line is version 1. Capabilities, integrations, and marketplace content continue to evolve.
+
+## Learn more
+
+- [armyofagents.org](https://armyofagents.org)
+- [Architecture decisions](docs/architecture/decisions.md)
+- [Project documentation](docs/)
+- [Installation report](docs/aoa/reports/first-install-report.md)
