@@ -79,6 +79,7 @@ vi.mock("../services/provider-resolution.js", () => ({
 
 vi.mock("drizzle-orm", () => ({
   and: vi.fn((...a: unknown[]) => ({ and: a })),
+  or: vi.fn((...a: unknown[]) => ({ or: a })),
   asc: vi.fn((a: unknown) => ({ asc: a })),
   eq: vi.fn((a: unknown, b: unknown) => ({ eq: [a, b] })),
   sql: Object.assign(
@@ -395,6 +396,25 @@ describe("Spec B Task 5: runner issueId branch", () => {
     expect(result.status).not.toBe("failed");
     const release = db._sets.find((s: any) => s.set?.status === "todo");
     expect(release).toBeUndefined();
+  });
+
+  it("(d-stale-checkout) releases a task owned by this run through checkoutRunId when executionRunId is missing", async () => {
+    getByIdMock.mockResolvedValueOnce({
+      id: "TASK-1",
+      status: "in_progress",
+      checkoutRunId: "run-1",
+      executionRunId: null,
+    });
+    const db = makeDb();
+
+    const result = await runAoaAgent(db as any, "a-1", TASK_PAYLOAD);
+
+    expect(result.status).toBe("failed");
+    expect(result.errorMessage).toMatch(/still in progress|not advanced/i);
+    const release = db._sets.find(
+      (s: any) => s.set?.status === "todo" && s.set?.executionRunId === null,
+    );
+    expect(release?.set?.checkoutRunId).toBe(null);
   });
 
   it("keeps an in-progress task parked when this Crew run owns an open blocking question", async () => {
