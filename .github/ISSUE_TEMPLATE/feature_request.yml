@@ -1,0 +1,60 @@
+name: Feature request
+description: Suggest a capability, workflow, adapter, or documentation improvement
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or operator problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should Army of Agents do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider?
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - UI
+        - API/server
+        - Database/migrations
+        - Agent adapters
+        - Commander
+        - Crew
+        - Memory/Company Brain
+        - Marketplace/plugins/skills
+        - Docs
+        - CI/release
+        - Other
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and constraints
+      description: Include compatibility, migration, permissions, budget, approval, or security constraints.
+  - type: textarea
+    id: docs
+    attributes:
+      label: Documentation impact
+      description: Which docs should change if this ships?
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked existing issues for similar requests.
+          required: true
+        - label: I understand planned behavior should be clearly labeled until it ships.
+          required: true

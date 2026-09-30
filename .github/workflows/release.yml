@@ -2,7 +2,7 @@
 #
 # Flow:
 #   1. Devs add `.changeset/*.md` files via `pnpm changeset` as part of PRs.
-#   2. On push to main, this workflow runs.
+#   2. Maintainers run this workflow manually after release permissions are configured.
 #   3. If unprocessed changesets exist, the action opens a "Version Packages" PR
 #      aggregating them; that PR bumps versions + writes CHANGELOGs via
 #      `pnpm version-packages` (= `changeset version`).
@@ -21,9 +21,11 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
+  # Automatic release PR creation requires repository Actions settings:
+  # Settings -> Actions -> General -> Workflow permissions -> Read and write permissions
+  # and Allow GitHub Actions to create and approve pull requests. Until that
+  # repository setting is enabled, keep release creation manual so normal pushes
+  # do not fail on the Changesets PR creation step.
   workflow_dispatch:
 
 concurrency:

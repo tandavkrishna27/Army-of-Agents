@@ -6,7 +6,8 @@
 
 Run people and AI agents from one governed control plane for goals, work, context, and outcomes.
 
-[Website](https://armyofagents.org) � [Documentation](docs/) � [Issues](https://github.com/tandavkrishna27/Army-of-Agents/issues)
+[Website](https://armyofagents.org) · [Documentation](docs/) · [Issues](https://github.com/tandavkrishna27/Army-of-Agents/issues)
+
 
 [![CI](https://github.com/tandavkrishna27/Army-of-Agents/actions/workflows/pr.yml/badge.svg)](https://github.com/tandavkrishna27/Army-of-Agents/actions/workflows/pr.yml)
 [![Node.js 20+](https://img.shields.io/badge/node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -28,6 +29,10 @@ Army of Agents gives organizations one control plane for people, AI agents, goal
 - [Repository structure](#repository-structure)
 - [Development](#development)
 - [Contributing](#contributing)
+- [Security](#security)
+- [Support](#support)
+- [Code of conduct](#code-of-conduct)
+- [License](#license)
 - [Project status](#project-status)
 
 ## What is Army of Agents?
@@ -237,6 +242,8 @@ Additional project planning information is in [`docs/roadmap.md`](docs/roadmap.m
 
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor workflow, setup instructions, verification expectations, database workflow, docs guidance, and pull request checklist.
+
 Contributions should:
 
 - preserve company-scoped data access;
@@ -248,6 +255,22 @@ Contributions should:
 
 Open an issue or pull request with the problem being solved, intended behavior, affected areas, verification steps, and any migration or compatibility considerations.
 
+## Security
+
+Please do not report security vulnerabilities through public GitHub issues. Follow [SECURITY.md](SECURITY.md) for private reporting guidance, supported versions, and safe testing expectations.
+
+## Support
+
+Use [SUPPORT.md](SUPPORT.md) to choose the right channel for setup help, bug reports, feature requests, and security reports.
+
+## Code of conduct
+
+Participation in this project is covered by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## License
+
+Army of Agents is licensed under the [Apache License 2.0](LICENSE).
+
 ## Project status
 
 Army of Agents is actively developed software. The current product line is version 1. Capabilities, integrations, and marketplace content continue to evolve.
@@ -258,3 +281,4 @@ Army of Agents is actively developed software. The current product line is versi
 - [Architecture decisions](docs/architecture/decisions.md)
 - [Project documentation](docs/)
 - [Installation report](docs/aoa/reports/first-install-report.md)
+

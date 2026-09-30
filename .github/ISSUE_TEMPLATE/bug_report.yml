@@ -1,0 +1,89 @@
+name: Bug report
+description: Report a reproducible problem in Army of Agents
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. If this is security-sensitive, do not continue here. Follow SECURITY.md instead.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest steps that reproduce the issue.
+      placeholder: |
+        1. Run ...
+        2. Open ...
+        3. Click ...
+        4. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: main @ commit SHA, release tag, or package version
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - UI
+        - API/server
+        - Database/migrations
+        - Agent adapters
+        - Commander
+        - Crew
+        - Memory/Company Brain
+        - Marketplace/plugins/skills
+        - Docs
+        - CI/release
+        - Other
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node.js version, pnpm version, deployment mode, database mode, browser if relevant.
+      placeholder: |
+        OS:
+        Node:
+        pnpm:
+        Deployment mode:
+        Database:
+        Browser:
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove secrets, tokens, private URLs, and personal data before posting.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I removed secrets, tokens, and private data from this report.
+          required: true
+        - label: This is not a security vulnerability report.
+          required: true
