@@ -65,7 +65,7 @@ import {
  * an operator a way to point the shelf at an arbitrary host.
  */
 export const DEFAULT_CONNECTOR_CATALOG_URL =
-  "https://meteoritelabs.github.io/aoa-marketplace-cdn/connectors.json";
+  "https://raw.githubusercontent.com/meteoritelabs/aoa-marketplace-cdn/main/connectors.json";
 
 /** Matches the marketplace catalog sync cadence. */
 export const CONNECTOR_CATALOG_TTL_MS = 6 * 60 * 60 * 1000;

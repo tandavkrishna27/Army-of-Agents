@@ -25,7 +25,7 @@ import { logger } from "../middleware/logger.js";
 import { serializeSafeError } from "./safe-error.js";
 
 const DEFAULT_CDN_URL =
-  "https://meteoritelabs.github.io/aoa-marketplace-cdn/catalog.json";
+  "https://raw.githubusercontent.com/meteoritelabs/aoa-marketplace-cdn/main/catalog.json";
 const SYNC_TIMEOUT_MS = 30_000;
 const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6h, M.4 makes this configurable
 
