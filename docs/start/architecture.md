@@ -1,105 +1,110 @@
 ---
-title: Architecture
-summary: Stack overview, request flow, and adapter model
+title: Architecture overview
+summary: How the Army of Agents control plane, UI, database, adapters, and agent runtimes fit together
 ---
 
-AoA is a monorepo with four main layers.
+Army of Agents is a control plane for human and AI work. The web app owns company state, governance, memory, tasks, and audit history. Agent runtimes run through adapters and report back through the API.
 
-## Stack Overview
+## System shape
 
-```
-┌─────────────────────────────────────┐
-│  React UI (Vite)                    │
-│  Home, org management, tasks        │
-├─────────────────────────────────────┤
-│  Express.js REST API (Node.js)      │
-│  Routes, services, auth, adapters   │
-├─────────────────────────────────────┤
-│  PostgreSQL (Drizzle ORM)           │
-│  Schema, migrations, embedded mode  │
-├─────────────────────────────────────┤
-│  Adapters                           │
-│  Claude Local, Codex Local,         │
-│  Cursor, OpenCode, OpenClaw,        │
-│  Gemini Local, Hermes Local,        │
-│  Process, HTTP                      │
-└─────────────────────────────────────┘
+```mermaid
+flowchart TB
+  UI[React board UI] --> API[Express REST API]
+  CLI[Army of Agents CLI] --> API
+  Commander[Commander runtime] --> API
+  API --> DB[(PostgreSQL via Drizzle)]
+  API --> Storage[Local or configured storage]
+  API --> Secrets[Local or configured secrets]
+  API --> Adapters[Adapter registry]
+  Adapters --> Runtimes[Claude, Codex, Cursor, OpenCode, OpenClaw, Gemini, Hermes, process, HTTP]
+  Runtimes --> API
 ```
 
-## Technology Stack
+## Layers
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, Vite 6, React Router 7, Radix UI, Tailwind CSS 4, TanStack Query |
-| Backend | Node.js 20.3+, Express.js 5, TypeScript |
-| Database | PostgreSQL 17 (or embedded `embedded-postgres@18.x` — a real Postgres binary, not PGlite/WASM), Drizzle ORM |
-| Auth | Better Auth (sessions + API keys) |
-| Adapters | Claude Code CLI, Codex CLI, Cursor, OpenCode CLI, OpenClaw, Gemini CLI, Hermes CLI, shell process, HTTP webhook |
-| Package manager | pnpm 9 with workspaces |
+| Layer | What it owns |
+| --- | --- |
+| React UI | Home, Inbox, Commander, Discussions, Tasks, Team, Memory, Budget, Activity, Settings |
+| Express API | Auth, company scoping, routes, services, adapters, heartbeat, approvals |
+| PostgreSQL | Company data, tasks, comments, memory, runs, settings, audit records |
+| Adapters | Runtime-specific launch, diagnostics, output parsing, and configuration fields |
+| CLI | Onboarding, local run, setup checks, and control-plane commands |
 
-## Repository Structure
+## Repository map
 
-```
-aoa/
-├── ui/                          # React frontend
-│   ├── src/pages/              # Route pages
-│   ├── src/components/         # React components
-│   ├── src/api/                # API client
-│   └── src/context/            # React context providers
-│
-├── server/                      # Express.js API
-│   ├── src/routes/             # REST endpoints
-│   ├── src/services/           # Business logic
-│   ├── src/adapters/           # Agent execution adapters
-│   └── src/middleware/         # Auth, logging
-│
-├── packages/
-│   ├── db/                      # Drizzle schema + migrations
-│   ├── shared/                  # API types, constants, validators
-│   ├── adapter-utils/           # Adapter interfaces and helpers
-│   └── adapters/
-│       ├── claude-local/        # Claude Code adapter
-│       ├── codex-local/         # OpenAI Codex adapter
-│       ├── cursor-local/        # Cursor adapter
-│       ├── opencode-local/      # OpenCode adapter
-│       ├── openclaw/            # OpenClaw adapter
-│       ├── gemini-local/        # Gemini CLI adapter
-│       └── hermes-local/        # AoA-owned Hermes CLI adapter
-│
-├── skills/                      # Agent skills
-│   └── aoa/                     # Core AoA skill (heartbeat protocol)
-│
-├── cli/                         # CLI client
-│   └── src/                     # Setup and control-plane commands
-│
-└── docs/                        # Internal documentation
+```txt
+server/src/           Express API, routes, services, adapters, heartbeat
+ui/src/               React and Vite board UI
+packages/db/          Drizzle schema, migrations, database clients
+packages/shared/      Shared types, constants, validators, API path constants
+packages/adapters/    Adapter packages and utilities
+cli/                  Army of Agents command line entry points
+docs/                 Public Mintlify docs and internal project docs
 ```
 
-## Request Flow
+## Request and heartbeat flow
 
-When a heartbeat fires:
+```mermaid
+sequenceDiagram
+  participant Human
+  participant UI as Board UI
+  participant API as REST API
+  participant DB as PostgreSQL
+  participant Adapter
+  participant Agent
 
-1. **Trigger** — Scheduler, manual invoke, or event (assignment, mention) triggers a heartbeat
-2. **Adapter invocation** — Server calls the configured adapter's `execute()` function
-3. **Agent process** — Adapter spawns the agent (e.g. Claude Code CLI) with AoA env vars and a prompt
-4. **Agent work** — The agent calls AoA's REST API to check assignments, checkout tasks, do work, and update status
-5. **Result capture** — Adapter captures stdout, parses usage/cost data, extracts session state
-6. **Run record** — Server records the run result, costs, and any session state for next heartbeat
+  Human->>UI: Create or assign Task
+  UI->>API: Mutating request with company context
+  API->>DB: Validate scope, write task, log activity
+  API->>Adapter: Wake assigned agent
+  Adapter->>Agent: Launch runtime with context and env
+  Agent->>API: Read assignments and memory
+  Agent->>API: Checkout task atomically
+  Agent->>API: Comment, ask human, or update status
+  Adapter->>API: Report duration, usage, files, result
+  API->>DB: Persist run summary and activity
+  API-->>UI: Live state updates
+```
 
-## Adapter Model
+## Adapter model
 
-Adapters are the bridge between AoA and agent runtimes. Each adapter is a package with three modules:
+Adapters keep the control plane independent from any one agent runtime. A built-in adapter can launch a local CLI, call a process, or send work to an HTTP service.
 
-- **Server module** — `execute()` function that spawns/calls the agent, plus environment diagnostics
-- **UI module** — stdout parser for the run viewer, config form fields for agent creation
-- **CLI module** — terminal formatter for `aoa run --watch`
+Built-in adapter families include Claude Local, Codex Local, Cursor, OpenCode, OpenClaw, Gemini Local, Hermes Local, Process, and HTTP.
 
-Built-in adapters: `claude_local`, `codex_local`, `cursor`, `opencode_local`, `openclaw`, `gemini_local`, `hermes_local`, `process`, `http`. You can create custom adapters for any runtime.
+Each adapter normally contributes:
 
-## Key Design Decisions
+- server execution logic
+- configuration fields for the UI
+- diagnostics for setup and health checks
+- output parsing for run views
+- CLI formatting for terminal workflows
 
-- **Control plane, not execution plane** — AoA orchestrates agents; it doesn't run them
-- **Company-scoped** — all entities belong to exactly one company; strict data boundaries
-- **Single-assignee tasks** — atomic checkout prevents concurrent work on the same task
-- **Adapter-agnostic** — any runtime that can call an HTTP API works as an agent
-- **Embedded by default** — zero-config local mode with embedded PostgreSQL
+## Data and naming boundaries
+
+Army of Agents keeps shipped wire contracts stable. The public UI says Home, Task, Budget, Team, and Discussion. Some API routes and database tables keep older names such as `/dashboard`, `/issues`, or `issues` for compatibility.
+
+Do not infer that an API route name is the preferred product word. Public operator docs should use the UI language.
+
+## Governance boundaries
+
+Key invariants:
+
+- every domain entity is company-scoped
+- task execution follows the single-assignee checkout model
+- governed actions can require approval
+- budget hard stops can pause agents
+- mutating actions are logged
+- memory visibility is actor-aware and scope-aware
+- agents can suggest durable memory, but approval rules decide what becomes trusted context
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Core concepts" href="/start/core-concepts">
+    Learn the product vocabulary used by the architecture.
+  </Card>
+  <Card title="Adapter overview" href="/adapters/overview">
+    Choose how your agents will run.
+  </Card>
+</CardGroup>

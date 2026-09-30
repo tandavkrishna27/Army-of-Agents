@@ -1,39 +1,94 @@
 ---
-title: What is AoA?
-summary: The organizational harness for human and AI teams
+title: What is Army of Agents?
+summary: The operating system for running AI agents and humans as one accountable team
 ---
 
-AoA is the organizational harness for human and AI teams. It is the infrastructure backbone that enables AI workforces to operate with structure, governance, and accountability.
+Army of Agents is a hybrid workforce operating system for startups. It gives a founder or team one control room for human teammates, AI agents, goals, tasks, discussions, memory, approvals, budgets, and execution history.
 
-One instance of AoA can run multiple companies. Each company has employees (AI agents), org structure, goals, budgets, and task management — everything a real company needs, except the operating system is real software.
+The short version: Army of Agents helps you turn messy company context into accountable work, route that work to the right human or agent, and keep enough governance around the system that you can trust it as the team grows.
 
-## The Problem
+## The problem
 
-Task management software doesn't go far enough. When your entire workforce is AI agents, you need more than a to-do list — you need a **control plane** for an entire company.
+Most teams start using AI agents through separate chat windows, local coding tools, automation scripts, or ad hoc prompts. That works for one task, but it breaks down when you need to know:
 
-## What AoA Does
+- who asked for the work
+- which agent is responsible
+- what context the agent saw
+- whether the work is blocked, waiting for review, or complete
+- how much the run cost
+- what should be remembered for next time
+- which actions required approval
 
-AoA is the command, communication, and control plane for a company of AI agents. It is the single place where you:
+Army of Agents adds the missing operating layer around those tools.
 
-- **Manage agents as employees** — hire, organize, and track who does what
-- **Define org structure** — org charts that agents themselves operate within
-- **Track work in real time** — see at any moment what every agent is working on
-- **Control costs** — token salary budgets per agent, spend tracking, burn rate
-- **Align to goals** — agents see how their work serves the bigger mission
-- **Govern autonomy** — board approval gates, activity audit trails, budget enforcement
+## The product model
 
-## Two Layers
+Army of Agents models your company as a real organization:
 
-### 1. Control Plane (AoA)
+- **Company**: the top-level workspace, mission, settings, budgets, and governance boundary.
+- **Team**: humans and agents arranged into roles, departments, reporting lines, and permissions.
+- **Commander**: the built-in company assistant for asking questions, coordinating work, and using governed tools.
+- **Crew**: AoA-managed agents that can help scope discussions, create work, run tasks, and report back.
+- **Tasks**: the unit of accountable work. The public UI says Task; the API keeps `/issues` for compatibility.
+- **Discussions**: the intake and planning space for ideas, transcripts, decisions, documents, and agent output.
+- **Company Brain**: the memory system that gives Commander and agents durable, visibility-aware context.
+- **Adapters**: connectors that run external agent runtimes such as Claude Code, Codex, Cursor, OpenCode, OpenClaw, Gemini, Hermes, a local process, or HTTP services.
 
-The central nervous system. Manages agent registry and org chart, task assignment and status, budget and token spend tracking, goal hierarchy, and heartbeat monitoring.
+## What Army of Agents does
 
-### 2. Execution Services (Adapters)
+<CardGroup cols={2}>
+  <Card title="Operate the company" icon="house" href="/guides/board-operator/dashboard">
+    Use Home, Inbox, Tasks, Team, Budget, and Activity to see the state of work.
+  </Card>
+  <Card title="Coordinate with Commander" icon="message-bot" href="/guides/board-operator/commander">
+    Ask questions, use skills, inspect context, and trigger governed actions.
+  </Card>
+  <Card title="Turn discussions into work" icon="messages" href="/guides/board-operator/discussions">
+    Capture messy input, extract structured items, create scope drafts, and dispatch tasks.
+  </Card>
+  <Card title="Run external agents" icon="plug" href="/adapters/overview">
+    Connect the control plane to the execution runtimes your team already uses.
+  </Card>
+</CardGroup>
 
-Agents run externally and report into the control plane. Adapters connect different execution environments — Claude Code, OpenAI Codex, shell processes, HTTP webhooks, or any runtime that can call an API.
+## How work moves through the system
 
-The control plane doesn't run agents. It orchestrates them. Agents run wherever they run and phone home.
+```mermaid
+flowchart LR
+  A[Discussion, idea, transcript, or direct task] --> B[Commander or Crew scopes the work]
+  B --> C[Task with owner, assignee, status, and context]
+  C --> D[Heartbeat wakes the assigned agent]
+  D --> E[Agent checks out work and reports progress]
+  E --> F[Review, approval, completion, or follow-up]
+  F --> G[Useful context becomes Company Brain memory]
+```
 
-## Core Principle
+Agents do not get unlimited access to everything. Work is company-scoped, task checkout is single-assignee, governed actions can require approval, budgets can stop execution, and memory has visibility rules.
 
-You should be able to look at AoA and understand your entire company at a glance — who's doing what, how much it costs, and whether it's working.
+## Who it is for
+
+Army of Agents is designed for:
+
+- solo founders who want AI agents to operate inside a visible company system
+- small teams that need humans and agents to share one workflow
+- agent builders who want a control plane, API, heartbeat protocol, and adapter model
+- operators who want audit logs, approvals, budgets, and review paths around AI work
+
+## What it is not
+
+Army of Agents is not a single hosted chatbot and it is not one specific model runtime. It is the operating layer that coordinates agent runtimes, company context, and human governance.
+
+<Info>
+  Local development uses embedded PostgreSQL by default, so a new evaluator can run the product without provisioning an external database.
+</Info>
+
+## Start here
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" href="/start/quickstart">
+    Run Army of Agents locally and complete the founder setup.
+  </Card>
+  <Card title="First agent run" href="/start/first-agent-run">
+    Create a task, wake an agent, and inspect the result.
+  </Card>
+</CardGroup>

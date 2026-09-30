@@ -1,60 +1,95 @@
 ---
 title: Discussions
-summary: Threads workspace, unlisted intake, scope drafts, crew loopback, and attachments
+summary: Use threads to capture ideas, extract scope, create tasks, and keep Crew results connected
 ---
 
-Discussions is AoA's thread workspace. It is the universal intake for ideas, transcripts, documents, agent output, and unstructured content. The route is `/discussions`; `/briefs` and `/debriefs` redirect here.
+Discussions is the Army of Agents workspace for unstructured company context. Use it for ideas, meeting notes, transcripts, documents, customer feedback, planning threads, and agent output that is not yet a clean task.
 
-## Workspace Layout
+## When to use Discussions
 
-The workspace has:
+Use Discussions when:
 
-- A thread rail
-- A Home overview
-- A global viewer on Home
-- Thread detail when a thread is selected
+- the input is messy or still being shaped
+- several people or agents need to add context before work starts
+- you want Crew to propose tasks from a thread
+- you want decisions and execution results connected to the source conversation
+- incoming material should be reviewed before it becomes Tasks or Memory
 
-The rail groups threads into Unlisted, Discuss, Scope, Assign, Done, and Archived. It supports search, New Thread, archive, and unarchive.
+The route is `/discussions`. Legacy `/briefs` and `/debriefs` paths redirect here.
 
-## Unlisted Intake
+## Workspace layout
 
-Unlisted items are inbound material that has not become a thread yet. Operators can turn them into threads or dismiss them.
+Discussions has:
 
-## New Thread Types
+- a thread rail for searching, creating, archiving, and reopening threads
+- a Home overview for recent and grouped discussion work
+- thread detail for posts, replies, attachments, scope cards, and linked outputs
+- viewer tabs for thread content, files, artifacts, and selected items
 
-New Thread supports:
+Threads can move through groups such as Unlisted, Discuss, Scope, Assign, Done, and Archived.
 
-- Idea
-- Discussion
-- Goal
-- Transcript
-- Document
+## Turn a discussion into work
 
-Goal threads can create a discussion, add an entry, and then promote the result to a goal.
+<Steps>
+  <Step title="Create or open a thread">
+    Start with a clear title and add the idea, transcript, note, or document. Include goals, constraints, and examples if you already know them.
+  </Step>
+  <Step title="Add enough context">
+    Good scope drafts need concrete details. Add decisions, relevant files, desired outcome, acceptance criteria, and what should not happen.
+  </Step>
+  <Step title="Ask Crew to scope">
+    Create a scope draft. Army of Agents extracts useful items and turns them into candidate task cards.
+  </Step>
+  <Step title="Review cards before accepting">
+    Edit titles, descriptions, assignees, departments, projects, and acceptance criteria. Reject cards that are speculative or duplicate existing work.
+  </Step>
+  <Step title="Dispatch according to autonomy">
+    Manual mode waits for you. Assist mode asks for dispatch approval. Drive mode dispatches when preflight checks pass.
+  </Step>
+  <Step title="Watch loopback">
+    Crew-originated work stays linked to its source thread. Results, failure cards, and task links help the discussion remain the narrative record.
+  </Step>
+</Steps>
 
-## Scope Drafts and Crew Routing
+## Unlisted intake
 
-Scope drafts turn extracted thread material into planned work. Autonomy controls how far AoA goes:
+Unlisted items are inbound material that has not become a normal thread yet. Convert useful material into a thread, or dismiss material that should not enter the operating system.
 
-- Manual: propose only
-- Assist: create planning tasks and request dispatch approval
-- Drive: create standard tasks and dispatch when preflight checks pass
+## Attachments
 
-Crew work remains linked to its originating thread. Successful execution is
-visible through the created task, its output, and the task's run-summary comment.
-When a crew run fails, AoA also posts a failure card into the originating thread
-with actions to retry or view the task. Run summaries can be disabled per agent
-with `runtimeConfig.autoRunSummary`; failure-card delivery is a separate,
-best-effort loopback.
+Posts and replies use the shared composer for drafts, mentions, attachments, and replay-safe retries. Thread entries can carry assets or artifacts, and the viewer can open linked files and selected item detail.
 
-## Attachments and Viewer Tabs
+## How to verify it worked
 
-Thread entries can carry assets or artifacts. The viewer supports thread content, linked files, browser-style viewers, and selected-item detail.
+After a discussion becomes work, check that:
 
-Posts and replies use the shared composer for drafts, mentions, attachments, and
-replay-safe retries. See [Compose messages and comments](composer.md) and the
-[Discussions API](../../api/discussions.md).
+- the source thread has the expected scope cards or linked tasks
+- accepted cards created Tasks with the right assignee and scope
+- Assist-mode dispatch requests appear in Inbox when required
+- Crew results or failure cards point back to the originating thread
+- any memory candidates are pending review instead of silently approved
 
-## Legacy Status
+## Troubleshooting
 
-Legacy Brief/Debrief tables remain for rollback safety. New operator work should happen in Discussions.
+<AccordionGroup>
+  <Accordion title="The scope draft is too vague">
+    Add a clearer desired outcome, examples, constraints, and acceptance criteria, then create a new draft.
+  </Accordion>
+  <Accordion title="No tasks were dispatched">
+    Check autonomy mode. Manual proposes only, Assist waits for approval, and Drive still respects budget, pause, and preflight checks.
+  </Accordion>
+  <Accordion title="A thread has too many unrelated topics">
+    Split the work into separate threads. Clear source boundaries produce better task cards and memory candidates.
+  </Accordion>
+</AccordionGroup>
+
+## Related docs
+
+<CardGroup cols={2}>
+  <Card title="Crew" href="/guides/board-operator/crew">
+    Learn how Crew scopes and dispatches discussion work.
+  </Card>
+  <Card title="Company Brain" href="/guides/board-operator/company-brain">
+    Review memory candidates that come from discussions.
+  </Card>
+</CardGroup>

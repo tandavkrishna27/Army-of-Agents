@@ -30,6 +30,7 @@
               "start/what-is-aoa",
               "start/quickstart",
               "start/core-concepts",
+              "start/first-agent-run",
               "start/architecture",
               "start/upstream-vs-aoa",
               "start/openclaw-integration"
@@ -49,6 +50,7 @@
               "guides/board-operator/discussions",
               "guides/board-operator/composer",
               "guides/board-operator/commander",
+              "guides/board-operator/crew",
               "guides/board-operator/creating-a-company",
               "guides/board-operator/inviting-and-joining",
               "guides/board-operator/managing-agents",
@@ -57,6 +59,7 @@
               "guides/board-operator/routines",
               "guides/board-operator/approvals",
               "guides/board-operator/memory",
+              "guides/board-operator/company-brain",
               "guides/board-operator/artifacts",
               "guides/board-operator/costs-and-budgets",
               "guides/board-operator/activity-log",
@@ -170,6 +173,17 @@
               "cli/overview",
               "cli/setup-commands",
               "cli/control-plane-commands"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Contribute",
+        "groups": [
+          {
+            "group": "Documentation",
+            "pages": [
+              "contributing/public-docs-style"
             ]
           }
         ]

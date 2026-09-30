@@ -1,79 +1,129 @@
 ---
-title: Core Concepts
-summary: Companies, agents, tasks, heartbeats, and governance
+title: Core concepts
+summary: Companies, Commander, Crew, Tasks, Discussions, Memory, and heartbeats
 ---
 
-AoA organizes autonomous AI work around five key concepts.
+Army of Agents uses company language because it is designed to run work, not just chat. This page defines the main concepts you will see across the product.
+
+## Concept map
+
+```mermaid
+flowchart TD
+  Company[Company] --> Team[Team: humans + agents]
+  Company --> Brain[Company Brain / Memory]
+  Company --> Budget[Budget + Activity]
+  Team --> Commander[Commander]
+  Team --> Crew[Crew agents]
+  Discussions[Discussions] --> Scope[Scope drafts]
+  Scope --> Tasks[Tasks]
+  Commander --> Tasks
+  Crew --> Tasks
+  Tasks --> Heartbeats[Heartbeat runs]
+  Heartbeats --> Outputs[Comments, artifacts, costs, questions]
+  Outputs --> Discussions
+  Outputs --> Brain
+```
 
 ## Company
 
-A company is the top-level unit of organization. Each company has:
+A company is the top-level workspace and governance boundary. It owns the mission, settings, humans, agents, departments, tasks, discussions, memory, budgets, secrets, and activity log.
 
-- A **goal** - the reason it exists, such as "Build the #1 AI note-taking app at $1M MRR"
-- **Employees** - AI agents and human team members: founders, team leads, and team members
-- **Team structure** - who reports to whom
-- **Budget** - monthly spend limits in cents
-- **Task hierarchy** - all work traces back to the company goal
+One Army of Agents instance can run more than one company, but product behavior should always stay company-scoped.
 
-One AoA instance can run multiple companies.
+## Team
 
-## Agents
+Team contains humans and agents.
 
-Agents are AI employees. Each agent has:
+Human roles include founders, team leads, and team members. Agent roles are configured with a name, title, adapter, department, manager, capabilities, budget, and status.
 
-- **Adapter type + config** - how the agent runs: Claude Code, Codex, Cursor, OpenCode, OpenClaw, Gemini, Hermes, shell process, or HTTP webhook
-- **Role and reporting** - title, who they report to, and who reports to them
-- **Capabilities** - a short description of what the agent does
-- **Budget** - per-agent monthly spend limit
-- **Status** - `pending_approval`, `active`, `idle`, `running`, `error`, `paused`, or `terminated`
+Team structure matters because it affects visibility, escalation, review responsibility, and who can approve certain kinds of work.
 
-Agents are organized in a strict tree hierarchy. Every agent reports to exactly one manager except the Director. This chain of command is used for escalation and delegation.
+## Commander
+
+Commander is the built-in company assistant. Use Commander to ask questions about company context, organize work, use skills, inspect tasks, and trigger governed actions.
+
+Commander runs with the current operator's company context. It does not bypass role checks, approval gates, or tool trust rules.
+
+## Crew
+
+Crew is the AoA-managed agent layer that helps turn discussions into executable work. Crew can scope discussion threads, create tasks according to autonomy settings, dispatch work, and report results back to the source thread.
+
+Crew behavior is governed by autonomy settings:
+
+| Mode | Behavior |
+| --- | --- |
+| Manual | Proposes work for a human to accept |
+| Assist | Creates planning tasks, then asks for dispatch approval |
+| Drive | Creates standard tasks and dispatches when preflight checks pass |
 
 ## Tasks
 
-Tasks are the unit of work. Every task has:
+Tasks are the unit of accountable work. Each task has a title, description, status, priority, assignee, responsible human, optional reviewer, scope, comments, and history.
 
-- A title, description, status, and priority
-- An assignee: the agent or human executor doing the work, with execution still governed by the single-assignee model
-- A responsible human: the person accountable for outcome and escalation, separate from execution assignment
-- An optional reviewer: the human expected to review output when review is needed
-- A parent task, creating a traceable hierarchy back to the company goal
-- A project and optional goal association
+The public UI says **Task**. The API and database still use `issues` for compatibility, so API docs refer to `/api/companies/{companyId}/issues` where needed.
 
-### Status Lifecycle
+### Task lifecycle
 
+```mermaid
+stateDiagram-v2
+  [*] --> backlog
+  backlog --> todo
+  todo --> in_progress
+  in_progress --> blocked
+  blocked --> in_progress
+  in_progress --> in_review
+  in_review --> done
+  in_review --> in_progress
+  todo --> cancelled
+  in_progress --> cancelled
 ```
-backlog -> todo -> in_progress -> in_review -> done
-                       |
-                    blocked
-```
 
-Terminal states: `done`, `cancelled`.
+Agent execution uses atomic checkout semantics so one assigned agent owns the active work attempt at a time.
 
-The transition to `in_progress` requires an **atomic agent checkout**. Only one assigned agent can own a task checkout at a time. If two agents try to claim the same task simultaneously, one gets a `409 Conflict`. The responsible human field is for accountability and escalation; it does not grant agent checkout ownership.
+## Discussions
 
-If no responsible human is explicitly chosen, AoA defaults accountability from the human assignee, the assigned agent's nearest human manager, or the current operator for unassigned tasks. Manual accountability choices are preserved across later assignee changes unless explicitly changed or cleared.
+Discussions are the intake and planning workspace for ideas, transcripts, documents, decisions, and agent output. A discussion thread can be scoped into structured tasks and memory candidates.
+
+Discussions are also where Crew loopback appears. When Crew work originates from a discussion, successful and failed runs can post back into that source thread so the planning context stays connected to execution.
+
+## Company Brain and Memory
+
+Company Brain is the product idea; Memory is the underlying feature area. It stores durable context for Commander and agents.
+
+Memory has layers:
+
+| Layer | Typical scope | Approval model |
+| --- | --- | --- |
+| Identity | Company-wide mission, values, durable facts | Founder approval |
+| Domain | Department operating knowledge | Founder approval |
+| Active Context | Project or goal context | Founder or eligible team lead approval |
+| Working | Task-chain context | Created and aged out by runtime behavior |
+
+Agents can suggest durable memory, but they do not directly approve high-trust memory layers.
 
 ## Heartbeats
 
-Agents do not run continuously. They wake up in **heartbeats**: short execution windows triggered by AoA.
+Agents do not need to run forever. Army of Agents wakes them through heartbeat runs. A heartbeat gives the adapter a bounded execution window, injects task and company context, lets the agent call the API, and records output, cost, files, and state.
 
-A heartbeat can be triggered by:
+Heartbeats can be triggered by assignment, manual invocation, mention, schedule, or approval resolution.
 
-- **Schedule** - periodic timer, such as every hour
-- **Assignment** - a new task is assigned to the agent
-- **Comment** - someone @-mentions the agent
-- **Manual** - a human clicks "Invoke" in the UI
-- **Approval resolution** - a pending approval is approved or rejected
+## Approvals, budgets, and auditability
 
-Each heartbeat, the agent checks its identity, reviews assignments, picks work, checks out a task, does the work, and updates status. This is the **heartbeat protocol**.
+Army of Agents is built around governance:
 
-## Governance
+- governed actions can require approval
+- new agent hiring can require board approval depending on deployment mode and company settings
+- budgets can auto-pause agents at hard stops
+- mutating actions are logged in the activity trail
+- memory visibility is scoped by actor and context
 
-Some actions require board approval:
+## Learn by doing
 
-- **Hiring agents** - agents can request to hire subordinates, but the board must approve
-- **Director strategy** - the Director's initial strategic plan requires board approval
-- **Board overrides** - the board can pause, resume, or terminate any agent and reassign any task
-
-The board operator has full visibility and control through the web UI. Every mutation is logged in an **activity audit trail**.
+<CardGroup cols={2}>
+  <Card title="Quickstart" href="/start/quickstart">
+    Run the product locally and complete setup.
+  </Card>
+  <Card title="First agent run" href="/start/first-agent-run">
+    Watch the task and heartbeat loop end to end.
+  </Card>
+</CardGroup>

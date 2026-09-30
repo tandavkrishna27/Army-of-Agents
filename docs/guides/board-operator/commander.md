@@ -1,21 +1,38 @@
 ---
 title: Work with Commander
-summary: Use Commander's cockpit, conversations, context, skills, files, and governed actions
+summary: Use Commander to inspect context, coordinate work, run skills, and trigger governed actions
 ---
 
-Commander is AoA's company-scoped coordination assistant. It can inspect company context, help organize work, and use governed tools through a streamed conversation. Commander does not bypass company access, role permissions, approval gates, or tool trust rules.
+Commander is Army of Agents' company-scoped coordination assistant. Use it when you want to ask about company context, plan work, inspect tasks, use skills, or trigger governed actions from a conversational cockpit.
 
-## Start and Verify Commander
+Commander does not bypass company access, role permissions, approval gates, tool trust rules, memory visibility, or budget controls.
 
-Open **Commander** from the sidebar. If the selected CLI is not ready, use the
-setup prompt to authenticate and verify the connection. The onboarding UI offers
-interactive sign-in for Codex; Claude currently uses the API-key path because
-its paste-code login bridge is not implemented there. The server API supports
-founder board users starting or cancelling either Anthropic or OpenAI login
-challenges, as well as saving the corresponding Commander credential.
-Challenges and credentials are company-scoped.
+## When to use Commander
 
-Connection verification reports whether the configured CLI and authentication are usable. A successful sign-in does not grant Commander permissions beyond those of its authenticated operator context.
+Use Commander to:
+
+- ask questions about company work and context
+- summarize tasks, discussions, goals, and memory
+- plan the next set of tasks from a vague request
+- invoke skills attached to Commander
+- inspect your accountable work through the Cockpit
+- trigger governed actions when your role allows them
+
+## Start and verify Commander
+
+<Steps>
+  <Step title="Open Commander">
+    Select Commander from the sidebar while the intended company is active.
+  </Step>
+  <Step title="Check runtime setup">
+    If the selected runtime is not ready, follow the setup prompt to authenticate and verify the local CLI or configured provider path.
+  </Step>
+  <Step title="Send a small context question">
+    Ask Commander to summarize the current company, open tasks, or your accountable work. This verifies streaming and context access before you ask it to take action.
+  </Step>
+</Steps>
+
+Connection verification reports whether the configured runtime and authentication are usable. A successful sign-in does not grant Commander permissions beyond the authenticated operator context.
 
 ## Use the Cockpit
 
@@ -25,40 +42,67 @@ The Cockpit summarizes work accountable to the current user:
 - **Managed**: work in your human and agent responsibility hierarchy
 - **Awaiting review**: work that expects your review
 
-Cockpit sections are independently bounded. If one source fails, Commander marks the result partial instead of presenting an all-clear state.
+If one source fails, Commander marks the result partial instead of presenting an all-clear state.
 
-## Manage Conversations
+## Compose a useful turn
 
-Create separate conversations for separate work streams. You can rename, pin, archive, delete, and drag conversations into a manual order. Resetting the order returns unpinned conversations to recency grouping.
+Good Commander requests include the outcome, scope, and constraints.
 
-Commander persists user, assistant, and tool messages. Long histories may be summarized for context management. Page and department context can be included with a turn; choose the narrowest useful context to reduce noise.
+```txt
+Review the current discussion about onboarding, propose the next three tasks, and keep them scoped to the CLI quickstart. Do not create tasks yet.
+```
 
-## Compose a Turn
-
-The Commander composer supports:
+The composer supports:
 
 - `@` mentions for company agents
 - `/` skill tokens or skills selected from the add menu
 - up to five supported attachments
-- Retry, Edit, and Discard after a failed request
+- retry, edit, and discard after a failed request
 
-Plain text, Markdown, and JSON attachments can contribute up to 32 KB of text to the runtime turn. Images and PDFs are stored but are not currently shown to the model. Attachment content is not copied into the persisted user-message row. See [Compose messages and comments](composer.md) and [Commander attachment runtime](../../architecture/commander-attachment-runtime.md).
+Plain text, Markdown, and JSON attachments can contribute text to the runtime turn. Images and PDFs are stored but are not currently shown to the model.
 
-## Tools, Permissions, and Trust
+## Tools, permissions, and trust
 
-Commander tools remain company-scoped and pass normal role and entity checks. Governed actions can stop for confirmation. Tool permissions determine which capabilities are available; trust rules can remember an approved decision for eligible repeated actions. Review or remove trust rules in Commander settings when the operating boundary changes.
+Commander tools remain company-scoped and pass normal role and entity checks. Governed actions can stop for confirmation. Tool permissions determine which capabilities are available; trust rules can remember an approved decision for eligible repeated actions.
 
-Skills are inserted as readable tokens and expanded only on send. The generated tool manifest is the source of truth for the current Commander tool catalog; do not rely on a hand-maintained tool count.
+Review or remove trust rules when the operating boundary changes.
 
-## Questions, Review, and Completion
+<Warning>
+  Treat trusted Commander actions like product permissions. If the context, role, or workflow changes, remove old trust rules and approve the action again.
+</Warning>
+
+## Questions, review, and completion
 
 Agent questions, review requests, task state, and run completion are separate concepts:
 
-- A work question remains durable and can appear in Commander, Inbox, Task Work, a workspace, or its source Discussion.
-- Answering a question can request continuation of the parked work.
-- A technically completed run does not automatically mean the task is complete.
-- Review and acceptance follow the task's assigned reviewer and completion policy.
+- a work question can appear in Commander, Inbox, Task Work, Workspace, or its source Discussion
+- answering a question can request continuation of parked work
+- a technically completed run does not automatically mean the task is complete
+- review and acceptance follow the task's assigned reviewer and completion policy
 
-Use the Cockpit's **Awaiting review** queue for accountable review work. Check the task and its output rather than inferring completion from a streamed Commander response.
+Use **Awaiting review** for accountable review work. Check the task and its output before inferring completion from a streamed Commander response.
 
-For request and stream details, see the [Commander API](../../api/internal-agent.md).
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Commander cannot use a skill">
+    Confirm the skill is installed, attached to Commander where required, and allowed by the current tool manifest.
+  </Accordion>
+  <Accordion title="Commander cannot see expected context">
+    Check company selection, role permissions, page context, department context, and memory visibility.
+  </Accordion>
+  <Accordion title="A tool action asks for approval">
+    This is expected for governed actions. Review the proposed action and approve only when the scope is correct.
+  </Accordion>
+</AccordionGroup>
+
+## Related docs
+
+<CardGroup cols={2}>
+  <Card title="Company Brain" href="/guides/board-operator/company-brain">
+    Understand the memory context Commander can use.
+  </Card>
+  <Card title="Commander API" href="/api/internal-agent">
+    Review request and stream contracts.
+  </Card>
+</CardGroup>
