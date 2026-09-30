@@ -220,20 +220,15 @@ jobs:
             exit 1
           fi
 
-  # verify and e2e run independently of policy. Failing policy (e.g.,
-  # contributor accidentally committed pnpm-lock.yaml) should not mask
-  # verify's test failures or e2e's UI failures — contributors deserve
-  # to see all their PR's failure signal, not just the first gate.
-  # Branch protection rules require ALL of policy/verify/e2e/brand-check
-  # to pass for merge — that's the right gate, not a pipeline dependency.
-  verify:
+  # Long gates run independently of policy and in parallel. Failing policy
+  # should not mask typecheck/test/build/e2e failures — contributors deserve
+  # to see all failure signal. The ci-required aggregator below is the branch
+  # protection gate and explicitly requires every shard to pass for code PRs.
+  typecheck:
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
-    # Full server + ui + embedded-PG integration suites now run ~37 min (test
-    # phase alone), and the build step needs ~8 more — 45 left no margin (a green
-    # 17.4k-test run was canceled mid-build at 45m18s). 60 adds durable headroom.
-    timeout-minutes: 60
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -256,11 +251,87 @@ jobs:
       - name: Typecheck
         run: pnpm -r typecheck
 
-      - name: Run tests
-        run: pnpm test:run
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Vitest shard ${{ matrix.shard }}/4
+        run: pnpm test:run -- --shard=${{ matrix.shard }}/4
+
+  build:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Build
         run: pnpm build
+
+  tool-contracts:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Tool contract freshness
         run: |
@@ -305,7 +376,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
-    timeout-minutes: 30
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
 
     steps:
       - name: Checkout repository
@@ -366,17 +441,17 @@ jobs:
           }
           CONF
 
-      - name: Run e2e tests
+      - name: Run e2e tests shard ${{ matrix.shard }}/4
         env:
           # Gates LLM-dependent e2e specs only; server keyless-boot safety is handled by the embedding-worker fix, not this flag.
           AOA_E2E_SKIP_LLM: "true"
-        run: pnpm run test:e2e
+        run: pnpm run test:e2e -- --shard=${{ matrix.shard }}/4
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             tests/e2e/playwright-report/
             tests/e2e/test-results/
@@ -601,7 +676,7 @@ jobs:
   # so this gate goes RED (drafts are unmergeable; a passing required check
   # there would be the footgun). Marking ready re-runs everything for real.
   ci-required:
-    needs: [changes, policy, brand-check, verify, lint, e2e, e2e-pgvector, migrations]
+    needs: [changes, policy, brand-check, typecheck, unit-tests, build, tool-contracts, lint, e2e, e2e-pgvector, migrations]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -612,13 +687,16 @@ jobs:
           R_CHANGES: ${{ needs.changes.result }}
           R_POLICY: ${{ needs.policy.result }}
           R_BRAND: ${{ needs['brand-check'].result }}
-          R_VERIFY: ${{ needs.verify.result }}
+          R_TYPECHECK: ${{ needs.typecheck.result }}
+          R_UNIT_TESTS: ${{ needs['unit-tests'].result }}
+          R_BUILD: ${{ needs.build.result }}
+          R_TOOL_CONTRACTS: ${{ needs['tool-contracts'].result }}
           R_LINT: ${{ needs.lint.result }}
           R_E2E: ${{ needs.e2e.result }}
           R_E2E_PGVECTOR: ${{ needs['e2e-pgvector'].result }}
           R_MIGRATIONS: ${{ needs.migrations.result }}
         run: |
-          echo "code=$R_CODE | changes=$R_CHANGES policy=$R_POLICY brand-check=$R_BRAND verify=$R_VERIFY lint=$R_LINT e2e=$R_E2E e2e-pgvector=$R_E2E_PGVECTOR migrations=$R_MIGRATIONS"
+          echo "code=$R_CODE | changes=$R_CHANGES policy=$R_POLICY brand-check=$R_BRAND typecheck=$R_TYPECHECK unit-tests=$R_UNIT_TESTS build=$R_BUILD tool-contracts=$R_TOOL_CONTRACTS lint=$R_LINT e2e=$R_E2E e2e-pgvector=$R_E2E_PGVECTOR migrations=$R_MIGRATIONS"
           fail=0
           # Detector must have succeeded. Skipped (draft) => red, by design.
           if [ "$R_CHANGES" != "success" ]; then
@@ -639,7 +717,7 @@ jobs:
           # Heavy jobs required to pass ONLY when code changed. On a docs-only
           # PR (code=false) they are skipped, which is allowed.
           if [ "$R_CODE" = "true" ]; then
-            for kv in "verify=$R_VERIFY" "lint=$R_LINT" "e2e=$R_E2E" "e2e-pgvector=$R_E2E_PGVECTOR" "migrations=$R_MIGRATIONS"; do
+            for kv in "typecheck=$R_TYPECHECK" "unit-tests=$R_UNIT_TESTS" "build=$R_BUILD" "tool-contracts=$R_TOOL_CONTRACTS" "lint=$R_LINT" "e2e=$R_E2E" "e2e-pgvector=$R_E2E_PGVECTOR" "migrations=$R_MIGRATIONS"; do
               name="${kv%%=*}"; res="${kv#*=}"
               [ "$res" = "success" ] || { echo "::error::$name=$res (required for code changes)"; fail=1; }
             done
