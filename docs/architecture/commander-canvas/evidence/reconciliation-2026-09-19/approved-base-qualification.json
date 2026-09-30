@@ -1,0 +1,84 @@
+{
+  "status": "qualified and adopted locally; E1.2 connected acceptance remains open",
+  "scope": "isolated combined candidate only",
+  "unitBefore": {
+    "failed": 2,
+    "passed": 1
+  },
+  "unitAfter": {
+    "failed": 0,
+    "passed": 3
+  },
+  "realOccupiedPort": {
+    "passed": 1,
+    "failed": 0
+  },
+  "review": "ownership_review found no concrete blocker; retries limited to confirmed pre-migration IPv4 collision; no weakened security assertion",
+  "candidateSourceManifestSha256": "82633aed8666b5ae90ae7c32093a2d3d158ecb7bf7a44c49810d6b4299fa110c",
+  "qualifiedSourceMatch": {
+    "files": 6759,
+    "differences": 0
+  },
+  "logs": {
+    ".tmp/e12-startup-red.log": {
+      "sha256": "996bce2a9acb40dc6354565779a3b503bec1ced145af02965b50dd820b352b85",
+      "bytes": 4262
+    },
+    ".tmp/e12-startup-unit-final.log": {
+      "sha256": "159ce5af682650572f453aa2ca780d41100342463571af0e159fdaa55428aac0",
+      "bytes": 1478
+    },
+    ".tmp/e12-real-collision.log": {
+      "sha256": "e669b2712dbf7bc9e878941e0028351dfb6b7d6594141dfe2c4e84c4db6e57a5",
+      "bytes": 108808
+    },
+    ".tmp/e12-approved-full-tests.log": {
+      "sha256": "8e4172cb023fd1428458478251d3b846d5a54ff9df238358dc06056e3ea50158",
+      "bytes": 23267066
+    },
+    ".tmp/e12-approved-typecheck.log": {
+      "sha256": "f780b425f3d8cd1d15b44e05eda9db5e7076ad5f4e8225c6cccdb984a1f4f6d5",
+      "bytes": 5387
+    },
+    ".tmp/e12-approved-build.log": {
+      "sha256": "f211d148a950f877a673125aef3d4f96d7482614fd2a22167e1d218aa6e793dc",
+      "bytes": 37515
+    },
+    ".tmp/e12-adopted-install.log": {
+      "sha256": "d52fd2edbdb588af645ecdc5503185a8ff00166c6d1da3dc1afb999208676542",
+      "bytes": 1530
+    },
+    ".tmp/e12-adopted-browser.log": {
+      "sha256": "fd8b36658b34c25259e7e5766e33174389d1dbff2a1826266c79b0a029dbb6c8",
+      "bytes": 1107
+    },
+    ".tmp/e12-adopted-source-comparison.json": {
+      "sha256": "9a6e2becf08200253d8dd5bab3cb0f9cebbf4ede43aca528a88048d3536fee1e",
+      "bytes": 72
+    }
+  },
+  "fullTests": {
+    "passed": 24847,
+    "failed": 0,
+    "skipped": 76,
+    "filesPassed": 2643,
+    "filesSkipped": 10,
+    "durationSeconds": 700.05
+  },
+  "typecheck": "passed",
+  "upstreamObservedLater": "77f4bf98b0136b018c3c7579cf3de80fa6bac007",
+  "adoptionPin": "75350f1f634aec9b679d715aeefeb45287aa36e7",
+  "build": "passed",
+  "adoptedMerge": "7bcf81596ebf59c30dbb417aca411e84b6925de2",
+  "adoptedSourceComparison": {
+    "checked": 6759,
+    "differences": [],
+    "extraSourceFiles": []
+  },
+  "frozenInstall": "passed",
+  "browserFixtures": {
+    "passed": 5,
+    "failed": 0,
+    "productionEntryProof": false
+  }
+}

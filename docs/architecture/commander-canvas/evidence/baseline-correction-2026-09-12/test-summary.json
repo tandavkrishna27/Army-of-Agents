@@ -1,0 +1,131 @@
+[
+  {
+    "log": "combined.log",
+    "counts": {
+      "passed": 247
+    },
+    "errors": [],
+    "skippedFiles": [],
+    "failures": []
+  },
+  {
+    "log": "dns-fixture.log",
+    "counts": {
+      "passed": 79
+    },
+    "errors": [],
+    "skippedFiles": [],
+    "failures": []
+  },
+  {
+    "log": "final-shard-1.log",
+    "counts": {
+      "passed": 6318,
+      "skipped": 12
+    },
+    "errors": [],
+    "skippedFiles": [
+      "\u2713  @armyofagents/server  src/services/internal-agent/__tests__/crew-post-e2e.live.test.ts (5 tests | 3 skipped)",
+      "\u2193  @armyofagents/server  src/__tests__/thread-v2-real-e2e.integration.test.ts (2 tests | 2 skipped)",
+      "\u2713  @armyofagents/adapter-claude-local  src/server/__tests__/ambient-config.test.ts (48 tests | 2 skipped)",
+      "\u2193  @armyofagents/sandbox-e2b-provider  src/__tests__/keyed-dat-009-artifact-export.test.ts (4 tests | 4 skipped)",
+      "\u2193  @armyofagents/server  src/__tests__/commander-skill-triggering.acceptance.test.ts (1 test | 1 skipped)"
+    ],
+    "failures": []
+  },
+  {
+    "log": "final-shard-2.log",
+    "counts": {
+      "passed": 6131,
+      "skipped": 33
+    },
+    "errors": [],
+    "skippedFiles": [
+      "\u2713  @armyofagents/sandbox-e2b-provider  src/__tests__/keyed-w7u1-agent-output-probe.test.ts (11 tests | 1 skipped)",
+      "\u2713  packages/provider-wire  src/__tests__/svc-008a-t8-process-conformance.test.ts (36 tests | 1 skipped)",
+      "\u2713  @armyofagents/server  src/__tests__/provider-login-routes.test.ts (36 tests | 2 skipped)",
+      "\u2193  @armyofagents/sandbox-e2b-provider  src/__tests__/keyed-real-e2b.test.ts (19 tests | 19 skipped)",
+      "\u2713  @armyofagents/adapter-codex-local  src/server/__tests__/appserver-spike.test.ts (7 tests | 1 skipped)",
+      "\u2193  @armyofagents/browser-runtime  src/__tests__/browser-containment.browser.test.ts (9 tests | 9 skipped)"
+    ],
+    "failures": []
+  },
+  {
+    "log": "final-shard-3.log",
+    "counts": {
+      "failed": 4,
+      "passed": 5764,
+      "skipped": 28
+    },
+    "errors": [],
+    "skippedFiles": [
+      "\u2713  @armyofagents/server  src/__tests__/job-leasing-load.integration.test.ts (13 tests | 9 skipped)",
+      "\u2193  @armyofagents/sandbox-e2b-provider  src/__tests__/keyed-cli-008-unit-d-invocation.test.ts (5 tests | 5 skipped)",
+      "\u2193  @armyofagents/browser-runtime  src/__tests__/browser-teardown.browser.test.ts (5 tests | 5 skipped)",
+      "\u2193  @armyofagents/server  src/__tests__/aoa-realoutput.integration.test.ts (1 test | 1 skipped)",
+      "\u2713  @armyofagents/server  src/__tests__/provider-switching.integration.test.ts (7 tests | 1 skipped)",
+      "\u2193  @armyofagents/server  src/__tests__/integration/inbound-routing-e2e.test.ts (4 tests | 4 skipped)",
+      "\u2713  @armyofagents/server  src/__tests__/commander-tools-md.test.ts (20 tests | 1 skipped)",
+      "\u2713  @armyofagents/ui  src/__tests__/InboxHub.test.tsx (41 tests | 2 skipped)"
+    ],
+    "failures": [
+      "FAIL   @armyofagents/server  src/__tests__/blocked-task-scan.integration.test.ts [ server/src/__tests__/blocked-task-scan.integration.test.ts ]",
+      "FAIL   @armyofagents/server  src/__tests__/blocked-task-scan.integration.test.ts > A-M14 \u2014 blockedTaskScan honors dependency completion + dedups > returns 0 findings when the ONLY dependency is already done",
+      "FAIL   @armyofagents/server  src/__tests__/blocked-task-scan.integration.test.ts > A-M14 \u2014 blockedTaskScan honors dependency completion + dedups > returns 1 finding when an in-progress task has an incomplete dependency",
+      "FAIL   @armyofagents/server  src/__tests__/blocked-task-scan.integration.test.ts > A-M14 \u2014 blockedTaskScan honors dependency completion + dedups > counts a task with TWO incomplete dependencies exactly ONCE (DISTINCT)",
+      "FAIL   @armyofagents/server  src/__tests__/blocked-task-scan.integration.test.ts > A-M14 \u2014 blockedTaskScan honors dependency completion + dedups > does not count an in-progress task whose deps are ALL terminal (mix of done + cancelled)"
+    ]
+  },
+  {
+    "log": "final-shard-4.log",
+    "counts": {
+      "passed": 6029,
+      "skipped": 5
+    },
+    "errors": [],
+    "skippedFiles": [
+      "\u2713  @armyofagents/sandbox-e2b-provider  src/__tests__/keyed-w10b-egress-enforcement-probe.test.ts (12 tests | 1 skipped)",
+      "\u276f  @armyofagents/db  src/__tests__/backup-lib-non-system-schemas.test.ts (2 tests | 2 skipped)",
+      "\u2193  @armyofagents/server  src/__tests__/execution-target-docker.integration.test.ts (1 test | 1 skipped)",
+      "\u2713  @armyofagents/ui  src/hooks/__tests__/useUnsavedChanges.test.tsx (10 tests | 1 skipped)"
+    ],
+    "failures": [
+      "FAIL   @armyofagents/db  src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas"
+    ]
+  },
+  {
+    "log": "git-callers.log",
+    "counts": {
+      "passed": 2,
+      "skipped": 152
+    },
+    "errors": [],
+    "skippedFiles": [
+      "\u2713  @armyofagents/server  src/__tests__/mcp-connector-install-adversarial.test.ts (154 tests | 152 skipped)"
+    ],
+    "failures": []
+  },
+  {
+    "log": "opener-green.log",
+    "counts": {
+      "passed": 14
+    },
+    "errors": [],
+    "skippedFiles": [],
+    "failures": []
+  },
+  {
+    "log": "opener-red.log",
+    "counts": {
+      "failed": 3,
+      "passed": 11
+    },
+    "errors": [],
+    "skippedFiles": [],
+    "failures": [
+      "FAIL   @armyofagents/server  src/__tests__/filesystem-routes.test.ts > filesystem routes \u2014 instance admin gate > reports asynchronous opener launch failure",
+      "FAIL   @armyofagents/server  src/__tests__/filesystem-routes.test.ts > filesystem routes \u2014 instance admin gate > reports a synchronous opener launch failure",
+      "FAIL   @armyofagents/server  src/__tests__/filesystem-routes.test.ts > filesystem routes \u2014 instance admin gate > keeps an error handler after successful launch"
+    ]
+  }
+]

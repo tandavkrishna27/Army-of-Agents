@@ -1,0 +1,13 @@
+{
+  "documents": 164,
+  "slice_plans": 31,
+  "coding_plans": 31,
+  "increments_each": 69,
+  "uat_scripts": 20,
+  "uat_slices": 31,
+  "source_entries": 82,
+  "base_sources": 70,
+  "bundled_sources": 12,
+  "principal_output_entries": 99,
+  "errors": []
+}

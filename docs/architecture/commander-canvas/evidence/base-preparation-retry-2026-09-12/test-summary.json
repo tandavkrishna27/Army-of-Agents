@@ -1,0 +1,128 @@
+[
+  {
+    "log": "base-shard-1.log",
+    "sha": "183e46a9c65fc3105c7e3d125629276814df7dbb",
+    "exitCode": 1,
+    "elapsedSeconds": 252.452,
+    "testFilesSummary": "Test Files  1 failed | 646 passed | 3 skipped (650)",
+    "testsSummary": "Tests  1 failed | 6297 passed | 12 skipped (6310)",
+    "testCounts": {
+      "failed": 1,
+      "passed": 6297,
+      "skipped": 12
+    },
+    "errorSummary": null,
+    "failures": [
+      "FAIL   @armyofagents/server  src/__tests__/outbound-url-guard.test.ts > executePinnedRequest > validateAndResolveFetchUrl strips embedded credentials from parsedUrl"
+    ]
+  },
+  {
+    "log": "base-shard-2.log",
+    "sha": "183e46a9c65fc3105c7e3d125629276814df7dbb",
+    "exitCode": 0,
+    "elapsedSeconds": 154.066,
+    "testFilesSummary": "Test Files  648 passed | 2 skipped (650)",
+    "testsSummary": "Tests  6137 passed | 33 skipped (6170)",
+    "testCounts": {
+      "passed": 6137,
+      "skipped": 33
+    },
+    "errorSummary": null,
+    "failures": []
+  },
+  {
+    "log": "base-shard-3.log",
+    "sha": "183e46a9c65fc3105c7e3d125629276814df7dbb",
+    "exitCode": 0,
+    "elapsedSeconds": 92.354,
+    "testFilesSummary": "Test Files  646 passed | 4 skipped (650)",
+    "testsSummary": "Tests  5762 passed | 28 skipped (5790)",
+    "testCounts": {
+      "passed": 5762,
+      "skipped": 28
+    },
+    "errorSummary": null,
+    "failures": []
+  },
+  {
+    "log": "base-shard-4.log",
+    "sha": "183e46a9c65fc3105c7e3d125629276814df7dbb",
+    "exitCode": 1,
+    "elapsedSeconds": 103.883,
+    "testFilesSummary": "Test Files  1 failed | 648 passed | 1 skipped (650)",
+    "testsSummary": "Tests  2 failed | 6033 passed | 3 skipped (6038)",
+    "testCounts": {
+      "failed": 2,
+      "passed": 6033,
+      "skipped": 3
+    },
+    "errorSummary": "Errors  1 error",
+    "failures": [
+      "FAIL   @armyofagents/server  src/__tests__/mcp-connector-install-adversarial.test.ts > [ESC-7] buildConnectorProcessEnv is documented as a control but has no production caller > [ESC-7] the scrub module now has a production caller (was dead code before FU-23)",
+      "FAIL   @armyofagents/server  src/__tests__/mcp-connector-install-adversarial.test.ts > [ESC-7] buildConnectorProcessEnv is documented as a control but has no production caller > [ESC-7] DESIRED: at least one production module routes connector spawns through it"
+    ]
+  },
+  {
+    "log": "candidate-shard-1.log",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "exitCode": 1,
+    "elapsedSeconds": 251.66,
+    "testFilesSummary": "Test Files  1 failed | 647 passed | 3 skipped (651)",
+    "testsSummary": "Tests  1 failed | 6315 passed | 12 skipped (6328)",
+    "testCounts": {
+      "failed": 1,
+      "passed": 6315,
+      "skipped": 12
+    },
+    "errorSummary": null,
+    "failures": [
+      "FAIL   @armyofagents/server  src/__tests__/outbound-url-guard.test.ts > executePinnedRequest > validateAndResolveFetchUrl strips embedded credentials from parsedUrl"
+    ]
+  },
+  {
+    "log": "candidate-shard-2.log",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "exitCode": 0,
+    "elapsedSeconds": 160.752,
+    "testFilesSummary": "Test Files  649 passed | 2 skipped (651)",
+    "testsSummary": "Tests  6131 passed | 33 skipped (6164)",
+    "testCounts": {
+      "passed": 6131,
+      "skipped": 33
+    },
+    "errorSummary": null,
+    "failures": []
+  },
+  {
+    "log": "candidate-shard-3.log",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "exitCode": 0,
+    "elapsedSeconds": 94.339,
+    "testFilesSummary": "Test Files  647 passed | 4 skipped (651)",
+    "testsSummary": "Tests  5768 passed | 28 skipped (5796)",
+    "testCounts": {
+      "passed": 5768,
+      "skipped": 28
+    },
+    "errorSummary": null,
+    "failures": []
+  },
+  {
+    "log": "candidate-shard-4.log",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "exitCode": 1,
+    "elapsedSeconds": 103.381,
+    "testFilesSummary": "Test Files  1 failed | 646 passed | 1 skipped (648)",
+    "testsSummary": "Tests  2 failed | 6024 passed | 3 skipped (6029)",
+    "testCounts": {
+      "failed": 2,
+      "passed": 6024,
+      "skipped": 3
+    },
+    "errorSummary": "Errors  1 error",
+    "failures": [
+      "FAIL   @armyofagents/server  src/__tests__/mcp-connector-install-adversarial.test.ts > [ESC-7] buildConnectorProcessEnv is documented as a control but has no production caller > [ESC-7] the scrub module now has a production caller (was dead code before FU-23)",
+      "FAIL   @armyofagents/server  src/__tests__/mcp-connector-install-adversarial.test.ts > [ESC-7] buildConnectorProcessEnv is documented as a control but has no production caller > [ESC-7] DESIRED: at least one production module routes connector spawns through it"
+    ]
+  }
+]

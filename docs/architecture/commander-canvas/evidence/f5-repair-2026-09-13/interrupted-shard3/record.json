@@ -1,0 +1,8 @@
+{
+  "reason": "Container stopped before shard3 result; resumed on user continue",
+  "finishedAt": "2026-09-12T21:14:42.923287867Z",
+  "containerExitCode": 255,
+  "oomKilled": false,
+  "result": "incomplete; not counted",
+  "budgetReset": false
+}

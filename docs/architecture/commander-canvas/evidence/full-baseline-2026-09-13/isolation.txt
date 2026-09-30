@@ -1,0 +1,1 @@
+node@sha256:b977d0f785d96029d8d4c0790b6bf1c2a4c72e0f26319808e7ba2e9d966a1ac3 1000:1000 [{"Type":"volume","Name":"universe-preparation-e9637db9","Source":"/var/lib/docker/volumes/universe-preparation-e9637db9/_data","Destination":"/workspace","Driver":"local","Mode":"z","RW":true,"Propagation":""}] {}

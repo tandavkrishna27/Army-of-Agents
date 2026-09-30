@@ -1,0 +1,21 @@
+{
+  "commit": "4aebfa0f4aaf011cfd85347246c18d3cbde305ba",
+  "parent": "b5cc42643223c433a8263564c7142761472a13d9",
+  "tree": "5beea4c124c0e068e66a952ab65c84fc86cb9faa",
+  "tested_files": {
+    "server/src/__tests__/helpers/blocked-task-fixture.ts": {
+      "type": "file",
+      "value": "973946d93acef7f934a624970b03cdcb752be173189edfaa42d368519d3cbb77"
+    },
+    "server/src/__tests__/blocked-task-scan.integration.test.ts": {
+      "type": "file",
+      "value": "1e5e5a67575d604e1c9309e263da2fd4b83e9c114075ac237675f85d8d7a0961"
+    },
+    "server/src/__tests__/blocked-task-fixture.test.ts": {
+      "type": "file",
+      "value": "8da308557592071b3e841a84b7c21d86e69bb91e447be0a25730e9f9b7fbbf6c"
+    }
+  },
+  "all_tested_bytes_match_committed_blobs": true,
+  "source_pushed": false
+}

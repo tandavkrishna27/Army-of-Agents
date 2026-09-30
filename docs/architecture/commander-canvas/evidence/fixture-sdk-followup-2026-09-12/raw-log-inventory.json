@@ -1,0 +1,17 @@
+[
+  {
+    "file": "sdk-build.log",
+    "sha256": "32fa7c961d1382ba362e584c438bb992314d094548988dbf0316e46c0b09d781",
+    "bytes": 966
+  },
+  {
+    "file": "sdk-exports.log",
+    "sha256": "5f289c4f1b9ed85f903940f9344e22b1372957bdb92bd2683404693f5f340def",
+    "bytes": 2019
+  },
+  {
+    "file": "shard-4-sdk.log",
+    "sha256": "63903ccfaf985ce6123e82d68bb861e3fbb153977ca3c7c19af62502b1ad28b7",
+    "bytes": 1014633
+  }
+]

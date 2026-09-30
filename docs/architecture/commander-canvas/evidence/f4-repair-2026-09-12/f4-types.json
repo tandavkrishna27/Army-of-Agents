@@ -1,0 +1,1 @@
+{"extends": "/workspace/f4-repair/server/tsconfig.json", "compilerOptions": {"noEmit": true}, "include": ["/workspace/f4-repair/server/src/__tests__/helpers/blocked-task-fixture.ts", "/workspace/f4-repair/server/src/__tests__/blocked-task-scan.integration.test.ts", "/workspace/f4-repair/server/src/__tests__/blocked-task-fixture.test.ts"], "exclude": []}

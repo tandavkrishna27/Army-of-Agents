@@ -1,0 +1,485 @@
+{
+  "source": "4aebfa0f4aaf011cfd85347246c18d3cbde305ba",
+  "commands": 13,
+  "allCommandsPassed": false,
+  "testCounts": {
+    "passed": 24258,
+    "skipped": 78
+  },
+  "fileCounts": {
+    "passed": 2591,
+    "skipped": 10,
+    "failed": 1
+  },
+  "crossShardFiles": [],
+  "nonPassingTests": [
+    {
+      "shard": 1,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-dat-009-artifact-export.test.ts",
+      "name": "DAT-009 \u2014 artifact digest + export, executed against a REAL E2B sandbox digests a file the SANDBOX produced, and exports its bytes byte-identically",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-dat-009-artifact-export.test.ts",
+      "name": "DAT-009 \u2014 artifact digest + export, executed against a REAL E2B sandbox \u2605 REFUSES to export a file the sandbox changed after the grant was minted",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-dat-009-artifact-export.test.ts",
+      "name": "DAT-009 \u2014 artifact digest + export, executed against a REAL E2B sandbox \u2605 a MISSING path in a real sandbox throws the domain not-found, never a fabricated digest",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-dat-009-artifact-export.test.ts",
+      "name": "DAT-009 \u2014 artifact digest + export, executed against a REAL E2B sandbox \u2605 REFUSES a file that outgrew its grant, and uploads nothing",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "packages/adapters/claude-local/src/server/__tests__/ambient-config.test.ts",
+      "name": "hasOverlayConfiguredClaudeAuth case-folds on Windows, where Anthropic_Api_Key IS ANTHROPIC_API_KEY",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "packages/adapters/claude-local/src/server/__tests__/ambient-config.test.ts",
+      "name": "hasOverlayConfiguredClaudeAuth case-folds the disabled-switch check too",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "server/src/__tests__/commander-skill-triggering.acceptance.test.ts",
+      "name": "Commander skill-triggering acceptance (\u00a717 hard bar) fires a use_skill tool_call for skill:aoa/spec on a naive prompt that never names the skill",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "server/src/__tests__/thread-v2-real-e2e.integration.test.ts",
+      "name": "thread v2 real-agent E2E (advisory) Adjutant posts a real agent entry after runControllerSweep claims the pending run",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "server/src/__tests__/thread-v2-real-e2e.integration.test.ts",
+      "name": "T5.2 work-as-tasks: converse\u2192propose cycle (advisory) Adjutant posts a scope_proposal card (proposalStatus='pending') after propose_crew_work",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "server/src/services/internal-agent/__tests__/crew-post-e2e.live.test.ts",
+      "name": "cross-provider E2E \u2014 real crew agent drives the MCP bridge codex_local: CLI not installed (loud skip)",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "server/src/services/internal-agent/__tests__/crew-post-e2e.live.test.ts",
+      "name": "cross-provider E2E \u2014 real crew agent drives the MCP bridge opencode_local: CLI not installed (loud skip)",
+      "status": "skipped"
+    },
+    {
+      "shard": 1,
+      "file": "server/src/services/internal-agent/__tests__/crew-post-e2e.live.test.ts",
+      "name": "cross-provider E2E \u2014 real crew agent drives the MCP bridge gemini_local: CLI not installed (loud skip)",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/browser-runtime/src/__tests__/browser-containment.browser.test.ts",
+      "name": "BRW-002 (a) \u2014 a real browser opens no reachable endpoint launches with Chromium's OS sandbox ENABLED",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/browser-runtime/src/__tests__/browser-containment.browser.test.ts",
+      "name": "BRW-002 (a) \u2014 a real browser opens no reachable endpoint refuses to launch when a debugging port is requested",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/browser-runtime/src/__tests__/browser-containment.browser.test.ts",
+      "name": "BRW-002 (a) \u2014 measured: the browser adds no listening socket opens no TCP port that was not already there",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/browser-runtime/src/__tests__/browser-containment.browser.test.ts",
+      "name": "BRW-002 (a) \u2014 measured: the browser adds no listening socket would FAIL if the browser did open a port (negative control)",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/browser-runtime/src/__tests__/browser-containment.browser.test.ts",
+      "name": "BRW-002 (b) \u2014 a real download stays in the job root persists a download under the root and it SURVIVES context close",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/browser-runtime/src/__tests__/browser-containment.browser.test.ts",
+      "name": "BRW-002 (b) \u2014 a real download stays in the job root a traversal filename cannot escape the root",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/browser-runtime/src/__tests__/browser-containment.browser.test.ts",
+      "name": "BRW-002 (b) \u2014 a real download stays in the job root leaves nothing behind in the staging directory after close",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/browser-runtime/src/__tests__/browser-containment.browser.test.ts",
+      "name": "BRW-002 \u2014 the deterministic journey navigates, downloads, and handles a popup",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/browser-runtime/src/__tests__/browser-containment.browser.test.ts",
+      "name": "BRW-002 \u2014 the deterministic journey reports a failed navigation instead of pretending to succeed",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-001/D4 \u2014 real E2B (keyed) \u2014 happy path + adapter-enforced isolation create \u2192 execute \u2192 inspect(redacted) \u2192 destroy \u2192 reconcile leaves zero",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-001/D4 \u2014 real E2B (keyed) \u2014 happy path + adapter-enforced isolation \u00a72.1 effect-authority withdrawal is terminal; cleanup authority stays usable",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-001/D4 \u2014 real E2B (keyed) \u2014 happy path + adapter-enforced isolation \u00a72.3 an absent cleanup target collapses to ResourceNotAvailableError (no existence oracle)",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-001/D4 \u2014 real E2B (keyed) \u2014 happy path + adapter-enforced isolation \u00a72.2 the cleanup facet denies every effect op",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-002/D6 \u2014 real E2B (keyed) \u2014 a fake CLI modifies a KNOWN file stage a file \u2192 run a real shell command that mutates it \u2192 read the mutation back",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-006/D2 \u2014 real E2B (keyed) \u2014 artifact commit / patch integrity stages a base, produces a real patch, and its declared result hash reproduces",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-001/D4 \u2014 real E2B (keyed) \u2014 real TTL enforcement a short-TTL sandbox actually expires (never hangs)",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-003/D4 \u2014 real E2B (keyed) \u2014 streaming, cancel, forced-timeout, lost-ACK success: a real command streams stdout/stderr chunks and exits 0",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-003/D4 \u2014 real E2B (keyed) \u2014 streaming, cancel, forced-timeout, lost-ACK cancel: terminating a sandbox mid-run stops it (isRunning \u2192 false), idempotently",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-003/D4 \u2014 real E2B (keyed) \u2014 streaming, cancel, forced-timeout, lost-ACK forced-timeout: a long command hits its positive budget and returns timedOut (never hangs)",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-003/D4 \u2014 real E2B (keyed) \u2014 streaming, cancel, forced-timeout, lost-ACK lost-ACK: a re-delivered create with the same idempotency key returns the SAME sandbox",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-001/D4 \u2014 managed-secret rehearsal (DEP-006/CM-012) old-key denial after cutoff: a revoked/old credential cannot create or execute",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-001/D4 \u2014 managed-secret rehearsal (DEP-006/CM-012) cleanup survives rotation: the CURRENT key still reconciles after a rotation cutover",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-001/D4 \u2014 managed-secret rehearsal (DEP-006/CM-012) tenant-probe-fails: the provider-control credential never crosses the neutral seam",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-001/D4 \u2014 managed-secret rehearsal (DEP-006/CM-012) kill-switch-stops-create/execute: disabling the management authority halts new work",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-004/D4 \u2014 real E2B (keyed) \u2014 cleanup reconciliation of a real leaked/tagged resource reconciles a genuinely leaked tagged resource and converges to a real zero-resource",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-004/D4 \u2014 real E2B (keyed) \u2014 cleanup reconciliation of a real leaked/tagged resource inspect-oracle guard: an absent cleanup target collapses to ResourceNotAvailableError (closes CLI-001-result.md TODO(CLI-004))",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-004/D4 \u2014 real E2B (keyed) \u2014 cleanup reconciliation of a real leaked/tagged resource lost-response replay: a re-delivered reconcile of an already-reclaimed resource stays a converged success",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-real-e2b.test.ts",
+      "name": "CLI-004/D4 \u2014 real E2B (keyed) \u2014 cleanup reconciliation of a real leaked/tagged resource cleanup-survives-rotation: the CURRENT key still reconciles a real leaked resource after a rotation cutover",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-w7u1-agent-output-probe.test.ts",
+      "name": "W7U1 \u2014 the output probe pack, against REAL E2B measures whether a real agent under the production argv can write a file, and reports three-state verdicts",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/provider-wire/src/__tests__/svc-008a-t8-process-conformance.test.ts",
+      "name": "T8 clause 10 \u2014 the keyed real-E2B arm against a real E2B account: an unreadable state is not a stop, and a real stop is",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "packages/adapters/codex-local/src/server/__tests__/appserver-spike.test.ts",
+      "name": "codex app-server LIVE approval loop (AOA_CODEX_APPSERVER_LIVE=1) delivers a blocking command approval (decline) then a file-change approval (accept)",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "server/src/__tests__/provider-login-routes.test.ts",
+      "name": "login lifecycle is provider-scoped reports NOT FOUND when read through a DIFFERENT provider's path",
+      "status": "skipped"
+    },
+    {
+      "shard": 2,
+      "file": "server/src/__tests__/provider-login-routes.test.ts",
+      "name": "login lifecycle is provider-scoped refuses to cancel (or kill) through a different provider's path (deferred: company-scoped login service)",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/browser-runtime/src/__tests__/browser-teardown.browser.test.ts",
+      "name": "BRW-002 (c) \u2014 a GRACEFUL cancellation reaps the browser closes the browser when the runner receives SIGTERM",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/browser-runtime/src/__tests__/browser-teardown.browser.test.ts",
+      "name": "BRW-002 (c) \u2014 on LINUX, the target platform, SIGKILL reaps the browser leaves no Chromium alive after an uncatchable kill",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/browser-runtime/src/__tests__/browser-teardown.browser.test.ts",
+      "name": "BRW-002 (c) \u2014 on WINDOWS, SIGKILL ORPHANS the browser (developer platform only) MEASURES that Chromium outlives the runner",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/browser-runtime/src/__tests__/browser-teardown.browser.test.ts",
+      "name": "BRW-002 (c) \u2014 the runner reports failure rather than exiting silently emits a typed failure event and a non-zero exit for an unreadable config",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/browser-runtime/src/__tests__/browser-teardown.browser.test.ts",
+      "name": "BRW-002 (c) \u2014 the runner reports failure rather than exiting silently refuses an unsafe launch through the REAL entrypoint, not just the library",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-cli-008-unit-d-invocation.test.ts",
+      "name": "CLI-008 Unit D \u2014 the invocation shape, executed in a REAL E2B sandbox claude shape: the sh -c script survives shellJoin, the prompt arrives intact on stdin, and $2 is the staged bundle path",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-cli-008-unit-d-invocation.test.ts",
+      "name": "CLI-008 Unit D \u2014 the invocation shape, executed in a REAL E2B sandbox codex shape: the lines never fuse \u2014 but the separator is one newline or two DEPENDING on the bundle's trailing newline (E7-F013)",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-cli-008-unit-d-invocation.test.ts",
+      "name": "CLI-008 Unit D \u2014 the invocation shape, executed in a REAL E2B sandbox refuses with exit 78 when a worker ignored the staging pointer and wrote nothing",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-cli-008-unit-d-invocation.test.ts",
+      "name": "CLI-008 Unit D \u2014 the invocation shape, executed in a REAL E2B sandbox E7-F014 \u2014 a command that RUNS and exits non-zero comes back as a RESULT carrying the real exit code",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-cli-008-unit-d-invocation.test.ts",
+      "name": "CLI-008 Unit D \u2014 the invocation shape, executed in a REAL E2B sandbox E7-F014 \u2014 a zero exit is untouched, and a genuine sandbox FAULT still THROWS rather than being reported as an exit code",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/aoa-realoutput.integration.test.ts",
+      "name": "AoA real-output acceptance (\u00a717 hard bar) extraction agent produces real discussion_extracted_items from a seeded entry",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/commander-tools-md.test.ts",
+      "name": "TOOLS.md contract (deferred) contains browser routing instruction (Bash for HTTP, task for QA)",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/job-leasing-load.integration.test.ts",
+      "name": "E3-PERF-01 production-capacity static-certificate lane records the real bounded claim plan and samples for hot_worker_fully_certified_no_work",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/job-leasing-load.integration.test.ts",
+      "name": "E3-PERF-01 production-capacity static-certificate lane records the real bounded claim plan and samples for hot_worker_head_saturated_999744_prefix",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/job-leasing-load.integration.test.ts",
+      "name": "E3-PERF-01 production-capacity static-certificate lane records the real bounded claim plan and samples for ten_thousand_workers_by_one_hundred",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/job-leasing-load.integration.test.ts",
+      "name": "E3-PERF-01 production-capacity static-certificate lane records the real bounded claim plan and samples for ninety_percent_stale_version_or_context",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/job-leasing-load.integration.test.ts",
+      "name": "E3-PERF-01 production-capacity static-certificate lane attests the complete current certificate tuple against the seeded candidates before the production claim",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/job-leasing-load.integration.test.ts",
+      "name": "E3-PERF-01 production-capacity static-certificate lane records 20 exact 256-row bulk-certificate upserts without changing authority rows",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/job-leasing-load.integration.test.ts",
+      "name": "E3-PERF-01 production-capacity static-certificate lane records 20 bounded 256-row sparse cleanup samples",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/job-leasing-load.integration.test.ts",
+      "name": "E3-PERF-01 production-capacity static-certificate lane records 20 bounded 256-row tail cleanup samples",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/job-leasing-load.integration.test.ts",
+      "name": "E3-PERF-01 production-capacity static-certificate lane keeps exact corpus size and combined table plus index bytes inside the blocking bound",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/provider-switching.integration.test.ts",
+      "name": "provider-switching engine \u2014 real DB: switch+persist, resolution, backfill 4: managed-home vs shared-home authMode: per-agent env.OPENAI_API_KEY flips authMode to apikey \u2014 SKIPPED",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/integration/inbound-routing-e2e.test.ts",
+      "name": "inbound routing E2E \u2014 live credentialed lane (gated, advisory) off-dial: enqueue \u2192 route \u2192 action='human', item stays in Inbox pending manual triage",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/integration/inbound-routing-e2e.test.ts",
+      "name": "inbound routing E2E \u2014 live credentialed lane (gated, advisory) auto_attach: confident match \u2192 action='auto_attach', content posted to thread",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/integration/inbound-routing-e2e.test.ts",
+      "name": "inbound routing E2E \u2014 live credentialed lane (gated, advisory) ambiguous: near-tie candidates \u2192 action='escalate_navigator', wakeup inserted",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "server/src/__tests__/integration/inbound-routing-e2e.test.ts",
+      "name": "inbound routing E2E \u2014 live credentialed lane (gated, advisory) full_auto + explicit_no_match: no threads \u2192 action='auto_create', new thread created",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "ui/src/__tests__/InboxHub.test.tsx",
+      "name": "InboxHub page opens resolved and archived history items in the viewer",
+      "status": "skipped"
+    },
+    {
+      "shard": 3,
+      "file": "ui/src/__tests__/InboxHub.test.tsx",
+      "name": "InboxHub page loads an audit timeline for the selected history item",
+      "status": "skipped"
+    },
+    {
+      "shard": 4,
+      "file": "packages/sandbox-e2b-provider/src/__tests__/keyed-w10b-egress-enforcement-probe.test.ts",
+      "name": "W10B \u2014 the DE-08 egress-enforcement probe, against REAL E2B measures whether the provider can constrain sandbox egress, and reports five three-state verdicts",
+      "status": "skipped"
+    },
+    {
+      "shard": 4,
+      "file": "packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts",
+      "name": "backup-lib non-system schemas backs up and restores the drizzle migration journal",
+      "status": "skipped"
+    },
+    {
+      "shard": 4,
+      "file": "packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts",
+      "name": "backup-lib non-system schemas restores legacy public-only backups without migration history",
+      "status": "skipped"
+    },
+    {
+      "shard": 4,
+      "file": "server/src/__tests__/execution-target-docker.integration.test.ts",
+      "name": "process adapter sandbox-docker execution target runs a process adapter command inside sandbox-docker",
+      "status": "skipped"
+    },
+    {
+      "shard": 4,
+      "file": "ui/src/hooks/__tests__/useUnsavedChanges.test.tsx",
+      "name": "useUnsavedChanges + UnsavedChangesProvider blocks the browser Back button (proven by the /browse spike + e2e)",
+      "status": "skipped"
+    }
+  ]
+}

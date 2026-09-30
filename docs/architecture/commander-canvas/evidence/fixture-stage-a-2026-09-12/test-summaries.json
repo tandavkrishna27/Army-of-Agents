@@ -1,0 +1,14 @@
+{
+  "isolated": [
+    " \u2713  @armyofagents/db  src/__tests__/backup-lib-non-system-schemas.test.ts (2 tests) 3019ms",
+    " Test Files  1 passed (1)",
+    "      Tests  2 passed (2)",
+    "   Duration  3.56s (transform 253ms, setup 0ms, collect 423ms, tests 3.02s, environment 0ms, prepare 46ms)"
+  ],
+  "shard-4": [
+    " \u2713  @armyofagents/db  src/__tests__/backup-lib-non-system-schemas.test.ts (2 tests) 7866ms",
+    " Test Files  7 failed | 640 passed | 1 skipped (648)",
+    "      Tests  5968 passed | 3 skipped (5971)",
+    "   Duration  100.98s (transform 23.91s, setup 4.97s, collect 233.41s, tests 790.56s, environment 61.52s, prepare 27.49s)"
+  ]
+}

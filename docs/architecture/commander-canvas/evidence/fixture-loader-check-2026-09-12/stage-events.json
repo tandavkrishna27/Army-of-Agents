@@ -1,0 +1,210 @@
+[
+  {
+    "fixture": "backup-non-system",
+    "stage": "data-dir",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:50.524Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "data-dir",
+    "event": "end",
+    "elapsedMs": 1,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:50.525Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "backup-dir",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:50.525Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "backup-dir",
+    "event": "end",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:50.525Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "port",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:50.525Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "port",
+    "event": "end",
+    "elapsedMs": 3,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:50.528Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "initialise",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:50.529Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "initialise",
+    "event": "end",
+    "elapsedMs": 6038,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.567Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "start",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.567Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "start",
+    "event": "end",
+    "elapsedMs": 57,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.624Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "create-database",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.624Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "create-database",
+    "event": "end",
+    "elapsedMs": 103,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.727Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "schema",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.728Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "schema",
+    "event": "end",
+    "elapsedMs": 13,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.741Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "journal-table",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.741Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "journal-table",
+    "event": "end",
+    "elapsedMs": 5,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.746Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "journal-row",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.746Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "journal-row",
+    "event": "end",
+    "elapsedMs": 2,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.749Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "users-table",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.749Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "users-table",
+    "event": "end",
+    "elapsedMs": 3,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.752Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "users-row",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.752Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "users-row",
+    "event": "end",
+    "elapsedMs": 2,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.754Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "seed-client-end",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.754Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "seed-client-end",
+    "event": "end",
+    "elapsedMs": 2,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.757Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "stop",
+    "event": "start",
+    "elapsedMs": 0,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:56.902Z"
+  },
+  {
+    "fixture": "backup-non-system",
+    "stage": "stop",
+    "event": "end",
+    "elapsedMs": 2749,
+    "pid": 3304,
+    "utc": "2026-09-12T17:23:59.651Z"
+  }
+]

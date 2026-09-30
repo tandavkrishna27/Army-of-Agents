@@ -1,0 +1,19 @@
+{"phase":"checks","kind":"candidate","sha":"9200a66c42633019349de937a8b97979acac0f7a","cwd":"/workspace/candidate","command":"corepack pnpm -r typecheck","startedAt":"2026-09-12T14:12:10.791Z","logPath":"/workspace/logs/candidate-typecheck.log"}
+Scope: 34 of 35 workspace projects
+packages/browser-runtime typecheck$ tsc --noEmit
+packages/shared typecheck$ tsc --noEmit
+packages/worker-protocol typecheck$ tsc --noEmit
+packages/browser-runtime typecheck: Done
+packages/worker-protocol typecheck: Done
+packages/shared typecheck: Done
+packages/adapter-utils typecheck$ tsc --noEmit
+packages/db typecheck$ tsc --noEmit
+packages/plugins/sdk typecheck$ pnpm --filter @armyofagents/shared build && tsc --noEmit
+packages/sandbox-fake-provider typecheck$ tsc --noEmit
+packages/plugins/sdk typecheck: sh: 1: pnpm: not found
+/workspace/candidate/packages/plugins/sdk:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @armyofagents/plugin-sdk@1.0.0 typecheck: `pnpm --filter @armyofagents/shared build && tsc --noEmit`
+spawn ENOENT
+packages/worker-daemon typecheck$ tsc --noEmit
+
+RESULT {"phase":"checks","kind":"candidate","sha":"9200a66c42633019349de937a8b97979acac0f7a","cwd":"/workspace/candidate","command":"corepack pnpm -r typecheck","startedAt":"2026-09-12T14:12:10.791Z","logPath":"/workspace/logs/candidate-typecheck.log","code":1,"signal":null,"timeout":false,"elapsedSeconds":3.104}

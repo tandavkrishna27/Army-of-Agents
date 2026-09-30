@@ -1,0 +1,16 @@
+[
+  {
+    "label": "exports-tsx",
+    "entries": 7664,
+    "beforeSha256": "69b4a24b75e3bc4b161cc96c1fc62b668161ed6bb7c6f68ee73b5ab7c1c67bc9",
+    "afterSha256": "69b4a24b75e3bc4b161cc96c1fc62b668161ed6bb7c6f68ee73b5ab7c1c67bc9",
+    "changed": []
+  },
+  {
+    "label": "shard-4-gated",
+    "entries": 7664,
+    "beforeSha256": "69b4a24b75e3bc4b161cc96c1fc62b668161ed6bb7c6f68ee73b5ab7c1c67bc9",
+    "afterSha256": "69b4a24b75e3bc4b161cc96c1fc62b668161ed6bb7c6f68ee73b5ab7c1c67bc9",
+    "changed": []
+  }
+]

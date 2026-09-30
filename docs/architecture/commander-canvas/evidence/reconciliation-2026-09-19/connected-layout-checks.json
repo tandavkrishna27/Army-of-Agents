@@ -1,0 +1,94 @@
+{
+  "date": "2026-09-19",
+  "branch": "codex/universe-interface",
+  "head": "a996d507bb54fa9d4623ffd6ca9a9c95d321d550",
+  "state": "uncommitted isolated working tree; not whole-slice acceptance",
+  "checks": {
+    "typecheck": "passed pnpm -r typecheck",
+    "build": "passed pnpm build; final UI guard delta rebuilt separately",
+    "universe_ui": {
+      "passed": 207,
+      "files": 17
+    },
+    "linux_postgres": {
+      "passed": 13,
+      "fixture": "normal embedded PostgreSQL, actual migration runner, task-owned isolated Linux copy"
+    },
+    "browser": {
+      "passed": 59,
+      "final_persistence_rerun": 5,
+      "transport": "controlled fixture; production route acceptance remains open"
+    },
+    "repository_tests": {
+      "passed": 22933,
+      "failed": 2,
+      "skipped": 1731,
+      "passed_files": 2413,
+      "failed_files": 2,
+      "skipped_files": 217,
+      "runtime_seconds": 317.22,
+      "failures": [
+        "unchanged browser-runtime direct playwright-core/package.json resolution",
+        "unchanged debrief dynamic import 5160ms against 3000ms threshold"
+      ],
+      "note": "Final synchronous guard additionally verified by final Universe207 and persistence5 reruns."
+    }
+  },
+  "remaining_gates": [
+    "reconciled migration lineage and combined replatform application qualification/adoption",
+    "production authorized entry acceptance owned by route packages",
+    "formal product acceptance; checkpoint renderer consumers remain E5.1/E5.2"
+  ],
+  "upstream_observed": "75350f1f634aec9b679d715aeefeb45287aa36e7",
+  "adopted_new_base": false,
+  "source_sha256": {
+    "packages/db/src/migrations/0281_wooden_captain_marvel.sql": "99f03bb519ca7d5ef14a98e3e1eba80819b0b967a7fbfb91db3fbdfb368be65b",
+    "packages/db/src/migrations/0282_past_roland_deschain.sql": "c34ab434431ae852c18a4515b9b51b7f492e00d1138cd844605c1b93990f2690",
+    "packages/db/src/migrations/0283_stale_absorbing_man.sql": "b99389aebcf263ec3d1314aba801aa7fc0325222e858fd7a13339406fd925763",
+    "packages/db/src/migrations/0284_icy_the_call.sql": "9e89130e449306e07940cd522431cbdf35eb716461b945fb0cc034bf4319a08a",
+    "packages/db/src/migrations/meta/0283_snapshot.json": "e7e7ca97fd79a6dd67a9a6835dc35d5c4c08480e37547ac809fe9b4f4d072314",
+    "packages/db/src/migrations/meta/0284_snapshot.json": "1d0619d4feced9fdb77ebe52721626c1ecfe109a2662788e69d50f159cb1fe5d",
+    "packages/db/src/migrations/meta/_journal.json": "6848d30e0b230c925076d949d25ebab80a37d20a88287ae29d1036c708982f73",
+    "packages/db/src/schema/index.ts": "40974cb25988dd7908fd5c789b449581673ece73111d1a19d19e66676d65788f",
+    "packages/db/src/schema/universe_layouts.ts": "83863fb6dfea4263859039f511252cd0e88309fbef184c76a336a53de131875b",
+    "packages/shared/src/__tests__/universe-layout.test.ts": "3e3f43ddd6d4f5dcfa735b95cad09445300230419b3e2573dfe180f000c43b7f",
+    "packages/shared/src/index.ts": "210719c707839a19e71d158252357eb7086fc892fb8febc9b69543b84de11602",
+    "packages/shared/src/validators/index.ts": "5115fa7ac536c1f0eb6d7e31f6ba8653ce71c91ca1585fc6d1f7decb3f6f81b1",
+    "packages/shared/src/validators/universe-layout.ts": "55f382a78db3d9cafc7dd7232526c9d3ee55078b833bd01a04268bf181fa7931",
+    "server/src/__tests__/routes-universe-layout.test.ts": "d7b8a4137724c7269615475bf17335d79a0632d0093cce4779a9caa2a92d0286",
+    "server/src/__tests__/universe-layout-ownership.test.ts": "e41b594d67089e2d127101fa520a028c81ae928bdc92548bc368025cb8b388fb",
+    "server/src/__tests__/universe-layout-references.test.ts": "39a18d0d5bdd5610dda979d279df2b1783d608af96a53e8f5f0b8b3116b41e20",
+    "server/src/__tests__/universe-layout-service.test.ts": "b1eb44485d067d1b12921037aa8e427bf45c52bdaaac20ce2bb8bb5dadd2229d",
+    "server/src/__tests__/universe-layout.integration.test.ts": "6b412fcb02089736967490d0c3f8fce33eb223312a572ee633f178f004504dcf",
+    "server/src/routes/universe-drafts.ts": "90ad03083a3b8195203de44d5ef58563fabf4b86a7f5880b6a79615b770ace22",
+    "server/src/routes/universe-layout.ts": "3bb03732625c157a2a7071579e58207d58f20b1e50b4ef366514d90129e4ab7c",
+    "server/src/services/activity-log.ts": "1b49ffadec638d3fc75d478ed47c5405d3d0d8fb051c7ed084f9bc4c65cedb75",
+    "server/src/services/universe-layout-document.ts": "7566db89b71f629afb33e51fe8b47d9cd6b34309360acb243b8cc38448cb1f2f",
+    "server/src/services/universe-layout.ts": "7379a2494c440bd0f9259e71c3543bca61e6c95afae59462e302f7fc74b00454",
+    "tests/universe-canvas/persistence.spec.ts": "4b6dc4f2dc65e534f308431c54566d367fd6012028904b756df36d8c7a6ad8af",
+    "ui/src/api/client.ts": "d1f8d8c8c132c34d66d38ed5bf32d30a8463a447a140f653802bdbac91f92a63",
+    "ui/src/api/universe-draft.ts": "57a3b891a36c64a4e6a63f4c3443c853e1b7507609e4d34ba28605481921a0a5",
+    "ui/src/api/universe-layout.ts": "01edf3d2c2097dd6a292efeaa95dc378be1d2bb233d38a71fc13164784807514",
+    "ui/src/components/universe/PersistedUniverseWorkspace.tsx": "5f922b8a151377eb5ce042f77e59b22054efff79fbfe78ff7b2303747b763076",
+    "ui/src/components/universe/UniverseLayoutRecovery.tsx": "f9ab5294196bedbfc9d11dd1fca85194065d7c5c11175f87e9a07e9eb7341ee6",
+    "ui/src/components/universe/UniverseWorkspace.tsx": "af19fd88cf60e408a5bec819b08ccdb270dd05aec984da27f1dee3c25f26b50f",
+    "ui/src/components/universe/__tests__/PersistedUniverseWorkspace.test.tsx": "bc50bbcc762540d8128c0eb8fc35c7f4e6200eaf0d685faf8331402228d9866c",
+    "ui/src/components/universe/__tests__/UniverseWorkspace.test.tsx": "8644059dbd53ebfa23fe923b91cde259d9005a4ff7e9002ab355f7fc054c0017",
+    "ui/src/components/universe/layout-adapter.test.ts": "1d3cd9c01d1286b864ab4a2f3b719905af370949b724afb59b31d8b767fa5ec6",
+    "ui/src/components/universe/layout-adapter.ts": "5964252c3f8479ade1e30f723f6edc1981749207795323990828911602931985",
+    "ui/src/components/universe/layout-journal.test.ts": "21cef4631d5a218a3e47ede128b294f72d5b8cb9157d4220f89f489da613fe77",
+    "ui/src/components/universe/layout-journal.ts": "c52afede6557cf68de1175e9100d379ef3452946dcaab16fde394a73583d0f69",
+    "ui/src/components/universe/layout-rebase.test.ts": "1ad898c5b1ce75e37eae9a0fec2d38642601e960d1acb0e8194ab24429d5fd00",
+    "ui/src/components/universe/layout-rebase.ts": "41a1dff21c65f5c8f9a9c2328aaf9f15966c95150d50c9e2f5af1e80ce205249",
+    "ui/src/components/universe/universe-owner-isolation.test.tsx": "7a1c5efd1a633f2bf72850b6d9a8159a23bd828a8faaf521d9fdfde45b4f6579",
+    "ui/src/components/universe/universe-panels.css": "f9dc31849755295332b80097be37a5fa0df592e80f78a3dc23066371d59a2982",
+    "ui/src/components/universe/useUniverseDraft.test.tsx": "919ba3e4f97edfbed8f3f67238dd3aecf9da13b2423943854680c93794dcb1c3",
+    "ui/src/components/universe/useUniverseDraft.ts": "73fc7c181b715bdef0724931744fe5c3346c47d587683a4451433e0f0b39814c",
+    "ui/src/components/universe/useUniverseOwner.ts": "c98531e482844ad0f2028efcb8c929b19aa1c25ad90b5d563461ce975f7496df",
+    "ui/src/components/universe/useUniverseState.test.tsx": "3462db9faa87e1cad5c6e748a7dccc581d83eabbd12cfad2fd3ad7f0e01c0f7a",
+    "ui/src/components/universe/useUniverseState.ts": "89fc093fdb3c48155eef3ba1fd4ed7edfd296bed4b4ba17b1606d09034013427",
+    "ui/src/dev/UniversePersistenceHarness.tsx": "64767d1f54c85e42d90f88e4a63a9c6a94320c2e6c8e8c878ad5f95c31f97a6c",
+    "ui/src/lib/queryKeys.ts": "b42996f9d192657c45589405214abb27c2d08ce92a6b47354014e1b540c47713",
+    "ui/universe-persistence-harness.html": "031679dd41d6c441f47cd5ff02761d0412d6259a6ce4d3a9e04101b406a0fe26"
+  }
+}

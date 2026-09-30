@@ -1,0 +1,95 @@
+{"phase":"setup","kind":"base","sha":"183e46a9c65fc3105c7e3d125629276814df7dbb","cwd":"/workspace/base","command":"corepack pnpm install --frozen-lockfile","startedAt":"2026-09-12T14:10:56.547Z","logPath":"/workspace/logs/base-install.log"}
+Scope: all 35 workspace projects
+(node:51) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +1495
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 1495, reused 0, downloaded 52, added 54
+Progress: resolved 1495, reused 0, downloaded 102, added 107
+Progress: resolved 1495, reused 0, downloaded 203, added 207
+Progress: resolved 1495, reused 0, downloaded 228, added 233
+Progress: resolved 1495, reused 0, downloaded 258, added 263
+Progress: resolved 1495, reused 0, downloaded 287, added 292
+Progress: resolved 1495, reused 0, downloaded 343, added 348
+Progress: resolved 1495, reused 0, downloaded 375, added 380
+Progress: resolved 1495, reused 0, downloaded 423, added 428
+Progress: resolved 1495, reused 0, downloaded 469, added 474
+Progress: resolved 1495, reused 0, downloaded 521, added 526
+Progress: resolved 1495, reused 0, downloaded 600, added 605
+Progress: resolved 1495, reused 0, downloaded 682, added 687
+Progress: resolved 1495, reused 0, downloaded 709, added 714
+Progress: resolved 1495, reused 0, downloaded 779, added 784
+Progress: resolved 1495, reused 0, downloaded 807, added 812
+Progress: resolved 1495, reused 0, downloaded 833, added 838
+Progress: resolved 1495, reused 0, downloaded 863, added 868
+Progress: resolved 1495, reused 0, downloaded 888, added 893
+Progress: resolved 1495, reused 0, downloaded 951, added 956
+Progress: resolved 1495, reused 0, downloaded 1027, added 1032
+Progress: resolved 1495, reused 0, downloaded 1080, added 1085
+Progress: resolved 1495, reused 0, downloaded 1151, added 1156
+Progress: resolved 1495, reused 0, downloaded 1170, added 1175
+Progress: resolved 1495, reused 0, downloaded 1203, added 1208
+Progress: resolved 1495, reused 0, downloaded 1229, added 1233
+Progress: resolved 1495, reused 0, downloaded 1265, added 1270
+Progress: resolved 1495, reused 0, downloaded 1317, added 1321
+Progress: resolved 1495, reused 0, downloaded 1395, added 1400
+Progress: resolved 1495, reused 0, downloaded 1439, added 1444
+Progress: resolved 1495, reused 0, downloaded 1476, added 1481
+Progress: resolved 1495, reused 0, downloaded 1483, added 1488
+Progress: resolved 1495, reused 0, downloaded 1485, added 1490
+Progress: resolved 1495, reused 0, downloaded 1486, added 1491
+Progress: resolved 1495, reused 0, downloaded 1487, added 1492
+Progress: resolved 1495, reused 0, downloaded 1488, added 1492
+Progress: resolved 1495, reused 0, downloaded 1489, added 1494
+Progress: resolved 1495, reused 0, downloaded 1490, added 1494
+Progress: resolved 1495, reused 0, downloaded 1490, added 1495, done
+.../@embedded-postgres/linux-x64 postinstall$ node scripts/hydrate-symlinks.js
+.../esbuild@0.28.1/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+.../@embedded-postgres/linux-x64 postinstall: Done
+.../esbuild@0.28.1/node_modules/esbuild postinstall: Done
+.../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+.../es5-ext@0.10.64/node_modules/es5-ext postinstall$  node -e "try{require('./_postinstall')}catch(e){}" || exit 0
+.../es5-ext@0.10.64/node_modules/es5-ext postinstall: Done
+ WARN  Failed to create bin at /workspace/base/packages/adapter-manager/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/plugins/create-paperclip-plugin/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/plugins/examples/plugin-authoring-smoke-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/plugins/examples/plugin-hello-world-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/plugins/examples/plugin-file-browser-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/plugins/examples/plugin-kitchen-sink-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/provider-capability/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/sandbox-e2b-provider/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/worker-keystore/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/worker-networked-host/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/provider-wire/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/server/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/server/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/sdk/dist/dev-cli.js'
+
+devDependencies:
++ @changesets/cli 2.30.0
++ @playwright/test 1.59.1
++ cross-env 7.0.3
++ drizzle-orm 0.45.2
++ esbuild 0.28.1
++ tsx 4.22.4
++ typescript 5.9.3
++ vitest 3.2.6
+
+ WARN  Failed to create bin at /workspace/base/packages/plugins/examples/plugin-authoring-smoke-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/examples/plugin-authoring-smoke-example/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/plugins/create-paperclip-plugin/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/create-paperclip-plugin/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/plugins/examples/plugin-file-browser-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/examples/plugin-file-browser-example/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/plugins/examples/plugin-hello-world-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/examples/plugin-hello-world-example/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/plugins/examples/plugin-kitchen-sink-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/packages/plugins/examples/plugin-kitchen-sink-example/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/packages/provider-capability/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/provider-capability/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/sandbox-e2b-provider/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/sandbox-e2b-provider/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/worker-keystore/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/worker-keystore/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/provider-wire/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/provider-wire/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/adapter-manager/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/adapter-manager/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/packages/worker-networked-host/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/packages/worker-networked-host/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/base/server/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/base/server/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/base/server/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/base/server/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+Done in 44.8s
+
+RESULT {"phase":"setup","kind":"base","sha":"183e46a9c65fc3105c7e3d125629276814df7dbb","cwd":"/workspace/base","command":"corepack pnpm install --frozen-lockfile","startedAt":"2026-09-12T14:10:56.547Z","logPath":"/workspace/logs/base-install.log","code":0,"signal":null,"timeout":false,"elapsedSeconds":44.997}

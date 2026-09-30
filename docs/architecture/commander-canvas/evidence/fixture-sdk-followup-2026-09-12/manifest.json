@@ -1,0 +1,42 @@
+{
+  "aborted-shard-4.log.gz": {
+    "bytes": 34986,
+    "sha256": "3fb39a4fad3cc7edaaa6a9ddaf3377c67c84fd1e3715123d5cccba5ecb599976"
+  },
+  "command-ledger.json": {
+    "bytes": 1838,
+    "sha256": "776439a20f75c2fbade160a4a4d9ea13f3de70ebadaa9fd7137aaf886385df14"
+  },
+  "executed-runner.mjs": {
+    "bytes": 3565,
+    "sha256": "cb2bac3e76a6db7042dc67b32aba7b9a67e950ce2813cfc14e586e773f59e4db"
+  },
+  "raw-log-inventory.json": {
+    "bytes": 423,
+    "sha256": "927e96b6e99a0f21c9db99369bd792281bc536a1e175072e258288131bb8312d"
+  },
+  "sdk-build-before.json.gz": {
+    "bytes": 388735,
+    "sha256": "194e94a9f0c2cabb0d1459e193503602143425b1d177130180a574dff1fbfda5"
+  },
+  "sdk-build.log": {
+    "bytes": 966,
+    "sha256": "32fa7c961d1382ba362e584c438bb992314d094548988dbf0316e46c0b09d781"
+  },
+  "sdk-exports-after.json.gz": {
+    "bytes": 388735,
+    "sha256": "194e94a9f0c2cabb0d1459e193503602143425b1d177130180a574dff1fbfda5"
+  },
+  "sdk-exports.log": {
+    "bytes": 2019,
+    "sha256": "5f289c4f1b9ed85f903940f9344e22b1372957bdb92bd2683404693f5f340def"
+  },
+  "shard-4-sdk-before.json.gz": {
+    "bytes": 388735,
+    "sha256": "194e94a9f0c2cabb0d1459e193503602143425b1d177130180a574dff1fbfda5"
+  },
+  "source-integrity.json": {
+    "bytes": 503,
+    "sha256": "3b0cb44167446cb22f6438ef677b5fc631153ed31405b77c9fdce2fda9acc4cd"
+  }
+}

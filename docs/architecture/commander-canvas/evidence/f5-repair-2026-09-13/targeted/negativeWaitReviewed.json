@@ -1,0 +1,46 @@
+{
+  "label": "negativeWaitReviewed",
+  "sha": "4aebfa0f4aaf011cfd85347246c18d3cbde305ba",
+  "runnerHash": "c25452dfdb6a89639c9a529aec6c95807a94690b899451330be73db958e61147",
+  "command": [
+    "corepack",
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "packages/db/src/__tests__/backup-fixture.test.ts",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=/workspace/f5-repair-target-logs/negativeWaitReviewed-tests.json"
+  ],
+  "startedAt": "2026-09-12T21:00:36.947Z",
+  "beforeHashes": {
+    "packages/db/src/__tests__/backup-fixture.test.ts": {
+      "type": "file",
+      "value": "c17429299888609e1d89f7c392ca7adb79c1c14108c7dceeef509e915445901d"
+    },
+    "packages/db/src/__tests__/helpers/backup-fixture.ts": {
+      "type": "file",
+      "value": "b07f15c6d84bbbc923a5f4699489fbb8b89a9cac3ef1f6fb26d79776b7a2b96e"
+    },
+    "packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts": {
+      "type": "file",
+      "value": "f3952b659c64b0e04786a431e6254c8a579a764f1abef8ea26f18e3fdf31cd34"
+    }
+  },
+  "code": 1,
+  "signal": null,
+  "timeout": false,
+  "endedAt": "2026-09-12T21:00:37.899Z",
+  "changed": [],
+  "tests": {
+    "total": 16,
+    "passed": 15,
+    "failed": 1,
+    "pending": 0,
+    "success": false
+  },
+  "unhandled": false,
+  "expectedRed": true,
+  "accepted": true
+}

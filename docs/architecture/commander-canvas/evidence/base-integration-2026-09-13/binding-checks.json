@@ -1,0 +1,331 @@
+{
+  "historicalPlanningBase": "183e46a9c65fc3105c7e3d125629276814df7dbb",
+  "candidate": "bef01d9cc6947e25ec87df21e747eafdbe497527",
+  "runtimeAnchors": [
+    {
+      "path": "docs/replatform/epics/E10-desktop-migration-realtime/findings.md",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "3c204308cd0b8af7588697a453b614a641160587125d09bc9ae00826ab8dcdad",
+      "newSha256": "3c204308cd0b8af7588697a453b614a641160587125d09bc9ae00826ab8dcdad"
+    },
+    {
+      "path": "docs/replatform/epics/E8-browser-automation/findings.md",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "fd0629e1f53b0572f08be54c338a596845581aa25293fbae508c789f8f0aafb0",
+      "newSha256": "fd0629e1f53b0572f08be54c338a596845581aa25293fbae508c789f8f0aafb0"
+    },
+    {
+      "path": "package.json",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "983be4ef038db1a08baa9a4e18f3dee6c680bb9f09e5a05639233f35361678d8",
+      "newSha256": "983be4ef038db1a08baa9a4e18f3dee6c680bb9f09e5a05639233f35361678d8"
+    },
+    {
+      "path": "packages/browser-runtime/src/launch-guard.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "593a00e52eb95454f1416564ccc4fdba772491fd0cad01b78594309d3462922a",
+      "newSha256": "593a00e52eb95454f1416564ccc4fdba772491fd0cad01b78594309d3462922a"
+    },
+    {
+      "path": "packages/db/src/schema/artifacts.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "7b18325d23df50ea4afb64f7cd2cb8a3387a9c27e86950bce636b6a3e02cdb79",
+      "newSha256": "7b18325d23df50ea4afb64f7cd2cb8a3387a9c27e86950bce636b6a3e02cdb79"
+    },
+    {
+      "path": "packages/db/src/schema/assets.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "01565e1a6277c9b49264d16e810cf1d219663d5bac5982831b745ef19dcd51a4",
+      "newSha256": "01565e1a6277c9b49264d16e810cf1d219663d5bac5982831b745ef19dcd51a4"
+    },
+    {
+      "path": "packages/db/src/schema/internal_agent.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "065682b9e570ed81a0fe86cced034aba30706e96e4fdaeced5d61f27c30f2b70",
+      "newSha256": "065682b9e570ed81a0fe86cced034aba30706e96e4fdaeced5d61f27c30f2b70"
+    },
+    {
+      "path": "packages/db/src/schema/routines.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "44e4e76507d9286a87861dcc78d6259d80275869128366d1060dd85bbcab2582",
+      "newSha256": "44e4e76507d9286a87861dcc78d6259d80275869128366d1060dd85bbcab2582"
+    },
+    {
+      "path": "packages/shared/src/validators/internal-agent.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "e9f346d4c305daf6147973156a7210ee27299657c7101f618736f6b6a7a3bc64",
+      "newSha256": "e9f346d4c305daf6147973156a7210ee27299657c7101f618736f6b6a7a3bc64"
+    },
+    {
+      "path": "server/src/routes/artifacts.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "b0a5113602e9ac73583ae427103651ac79b86cbfe1da3f5cd9c18c13ef45f5f2",
+      "newSha256": "b0a5113602e9ac73583ae427103651ac79b86cbfe1da3f5cd9c18c13ef45f5f2"
+    },
+    {
+      "path": "server/src/routes/assets.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "320af8a5dc40071535d69ccecd125fd363f33b37abea3a437ff7feab41040d16",
+      "newSha256": "320af8a5dc40071535d69ccecd125fd363f33b37abea3a437ff7feab41040d16"
+    },
+    {
+      "path": "server/src/routes/goals.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "f30a6006367806639759aab4c21f3146bb231d35538c4bd4bb56964d870732da",
+      "newSha256": "f30a6006367806639759aab4c21f3146bb231d35538c4bd4bb56964d870732da"
+    },
+    {
+      "path": "server/src/routes/internal-agent.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "341d3afa580ed62f0fa9f5420792c5ab4a0c3ca721195b2807d15341895e6795",
+      "newSha256": "341d3afa580ed62f0fa9f5420792c5ab4a0c3ca721195b2807d15341895e6795"
+    },
+    {
+      "path": "server/src/routes/routines.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "16602bb0406198e0ea114400633958e4bb55d1c2b9fb73d2d551a9d5d5fb0f84",
+      "newSha256": "16602bb0406198e0ea114400633958e4bb55d1c2b9fb73d2d551a9d5d5fb0f84"
+    },
+    {
+      "path": "server/src/services/artifacts.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "ce1dd56d61c71d1cb99c5ff63d1b4ea635d9774fd5a2b21f219643c70af5c871",
+      "newSha256": "ce1dd56d61c71d1cb99c5ff63d1b4ea635d9774fd5a2b21f219643c70af5c871"
+    },
+    {
+      "path": "server/src/services/asset-serving-safety.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "3271e03ae444c058b24cd57348c6029b3ccb7b58b20e002f60cccc99ab800f34",
+      "newSha256": "3271e03ae444c058b24cd57348c6029b3ccb7b58b20e002f60cccc99ab800f34"
+    },
+    {
+      "path": "server/src/services/assets.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "4710d7097b9caccb0327e4d788c52f043d4c6c011a61432891ae5208e86ef479",
+      "newSha256": "4710d7097b9caccb0327e4d788c52f043d4c6c011a61432891ae5208e86ef479"
+    },
+    {
+      "path": "server/src/services/goals.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "c7832eae020ec52eb0333e5f7fcd3623b02094e0068bae83dd251ec74e2e8f1f",
+      "newSha256": "c7832eae020ec52eb0333e5f7fcd3623b02094e0068bae83dd251ec74e2e8f1f"
+    },
+    {
+      "path": "server/src/services/hub-items.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "3f245dcee73048a4f3a89e26311c209c7ea8056573387703cb866da4bd44240e",
+      "newSha256": "3f245dcee73048a4f3a89e26311c209c7ea8056573387703cb866da4bd44240e"
+    },
+    {
+      "path": "server/src/services/internal-agent/agent-loop.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "81313df39b1e5236b0b1987834e86a64fc816a266b279f42646acef90af37153",
+      "newSha256": "81313df39b1e5236b0b1987834e86a64fc816a266b279f42646acef90af37153"
+    },
+    {
+      "path": "server/src/services/internal-agent/proactive.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "ef54e066073e41d8cb6a880c2589939e073a25b065ad14f61432133479352352",
+      "newSha256": "ef54e066073e41d8cb6a880c2589939e073a25b065ad14f61432133479352352"
+    },
+    {
+      "path": "server/src/services/live-events.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "f9e5aade3bf310bf6a01097041d98668e187ab8bb7b5fd38fcb987ea1775888f",
+      "newSha256": "f9e5aade3bf310bf6a01097041d98668e187ab8bb7b5fd38fcb987ea1775888f"
+    },
+    {
+      "path": "server/src/services/notification-preferences.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "103db1e95008bb1a4e229e4030996477d457a6ec8667006aadd365e784673b08",
+      "newSha256": "103db1e95008bb1a4e229e4030996477d457a6ec8667006aadd365e784673b08"
+    },
+    {
+      "path": "server/src/services/routines.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "91e8ef56737dcaa948455681bf6bdf5af56a06669e108c84335e76c3416a4084",
+      "newSha256": "91e8ef56737dcaa948455681bf6bdf5af56a06669e108c84335e76c3416a4084"
+    },
+    {
+      "path": "server/src/services/secrets.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "650ec48443f9a00d7d4154e26325e25e2cdddc8edcf43b04057865a7a7af7488",
+      "newSha256": "650ec48443f9a00d7d4154e26325e25e2cdddc8edcf43b04057865a7a7af7488"
+    },
+    {
+      "path": "ui/package.json",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "8ac6e8dfded17960dc66df09c78668d80b034a378be88a8cb22791f8c0cc1e45",
+      "newSha256": "8ac6e8dfded17960dc66df09c78668d80b034a378be88a8cb22791f8c0cc1e45"
+    },
+    {
+      "path": "ui/src/api/artifacts.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "5e9d6950967963c848c7367281bea7fc517a0880db8247a503796b985c92c1bc",
+      "newSha256": "5e9d6950967963c848c7367281bea7fc517a0880db8247a503796b985c92c1bc"
+    },
+    {
+      "path": "ui/src/api/assets.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "c5f56e6863b4cc6889581ca59c7be9c21ed1ab1ca74cea131328940f7fb782b4",
+      "newSha256": "c5f56e6863b4cc6889581ca59c7be9c21ed1ab1ca74cea131328940f7fb782b4"
+    },
+    {
+      "path": "ui/src/api/hub-items.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "0e303e3f24538414295861e15d34c98e88c91714eef303ab3c755ee606d0d5e1",
+      "newSha256": "0e303e3f24538414295861e15d34c98e88c91714eef303ab3c755ee606d0d5e1"
+    },
+    {
+      "path": "ui/src/api/internal-agent.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "dd50edea2207518a23afd3563a413ab0e263d89fc9ad97d0b976b0823fb9d0d0",
+      "newSha256": "dd50edea2207518a23afd3563a413ab0e263d89fc9ad97d0b976b0823fb9d0d0"
+    },
+    {
+      "path": "ui/src/api/issues.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "f6238a627cf4f81e89197dac813207c23d8ccab4e4896448d5d3b4aa3c627b19",
+      "newSha256": "f6238a627cf4f81e89197dac813207c23d8ccab4e4896448d5d3b4aa3c627b19"
+    },
+    {
+      "path": "ui/src/api/routines.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "d1d75d7fe55ba2810023dadcf76de29f6873ef77a936e77e49e6881751e28f92",
+      "newSha256": "d1d75d7fe55ba2810023dadcf76de29f6873ef77a936e77e49e6881751e28f92"
+    },
+    {
+      "path": "ui/src/components/InternalAgentPanel.tsx",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "745fd2e66900916b2042dbb5cf36b23b230fb7ad41306ea18deb9e96212ca853",
+      "newSha256": "745fd2e66900916b2042dbb5cf36b23b230fb7ad41306ea18deb9e96212ca853"
+    },
+    {
+      "path": "ui/src/components/TaskDetail.tsx",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "fc719fe9c3d08fbcabfa3560f59b34939cf3e5faded24d4b5cac0878fac2bdc9",
+      "newSha256": "fc719fe9c3d08fbcabfa3560f59b34939cf3e5faded24d4b5cac0878fac2bdc9"
+    },
+    {
+      "path": "ui/src/components/commander/CommanderInput.tsx",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "e6e8f426b86f81c3efb562336bf662ce2df4919b09e71b8f793c87a646949a57",
+      "newSha256": "e6e8f426b86f81c3efb562336bf662ce2df4919b09e71b8f793c87a646949a57"
+    },
+    {
+      "path": "ui/src/components/commander/CommanderTaskFocusPane.tsx",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "4b69334e0c71ae2640a403822f47d807c36a16b19a77674c1f6124491115211a",
+      "newSha256": "4b69334e0c71ae2640a403822f47d807c36a16b19a77674c1f6124491115211a"
+    },
+    {
+      "path": "ui/src/components/hub/HubShell.tsx",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "7b079797b9c50db666b6154237d1c199cdd76cd526035c8435d6bd2fbc5614c2",
+      "newSha256": "7b079797b9c50db666b6154237d1c199cdd76cd526035c8435d6bd2fbc5614c2"
+    },
+    {
+      "path": "ui/src/components/settings/SettingsLayout.tsx",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "c2607cba4655203dfc674a2f9296a310971ecafc664b3f1bdd86b30d279ed0a8",
+      "newSha256": "c2607cba4655203dfc674a2f9296a310971ecafc664b3f1bdd86b30d279ed0a8"
+    },
+    {
+      "path": "ui/src/components/settings/sections/CommanderSection.tsx",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "f498c7921a75da9726aadb809a0ae8642be1ebddcc38cb6dab6e6ed3cce0c535",
+      "newSha256": "f498c7921a75da9726aadb809a0ae8642be1ebddcc38cb6dab6e6ed3cce0c535"
+    },
+    {
+      "path": "ui/src/context/ThemeContext.tsx",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "f0b36a2025a6518cfae57c5ac9f1f25a8949babe5cd53b61bc26715db66f5472",
+      "newSha256": "f0b36a2025a6518cfae57c5ac9f1f25a8949babe5cd53b61bc26715db66f5472"
+    },
+    {
+      "path": "ui/src/hooks/useHomeBoardLayout.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "ff42857ba271f67f72038170907564ff0e68fe7544ac5fd7b6b0e565d5bf1a3d",
+      "newSha256": "ff42857ba271f67f72038170907564ff0e68fe7544ac5fd7b6b0e565d5bf1a3d"
+    },
+    {
+      "path": "ui/src/lib/hub-toast-bridge.ts",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "23b656f58729ef44b2638ecb0aaa6f14720da7e20cf07b36aa64ea357fdbdbed",
+      "newSha256": "23b656f58729ef44b2638ecb0aaa6f14720da7e20cf07b36aa64ea357fdbdbed"
+    },
+    {
+      "path": "ui/src/pages/SettingsPage.tsx",
+      "present": true,
+      "unchanged": true,
+      "oldSha256": "f33d47c5ca5c3ad00a3acf9776a4749e3a89079bc1ae5e1d139fa032e837a9b4",
+      "newSha256": "f33d47c5ca5c3ad00a3acf9776a4749e3a89079bc1ae5e1d139fa032e837a9b4"
+    }
+  ],
+  "outputCollisions": [],
+  "firstBatch": {
+    "ui/src/App.tsx": {
+      "present": true,
+      "unchanged": true
+    },
+    "ui/package.json": {
+      "present": true,
+      "unchanged": true
+    },
+    "ui/vitest.config.ts": {
+      "present": true,
+      "unchanged": true
+    },
+    "ui/src/components/commander/CommanderTaskFocusPane.tsx": {
+      "present": true,
+      "unchanged": true
+    },
+    "ui/src/components/TaskDetail.tsx": {
+      "present": true,
+      "unchanged": true
+    }
+  },
+  "candidateTree": "421ffef177180137ba8a65aca799b4b81b502228"
+}

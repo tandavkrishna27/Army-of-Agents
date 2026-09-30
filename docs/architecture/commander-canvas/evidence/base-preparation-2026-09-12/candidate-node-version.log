@@ -1,0 +1,4 @@
+{"phase":"setup","kind":"candidate","sha":"9200a66c42633019349de937a8b97979acac0f7a","cwd":"/workspace/candidate","command":"node --version","startedAt":"2026-09-12T14:11:42.127Z","logPath":"/workspace/logs/candidate-node-version.log"}
+v24.21.0
+
+RESULT {"phase":"setup","kind":"candidate","sha":"9200a66c42633019349de937a8b97979acac0f7a","cwd":"/workspace/candidate","command":"node --version","startedAt":"2026-09-12T14:11:42.127Z","logPath":"/workspace/logs/candidate-node-version.log","code":0,"signal":null,"timeout":false,"elapsedSeconds":0.008}

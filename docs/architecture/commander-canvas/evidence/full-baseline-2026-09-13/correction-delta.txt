@@ -1,0 +1,7 @@
+ server/src/__tests__/blocked-task-fixture.test.ts  | 107 +++++++++++++++++++++
+ .../blocked-task-scan.integration.test.ts          |  79 +++++----------
+ server/src/__tests__/filesystem-routes.test.ts     |  91 +++++++++++++++++-
+ .../src/__tests__/helpers/blocked-task-fixture.ts  |  83 ++++++++++++++++
+ server/src/__tests__/outbound-url-guard.test.ts    |  31 +++++-
+ server/src/routes/filesystem.ts                    |  27 +++++-
+ 6 files changed, 351 insertions(+), 67 deletions(-)

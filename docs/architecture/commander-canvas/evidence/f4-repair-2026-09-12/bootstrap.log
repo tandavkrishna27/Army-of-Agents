@@ -1,0 +1,30 @@
+{"label":"bootstrap","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","exec","vitest","run","server/src/__tests__/blocked-task-fixture.test.ts"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:51.297Z"}
+
+ RUN  v3.2.6 /workspace/f4-repair
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts [ server/src/__tests__/blocked-task-fixture.test.ts ]
+Error: Cannot find module './helpers/blocked-task-fixture.js' imported from '/workspace/f4-repair/server/src/__tests__/blocked-task-fixture.test.ts'
+ ❯ src/__tests__/blocked-task-fixture.test.ts:3:1
+      1| import { createServer } from "node:net";
+      2| import { expect, it, vi } from "vitest";
+      3| import { createBlockedTaskFixture } from "./helpers/blocked-task-fixtu…
+       | ^
+      4| import { allocateEmbeddedPgPort } from "./helpers/embedded-pg-port.js";
+      5|
+
+Caused by: Error: Failed to load url ./helpers/blocked-task-fixture.js (resolved id: ./helpers/blocked-task-fixture.js) in /workspace/f4-repair/server/src/__tests__/blocked-task-fixture.test.ts. Does the file exist?
+ ❯ loadAndTransform ../node_modules/.pnpm/vite@6.4.3_@types+node@25.2.3_jiti@2.6.1_lightningcss@1.30.2_tsx@4.22.4_yaml@2.8.3/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35835:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  18:12:51
+   Duration  202ms (transform 25ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 46ms)
+
+
+RESULT {"label":"bootstrap","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","exec","vitest","run","server/src/__tests__/blocked-task-fixture.test.ts"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:51.297Z","code":1,"signal":null,"timeout":false,"elapsedSeconds":0.911,"changed":[]}

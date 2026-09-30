@@ -1,0 +1,41 @@
+{
+  "label": "red",
+  "sha": "4aebfa0f4aaf011cfd85347246c18d3cbde305ba",
+  "command": [
+    "corepack",
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "packages/db/src/__tests__/backup-fixture.test.ts",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=/workspace/f5-repair-target-logs/red-tests.json"
+  ],
+  "startedAt": "2026-09-12T20:59:31.458Z",
+  "beforeHashes": {
+    "packages/db/src/__tests__/backup-fixture.test.ts": {
+      "type": "file",
+      "value": "ec035e5c1f1ebc87125850224cf773ed67466c570824561e934db4171ce6e65d"
+    },
+    "packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts": {
+      "type": "file",
+      "value": "17748d6f2082f40ce57e6ef6573a98678cfed895632d979b5a0cb647c7578c8f"
+    }
+  },
+  "code": 1,
+  "signal": null,
+  "timeout": false,
+  "endedAt": "2026-09-12T20:59:32.520Z",
+  "changed": [],
+  "tests": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "pending": 0,
+    "success": false
+  },
+  "unhandled": false,
+  "expectedRed": true,
+  "accepted": true
+}

@@ -1,0 +1,69 @@
+{
+  "sourceCommit": "b5cc42643223c433a8263564c7142761472a13d9",
+  "method": "Read-only source and stopped-container file inspection; no new test or runtime start",
+  "files": {
+    "server/src/__tests__/blocked-task-scan.integration.test.ts": {
+      "gitBlob": "c50cf60c489a9bc78997de9a15300904ca03d501",
+      "workingFileSha256": "2f4714161c43d31e617b4cf3a22c26d37097637c1d389c37408e255a9191aa0a"
+    },
+    "packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts": {
+      "gitBlob": "8f5139442c6b7b5994e58bad381eadf0e162afca",
+      "workingFileSha256": "a26b0634d302ed6fde592dab4c5a515ba5271243f883375959c3abcf40d817ec"
+    },
+    "server/src/__tests__/helpers/embedded-pg-port.ts": {
+      "gitBlob": "86aba911a256cbd098b26cde7366ee08e3548d14",
+      "workingFileSha256": "f3e0b3a3991ee9c142352e974804e5e75d94714e89355ac510c59b4589303377"
+    },
+    "server/src/__tests__/helpers/migrated-database.ts": {
+      "gitBlob": "6fb6bacb25976dbb86b0c791d1f9985ec8278d6e",
+      "workingFileSha256": "85c220cd825dbeeb1d341e1f1389e07e112839708af9aba84aac8895734d92ab"
+    },
+    "server/src/__tests__/runtime-provider-keys-with-secret.integration.test.ts": {
+      "gitBlob": "440cbdf02aab095e808d1089cbe3840b2f582099",
+      "workingFileSha256": "b3ed03f712e340be8a00afc1a07512b396eebc9984a52398f72aad28c8558acc"
+    },
+    "packages/db/src/client.ts": {
+      "gitBlob": "beb73404536916947abe84cd10181d65ec0eaf5e",
+      "workingFileSha256": "1486c92d60045fef953d65a05b31217ff338f11f266cc45b67e450b4081585e1"
+    },
+    "vitest.config.ts": {
+      "gitBlob": "710f6c2462ec00e2553061c638f62f16d096b6d8",
+      "workingFileSha256": "32bcacb794fc959b3ff5ef508b6a96f790de2fab83cb50912a18fd8aca34be08"
+    },
+    "server/vitest.config.ts": {
+      "gitBlob": "ed8fb96cc55fc2c53cc5a37a2ddb18decc6a82c8",
+      "workingFileSha256": "f0bc939d4806b9c908111ebda9e980ef6eb73c385f88641e815aeadcf21de422"
+    },
+    "packages/db/vitest.config.ts": {
+      "gitBlob": "f624398e8deca6144a8c7a3ab3ca16543215a468",
+      "workingFileSha256": "478d341319ae4caff7a099e4a8c08741ce086e5fd267d30686f2c906bb36c72c"
+    },
+    "patches/embedded-postgres@18.1.0-beta.16.patch": {
+      "gitBlob": "0030bd9987c3b5cba8cce8493e90ad566e946ee7",
+      "workingFileSha256": "cdabaee9582f9dee5cdd3ab910c2237f9d283d6ce3a109141eb17d8e1c86d9fa"
+    }
+  },
+  "installedDependency": {
+    "version": "18.1.0-beta.16",
+    "source": "stopped container universe-preparation-e9637db9:/workspace/qualified/server/node_modules/embedded-postgres/dist/index.js",
+    "sha256": "8a6395fcd8e552ee0f10f6abb5dace877946625666f6daf4bc31152856bd8736",
+    "relevantLines": [
+      {
+        "line": 192,
+        "text": "this.process.on('close', () => {"
+      },
+      {
+        "line": 193,
+        "text": "reject();"
+      },
+      {
+        "line": 214,
+        "text": "(_a = this.process) === null || _a === void 0 ? void 0 : _a.on('exit', resolve);"
+      },
+      {
+        "line": 226,
+        "text": "(_c = this.process) === null || _c === void 0 ? void 0 : _c.kill('SIGINT');"
+      }
+    ]
+  }
+}

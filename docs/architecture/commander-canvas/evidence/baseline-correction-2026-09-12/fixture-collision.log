@@ -1,0 +1,27 @@
+Port collision excerpt from final-shard-3.log; original retained in compressed full evidence.
+
+
+
+stdout | src/__tests__/runtime-provider-keys-with-secret.integration.test.ts
+2026-09-12 16:06:36.837 UTC [49741] LOG:  listening on IPv6 address "::1", port 58293
+
+
+
+stdout | src/__tests__/runtime-provider-keys-with-secret.integration.test.ts
+2026-09-12 16:06:36.837 UTC [49741] LOG:  listening on IPv4 address "127.0.0.1", port 58293
+
+
+
+stdout | src/__tests__/runtime-provider-keys-with-secret.integration.test.ts
+2026-09-12 16:06:36.852 UTC [49741] LOG:  listening on Unix socket "/tmp/.s.PGSQL.58293"
+
+
+stdout | src/__tests__/blocked-task-scan.integration.test.ts
+2026-09-12 16:06:41.367 UTC [50289] LOG:  could not bind IPv6 address "::1": Address already in use
+2026-09-12 16:06:41.367 UTC [50289] HINT:  Is another postmaster already running on port 58293? If not, wait a few seconds and retry.
+2026-09-12 16:06:41.367 UTC [50289] LOG:  could not bind IPv4 address "127.0.0.1": Address already in use
+2026-09-12 16:06:41.367 UTC [50289] LOG:  could not bind IPv6 address "::1": Address already in use
+2026-09-12 16:06:41.367 UTC [50289] HINT:  Is another postmaster already running on port 58293? If not, wait a few seconds and retry.
+2026-09-12 16:06:41.367 UTC [50289] LOG:  could not bind IPv4 address "127.0.0.1": Address already in use
+2026-09-12 16:06:41.367 UTC [50289] HINT:  Is another postmaster already running on port 58293? If not, wait a few seconds and retry.
+2026-09-12 16:06:41.367 UTC [50289] WARNING:  could not create listen socket for "localhost"

@@ -1,0 +1,184 @@
+{
+  "disposition": "Diagnostic passed; prior full qualification remains failed; no source fix or base adoption",
+  "testIdentitiesMatchPriorFailedShard": true,
+  "tests": {
+    "numTotalTests": 6046,
+    "numPassedTests": 6043,
+    "numFailedTests": 0,
+    "numPendingTests": 3,
+    "success": true
+  },
+  "stageEnds": [
+    {
+      "fixture": "backup-non-system",
+      "stage": "data-dir",
+      "event": "end",
+      "elapsedMs": 3,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:49.998Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "backup-dir",
+      "event": "end",
+      "elapsedMs": 0,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:49.999Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "port",
+      "event": "end",
+      "elapsedMs": 4,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:50.003Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "initialise",
+      "event": "end",
+      "elapsedMs": 3081,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:53.084Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "start",
+      "event": "end",
+      "elapsedMs": 82,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:53.166Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "create-database",
+      "event": "end",
+      "elapsedMs": 129,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:53.295Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "schema",
+      "event": "end",
+      "elapsedMs": 13,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:53.310Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-table",
+      "event": "end",
+      "elapsedMs": 5,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:53.315Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-row",
+      "event": "end",
+      "elapsedMs": 4,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:53.319Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-table",
+      "event": "end",
+      "elapsedMs": 4,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:53.323Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-row",
+      "event": "end",
+      "elapsedMs": 3,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:53.327Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "seed-client-end",
+      "event": "end",
+      "elapsedMs": 2,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:53.329Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "stop",
+      "event": "end",
+      "elapsedMs": 1904,
+      "pid": 146,
+      "utc": "2026-09-12T19:40:55.350Z"
+    }
+  ],
+  "targetInitdbSamples": [
+    {
+      "utc": "2026-09-12T19:40:50.638Z",
+      "target": [
+        {
+          "pid": 390,
+          "ppid": 146,
+          "comm": "initdb",
+          "state": "D",
+          "userTicks": 0,
+          "systemTicks": 3,
+          "blockIoDelayTicks": 0,
+          "wait": "jbd2_log_wait_commit",
+          "io": "rchar: 22860847\nwchar: 64393087\nsyscr: 2595\nsyscw: 22808\nread_bytes: 23023616\nwrite_bytes: 40783872\ncancelled_write_bytes: 290816"
+        }
+      ],
+      "otherInitdb": 0
+    },
+    {
+      "utc": "2026-09-12T19:40:51.638Z",
+      "target": [
+        {
+          "pid": 390,
+          "ppid": 146,
+          "comm": "initdb",
+          "state": "D",
+          "userTicks": 1,
+          "systemTicks": 5,
+          "blockIoDelayTicks": 0,
+          "wait": "jbd2_log_wait_commit",
+          "io": "rchar: 22860847\nwchar: 64393087\nsyscr: 2595\nsyscw: 22808\nread_bytes: 23027712\nwrite_bytes: 40783872\ncancelled_write_bytes: 290816"
+        }
+      ],
+      "otherInitdb": 8
+    },
+    {
+      "utc": "2026-09-12T19:40:52.638Z",
+      "target": [
+        {
+          "pid": 390,
+          "ppid": 146,
+          "comm": "initdb",
+          "state": "D",
+          "userTicks": 1,
+          "systemTicks": 7,
+          "blockIoDelayTicks": 0,
+          "wait": "submit_bio_wait",
+          "io": "rchar: 22860847\nwchar: 64393087\nsyscr: 2595\nsyscw: 22808\nread_bytes: 23031808\nwrite_bytes: 40783872\ncancelled_write_bytes: 290816"
+        }
+      ],
+      "otherInitdb": 9
+    }
+  ],
+  "sampler": {
+    "samples": 114,
+    "totalMs": 118.89867900004185,
+    "maxMs": 4.681863999998313
+  },
+  "sourceIntegrity": {
+    "trackedEntries": 7666,
+    "restoredEqualsPristine": true,
+    "instrumentedUnchangedDuringTests": true
+  },
+  "runtimeFinal": {
+    "status": "exited",
+    "networks": {}
+  }
+}

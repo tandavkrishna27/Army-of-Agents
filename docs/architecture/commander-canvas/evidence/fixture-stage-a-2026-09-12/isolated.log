@@ -1,0 +1,207 @@
+{"label":"isolated","phase":"diagnostic","cwd":"/workspace/fixture-diagnostics","sha":"b5cc42643223c433a8263564c7142761472a13d9","patchSha256":"0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/db","packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts"],"startedAt":"2026-09-12T16:37:40.647Z"}
+
+ RUN  v3.2.6 /workspace/fixture-diagnostics
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"data-dir","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:41.577Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"data-dir","event":"end","elapsedMs":1,"pid":670,"utc":"2026-09-12T16:37:41.579Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"backup-dir","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:41.579Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"backup-dir","event":"end","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:41.579Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"port","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:41.579Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"port","event":"end","elapsedMs":3,"pid":670,"utc":"2026-09-12T16:37:41.583Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"initialise","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:41.583Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+The files belonging to this database system will be owned by user "node".
+This user must also own the server process.
+
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+The database cluster will be initialized with this locale configuration:
+  locale provider:   libc
+  LC_COLLATE:  C.UTF-8
+  LC_CTYPE:    C.UTF-8
+  LC_MESSAGES: C
+  LC_MONETARY: C.UTF-8
+  LC_NUMERIC:  C.UTF-8
+  LC_TIME:     C.UTF-8
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are enabled.
+
+fixing permissions on existing directory /tmp/aoa-backup-test-d1q7QB ... ok
+creating subdirectories ...
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+ok
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+selecting dynamic shared memory implementation ... posix
+selecting default "max_connections" ...
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+100
+selecting default "shared_buffers" ...
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+128MB
+selecting default time zone ...
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+Etc/UTC
+creating configuration files ...
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+ok
+running bootstrap script ...
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+ok
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+performing post-bootstrap initialization ...
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+ok
+syncing data to disk ...
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+ok
+
+Success. You can now start the database server using:
+
+    '/workspace/fixture-diagnostics/node_modules/.pnpm/@embedded-postgres+linux-x64@18.1.0-beta.16/node_modules/@embedded-postgres/linux-x64/native/bin/pg_ctl' -D /tmp/aoa-backup-test-d1q7QB -l logfile start
+
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"initialise","event":"end","elapsedMs":2174,"pid":670,"utc":"2026-09-12T16:37:43.757Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"start","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:43.757Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.769 UTC [707] LOG:  starting PostgreSQL 18.1 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.769 UTC [707] LOG:  listening on IPv6 address "::1", port 36613
+2026-09-12 16:37:43.769 UTC [707] LOG:  listening on IPv4 address "127.0.0.1", port 36613
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.774 UTC [707] LOG:  listening on Unix socket "/tmp/.s.PGSQL.36613"
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.779 UTC [713] LOG:  database system was shut down at 2026-09-12 16:37:41 UTC
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.782 UTC [707] LOG:  database system is ready to accept connections
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"start","event":"end","elapsedMs":25,"pid":670,"utc":"2026-09-12T16:37:43.783Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"create-database","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:43.783Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"create-database","event":"end","elapsedMs":72,"pid":670,"utc":"2026-09-12T16:37:43.854Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"schema","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:43.856Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"schema","event":"end","elapsedMs":11,"pid":670,"utc":"2026-09-12T16:37:43.866Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"journal-table","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:43.866Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"journal-table","event":"end","elapsedMs":3,"pid":670,"utc":"2026-09-12T16:37:43.869Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"journal-row","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:43.869Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"journal-row","event":"end","elapsedMs":2,"pid":670,"utc":"2026-09-12T16:37:43.871Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"users-table","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:43.871Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"users-table","event":"end","elapsedMs":2,"pid":670,"utc":"2026-09-12T16:37:43.873Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"users-row","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:43.873Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"users-row","event":"end","elapsedMs":2,"pid":670,"utc":"2026-09-12T16:37:43.875Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"seed-client-end","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:43.875Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"seed-client-end","event":"end","elapsedMs":1,"pid":670,"utc":"2026-09-12T16:37:43.876Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"stop","event":"start","elapsedMs":0,"pid":670,"utc":"2026-09-12T16:37:43.971Z"}
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.971 UTC [707] LOG:  received fast shutdown request
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.975 UTC [707] LOG:  aborting any active transactions
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.976 UTC [707] LOG:  background worker "logical replication launcher" (PID 716) exited with exit code 1
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.976 UTC [711] LOG:  shutting down
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:43.978 UTC [711] LOG:  checkpoint starting: shutdown immediate
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:44.587 UTC [711] LOG:  checkpoint complete: wrote 956 buffers (5.8%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.013 s, sync=0.589 s, total=0.612 s; sync files=328, longest=0.003 s, average=0.002 s; distance=4423 kB, estimate=4423 kB; lsn=0/1B9D460, redo lsn=0/1B9D460
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+2026-09-12 16:37:44.595 UTC [707] LOG:  database system is shut down
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+{"fixture":"backup-non-system","stage":"stop","event":"end","elapsedMs":625,"pid":670,"utc":"2026-09-12T16:37:44.596Z"}
+
+ ✓  @armyofagents/db  src/__tests__/backup-lib-non-system-schemas.test.ts (2 tests) 3019ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  16:37:41
+   Duration  3.56s (transform 253ms, setup 0ms, collect 423ms, tests 3.02s, environment 0ms, prepare 46ms)
+
+
+RESULT {"label":"isolated","phase":"diagnostic","cwd":"/workspace/fixture-diagnostics","sha":"b5cc42643223c433a8263564c7142761472a13d9","patchSha256":"0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/db","packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts"],"startedAt":"2026-09-12T16:37:40.647Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":4.026,"changedSource":[]}

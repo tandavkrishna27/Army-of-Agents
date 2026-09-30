@@ -1,0 +1,14 @@
+[
+  {
+    "file": "dns-fixture.patch",
+    "sha256": "a39fdd5c7307f02f7c3f6583ef8c9f5b3b65d04ce77eb0b861d076ef46baaac0"
+  },
+  {
+    "file": "opener-green.patch",
+    "sha256": "2b77e25883a71b50eae3013d5b07b6ef6b64968e1fdfa358d30bd486c1d301a7"
+  },
+  {
+    "file": "opener-red.patch",
+    "sha256": "3f75e9d58cfe099a9dd2ee833473e5f5bbadf2918144c409305715bd42718354"
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "label": "shard1",
+  "sha": "fcab5a112aeac8385733f528396e65d258c02dfb",
+  "command": [
+    "corepack",
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "--shard=1/4",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=/workspace/f5-qualified-baseline-20260913-logs/shard1-tests.json"
+  ],
+  "cwd": "/workspace/f5-qualified-baseline-20260913",
+  "startedAt": "2026-09-12T21:03:42.897Z",
+  "code": 0,
+  "signal": null,
+  "timeout": false,
+  "elapsedSeconds": 253.389,
+  "changed": [],
+  "report": {
+    "total": 6330,
+    "passed": 6318,
+    "failed": 0,
+    "pending": 12,
+    "success": true
+  },
+  "unhandled": false,
+  "accepted": true,
+  "safeToContinue": true
+}

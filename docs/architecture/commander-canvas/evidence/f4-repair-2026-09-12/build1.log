@@ -1,0 +1,7 @@
+{"label":"build1","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","--filter","@armyofagents/sandbox-fake-provider","build"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:34.866Z"}
+
+> @armyofagents/sandbox-fake-provider@0.1.0 build /workspace/f4-repair/packages/sandbox-fake-provider
+> tsc
+
+
+RESULT {"label":"build1","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","--filter","@armyofagents/sandbox-fake-provider","build"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:34.866Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":1.216,"changed":[]}

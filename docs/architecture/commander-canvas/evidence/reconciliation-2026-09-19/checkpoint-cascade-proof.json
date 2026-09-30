@@ -1,0 +1,20 @@
+{
+  "status": "passed on active existing base; not combined-candidate adoption",
+  "head": "a996d507bb54fa9d4623ffd6ca9a9c95d321d550",
+  "tests": {
+    "passed": 18,
+    "failed": 0
+  },
+  "command": "node node_modules/vitest/vitest.mjs run server/src/__tests__/universe-layout.integration.test.ts",
+  "environment": "Linux task-owned universe-preparation-e9637db9, /workspace/e12-qualified-20260919",
+  "files": {
+    "server/src/__tests__/universe-layout.integration.test.ts": {
+      "sha256": "e9f532cd67b83575dfa8038e0916deb7e98c9ae7a272767f9d3f27060a39b39f",
+      "bytes": 27604
+    },
+    ".tmp/e12-cascade-proof.log": {
+      "sha256": "1b08eb4b7c021ffbe7efe1ef7838fec798501d205f6a44b74dbe685e9b70d211",
+      "bytes": 97199
+    }
+  }
+}

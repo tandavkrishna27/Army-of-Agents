@@ -1,0 +1,106 @@
+{"label":"red-stop","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"red-stop","command":["corepack","pnpm","exec","vitest","run","server/src/__tests__/blocked-task-fixture.test.ts"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:13:30.207Z"}
+
+ RUN  v3.2.6 /workspace/f4-repair
+
+ ❯  @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts (12 tests | 3 failed) 15ms
+   ✓ starts once and disposes once in ownership order 2ms
+   × fails closed on rejected start: undefined 4ms
+     → expected "spy" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st spy call:
+
+    Array []
+
+
+Number of calls: 1
+
+   × fails closed on rejected start: Error: bind failed 0ms
+     → expected "spy" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st spy call:
+
+    Array []
+
+
+Number of calls: 1
+
+   × does not stop after init failure 1ms
+     → expected "spy" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st spy call:
+
+    Array []
+
+
+Number of calls: 1
+
+   ✓ stops a started cluster after migration failure without an unacquired client 0ms
+   ✓ closes client before stopping after seed failure 0ms
+   ✓ still stops after client-close failure and retains cleanup error and directory 0ms
+   ✓ retains directory and error on stop failure 0ms
+   ✓ does not swallow directory removal failure 0ms
+   ✓ cannot start after disposal 0ms
+   ✓ serializes disposal with pending start and prevents later queries 0ms
+   ✓ avoids an occupied preferred port without closing its listener 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts > fails closed on rejected start: undefined
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts > fails closed on rejected start: Error: bind failed
+AssertionError: expected "spy" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st spy call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ src/__tests__/blocked-task-fixture.test.ts:42:25
+     40|   expect(h.d.connect).not.toHaveBeenCalled();
+     41|   expect(h.d.seed).not.toHaveBeenCalled();
+     42|   expect(h.pg.stop).not.toHaveBeenCalled();
+       |                         ^
+     43|   expect(h.d.removeDirectory).toHaveBeenCalledOnce();
+     44| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts > does not stop after init failure
+AssertionError: expected "spy" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st spy call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ src/__tests__/blocked-task-fixture.test.ts:49:46
+     47|   const h = harness(); h.pg.initialise.mockRejectedValueOnce(new Error…
+     48|   await expect(h.f.start()).rejects.toThrow("during initialise");
+     49|   await h.f.dispose(); expect(h.pg.stop).not.toHaveBeenCalled();
+       |                                              ^
+     50| });
+     51| it("stops a started cluster after migration failure without an unacqui…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+   Start at  18:13:30
+   Duration  216ms (transform 27ms, setup 0ms, collect 27ms, tests 15ms, environment 0ms, prepare 39ms)
+
+
+RESULT {"label":"red-stop","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"red-stop","command":["corepack","pnpm","exec","vitest","run","server/src/__tests__/blocked-task-fixture.test.ts"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:13:30.207Z","code":1,"signal":null,"timeout":false,"elapsedSeconds":0.935,"changed":[]}

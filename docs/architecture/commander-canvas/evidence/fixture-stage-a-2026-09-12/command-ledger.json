@@ -1,0 +1,200 @@
+[
+  {
+    "label": "node-version",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "node",
+      "--version"
+    ],
+    "startedAt": "2026-09-12T16:37:14.605Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.005,
+    "changedSource": []
+  },
+  {
+    "label": "pnpm-version",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--version"
+    ],
+    "startedAt": "2026-09-12T16:37:15.116Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.219,
+    "changedSource": []
+  },
+  {
+    "label": "offline-install",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "install",
+      "--offline",
+      "--frozen-lockfile"
+    ],
+    "startedAt": "2026-09-12T16:37:15.791Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 4.782,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-worker-protocol",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/worker-protocol",
+      "build"
+    ],
+    "startedAt": "2026-09-12T16:37:21.041Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.775,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-sandbox-fake-provider",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/sandbox-fake-provider",
+      "build"
+    ],
+    "startedAt": "2026-09-12T16:37:23.286Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.064,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-worker-daemon",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/worker-daemon",
+      "build"
+    ],
+    "startedAt": "2026-09-12T16:37:24.820Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.409,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-sandbox-provider-contract",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/sandbox-provider-contract",
+      "build"
+    ],
+    "startedAt": "2026-09-12T16:37:26.702Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.829,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-sandbox-e2b-provider",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/sandbox-e2b-provider",
+      "build"
+    ],
+    "startedAt": "2026-09-12T16:37:28.016Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.02,
+    "changedSource": []
+  },
+  {
+    "label": "isolated",
+    "phase": "diagnostic",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project=@armyofagents/db",
+      "packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts"
+    ],
+    "startedAt": "2026-09-12T16:37:40.647Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 4.026,
+    "changedSource": []
+  },
+  {
+    "label": "shard-4",
+    "phase": "diagnostic",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--shard=4/4"
+    ],
+    "startedAt": "2026-09-12T16:37:58.208Z",
+    "code": 1,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 101.625,
+    "changedSource": []
+  }
+]

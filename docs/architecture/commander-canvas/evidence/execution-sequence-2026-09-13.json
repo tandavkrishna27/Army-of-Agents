@@ -1,0 +1,19 @@
+{
+  "kind": "planning-structure-only",
+  "originalIncrements": 69,
+  "v1Increments": 66,
+  "v2Increments": 3,
+  "workPackages": 86,
+  "schedulingSlots": 23,
+  "topologicallyOrderedPackages": 86,
+  "negativeControlsRejected": {
+    "missing_package": true,
+    "cycle": true,
+    "lost_producer_edge": true,
+    "v1_waits_on_v2": true,
+    "acceptance_as_entry": true,
+    "omitted_release_obligation": true,
+    "false_completion": true
+  },
+  "errors": []
+}

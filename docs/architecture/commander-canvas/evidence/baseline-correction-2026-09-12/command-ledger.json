@@ -1,0 +1,494 @@
+[
+  {
+    "label": "offline-install",
+    "phase": "setup",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "install",
+      "--offline",
+      "--frozen-lockfile"
+    ],
+    "startedAt": "2026-09-12T15:54:02.295Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 5.02,
+    "changedSource": []
+  },
+  {
+    "label": "node-version",
+    "phase": "setup",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "node",
+      "--version"
+    ],
+    "startedAt": "2026-09-12T15:54:15.634Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.005,
+    "changedSource": []
+  },
+  {
+    "label": "pnpm-version",
+    "phase": "setup",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--version"
+    ],
+    "startedAt": "2026-09-12T15:54:16.639Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.153,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-worker-protocol",
+    "phase": "setup",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/worker-protocol",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:54:17.729Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.818,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-sandbox-fake-provider",
+    "phase": "setup",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/sandbox-fake-provider",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:54:20.523Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.049,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-worker-daemon",
+    "phase": "setup",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/worker-daemon",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:54:22.556Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.56,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-sandbox-provider-contract",
+    "phase": "setup",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/sandbox-provider-contract",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:54:25.112Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.937,
+    "changedSource": []
+  },
+  {
+    "label": "prebuild-sandbox-e2b-provider",
+    "phase": "setup",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/sandbox-e2b-provider",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:54:27.023Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.058,
+    "changedSource": []
+  },
+  {
+    "label": "git-callers",
+    "phase": "targeted",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project=@armyofagents/server",
+      "server/src/__tests__/mcp-connector-install-adversarial.test.ts",
+      "-t",
+      "ESC-7"
+    ],
+    "startedAt": "2026-09-12T15:54:29.075Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 4.215,
+    "changedSource": []
+  },
+  {
+    "label": "dns-fixture",
+    "phase": "targeted",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "fe7cd2c72735645f113e708b920a60b543968a7df88085fae63559be01154042",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project=@armyofagents/server",
+      "server/src/__tests__/outbound-url-guard.test.ts"
+    ],
+    "startedAt": "2026-09-12T15:54:54.096Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.657,
+    "changedSource": []
+  },
+  {
+    "label": "opener-red",
+    "phase": "targeted",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "7f29c0ea33b9c193c952e2bfce8e6292175c39f2fdf1dd3dd35cb67e1b9a6dae",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project=@armyofagents/server",
+      "server/src/__tests__/filesystem-routes.test.ts"
+    ],
+    "startedAt": "2026-09-12T15:55:56.462Z",
+    "code": 1,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 2.505,
+    "changedSource": []
+  },
+  {
+    "label": "opener-green",
+    "phase": "targeted",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project=@armyofagents/server",
+      "server/src/__tests__/filesystem-routes.test.ts"
+    ],
+    "startedAt": "2026-09-12T15:56:22.908Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 2.595,
+    "changedSource": []
+  },
+  {
+    "label": "combined",
+    "phase": "targeted",
+    "cwd": "/workspace/corrected",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project=@armyofagents/server",
+      "server/src/__tests__/filesystem-routes.test.ts",
+      "server/src/__tests__/outbound-url-guard.test.ts",
+      "server/src/__tests__/mcp-connector-install-adversarial.test.ts"
+    ],
+    "startedAt": "2026-09-12T15:56:26.141Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 3.562,
+    "changedSource": []
+  },
+  {
+    "label": "final-install",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "install",
+      "--offline",
+      "--frozen-lockfile"
+    ],
+    "startedAt": "2026-09-12T15:57:12.796Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 4.962,
+    "changedSource": []
+  },
+  {
+    "label": "final-prebuild-worker-protocol",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/worker-protocol",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:57:18.492Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.927,
+    "changedSource": []
+  },
+  {
+    "label": "final-prebuild-sandbox-fake-provider",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/sandbox-fake-provider",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:57:21.164Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.094,
+    "changedSource": []
+  },
+  {
+    "label": "final-prebuild-worker-daemon",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/worker-daemon",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:57:23.016Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.638,
+    "changedSource": []
+  },
+  {
+    "label": "final-prebuild-sandbox-provider-contract",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/sandbox-provider-contract",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:57:25.366Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.882,
+    "changedSource": []
+  },
+  {
+    "label": "final-prebuild-sandbox-e2b-provider",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/sandbox-e2b-provider",
+      "build"
+    ],
+    "startedAt": "2026-09-12T15:57:26.960Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.98,
+    "changedSource": []
+  },
+  {
+    "label": "final-typecheck",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "-r",
+      "typecheck"
+    ],
+    "startedAt": "2026-09-12T15:57:28.674Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 89.299,
+    "changedSource": []
+  },
+  {
+    "label": "final-shard-1",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--shard=1/4"
+    ],
+    "startedAt": "2026-09-12T15:58:58.689Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 254.933,
+    "changedSource": []
+  },
+  {
+    "label": "final-shard-2",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--shard=2/4"
+    ],
+    "startedAt": "2026-09-12T16:03:14.280Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 152.855,
+    "changedSource": []
+  },
+  {
+    "label": "final-shard-3",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--shard=3/4"
+    ],
+    "startedAt": "2026-09-12T16:05:47.837Z",
+    "code": 1,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 115.236,
+    "changedSource": []
+  },
+  {
+    "label": "final-shard-4",
+    "phase": "final",
+    "cwd": "/workspace/qualified",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--shard=4/4"
+    ],
+    "startedAt": "2026-09-12T16:07:43.747Z",
+    "code": 1,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 111.198,
+    "changedSource": []
+  }
+]

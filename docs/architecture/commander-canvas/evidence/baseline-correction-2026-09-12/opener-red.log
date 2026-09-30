@@ -1,0 +1,85 @@
+{"label":"opener-red","phase":"targeted","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"7f29c0ea33b9c193c952e2bfce8e6292175c39f2fdf1dd3dd35cb67e1b9a6dae","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/server","server/src/__tests__/filesystem-routes.test.ts"],"startedAt":"2026-09-12T15:55:56.462Z"}
+
+ RUN  v3.2.6 /workspace/corrected
+
+ ❯  @armyofagents/server  src/__tests__/filesystem-routes.test.ts (14 tests | 3 failed) 55ms
+   ✓ filesystem routes — instance admin gate > 403 browse for non-admin board user 10ms
+   ✓ filesystem routes — instance admin gate > 403 mkdir for non-admin 8ms
+   ✓ filesystem routes — instance admin gate > 403 reveal for non-admin 2ms
+   ✓ filesystem routes — instance admin gate > 403 drives for non-admin 2ms
+   ✓ filesystem routes — instance admin gate > 403 home for non-admin 2ms
+   ✓ filesystem routes — instance admin gate > not 403 for local_implicit (regression guard) 10ms
+   ✓ filesystem routes — instance admin gate > 400 reveal for path outside home dir (instance admin) 2ms
+   ✓ filesystem routes — instance admin gate > 400 reveal for sibling-prefix path that bypasses startsWith (instance admin) 2ms
+   ✓ filesystem routes — instance admin gate > acknowledges successful opener launch for the home directory 3ms
+   × filesystem routes — instance admin gate > reports asynchronous opener launch failure 6ms
+     → expected 200 to be 500 // Object.is equality
+   × filesystem routes — instance admin gate > reports a synchronous opener launch failure 3ms
+     → expected { error: 'Internal server error' } to deeply equal { Object (error) }
+   × filesystem routes — instance admin gate > keeps an error handler after successful launch 2ms
+     → expected 1 to be greater than 1
+   ✓ filesystem routes — instance admin gate > rejects a missing reveal path without spawning 2ms
+   ✓ filesystem routes — instance admin gate > returns 404 for an absent in-home path without spawning 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL   @armyofagents/server  src/__tests__/filesystem-routes.test.ts > filesystem routes — instance admin gate > reports asynchronous opener launch failure
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ src/__tests__/filesystem-routes.test.ts:128:24
+    126|     const res = await request(makeApp(instanceAdmin))
+    127|       .post("/api/filesystem/reveal").send({ path: os.homedir() });
+    128|     expect(res.status).toBe(500);
+       |                        ^
+    129|     expect(res.body).toEqual({ error: "Unable to launch the file manag…
+    130|     expect(processMock.spawn).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL   @armyofagents/server  src/__tests__/filesystem-routes.test.ts > filesystem routes — instance admin gate > reports a synchronous opener launch failure
+AssertionError: expected { error: 'Internal server error' } to deeply equal { Object (error) }
+
+- Expected
++ Received
+
+  {
+-   "error": "Unable to launch the file manager",
++   "error": "Internal server error",
+  }
+
+ ❯ src/__tests__/filesystem-routes.test.ts:140:22
+    138|       .post("/api/filesystem/reveal").send({ path: os.homedir() });
+    139|     expect(res.status).toBe(500);
+    140|     expect(res.body).toEqual({ error: "Unable to launch the file manag…
+       |                      ^
+    141|   });
+    142|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL   @armyofagents/server  src/__tests__/filesystem-routes.test.ts > filesystem routes — instance admin gate > keeps an error handler after successful launch
+AssertionError: expected 1 to be greater than 1
+ ❯ src/__tests__/filesystem-routes.test.ts:149:42
+    147|     expect(res.body).toEqual({ ok: true });
+    148|     expect(child.unref).toHaveBeenCalledTimes(1);
+    149|     expect(child.listenerCount("error")).toBeGreaterThan(1);
+       |                                          ^
+    150|     expect(() => {
+    151|       child.emit("error", new Error("fixture late error"));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 passed (14)
+   Start at  15:55:56
+   Duration  1.98s (transform 875ms, setup 0ms, collect 1.77s, tests 55ms, environment 0ms, prepare 45ms)
+
+
+RESULT {"label":"opener-red","phase":"targeted","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"7f29c0ea33b9c193c952e2bfce8e6292175c39f2fdf1dd3dd35cb67e1b9a6dae","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/server","server/src/__tests__/filesystem-routes.test.ts"],"startedAt":"2026-09-12T15:55:56.462Z","code":1,"signal":null,"timeout":false,"elapsedSeconds":2.505,"changedSource":[]}

@@ -1,0 +1,7 @@
+{"phase":"checks","kind":"candidate","sha":"9200a66c42633019349de937a8b97979acac0f7a","cwd":"/workspace/candidate","command":"corepack pnpm --filter @armyofagents/worker-protocol build","startedAt":"2026-09-12T14:12:03.127Z","logPath":"/workspace/logs/candidate-prebuild-worker-protocol.log"}
+
+> @armyofagents/worker-protocol@0.1.0 build /workspace/candidate/packages/worker-protocol
+> tsc
+
+
+RESULT {"phase":"checks","kind":"candidate","sha":"9200a66c42633019349de937a8b97979acac0f7a","cwd":"/workspace/candidate","command":"corepack pnpm --filter @armyofagents/worker-protocol build","startedAt":"2026-09-12T14:12:03.127Z","logPath":"/workspace/logs/candidate-prebuild-worker-protocol.log","code":0,"signal":null,"timeout":false,"elapsedSeconds":1.747}

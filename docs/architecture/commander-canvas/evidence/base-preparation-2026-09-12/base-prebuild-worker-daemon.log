@@ -1,0 +1,7 @@
+{"phase":"checks","kind":"base","sha":"183e46a9c65fc3105c7e3d125629276814df7dbb","cwd":"/workspace/base","command":"corepack pnpm --filter @armyofagents/worker-daemon build","startedAt":"2026-09-12T14:11:56.122Z","logPath":"/workspace/logs/base-prebuild-worker-daemon.log"}
+
+> @armyofagents/worker-daemon@0.1.0 build /workspace/base/packages/worker-daemon
+> tsc
+
+
+RESULT {"phase":"checks","kind":"base","sha":"183e46a9c65fc3105c7e3d125629276814df7dbb","cwd":"/workspace/base","command":"corepack pnpm --filter @armyofagents/worker-daemon build","startedAt":"2026-09-12T14:11:56.122Z","logPath":"/workspace/logs/base-prebuild-worker-daemon.log","code":0,"signal":null,"timeout":false,"elapsedSeconds":1.467}

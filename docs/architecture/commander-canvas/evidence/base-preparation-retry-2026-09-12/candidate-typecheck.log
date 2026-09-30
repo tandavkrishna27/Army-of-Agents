@@ -1,0 +1,90 @@
+{"phase":"checks","kind":"candidate","sha":"9200a66c42633019349de937a8b97979acac0f7a","cwd":"/workspace/candidate","command":"corepack pnpm -r typecheck","startedAt":"2026-09-12T14:28:43.990Z","logPath":"/workspace/retry-logs/candidate-typecheck.log"}
+Scope: 34 of 35 workspace projects
+packages/browser-runtime typecheck$ tsc --noEmit
+packages/shared typecheck$ tsc --noEmit
+packages/worker-protocol typecheck$ tsc --noEmit
+packages/browser-runtime typecheck: Done
+packages/worker-protocol typecheck: Done
+packages/shared typecheck: Done
+packages/adapter-utils typecheck$ tsc --noEmit
+packages/db typecheck$ tsc --noEmit
+packages/plugins/sdk typecheck$ pnpm --filter @armyofagents/shared build && tsc --noEmit
+packages/sandbox-fake-provider typecheck$ tsc --noEmit
+packages/plugins/sdk typecheck: > @armyofagents/shared@0.2.7 build /workspace/candidate/packages/shared
+packages/plugins/sdk typecheck: > tsc
+packages/sandbox-fake-provider typecheck: Done
+packages/worker-daemon typecheck$ tsc --noEmit
+packages/worker-daemon typecheck: Done
+packages/adapter-utils typecheck: Done
+packages/plugins/sdk typecheck: Done
+packages/db typecheck: Done
+packages/adapters/acpx-local typecheck$ tsc --noEmit
+packages/adapters/claude-local typecheck$ tsc --noEmit
+packages/adapters/codex-local typecheck$ tsc --noEmit
+packages/adapters/cursor-cloud typecheck$ tsc --noEmit
+packages/adapters/acpx-local typecheck: Done
+packages/adapters/cursor-local typecheck$ tsc --noEmit
+packages/adapters/cursor-cloud typecheck: Done
+packages/adapters/gemini-local typecheck$ tsc --noEmit
+packages/adapters/claude-local typecheck: Done
+packages/adapters/grok-local typecheck$ tsc --noEmit
+packages/adapters/codex-local typecheck: Done
+packages/adapters/openclaw typecheck$ tsc --noEmit
+packages/adapters/cursor-local typecheck: Done
+packages/adapters/openclaw-gateway typecheck$ tsc --noEmit
+packages/adapters/grok-local typecheck: Done
+packages/adapters/opencode-local typecheck$ tsc --noEmit
+packages/adapters/gemini-local typecheck: Done
+packages/adapters/pi-local typecheck$ tsc --noEmit
+packages/adapters/openclaw typecheck: Done
+packages/plugins/create-paperclip-plugin typecheck$ tsc --noEmit
+packages/plugins/create-paperclip-plugin typecheck: Done
+.../plugin-authoring-smoke-example typecheck$ node ../../../../scripts/build-plugin-sdk-locked.mjs && tsc --noEmit
+.../plugin-authoring-smoke-example typecheck: > @armyofagents/plugin-sdk@1.0.0 build /workspace/candidate/packages/plugins/sdk
+.../plugin-authoring-smoke-example typecheck: > pnpm --filter @armyofagents/shared build && tsc
+.../plugin-authoring-smoke-example typecheck: > @armyofagents/shared@0.2.7 build /workspace/candidate/packages/shared
+.../plugin-authoring-smoke-example typecheck: > tsc
+packages/adapters/openclaw-gateway typecheck: Done
+.../examples/plugin-file-browser-example typecheck$ node ../../../../scripts/build-plugin-sdk-locked.mjs && tsc --noEmit
+packages/adapters/pi-local typecheck: Done
+.../examples/plugin-hello-world-example typecheck$ node ../../../../scripts/build-plugin-sdk-locked.mjs && tsc --noEmit
+packages/adapters/opencode-local typecheck: Done
+.../examples/plugin-kitchen-sink-example typecheck$ node ../../../../scripts/build-plugin-sdk-locked.mjs && tsc --noEmit
+.../examples/plugin-file-browser-example typecheck: > @armyofagents/plugin-sdk@1.0.0 build /workspace/candidate/packages/plugins/sdk
+.../examples/plugin-file-browser-example typecheck: > pnpm --filter @armyofagents/shared build && tsc
+.../examples/plugin-file-browser-example typecheck: > @armyofagents/shared@0.2.7 build /workspace/candidate/packages/shared
+.../examples/plugin-file-browser-example typecheck: > tsc
+.../plugin-authoring-smoke-example typecheck: Done
+packages/provider-capability typecheck$ tsc --noEmit
+packages/provider-capability typecheck: Done
+packages/sandbox-provider-contract typecheck$ tsc --noEmit
+packages/sandbox-provider-contract typecheck: Done
+.../examples/plugin-hello-world-example typecheck: > @armyofagents/plugin-sdk@1.0.0 build /workspace/candidate/packages/plugins/sdk
+.../examples/plugin-hello-world-example typecheck: > pnpm --filter @armyofagents/shared build && tsc
+.../examples/plugin-hello-world-example typecheck: > @armyofagents/shared@0.2.7 build /workspace/candidate/packages/shared
+.../examples/plugin-hello-world-example typecheck: > tsc
+.../examples/plugin-file-browser-example typecheck: Done
+.../examples/plugin-kitchen-sink-example typecheck: > @armyofagents/plugin-sdk@1.0.0 build /workspace/candidate/packages/plugins/sdk
+.../examples/plugin-kitchen-sink-example typecheck: > pnpm --filter @armyofagents/shared build && tsc
+.../examples/plugin-kitchen-sink-example typecheck: > @armyofagents/shared@0.2.7 build /workspace/candidate/packages/shared
+.../examples/plugin-kitchen-sink-example typecheck: > tsc
+.../examples/plugin-hello-world-example typecheck: Done
+.../examples/plugin-kitchen-sink-example typecheck: Done
+packages/sandbox-e2b-provider typecheck$ tsc --noEmit
+ui typecheck$ tsc -b
+packages/sandbox-e2b-provider typecheck: Done
+ui typecheck: Done
+packages/worker-keystore typecheck$ tsc --noEmit
+packages/provider-wire typecheck$ tsc --noEmit
+packages/provider-wire typecheck: Done
+packages/worker-keystore typecheck: Done
+packages/adapter-manager typecheck$ tsc --noEmit
+packages/worker-networked-host typecheck$ tsc --noEmit
+packages/worker-networked-host typecheck: Done
+packages/adapter-manager typecheck: Done
+server typecheck$ tsc --noEmit
+server typecheck: Done
+cli typecheck$ tsc --noEmit
+cli typecheck: Done
+
+RESULT {"phase":"checks","kind":"candidate","sha":"9200a66c42633019349de937a8b97979acac0f7a","cwd":"/workspace/candidate","command":"corepack pnpm -r typecheck","startedAt":"2026-09-12T14:28:43.990Z","logPath":"/workspace/retry-logs/candidate-typecheck.log","code":0,"signal":null,"timeout":false,"elapsedSeconds":88.206}

@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { eq } from 'drizzle-orm';
+import { universeLayoutService, companies, internalAgentConversations, issues, artifacts, artifactVersions, universeLayouts, activityLog } from './auth-service.mjs';
+const sql=postgres('postgres://postgres@127.0.0.1:5432/universe_drizzle_upgrade');
+const db=drizzle(sql); const svc=universeLayoutService(db); let checks=0;
+const rejected=async(p,status)=>{ await assert.rejects(p,e=>e.status===status); checks++; };
+try {
+ const companyId=randomUUID(), other=randomUUID(), conversationId=randomUUID(), userId='auth-check-'+randomUUID();
+ for(const id of [companyId,other]) await db.insert(companies).values({id,name:'Universe auth diagnostic',organizationId:'00000000-0000-0000-0000-000000000001',issuePrefix:'U'+id.slice(0,7)});
+ await db.insert(internalAgentConversations).values({id:conversationId,companyId,userId});
+ const scope={companyId,userId,conversationId};
+ const task=randomUUID(),foreign=randomUUID(),artifact=randomUUID(),version=randomUUID(),otherArtifact=randomUUID(),wrongVersion=randomUUID();
+ await db.insert(issues).values([{id:task,companyId,title:'Canonical'},{id:foreign,companyId:other,title:'Foreign'}]);
+ await db.insert(artifacts).values([{id:artifact,companyId,title:'Artifact',type:'document',createdById:userId},{id:otherArtifact,companyId:other,title:'Other',type:'document',createdById:userId}]);
+ await db.insert(artifactVersions).values([{id:version,artifactId:artifact,versionNumber:1,source:'human'},{id:wrongVersion,artifactId:otherArtifact,versionNumber:1,source:'human'}]);
+ const op=(kind,id,v)=>({type:'open',key:JSON.stringify([companyId,userId,conversationId,kind,id,v??null]),ref:{kind,id,...(v?{version:v}:{})},title:'Untrusted',rect:{x:0,y:0,width:300,height:200}});
+ const patch=(operation,revision=0)=>({schemaVersion:1,operationId:randomUUID(),expectedRevision:revision,operations:[operation]});
+ await rejected(svc.get({...scope,userId:'other'}),404);
+ await rejected(svc.apply(scope,patch(op('task',foreign))),404);
+ assert.equal((await svc.get(scope)).revision,0); checks++;
+ assert.equal((await db.select().from(universeLayouts).where(eq(universeLayouts.conversationId,conversationId))).length,0); checks++;
+ await rejected(svc.apply(scope,patch(op('artifact',artifact,wrongVersion))),404);
+ await rejected(svc.apply(scope,patch(op('browser',task))),404);
+ const first=patch(op('task',task)); assert.equal((await svc.apply(scope,first)).revision,1); checks++;
+ assert.equal((await svc.get(scope)).document.panels[0].title,'Canonical'); checks++;
+ const auditRows=()=>db.select().from(activityLog).where(eq(activityLog.companyId,companyId));
+ assert.equal((await auditRows()).length,1); checks++;
+ await svc.apply(scope,first); assert.equal((await auditRows()).length,1); checks++;
+ const failDb=new Proxy(db,{get(target,prop){if(prop==='transaction') return fn=>target.transaction(tx=>fn(new Proxy(tx,{get(t,p){if(p==='insert') return table=>{if(table===activityLog) throw new Error('diagnostic audit failure');return t.insert(table);};const v=Reflect.get(t,p);return typeof v==='function'?v.bind(t):v;}})));const v=Reflect.get(target,prop);return typeof v==='function'?v.bind(target):v;}});
+ await assert.rejects(universeLayoutService(failDb).apply(scope,patch({type:'pin',key:op('task',task).key,value:true},1)),/diagnostic audit failure/); checks++;
+ assert.equal((await svc.get(scope)).revision,1); assert.equal((await svc.get(scope)).document.panels[0].pinned,false); checks++;
+
+ await db.update(issues).set({title:'x'.repeat(1100)}).where(eq(issues.id,task));
+ assert.equal((await svc.get(scope)).document.panels[0].title.length,1024); checks++;
+ await svc.apply(scope,patch(op('artifact',artifact,version),1)); checks++;
+ await db.delete(issues).where(eq(issues.id,task)); await rejected(svc.get(scope),404);
+ await svc.apply(scope,patch({type:'close',key:op('task',task).key},2));
+ assert.equal((await svc.get(scope)).document.panels.length,1); checks++;
+ await db.update(internalAgentConversations).set({userId:'transferred'}).where(eq(internalAgentConversations.id,conversationId));
+ await rejected(svc.apply(scope,first),404); await rejected(svc.getReceipt(scope,first.operationId),404);
+ console.log(JSON.stringify({result:'passed',checks,database:'universe_drizzle_upgrade',scope:'disposable Universe containers; actual service and schema bundle; no route or migration-wrapper qualification'}));
+} finally {await sql.end();}

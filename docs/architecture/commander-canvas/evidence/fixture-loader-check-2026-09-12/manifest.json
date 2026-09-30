@@ -1,0 +1,42 @@
+{
+  "command-ledger.json": {
+    "bytes": 1160,
+    "sha256": "fcece0e016e000e280e576c3eed743cce4b2c64e6fe83b1ab3bcfe4b0ef2d2e3"
+  },
+  "executed-runner.mjs": {
+    "bytes": 4777,
+    "sha256": "6e3fb60ebc1af60dfccb5aa6bdd058df829a4b8471fb18ec00e569827917fc71"
+  },
+  "exports-tsx-before.json.gz": {
+    "bytes": 388735,
+    "sha256": "194e94a9f0c2cabb0d1459e193503602143425b1d177130180a574dff1fbfda5"
+  },
+  "exports-tsx.log": {
+    "bytes": 933,
+    "sha256": "0dd25e4dfc1aa49edfba5b1146a1ed1d8c601550e2b65ad5ec8bc7a7f29f0f95"
+  },
+  "raw-log-inventory.json": {
+    "bytes": 287,
+    "sha256": "bb93bcff9db4a3cd62df7a32b5f794f75b59def09026c1e95b105d7df16aeb3a"
+  },
+  "shard-4-gated-after.json.gz": {
+    "bytes": 388735,
+    "sha256": "194e94a9f0c2cabb0d1459e193503602143425b1d177130180a574dff1fbfda5"
+  },
+  "shard-4.log.gz": {
+    "bytes": 169612,
+    "sha256": "3174876077d0c3c179dd75a537f8e47c0d28004c0397bdaf2f2e3a54938c1a78"
+  },
+  "shard-4.summary.log": {
+    "bytes": 73445,
+    "sha256": "826e0c90fbdfda8b51b4f41923f53b948ccd2e444dfc385f2e3fc2c529372d0a"
+  },
+  "source-integrity.json": {
+    "bytes": 507,
+    "sha256": "83e44bc5f075b12a0b5a509e9f8d5dbf4796048ba0f522230921e820d8eef5f7"
+  },
+  "stage-events.json": {
+    "bytes": 4363,
+    "sha256": "6cc13ab4948cbcaeb3fdfa68452452083c2ec771f6606ffde0918a87e138ba0f"
+  }
+}

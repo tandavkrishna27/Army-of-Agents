@@ -1,0 +1,4 @@
+{"label":"node-version","phase":"setup","cwd":"/workspace/fixture-diagnostics","sha":"b5cc42643223c433a8263564c7142761472a13d9","patchSha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","command":["node","--version"],"startedAt":"2026-09-12T16:37:14.605Z"}
+v24.21.0
+
+RESULT {"label":"node-version","phase":"setup","cwd":"/workspace/fixture-diagnostics","sha":"b5cc42643223c433a8263564c7142761472a13d9","patchSha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","command":["node","--version"],"startedAt":"2026-09-12T16:37:14.605Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":0.005,"changedSource":[]}

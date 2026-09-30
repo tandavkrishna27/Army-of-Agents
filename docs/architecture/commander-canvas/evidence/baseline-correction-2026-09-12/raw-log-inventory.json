@@ -1,0 +1,122 @@
+[
+  {
+    "file": "combined.log",
+    "rawBytes": 1928,
+    "rawSha256": "f72a43aee9b893f548fde56bef689202c3c55dc44dab4d20b2bd9a0ca61e8e46"
+  },
+  {
+    "file": "dns-fixture.log",
+    "rawBytes": 1362,
+    "rawSha256": "88f7e1230f6b6157360b42a997990f7acb9b03bb43f9f2284faec4839c1f41ea"
+  },
+  {
+    "file": "final-install.log",
+    "rawBytes": 8408,
+    "rawSha256": "b3450213fe99358c51ccdb3db697f0235e31f4cfb85dec7ac469cbbc2c9c11d0"
+  },
+  {
+    "file": "final-prebuild-sandbox-e2b-provider.log",
+    "rawBytes": 892,
+    "rawSha256": "a6a3e625effebaf5f9acb4da70c7ee36f0b13ea356024ed08e15a3ee9a36d1c1"
+  },
+  {
+    "file": "final-prebuild-sandbox-fake-provider.log",
+    "rawBytes": 899,
+    "rawSha256": "5d5b241b4a9fcf22fac246c4d1dcaf5bfe3e53a880694e0358645eb8433af0cc"
+  },
+  {
+    "file": "final-prebuild-sandbox-provider-contract.log",
+    "rawBytes": 923,
+    "rawSha256": "3a6adfc127dbd3b31ec39e904ab0c23ef01d9b2cab164565854497a2904e1cd0"
+  },
+  {
+    "file": "final-prebuild-worker-daemon.log",
+    "rawBytes": 851,
+    "rawSha256": "1922092d3614c6436a1746e48505ed9a83e19da88a10506310197ad72d5850c1"
+  },
+  {
+    "file": "final-prebuild-worker-protocol.log",
+    "rawBytes": 863,
+    "rawSha256": "668f3af68bcb95295451f4b5ac51800f8be88c353c019d5b906d4ca0280e80a9"
+  },
+  {
+    "file": "final-shard-1.log",
+    "rawBytes": 6084835,
+    "rawSha256": "08930eabfd0c61d93ebeb309fd07d07c7834c2a5834357d3b2e9d4dda317be3c"
+  },
+  {
+    "file": "final-shard-2.log",
+    "rawBytes": 7714666,
+    "rawSha256": "0d84e5b6b246fa375aa5e9d5d5e2431b3fcd1114a6ac072b3fbefe28a078ba3c"
+  },
+  {
+    "file": "final-shard-3.log",
+    "rawBytes": 3634363,
+    "rawSha256": "4b8cc29270ac61907f51020f918ebafcff091bf7ce1a982071ca122e4fc59e3d"
+  },
+  {
+    "file": "final-shard-4.log",
+    "rawBytes": 4531868,
+    "rawSha256": "454d34cbd37529d8c932f8bc1a43c317eee251b7d86be7ba18a7803e385d2512"
+  },
+  {
+    "file": "final-typecheck.log",
+    "rawBytes": 5947,
+    "rawSha256": "92791d49246de84d8a553d7ec28503e9b02f64239f70735d90c5a6ee76e8cb6b"
+  },
+  {
+    "file": "git-callers.log",
+    "rawBytes": 1504,
+    "rawSha256": "7434cf883196e2d93446913f451eaea6a3f336d10ecb75ee4e30855caf3aa06f"
+  },
+  {
+    "file": "node-version.log",
+    "rawBytes": 638,
+    "rawSha256": "40b25bbed3c5d142e302239ebe5c25f6a2e99e22adfce94d9010a5ff06b996f7"
+  },
+  {
+    "file": "offline-install.log",
+    "rawBytes": 8409,
+    "rawSha256": "748a4de1467efd324f583d04d5fbb0317205d68d718345fde8565c45c7755836"
+  },
+  {
+    "file": "opener-green.log",
+    "rawBytes": 1363,
+    "rawSha256": "fdbb561d827eefb7feebce70c4dea25db6c7d93683c1b217c20326741bc8470b"
+  },
+  {
+    "file": "opener-red.log",
+    "rawBytes": 7292,
+    "rawSha256": "ff6ed51d6e592e4fe11f9bf9ce321eb101be63e729b4ab034e47b4557a4d1cae"
+  },
+  {
+    "file": "pnpm-version.log",
+    "rawBytes": 658,
+    "rawSha256": "1b0ad012fc289ca4b7b0eddb024f411323854fc18b948e11a6c2079bbfb5345a"
+  },
+  {
+    "file": "prebuild-sandbox-e2b-provider.log",
+    "rawBytes": 881,
+    "rawSha256": "73a9e62f553d6f886dfb14f39b3efd4f8d5c14437f100001c6a5ae504f134a3c"
+  },
+  {
+    "file": "prebuild-sandbox-fake-provider.log",
+    "rawBytes": 887,
+    "rawSha256": "afa37bdb4e59d56b0df0978e4550c74aeeec91c55875018315a3f800c270169e"
+  },
+  {
+    "file": "prebuild-sandbox-provider-contract.log",
+    "rawBytes": 911,
+    "rawSha256": "62f6a19022581a7aa74a390a5fae2182a80e7df9dc4ab5da0d85c8835f8c73f8"
+  },
+  {
+    "file": "prebuild-worker-daemon.log",
+    "rawBytes": 838,
+    "rawSha256": "43cdaac83e04de6ebf1ccee5d21fa80be8d1cf73ad3da998852368b7bd40d5ad"
+  },
+  {
+    "file": "prebuild-worker-protocol.log",
+    "rawBytes": 851,
+    "rawSha256": "0f41536847fdf7ce57f917ffce85e06ed46d061e791a5154939fafb7f154b2dd"
+  }
+]

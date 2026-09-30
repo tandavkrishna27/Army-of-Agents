@@ -1,0 +1,21 @@
+{
+  "sha": "4aebfa0f4aaf011cfd85347246c18d3cbde305ba",
+  "startedAt": "2026-09-12T19:40:47.633Z",
+  "command": [
+    "corepack",
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "--shard=4/4",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=/workspace/f5-attribution-20260913-logs/tests.json"
+  ],
+  "patchSha256": "86aaf30d5952b75fcf0054951a4603555b3f38706b2fa5005da969e124148233",
+  "code": 0,
+  "signal": null,
+  "timedOut": false,
+  "endedAt": "2026-09-12T19:42:40.337Z",
+  "changed": []
+}

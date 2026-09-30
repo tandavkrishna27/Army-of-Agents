@@ -1,0 +1,18 @@
+{
+  "remote": "06a37345229fd23837764106350318cdb61b3445\trefs/heads/docs/replatform-program",
+  "chosenReplatform": "06a37345229fd23837764106350318cdb61b3445",
+  "repair": "fcab5a112aeac8385733f528396e65d258c02dfb",
+  "mergeBase": "9200a66c42633019349de937a8b97979acac0f7a",
+  "proposedTree": "0ad79d8bb727f30040c2649a20ee16609cf3f117",
+  "checkedUiPaths": [
+    "ui/src/App.tsx",
+    "ui/package.json",
+    "ui/vitest.config.ts",
+    "ui/src/components/commander/CommanderTaskFocusPane.tsx",
+    "ui/src/components/TaskDetail.tsx"
+  ],
+  "uiDelta": "",
+  "collisions": "",
+  "branchChanged": false,
+  "qualifiedCombinedTree": false
+}

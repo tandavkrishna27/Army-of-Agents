@@ -1,0 +1,72 @@
+[
+  {
+    "label": "isolated",
+    "entries": 7664,
+    "beforeSha256": "69b4a24b75e3bc4b161cc96c1fc62b668161ed6bb7c6f68ee73b5ab7c1c67bc9",
+    "afterSha256": "69b4a24b75e3bc4b161cc96c1fc62b668161ed6bb7c6f68ee73b5ab7c1c67bc9",
+    "changed": []
+  },
+  {
+    "label": "node-version",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "offline-install",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "pnpm-version",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "prebuild-sandbox-e2b-provider",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "prebuild-sandbox-fake-provider",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "prebuild-sandbox-provider-contract",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "prebuild-worker-daemon",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "prebuild-worker-protocol",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "shard-4",
+    "entries": 7664,
+    "beforeSha256": "69b4a24b75e3bc4b161cc96c1fc62b668161ed6bb7c6f68ee73b5ab7c1c67bc9",
+    "afterSha256": "69b4a24b75e3bc4b161cc96c1fc62b668161ed6bb7c6f68ee73b5ab7c1c67bc9",
+    "changed": []
+  }
+]

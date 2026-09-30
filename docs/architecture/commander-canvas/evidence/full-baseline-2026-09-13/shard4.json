@@ -1,0 +1,32 @@
+{
+  "label": "shard4",
+  "sha": "4aebfa0f4aaf011cfd85347246c18d3cbde305ba",
+  "command": [
+    "corepack",
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "--shard=4/4",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=/workspace/full-baseline-20260913-logs/shard4-tests.json"
+  ],
+  "cwd": "/workspace/full-baseline-20260913",
+  "startedAt": "2026-09-12T19:21:08.146Z",
+  "code": 1,
+  "signal": null,
+  "timeout": false,
+  "elapsedSeconds": 112.567,
+  "changed": [],
+  "report": {
+    "total": 6046,
+    "passed": 6041,
+    "failed": 0,
+    "pending": 5,
+    "success": false
+  },
+  "unhandled": true,
+  "accepted": false,
+  "safeToContinue": false
+}

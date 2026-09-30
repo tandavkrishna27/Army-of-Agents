@@ -1,0 +1,170 @@
+[
+  {
+    "label": "combined",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "dns-fixture",
+    "entries": 7664,
+    "beforeSha256": "e06fa5772420a4f935258bd2813c548eff446a14e7ffcc18f1fc3215d2f88b88",
+    "afterSha256": "e06fa5772420a4f935258bd2813c548eff446a14e7ffcc18f1fc3215d2f88b88",
+    "changed": []
+  },
+  {
+    "label": "final-install",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-prebuild-sandbox-e2b-provider",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-prebuild-sandbox-fake-provider",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-prebuild-sandbox-provider-contract",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-prebuild-worker-daemon",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-prebuild-worker-protocol",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-shard-1",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-shard-2",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-shard-3",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-shard-4",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "final-typecheck",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "git-callers",
+    "entries": 7664,
+    "beforeSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "afterSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "changed": []
+  },
+  {
+    "label": "node-version",
+    "entries": 7664,
+    "beforeSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "afterSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "changed": []
+  },
+  {
+    "label": "offline-install",
+    "entries": 7664,
+    "beforeSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "afterSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "changed": []
+  },
+  {
+    "label": "opener-green",
+    "entries": 7664,
+    "beforeSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "afterSha256": "9d069ca17d4bf21a7fcb8a7712103ce64d8949fe0edb895947ea3a5c4e09ab7d",
+    "changed": []
+  },
+  {
+    "label": "opener-red",
+    "entries": 7664,
+    "beforeSha256": "af271eb1a74bc6bf141bdd964aa474f1ee41e2fb0b1c78bcb28125b43d7dcc15",
+    "afterSha256": "af271eb1a74bc6bf141bdd964aa474f1ee41e2fb0b1c78bcb28125b43d7dcc15",
+    "changed": []
+  },
+  {
+    "label": "pnpm-version",
+    "entries": 7664,
+    "beforeSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "afterSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "changed": []
+  },
+  {
+    "label": "prebuild-sandbox-e2b-provider",
+    "entries": 7664,
+    "beforeSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "afterSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "changed": []
+  },
+  {
+    "label": "prebuild-sandbox-fake-provider",
+    "entries": 7664,
+    "beforeSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "afterSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "changed": []
+  },
+  {
+    "label": "prebuild-sandbox-provider-contract",
+    "entries": 7664,
+    "beforeSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "afterSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "changed": []
+  },
+  {
+    "label": "prebuild-worker-daemon",
+    "entries": 7664,
+    "beforeSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "afterSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "changed": []
+  },
+  {
+    "label": "prebuild-worker-protocol",
+    "entries": 7664,
+    "beforeSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "afterSha256": "c058552f0da677cdda6b46ed950cbb29c82076f40ad642d72fa3665078c59e94",
+    "changed": []
+  }
+]

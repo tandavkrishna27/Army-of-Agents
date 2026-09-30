@@ -1,0 +1,15 @@
+{
+  "attention-390-1x.png": "00818940735ecfcff047e43c4e2c8da47553fe5e0fd16ea61967fd4bda9935a7",
+  "attention-390-2x.png": "931cc38617d752c9af8cb7cb9090bd551b13412c2328560ce4af5eb7f35aabd0",
+  "available-reference.png": "fba44afb9fbbf251c605d13fac76f9583514241be4764e41e4a34f9e153ecddc",
+  "base-checks.json": "c8f98d6c11a2d50a192f7d05d72eb615b679076eb7a987761d3d81db1d1634d3",
+  "failure-1440-1x.png": "f0d7dee433c713c17b1fdf4412d57d04836e407170d593f1ecd3b5e26871dc31",
+  "focus-1440-1x.png": "8523f0b1d0345bf680282b15893ac4946ac38f81f2130f207189f6cbe2380be3",
+  "initial-harness-errors.json": "4ad1d16fb8ef0e47410344f0fdf853f0e5f56d68b05e278f97f5abd78747486c",
+  "initial-narrow-overlap.json": "8d1c1dbc260df204eadbc880ada359177c74446cf01fa27f5192ccd8eda1faa8",
+  "loading-1440-1x.png": "58785aef9a262959600e13cc90a510d28dc05fc95032388d47bb5f516ec6bcbf",
+  "render-check.cjs": "b38b0a2537ba63ef22bfc7c097e0f0cc3a3776d9d5b7332f736460199013a4fd",
+  "render-checks.json": "aa152698241f0a0124f680b4249107450ac348c65d4af47b32bff4ea8670d01f",
+  "revoked-1440-1x.png": "e31304c4b95866ba6f26ff7b2336be489bb317dffeef6949f6893fdfdce676ce",
+  "state-study.html": "55f549c2b43e59c9ccff2d443377c1b3c89e777b68236b503d67abfca31122a7"
+}

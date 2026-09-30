@@ -1,0 +1,27 @@
+CREATE TABLE
+psql:/tmp/universe-0281.sql:10: NOTICE:  relation "universe_layout_operations" already exists, skipping
+CREATE TABLE
+psql:/tmp/universe-0281.sql:22: NOTICE:  relation "universe_layouts" already exists, skipping
+DO
+DO
+DO
+CREATE INDEX
+psql:/tmp/universe-0281.sql:36: NOTICE:  relation "universe_layout_operations_layout_op_uq" already exists, skipping
+CREATE INDEX
+psql:/tmp/universe-0281.sql:37: NOTICE:  relation "universe_layouts_company_user_idx" already exists, skipping
+psql:/tmp/universe-0281.sql:38: NOTICE:  relation "universe_layouts_owner_conversation_uq" already exists, skipping
+CREATE INDEX
+CREATE TABLE
+psql:/tmp/universe-0282.sql:14: NOTICE:  relation "universe_drafts" already exists, skipping
+DO
+psql:/tmp/universe-0282.sql:20: NOTICE:  relation "universe_drafts_company_user_idx" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+psql:/tmp/universe-0282.sql:21: NOTICE:  relation "universe_drafts_owner_destination_uq" already exists, skipping
+psql:/tmp/universe-0283.sql:2: NOTICE:  column "acknowledgement" of relation "universe_layout_operations" already exists, skipping
+ALTER TABLE
+psql:/tmp/universe-0284.sql:14: NOTICE:  relation "universe_panel_checkpoints" already exists, skipping
+CREATE TABLE
+DO
+psql:/tmp/universe-0284.sql:20: NOTICE:  relation "universe_checkpoints_owner_version_uq" already exists, skipping
+CREATE INDEX

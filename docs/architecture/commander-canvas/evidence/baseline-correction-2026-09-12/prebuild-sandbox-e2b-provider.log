@@ -1,0 +1,7 @@
+{"label":"prebuild-sandbox-e2b-provider","phase":"setup","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","command":["corepack","pnpm","--filter","@armyofagents/sandbox-e2b-provider","build"],"startedAt":"2026-09-12T15:54:27.023Z"}
+
+> @armyofagents/sandbox-e2b-provider@0.1.0 build /workspace/corrected/packages/sandbox-e2b-provider
+> tsc
+
+
+RESULT {"label":"prebuild-sandbox-e2b-provider","phase":"setup","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","command":["corepack","pnpm","--filter","@armyofagents/sandbox-e2b-provider","build"],"startedAt":"2026-09-12T15:54:27.023Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":1.058,"changedSource":[]}

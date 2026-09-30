@@ -1,0 +1,131 @@
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+The files belonging to this database system will be owned by user "node".
+This user must also own the server process.
+
+The files belonging to this database system will be owned by user "node".
+This user must also own the server process.
+
+
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+The database cluster will be initialized with this locale configuration:
+  locale provider:   libc
+  LC_COLLATE:  C.UTF-8
+  LC_CTYPE:    C.UTF-8
+  LC_MESSAGES: C
+  LC_MONETARY: C.UTF-8
+  LC_NUMERIC:  C.UTF-8
+  LC_TIME:     C.UTF-8
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+The database cluster will be initialized with this locale configuration:
+  locale provider:   libc
+  LC_COLLATE:  C.UTF-8
+  LC_CTYPE:    C.UTF-8
+  LC_MESSAGES: C
+  LC_MONETARY: C.UTF-8
+  LC_NUMERIC:  C.UTF-8
+  LC_TIME:     C.UTF-8
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are enabled.
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+ok
+
+ok
+
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+selecting dynamic shared memory implementation ... posix
+selecting default "max_connections" ...
+
+selecting dynamic shared memory implementation ... posix
+selecting default "max_connections" ...
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+100
+selecting default "shared_buffers" ...
+
+100
+selecting default "shared_buffers" ...
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+128MB
+selecting default time zone ...
+
+128MB
+selecting default time zone ...
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+Etc/UTC
+creating configuration files ...
+
+Etc/UTC
+creating configuration files ...
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+ok
+running bootstrap script ...
+
+ok
+running bootstrap script ...
+
+ ✓  @armyofagents/server  src/__tests__/distributed-execution-rollout-source.test.ts (7 tests) 5ms
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+ok
+
+ok
+
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+performing post-bootstrap initialization ...
+
+performing post-bootstrap initialization ...
+
+
+stdout | src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+ok
+syncing data to disk ...
+
+ok
+syncing data to disk ...
+
+
+ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL   @armyofagents/db  src/__tests__/backup-lib-non-system-schemas.test.ts > backup-lib non-system schemas
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/__tests__/backup-lib-non-system-schemas.test.ts:41:3
+     39|   let pgStarted = false;
+     40|
+     41|   beforeAll(async () => {
+       |   ^
+     42|     const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-backu…
+     43|     backupDir = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-backup-fi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 647 passed | 1 skipped (649)
+      Tests  6041 passed | 5 skipped (6046)
+   Start at  19:21:08
+   Duration  111.55s (transform 27.21s, setup 5.30s, collect 260.38s, tests 881.94s, environment 68.61s, prepare 29.31s)
+
+JSON report written to /workspace/full-baseline-20260913-logs/shard4-tests.json
+
+RESULT {"label":"shard4","sha":"4aebfa0f4aaf011cfd85347246c18d3cbde305ba","command":["corepack","pnpm","exec","vitest","run","--shard=4/4","--reporter=default","--reporter=json","--outputFile.json=/workspace/full-baseline-20260913-logs/shard4-tests.json"],"cwd":"/workspace/full-baseline-20260913","startedAt":"2026-09-12T19:21:08.146Z","code":1,"signal":null,"timeout":false,"elapsedSeconds":112.567,"changed":[]}

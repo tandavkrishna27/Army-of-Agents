@@ -1,0 +1,141 @@
+{"label":"red-swallow","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"red-swallow","command":["corepack","pnpm","exec","vitest","run","server/src/__tests__/blocked-task-fixture.test.ts"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:13:24.471Z"}
+
+ RUN  v3.2.6 /workspace/f4-repair
+
+ ❯  @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts (12 tests | 6 failed) 17ms
+   ✓ starts once and disposes once in ownership order 2ms
+   × fails closed on rejected start: undefined 4ms
+     → promise resolved "undefined" instead of rejecting
+   × fails closed on rejected start: Error: bind failed 0ms
+     → promise resolved "undefined" instead of rejecting
+   × does not stop after init failure 1ms
+     → promise resolved "undefined" instead of rejecting
+   × stops a started cluster after migration failure without an unacquired client 0ms
+     → promise resolved "undefined" instead of rejecting
+   × closes client before stopping after seed failure 2ms
+     → promise resolved "{ fixture: true }" instead of rejecting
+   ✓ still stops after client-close failure and retains cleanup error and directory 1ms
+   ✓ retains directory and error on stop failure 0ms
+   ✓ does not swallow directory removal failure 0ms
+   ✓ cannot start after disposal 1ms
+   × serializes disposal with pending start and prevents later queries 1ms
+     → promise resolved "undefined" instead of rejecting
+   ✓ avoids an occupied preferred port without closing its listener 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts > fails closed on rejected start: undefined
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts > fails closed on rejected start: Error: bind failed
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/__tests__/blocked-task-fixture.test.ts:37:27
+     35| it.each([undefined, new Error("bind failed")])("fails closed on reject…
+     36|   const h = harness(); h.pg.start.mockRejectedValueOnce(cause);
+     37|   await expect(h.f.start()).rejects.toMatchObject({ message: "Blocked-…
+       |                           ^
+     38|   await h.f.dispose();
+     39|   expect(h.d.migrate).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts > does not stop after init failure
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/__tests__/blocked-task-fixture.test.ts:48:27
+     46| it("does not stop after init failure", async () => {
+     47|   const h = harness(); h.pg.initialise.mockRejectedValueOnce(new Error…
+     48|   await expect(h.f.start()).rejects.toThrow("during initialise");
+       |                           ^
+     49|   await h.f.dispose(); expect(h.pg.stop).not.toHaveBeenCalled();
+     50| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts > stops a started cluster after migration failure without an unacquired client
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/__tests__/blocked-task-fixture.test.ts:53:27
+     51| it("stops a started cluster after migration failure without an unacqui…
+     52|   const h = harness(); h.d.migrate.mockRejectedValueOnce(new Error("mi…
+     53|   await expect(h.f.start()).rejects.toThrow("during migrate");
+       |                           ^
+     54|   await h.f.dispose();
+     55|   expect(h.d.closeDb).not.toHaveBeenCalled(); expect(h.pg.stop).toHave…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts > closes client before stopping after seed failure
+AssertionError: promise resolved "{ fixture: true }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "fixture": true,
+  }
+
+ ❯ src/__tests__/blocked-task-fixture.test.ts:59:27
+     57| it("closes client before stopping after seed failure", async () => {
+     58|   const h = harness(); h.d.seed.mockRejectedValueOnce(new Error("seed …
+     59|   await expect(h.f.start()).rejects.toThrow("during seed");
+       |                           ^
+     60|   await h.f.dispose(); expect(h.events.slice(-3)).toEqual(["close", "s…
+     61| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL   @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts > serializes disposal with pending start and prevents later queries
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ src/__tests__/blocked-task-fixture.test.ts:90:36
+     88|   h.pg.start.mockImplementationOnce(() => { entered(); return new Prom…
+     89|   const starting = h.f.start();
+     90|   const rejection = expect(starting).rejects.toThrow("during start");
+       |                                    ^
+     91|   await entry; const disposing = h.f.dispose(); finish();
+     92|   await rejection; await disposing;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 6 passed (12)
+   Start at  18:13:24
+   Duration  226ms (transform 27ms, setup 0ms, collect 28ms, tests 17ms, environment 0ms, prepare 40ms)
+
+
+RESULT {"label":"red-swallow","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"red-swallow","command":["corepack","pnpm","exec","vitest","run","server/src/__tests__/blocked-task-fixture.test.ts"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:13:24.471Z","code":1,"signal":null,"timeout":false,"elapsedSeconds":0.973,"changed":[]}

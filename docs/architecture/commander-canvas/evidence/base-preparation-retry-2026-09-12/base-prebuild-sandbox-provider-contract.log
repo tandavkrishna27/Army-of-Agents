@@ -1,0 +1,7 @@
+{"phase":"checks","kind":"base","sha":"183e46a9c65fc3105c7e3d125629276814df7dbb","cwd":"/workspace/base","command":"corepack pnpm --filter @armyofagents/sandbox-provider-contract build","startedAt":"2026-09-12T14:17:04.559Z","logPath":"/workspace/retry-logs/base-prebuild-sandbox-provider-contract.log"}
+
+> @armyofagents/sandbox-provider-contract@0.1.0 build /workspace/base/packages/sandbox-provider-contract
+> tsc
+
+
+RESULT {"phase":"checks","kind":"base","sha":"183e46a9c65fc3105c7e3d125629276814df7dbb","cwd":"/workspace/base","command":"corepack pnpm --filter @armyofagents/sandbox-provider-contract build","startedAt":"2026-09-12T14:17:04.559Z","logPath":"/workspace/retry-logs/base-prebuild-sandbox-provider-contract.log","code":0,"signal":null,"timeout":false,"elapsedSeconds":0.84}

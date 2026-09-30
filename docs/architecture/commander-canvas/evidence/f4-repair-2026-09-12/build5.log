@@ -1,0 +1,11 @@
+{"label":"build5","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","--filter","@armyofagents/plugin-sdk","build"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:43.247Z"}
+
+> @armyofagents/plugin-sdk@1.0.0 build /workspace/f4-repair/packages/plugins/sdk
+> pnpm --filter @armyofagents/shared build && tsc
+
+
+> @armyofagents/shared@0.2.7 build /workspace/f4-repair/packages/shared
+> tsc
+
+
+RESULT {"label":"build5","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","--filter","@armyofagents/plugin-sdk","build"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:43.247Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":5.883,"changed":[]}

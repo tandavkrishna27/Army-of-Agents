@@ -1,0 +1,2718 @@
+{
+  "schemaVersion": 1,
+  "planSource": "8fa8b964a7300eb7125def094df6a92fffb58bc8",
+  "applicationBase": "b48132dac0f3435e017915e1e21ef1d66a39d0cd",
+  "featureImplementationAuthorized": false,
+  "parents": {
+    "E0.1/1": {
+      "title": "Baseline and ownership",
+      "plan": "coding-plans/e0-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E0.1/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E0.1/2": {
+      "title": "Contract collision and upstream integration",
+      "plan": "coding-plans/e0-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E0.1/2.a",
+        "E0.1/2.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.0/1": {
+      "title": "Screen-state review",
+      "plan": "coding-plans/e1-0.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.0/1.a",
+        "E1.0/1.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.0/2": {
+      "title": "Actual host reproduction",
+      "plan": "coding-plans/e1-0.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.0/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.1/1": {
+      "title": "Registry and lifecycle",
+      "plan": "coding-plans/e1-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.1/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.1/2": {
+      "title": "Pointer and focus handling",
+      "plan": "coding-plans/e1-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.1/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.1/3": {
+      "title": "Renderer adaptation",
+      "plan": "coding-plans/e1-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.1/3"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.2/1": {
+      "title": "Persistence transaction",
+      "plan": "coding-plans/e1-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.2/1",
+        "E5.1/2",
+        "E5.2/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.2/2": {
+      "title": "Conflict and reload recovery",
+      "plan": "coding-plans/e1-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.2/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.3/1": {
+      "title": "Draft storage",
+      "plan": "coding-plans/e1-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.3/1.a",
+        "E1.3/1.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.3/2": {
+      "title": "Submission acknowledgement and uncertain outcome",
+      "plan": "coding-plans/e1-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.3/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.4/1": {
+      "title": "Icon tray and menus",
+      "plan": "coding-plans/e1-4.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.4/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.4/2": {
+      "title": "Open overview, rails and restoration",
+      "plan": "coding-plans/e1-4.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.4/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.5/1": {
+      "title": "Compact, expanded, maximized and tucked chat",
+      "plan": "coding-plans/e1-5.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.5/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.5/2": {
+      "title": "Blob and caption independence",
+      "plan": "coding-plans/e1-5.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.5/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.5/3": {
+      "title": "Shared controls, focus and restoration",
+      "plan": "coding-plans/e1-5.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.5/3"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.6/1": {
+      "title": "Viewport context and placement",
+      "plan": "coding-plans/e1-6.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.6/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.6/2": {
+      "title": "Camera, reference glow and panel transitions",
+      "plan": "coding-plans/e1-6.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.6/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E1.6/3": {
+      "title": "Keyboard, touch and motion qualification",
+      "plan": "coding-plans/e1-6.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E1.6/3"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E2.1/1": {
+      "title": "Capture and resolve selected context",
+      "plan": "coding-plans/e2-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E2.1/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E2.1/2": {
+      "title": "Continuity, corrections and provider loss",
+      "plan": "coding-plans/e2-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E2.1/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E2.2/1": {
+      "title": "Observation and payload identity",
+      "plan": "coding-plans/e2-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E2.2/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E2.2/2": {
+      "title": "Existing execution and distributed binding",
+      "plan": "coding-plans/e2-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E2.2/2.a",
+        "E2.2/2.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E2.3/1": {
+      "title": "Truthful catch-up",
+      "plan": "coding-plans/e2-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E2.3/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E2.3/2": {
+      "title": "Disconnect, replay and canonical refresh",
+      "plan": "coding-plans/e2-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E2.3/2",
+        "E0.1/2.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E2.4/1": {
+      "title": "Shared task content and reply composer",
+      "plan": "coding-plans/e2-4.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E2.4/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E2.4/2": {
+      "title": "All entry points and lifecycle regression",
+      "plan": "coding-plans/e2-4.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E2.4/2",
+        "E0.1/2.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E3.1/1": {
+      "title": "Provider contract qualification",
+      "plan": "coding-plans/e3-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E3.1/1.a",
+        "E3.1/1.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E3.1/2": {
+      "title": "Session integration",
+      "plan": "coding-plans/e3-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E3.1/2",
+        "E3.1/1.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E3.2/1": {
+      "title": "Connection and control state",
+      "plan": "coding-plans/e3-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E3.2/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E3.2/2": {
+      "title": "Recovery and interruption",
+      "plan": "coding-plans/e3-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E3.2/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E3.3/1": {
+      "title": "Gemini conformance",
+      "plan": "coding-plans/e3-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E3.3/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E3.3/2": {
+      "title": "ElevenLabs conformance",
+      "plan": "coding-plans/e3-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E3.3/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E3.4/1": {
+      "title": "Split recognition and synthesis",
+      "plan": "coding-plans/e3-4.md",
+      "release": "V2",
+      "acceptanceAfter": [
+        "E3.4/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E3.4/2": {
+      "title": "Local speech runtime",
+      "plan": "coding-plans/e3-4.md",
+      "release": "V2",
+      "acceptanceAfter": [
+        "E3.4/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E3.4/3": {
+      "title": "V2 regression and rollout",
+      "plan": "coding-plans/e3-4.md",
+      "release": "V2",
+      "acceptanceAfter": [
+        "E3.4/3"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E4.1/1": {
+      "title": "Durable originals",
+      "plan": "coding-plans/e4-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E4.1/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E4.1/2": {
+      "title": "Processing status",
+      "plan": "coding-plans/e4-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E4.1/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E4.2/1": {
+      "title": "Format capability matrix",
+      "plan": "coding-plans/e4-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E4.2/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E4.2/2": {
+      "title": "Isolated processing and display",
+      "plan": "coding-plans/e4-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E4.2/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E4.3/1": {
+      "title": "Immutable revisions",
+      "plan": "coding-plans/e4-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E4.3/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E4.3/2": {
+      "title": "Generation qualification",
+      "plan": "coding-plans/e4-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E4.3/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E5.1/1": {
+      "title": "Reviewed renderer registry",
+      "plan": "coding-plans/e5-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E5.1/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E5.1/2": {
+      "title": "State and action boundary",
+      "plan": "coding-plans/e5-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E5.1/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E5.2/1": {
+      "title": "Host qualification",
+      "plan": "coding-plans/e5-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E5.2/1.a",
+        "E5.2/1.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E5.2/2": {
+      "title": "Capability bridge",
+      "plan": "coding-plans/e5-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E5.2/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.0/1": {
+      "title": "Contained automation adapter",
+      "plan": "coding-plans/e6-0.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.0/1.a",
+        "E6.0/1.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.0/2": {
+      "title": "Cloud streaming qualification",
+      "plan": "coding-plans/e6-0.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.0/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.0/3": {
+      "title": "Local streaming qualification",
+      "plan": "coding-plans/e6-0.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.0/3"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.1/1": {
+      "title": "Admitted session ownership",
+      "plan": "coding-plans/e6-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.1/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.1/2": {
+      "title": "Approval and recovery",
+      "plan": "coding-plans/e6-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.1/2.a",
+        "E6.1/2.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.2/1": {
+      "title": "Authenticated live view",
+      "plan": "coding-plans/e6-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.2/1.a",
+        "E6.2/1.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.2/2": {
+      "title": "Takeover and reconnect",
+      "plan": "coding-plans/e6-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.2/2.a",
+        "E6.2/2.b"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.3/1": {
+      "title": "Remote local-worker access",
+      "plan": "coding-plans/e6-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.3/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.3/2": {
+      "title": "Offline and focus recovery",
+      "plan": "coding-plans/e6-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.3/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.4/1": {
+      "title": "Task/session lifetime",
+      "plan": "coding-plans/e6-4.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.4/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.4/2": {
+      "title": "File transfers",
+      "plan": "coding-plans/e6-4.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.4/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E6.4/3": {
+      "title": "Saved profile reuse",
+      "plan": "coding-plans/e6-4.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E6.4/3"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E7.1/1": {
+      "title": "Conversational routine changes",
+      "plan": "coding-plans/e7-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E7.1/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E7.1/2": {
+      "title": "Scheduled execution recovery",
+      "plan": "coding-plans/e7-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E7.1/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E7.2/1": {
+      "title": "Durable trigger intent",
+      "plan": "coding-plans/e7-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E7.2/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E7.2/2": {
+      "title": "Reconcile and deduplicate",
+      "plan": "coding-plans/e7-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E7.2/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E7.3/1": {
+      "title": "Shared policy correction",
+      "plan": "coding-plans/e7-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E7.3/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E7.3/2": {
+      "title": "Attention surfaces and catch-up",
+      "plan": "coding-plans/e7-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E7.3/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E7.3/3": {
+      "title": "Delivery deduplication",
+      "plan": "coding-plans/e7-3.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E7.3/3"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E8.1/1": {
+      "title": "Preferences contract foundation",
+      "plan": "coding-plans/e8-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E8.1/1.a",
+        "E8.1/1.b",
+        "E8.1/1.c",
+        "E8.1/1.d"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E8.1/2": {
+      "title": "Consumer configuration",
+      "plan": "coding-plans/e8-1.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E8.1/2.a",
+        "E8.1/2.b",
+        "E8.1/2.c",
+        "E8.1/2.d",
+        "E8.1/2.e"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E8.2/1": {
+      "title": "Integrated evidence",
+      "plan": "coding-plans/e8-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E8.2/1"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    },
+    "E8.2/2": {
+      "title": "Release and recovery rehearsal",
+      "plan": "coding-plans/e8-2.md",
+      "release": "V1",
+      "acceptanceAfter": [
+        "E8.2/2"
+      ],
+      "acceptanceRule": "All original tests, cleanup, recovery and applicable UAT in the owning coding plan must be accepted; package completion alone does not waive them."
+    }
+  },
+  "gates": {
+    "PERSONAL_IDENTITY": {
+      "status": "open",
+      "owner": "E0/E8 identity and DB reviewer; Codex prepares evidence",
+      "plan": "coding-plans/e8-1.md",
+      "entryRequirement": "Review stable local_trusted/authenticated identity, company/user ownership and exact schema/route role binding before implementing the store; concurrency tests are outputs.",
+      "completionEvidence": "Stable authenticated/local_trusted user identity, company+user predicates, same-role generated schema and absent-row concurrency tests",
+      "kind": "binding_or_environment"
+    },
+    "D3_DESIGN": {
+      "status": "design_reviewed_binding_open",
+      "owner": "Codex security/Budget author plus assigned technical reviewer",
+      "plan": "voice-media-review-corrections.md",
+      "entryRequirement": "Apply the accepted D3 policy and obtain source-bound credential/session/Budget design review before dependent runtime code; initial documentary mapping can establish that binding without paid calls.",
+      "completionEvidence": "Bind accepted credential/session/Budget design to actual source/roles/migrations and reconcile active instruction baseline; provider terms decision stays accepted",
+      "kind": "binding_or_environment"
+    },
+    "PROVIDER_ACCESS": {
+      "status": "open_per_provider",
+      "owner": "Deployment/company provider administrator; Codex qualification author",
+      "plan": "voice-media-policy.md",
+      "entryRequirement": "Before an authorized live probe: permitted provider account, approved purpose/region/retention, credentials, supported device, explicit cost ceiling and cleanup owner. Documentary work does not require credentials.",
+      "completionEvidence": "Explicitly available permitted credentials, device and test budget; official current provider contract plus admin accepted region/retention under company policy. No paid call from settings read",
+      "kind": "binding_or_environment"
+    },
+    "HOST_OWNER": {
+      "status": "open",
+      "owner": "Deployment operator and isolated-host security reviewer; individual assignment required",
+      "plan": "coding-plans/e5-2.md",
+      "entryRequirement": "For discovery, assign the deployment owner and provide source/config access. Before host implementation, accept exact deployment/containment design. Runtime malicious-fixture proof is produced in the qualification package.",
+      "completionEvidence": "Exact deployment files/revision, origin/headers/CSP/egress and resource containment facility; /1.a discovers, /1.b proves runtime",
+      "kind": "binding_or_environment"
+    },
+    "BROWSER_OWNER": {
+      "status": "open",
+      "owner": "Replatform browser/worker owner; individual assignment required",
+      "plan": "coding-plans/e6-0.md",
+      "entryRequirement": "Assign the upstream browser/worker owner and provide guarded attachment source plus protocol decision access for feasibility; qualification is the output.",
+      "completionEvidence": "Exact Browser Use/worker attachment seam and common identity/transport decision; no debugger port or sandbox bypass",
+      "kind": "binding_or_environment"
+    },
+    "HUMAN_INTAKE": {
+      "status": "selected_A_binding_open",
+      "owner": "Codex intake author and asset/auth/storage reviewer",
+      "plan": "coding-plans/e4-1.md",
+      "entryRequirement": "Selected A is settled. Review actual actor/company/destination and same-role storage/transaction bindings before source edits; crash and revocation tests follow those edits.",
+      "completionEvidence": "Selected A actor/company/destination authorization, same-role atomic publication, storage crash/revocation tests and generated schema order",
+      "kind": "binding_or_environment"
+    },
+    "PROCESSORS": {
+      "status": "open_per_format",
+      "owner": "Processor/deployment operator; Codex materials author",
+      "plan": "coding-plans/e4-2.md",
+      "entryRequirement": "Provide pinned available converter/distribution candidates, license/deployment permission and disposable fixture environment. Format support and measured limits are qualification outputs.",
+      "completionEvidence": "Pinned converter/image distribution, licensing/deployment availability, resource limits and damaged/encrypted/oversized fixture matrix",
+      "kind": "binding_or_environment"
+    },
+    "INDEX": {
+      "status": "open",
+      "owner": "Index/storage and authorization owner; Codex consumer author",
+      "plan": "coding-plans/e4-2.md",
+      "entryRequirement": "Review destination-scoped index writer/retrieval and revocation contracts with their source owner before binding; implementation tests prove the contract afterward.",
+      "completionEvidence": "Qualified writer/retrieval boundary with destination lineage, revocation, private-source and no implicit Memory publication evidence",
+      "kind": "binding_or_environment"
+    },
+    "ACTUAL_UI_HOST": {
+      "status": "open",
+      "owner": "Target-host operator and Codex UI test author; TK acceptance",
+      "plan": "coding-plans/e1-0.md",
+      "entryRequirement": "Provide the actual supported application host, browser and input modes. The package executes and records the route regression; a prior passing run is not an entry requirement.",
+      "completionEvidence": "Access to actual supported host/browser and input modes. Component/standalone mock is insufficient for the reported route defect",
+      "kind": "binding_or_environment"
+    },
+    "SECURITY_OWNER": {
+      "status": "open",
+      "owner": "Credential/Budget service owners and assigned independent technical reviewer",
+      "plan": "voice-media-qualification-inventory.md",
+      "entryRequirement": "Assign credential and Budget writer reviewers and approve exact source/roles/transaction design before code; enumerate all affected writers. Concurrency, cap and stop tests are completion evidence.",
+      "completionEvidence": "All resolver/export/mutation and spend writers, concurrency/cap enforcement, stop delivery and conservative unknown-exposure evidence; not preference-policy ownership",
+      "kind": "binding_or_environment"
+    },
+    "CMD": {
+      "status": "open_upstream",
+      "owner": "Replatform Commander owner; Codex consumer; accountable upstream individual not yet recorded",
+      "plan": "worker-publication-qualification.md",
+      "entryRequirement": "Upstream must supply the actual qualified distributed routing, per-user credential, cancellation and originating-result authority revision. Universe cannot implement a substitute authority to clear this gate.",
+      "completionEvidence": "Actual E10-F001 routing, per-user credential, cancellation and originating result authority at a qualified revision; source existence alone does not close",
+      "kind": "binding_or_environment"
+    },
+    "WORKER_PUBLICATION": {
+      "status": "open",
+      "owner": "Codex output-binding/materials author and auth/worker/security reviewers",
+      "plan": "worker-publication-qualification.md",
+      "entryRequirement": "Review accepted-output slot/cancel/permission-writer contracts and assign their owners. E2.2 produces accepted output binding; E4 later proves canonical publication and reply repair. Do not require E4 publication before E2.2 producer code.",
+      "completionEvidence": "Accepted-output owner/slot/cancel transaction, permission-writer lock coverage, receipt/revocation/competing-attempt tests and processor default-deny tuples",
+      "kind": "binding_or_environment"
+    },
+    "BROWSER_APPROVAL": {
+      "status": "open_upstream",
+      "owner": "Replatform browser/approval owners; Codex browser consumer",
+      "plan": "coding-plans/e6-0.md",
+      "entryRequirement": "Receive qualified upstream approval delivery/recovery and admitted worker attachment contracts before consumer code; streaming and takeover acceptance remain downstream.",
+      "completionEvidence": "Actual E8-F001/F004 approval delivery and stranded-answer recovery plus guarded admitted worker attachment; no replacement authority",
+      "kind": "binding_or_environment"
+    },
+    "CLOUD_ENV": {
+      "status": "open_upstream",
+      "owner": "Cloud/worker operator and security reviewer",
+      "plan": "coding-plans/e6-0.md",
+      "entryRequirement": "Receive the upstream credential/metadata boundary, authorized image/tier and actual cloud test environment with spend permission. Streaming/controller proof is produced by qualification.",
+      "completionEvidence": "E8-F012 accepted credential/metadata boundary, authorized tier/image, headed stream/controller evidence and qualification spend authorization",
+      "kind": "binding_or_environment"
+    },
+    "LOCAL_WORKER": {
+      "status": "open_upstream",
+      "owner": "Local worker/device operator and replatform authentication owner",
+      "plan": "coding-plans/e6-3.md",
+      "entryRequirement": "Receive the authenticated outbound worker contract and an authorized supported device. Actual capture/offline/stale-input behavior is then qualified independently of cloud.",
+      "completionEvidence": "Authenticated outbound worker on actual supported OS/devices, selected-browser capture and stale/offline input rejection",
+      "kind": "binding_or_environment"
+    },
+    "TOOL_SECURITY": {
+      "status": "open",
+      "owner": "Codex tool author and capability/auth reviewer",
+      "plan": "coding-plans/e5-2.md",
+      "entryRequirement": "Review exact grant/action-link roles, migration and capability boundary before implementation; the real host and DB denial suite closes the consumer afterward.",
+      "completionEvidence": "Application-owned grant/action links, exact roles/migrations, generation/channel/revocation and real DB denial coverage; no frozen kernel privilege expansion",
+      "kind": "binding_or_environment"
+    },
+    "TERMINAL_WRITERS": {
+      "status": "open",
+      "owner": "Canonical source/scheduler writer owners; Codex follow-up consumer",
+      "plan": "coding-plans/e7-2.md",
+      "entryRequirement": "Enumerate and source-bind every enabled terminal/reopen writer and approve its same-owner intent/outbox design before adding follow-ups; crash coverage is generated afterward.",
+      "completionEvidence": "Enumerated terminal/reopen writers, reviewed same-owner intent/outbox architecture and crash/duplicate/revocation tests for every enabled source",
+      "kind": "binding_or_environment"
+    },
+    "MEDIA_PROVIDER": {
+      "status": "open_per_adapter",
+      "owner": "Provider/deployment administrator, Codex media author and security/Budget reviewer",
+      "plan": "coding-plans/e4-3.md",
+      "entryRequirement": "Provide each retained generation adapter contract and permitted account/environment/cost ceiling, with accepted credential and shared Budget producer bindings. Paid conformance follows implementation.",
+      "completionEvidence": "Actual generation adapter/API availability, accepted credential policy, budget/fencing/output publication and paid conformance for each retained provider",
+      "kind": "binding_or_environment"
+    },
+    "PROFILE": {
+      "status": "open_upstream",
+      "owner": "Accounts and Access/profile worker owner; security reviewer",
+      "plan": "coding-plans/e6-4.md",
+      "entryRequirement": "Receive the qualified upstream saved-account/profile authority, encryption/retention and purge contract plus test environment; both-placement Universe use/purge tests follow.",
+      "completionEvidence": "E8-F011/profile access, encryption/retention, revocation, measured teardown/purge and both-placement tests; signed-out success insufficient",
+      "kind": "binding_or_environment"
+    },
+    "V1_ACCEPTANCE": {
+      "status": "not_run",
+      "owner": "TK acceptance; Codex evidence; technical reviewer assigned per batch",
+      "plan": "user-acceptance-plan.md",
+      "entryRequirement": "Completion-only decision: TK or recorded delegate accepts the combined V1 and rollback evidence after E8.2/2 runs. Never a prerequisite for running the acceptance rehearsal.",
+      "completionEvidence": "Every retained V1 slice and integrated UAT/recovery/rollout accepted. Any required blocked mode keeps V1 open",
+      "kind": "completion_decision"
+    },
+    "V2_APPROVAL": {
+      "status": "not_authorized",
+      "owner": "TK",
+      "plan": "release-plans/v2.md",
+      "entryRequirement": "Require completed and accepted E8.2/2 and explicit V2 implementation approval. V1 waits never authorize V2.",
+      "completionEvidence": "V1 accepted complete and explicit separate V2 implementation scope approval; multi-screen is outside the 31-slice packet",
+      "kind": "authorization"
+    },
+    "LOCAL_SPEECH": {
+      "status": "open",
+      "owner": "Supported-device/model operator; Codex speech author",
+      "plan": "coding-plans/e3-4.md",
+      "entryRequirement": "Provide authorized supported OS/hardware, permitted model/distribution and measurable resource constraints; actual installation/disconnect performance is qualification output.",
+      "completionEvidence": "Actual OS/hardware/model installation/update/resource and disconnect qualification",
+      "kind": "binding_or_environment"
+    }
+  },
+  "batches": [
+    {
+      "id": "B00",
+      "title": "Recorded starting point",
+      "outcome": "Replatform adopted and represented Canvas design checked; preserve evidence, do not repeat setup",
+      "lanes": [
+        "coord"
+      ],
+      "acceptance": "Read base-integration-results.md; no new source work"
+    },
+    {
+      "id": "B01",
+      "title": "Contracts and early risk checks",
+      "outcome": "Preferences contracts, remaining state coverage, voice/browser/host feasibility",
+      "lanes": [
+        "shared",
+        "design",
+        "voice",
+        "browser",
+        "host"
+      ],
+      "acceptance": "Freeze producer signatures; assign real external owners without claiming their gates closed"
+    },
+    {
+      "id": "B02",
+      "title": "First Canvas demonstration",
+      "outcome": "Shared panel controller/frame, React Flow fixture host and draft snapshot types",
+      "lanes": [
+        "panel",
+        "draft"
+      ],
+      "acceptance": "Open two fixture panels; drag/resize at zoom; pin/maximize/minimize/close/undo; no live task claims"
+    },
+    {
+      "id": "B03",
+      "title": "Persistence producers",
+      "outcome": "Preference and layout/checkpoint transaction foundations",
+      "lanes": [
+        "shared",
+        "persistence"
+      ],
+      "acceptance": "Owner isolation, concurrent initial writes, operation replay, immutable opening order"
+    },
+    {
+      "id": "B04",
+      "title": "Drafts, reload and context capture",
+      "outcome": "Durable drafts, layout recovery and immutable selected context",
+      "lanes": [
+        "draft",
+        "persistence",
+        "context"
+      ],
+      "acceptance": "Reload and two-tab conflict retain geometry and unsent content; capture cannot retarget"
+    },
+    {
+      "id": "B05",
+      "title": "Canonical reads and original intake",
+      "outcome": "Context authorization, read-only outcome, shared attention projection, manual originals",
+      "lanes": [
+        "context",
+        "outcome",
+        "attention",
+        "materials"
+      ],
+      "acceptance": "Outcome reads do not execute work; attention counts are authorized; original survives preview failure"
+    },
+    {
+      "id": "B06",
+      "title": "Recovery and tray",
+      "outcome": "Draft reconciliation, stable tray/menu state and format qualification",
+      "lanes": [
+        "draft",
+        "tray",
+        "materials"
+      ],
+      "acceptance": "Send A/type B/ack A preserves B; menu ownership fixed; format matrix records real limits"
+    },
+    {
+      "id": "B07",
+      "title": "Commander and overview",
+      "outcome": "Recoverable panel overview, chat/captions/blob presentation",
+      "lanes": [
+        "tray",
+        "commander"
+      ],
+      "acceptance": "Hide both rails and restore work; compact/maximize/tuck and hover paths stay usable"
+    },
+    {
+      "id": "B08",
+      "title": "Manual task work and catch-up",
+      "outcome": "Existing task content plus canonical snapshot/summary reconciliation",
+      "lanes": [
+        "task",
+        "context"
+      ],
+      "acceptance": "Manual reply stays on its task; duplicate/missing events converge without new execution"
+    },
+    {
+      "id": "B09",
+      "title": "Motion and personal appearance",
+      "outcome": "Measured camera/bounds, transitions/highlight and appearance settings",
+      "lanes": [
+        "panel",
+        "settings"
+      ],
+      "acceptance": "Requested offscreen focus, input-safe cancellation, reduced motion and contrast/reset tests"
+    },
+    {
+      "id": "B10",
+      "title": "Attention and real task routes",
+      "outcome": "Shared questions, every task entry and actual-host defect reproduction",
+      "lanes": [
+        "attention",
+        "task",
+        "design",
+        "settings"
+      ],
+      "acceptance": "Original Needs-you failure journey passes through all five entry routes in the target host"
+    },
+    {
+      "id": "B11",
+      "title": "Credential and shared spend foundations",
+      "outcome": "Purpose-scoped Secrets and canonical shared Budget producers",
+      "lanes": [
+        "security",
+        "budget"
+      ],
+      "acceptance": "No credential bypass; simultaneous voice/media spend cannot exceed cap; unresolved cost retained"
+    },
+    {
+      "id": "B12",
+      "title": "Execution and browser qualification",
+      "outcome": "Canonical output-binding producer; contained adapter and independent cloud/local qualifications",
+      "lanes": [
+        "execution",
+        "browser",
+        "cloud",
+        "local"
+      ],
+      "acceptance": "Exact execution owner/slots and approval authority; local success cannot certify cloud or vice versa"
+    },
+    {
+      "id": "B13",
+      "title": "Materials and publication",
+      "outcome": "Isolated processors/index, full intake status, immutable version publication",
+      "lanes": [
+        "materials"
+      ],
+      "acceptance": "Private lineage/revoke/cancel/concurrent completion tests; no duplicate version or implicit Memory write"
+    },
+    {
+      "id": "B14",
+      "title": "Result delivery and first live sessions",
+      "outcome": "Original-conversation result repair, OpenAI session, admitted browser ownership",
+      "lanes": [
+        "execution",
+        "voice",
+        "browser"
+      ],
+      "acceptance": "One request/result despite disconnect; voice/automation use canonical authority"
+    },
+    {
+      "id": "B15",
+      "title": "Connected features",
+      "outcome": "Reviewed blocks, routines, voice recovery, local/cloud panels",
+      "lanes": [
+        "blocks",
+        "routines",
+        "voice",
+        "cloud",
+        "local"
+      ],
+      "acceptance": "Recover drafts/checkpoints and acknowledged work; takeover fences old input; voice never resubmits partials"
+    },
+    {
+      "id": "B16",
+      "title": "Remaining V1 capabilities",
+      "outcome": "Host/tools, follow-ups, Gemini, ElevenLabs and media generation",
+      "lanes": [
+        "host",
+        "routines",
+        "gemini",
+        "elevenlabs",
+        "media"
+      ],
+      "acceptance": "Independent real-provider conformance; containment/terminal-writer/paid-output failure cases"
+    },
+    {
+      "id": "B17",
+      "title": "Browser lifetime, files and profiles",
+      "outcome": "Both-placement lifecycle, asset transfer and qualified saved accounts",
+      "lanes": [
+        "browser"
+      ],
+      "acceptance": "Panel close differs from session stop; transfer dedup; actual profile purge. Repeat task/artifact route suite against final materials renderer"
+    },
+    {
+      "id": "B18",
+      "title": "Delivery and provider settings",
+      "outcome": "Cross-device announcements and actual voice/browser settings consumers",
+      "lanes": [
+        "attention",
+        "settings"
+      ],
+      "acceptance": "No duplicate speech; settings never grant delivery/authority or trigger paid probes"
+    },
+    {
+      "id": "B19",
+      "title": "Cross-slice closure",
+      "outcome": "Exhaustive settings, source bindings and evidence reconciliation",
+      "lanes": [
+        "settings",
+        "coord"
+      ],
+      "acceptance": "Recheck context/catch-up and task routes with real results/renderers; every retained field and gate has evidence"
+    },
+    {
+      "id": "B20",
+      "title": "Complete V1 acceptance",
+      "outcome": "Whole V1 evidence, rollback/recovery and user acceptance",
+      "lanes": [
+        "release"
+      ],
+      "acceptance": "No required slice, provider, placement, profile or UAT may be hidden/skipped to declare V1 complete"
+    },
+    {
+      "id": "B21",
+      "title": "Separately approved V2 speech",
+      "outcome": "Split pipeline and local speech only after completed V1",
+      "lanes": [
+        "voice",
+        "local"
+      ],
+      "acceptance": "Independent mode qualification; no V2 implementation during a V1 wait"
+    },
+    {
+      "id": "B22",
+      "title": "V2 regression and rollout",
+      "outcome": "Recheck shared voice/settings and V1 compatibility",
+      "lanes": [
+        "release"
+      ],
+      "acceptance": "V2 acceptance and rollback; multi-screen remains separately deferred"
+    }
+  ],
+  "packages": [
+    {
+      "id": "E0.1/1",
+      "parent": "E0.1/1",
+      "batch": "B00",
+      "lane": "coord",
+      "requires": [],
+      "gates": [],
+      "boundary": "Qualified source/ownership inventory already recorded; upstream owners remain explicit",
+      "release": "V1",
+      "plan": "coding-plans/e0-1.md",
+      "status": "evidenced_portion",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E0.1/2.a",
+      "parent": "E0.1/2",
+      "batch": "B00",
+      "lane": "coord",
+      "requires": [
+        "E0.1/1"
+      ],
+      "gates": [],
+      "boundary": "Adopted-base source collision checks already recorded",
+      "release": "V1",
+      "plan": "coding-plans/e0-1.md",
+      "status": "evidenced_portion",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.0/1.a",
+      "parent": "E1.0/1",
+      "batch": "B00",
+      "lane": "design",
+      "requires": [
+        "E0.1/2.a"
+      ],
+      "gates": [],
+      "boundary": "Represented first-Canvas state study already checked; not all UI states",
+      "release": "V1",
+      "plan": "coding-plans/e1-0.md",
+      "status": "evidenced_portion",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.0/1.b",
+      "parent": "E1.0/1",
+      "batch": "B01",
+      "lane": "design",
+      "requires": [
+        "E1.0/1.a"
+      ],
+      "gates": [],
+      "boundary": "Complete remaining surface/state review matrix before affected consumer coding",
+      "release": "V1",
+      "plan": "coding-plans/e1-0.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.1/1.a",
+      "parent": "E8.1/1",
+      "batch": "B01",
+      "lane": "shared",
+      "requires": [
+        "E0.1/2.a"
+      ],
+      "gates": [],
+      "boundary": "Preference types/defaults/resolver contract; no provider credential or Budget implementation",
+      "release": "V1",
+      "plan": "coding-plans/e8-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.1/1.a",
+      "parent": "E3.1/1",
+      "batch": "B01",
+      "lane": "voice",
+      "requires": [
+        "E0.1/2.a"
+      ],
+      "gates": [
+        "D3_DESIGN"
+      ],
+      "boundary": "Official documentary operation map and reviewed credential/session/Budget contract; no live qualification credit",
+      "release": "V1",
+      "plan": "coding-plans/e3-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E5.2/1.a",
+      "parent": "E5.2/1",
+      "batch": "B01",
+      "lane": "host",
+      "requires": [
+        "E0.1/2.a"
+      ],
+      "gates": [
+        "HOST_OWNER"
+      ],
+      "boundary": "Identify deployment files/owner and containment feasibility; no host enablement certificate",
+      "release": "V1",
+      "plan": "coding-plans/e5-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.0/1.a",
+      "parent": "E6.0/1",
+      "batch": "B01",
+      "lane": "browser",
+      "requires": [
+        "E0.1/2.a"
+      ],
+      "gates": [
+        "BROWSER_OWNER"
+      ],
+      "boundary": "Pin attachment/common protocol feasibility and guard constraints; no automation acceptance",
+      "release": "V1",
+      "plan": "coding-plans/e6-0.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.1/1",
+      "parent": "E1.1/1",
+      "batch": "B02",
+      "lane": "panel",
+      "requires": [
+        "E8.1/1.a",
+        "E1.0/1.a"
+      ],
+      "gates": [],
+      "boundary": "Registry, identity, normal geometry and bounded undo/history",
+      "release": "V1",
+      "plan": "coding-plans/e1-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.3/1.a",
+      "parent": "E1.3/1",
+      "batch": "B02",
+      "lane": "draft",
+      "requires": [
+        "E8.1/1.a"
+      ],
+      "gates": [],
+      "boundary": "All five destination schemas and immutable draft/pending snapshot contract",
+      "release": "V1",
+      "plan": "coding-plans/e1-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.1/2",
+      "parent": "E1.1/2",
+      "batch": "B02",
+      "lane": "panel",
+      "requires": [
+        "E1.1/1"
+      ],
+      "gates": [],
+      "boundary": "Shared drag/eight-edge resize/focus with generation and zoom fencing",
+      "release": "V1",
+      "plan": "coding-plans/e1-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.1/3",
+      "parent": "E1.1/3",
+      "batch": "B02",
+      "lane": "panel",
+      "requires": [
+        "E1.1/2"
+      ],
+      "gates": [],
+      "boundary": "Actual React Flow adapter/host and fixture renderers; not real task/browser acceptance",
+      "release": "V1",
+      "plan": "coding-plans/e1-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.1/1.b",
+      "parent": "E8.1/1",
+      "batch": "B03",
+      "lane": "shared",
+      "requires": [
+        "E8.1/1.a"
+      ],
+      "gates": [
+        "PERSONAL_IDENTITY"
+      ],
+      "boundary": "Revisioned preference store/routes/client/hook and reset authorization",
+      "release": "V1",
+      "plan": "coding-plans/e8-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.2/1",
+      "parent": "E1.2/1",
+      "batch": "B03",
+      "lane": "persistence",
+      "requires": [
+        "E1.1/3",
+        "E8.1/1.a"
+      ],
+      "gates": [
+        "PERSONAL_IDENTITY"
+      ],
+      "boundary": "Layout receipts/ordinal allocation and checkpoint producer with registered inert schemas",
+      "release": "V1",
+      "plan": "coding-plans/e1-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.3/1.b",
+      "parent": "E1.3/1",
+      "batch": "B04",
+      "lane": "draft",
+      "requires": [
+        "E1.3/1.a",
+        "E1.2/1"
+      ],
+      "gates": [
+        "PERSONAL_IDENTITY"
+      ],
+      "boundary": "Durable destination drafts; scheduled after layout only to serialize shared schema/route edits",
+      "release": "V1",
+      "plan": "coding-plans/e1-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.2/2",
+      "parent": "E1.2/2",
+      "batch": "B04",
+      "lane": "persistence",
+      "requires": [
+        "E1.2/1"
+      ],
+      "gates": [],
+      "boundary": "Hydration/journal/conflict recovery, viewport/order/selection/maximize persistence",
+      "release": "V1",
+      "plan": "coding-plans/e1-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E2.1/1",
+      "parent": "E2.1/1",
+      "batch": "B04",
+      "lane": "context",
+      "requires": [
+        "E1.1/3",
+        "E1.3/1.a"
+      ],
+      "gates": [],
+      "boundary": "Frozen context/viewport capture; consumes draft contract without waiting for motion",
+      "release": "V1",
+      "plan": "coding-plans/e2-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E2.1/2",
+      "parent": "E2.1/2",
+      "batch": "B05",
+      "lane": "context",
+      "requires": [
+        "E2.1/1"
+      ],
+      "gates": [],
+      "boundary": "Canonical authorized reference resolution and disclosure-safe retrieval",
+      "release": "V1",
+      "plan": "coding-plans/e2-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E2.2/1",
+      "parent": "E2.2/1",
+      "batch": "B05",
+      "lane": "outcome",
+      "requires": [
+        "E2.1/2"
+      ],
+      "gates": [],
+      "boundary": "Read-only outcomes, fingerprint/preflight, canonical run/reply hydration; no distributed cutover",
+      "release": "V1",
+      "plan": "coding-plans/e2-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E7.3/1",
+      "parent": "E7.3/1",
+      "batch": "B05",
+      "lane": "attention",
+      "requires": [
+        "E8.1/1.b"
+      ],
+      "gates": [],
+      "boundary": "Shared notification policy and authorized projection API before catch-up or question UI",
+      "release": "V1",
+      "plan": "coding-plans/e7-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E4.1/1",
+      "parent": "E4.1/1",
+      "batch": "B05",
+      "lane": "materials",
+      "requires": [
+        "E0.1/2.a",
+        "E1.1/3",
+        "E1.3/1.a"
+      ],
+      "gates": [
+        "HUMAN_INTAKE"
+      ],
+      "boundary": "Durable manual original plus processing/status contract; no generation dependency",
+      "release": "V1",
+      "plan": "coding-plans/e4-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.3/2",
+      "parent": "E1.3/2",
+      "batch": "B06",
+      "lane": "draft",
+      "requires": [
+        "E1.3/1.b",
+        "E2.2/1"
+      ],
+      "gates": [],
+      "boundary": "Submission snapshot/CAS clearing and unknown-outcome recovery",
+      "release": "V1",
+      "plan": "coding-plans/e1-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.4/1",
+      "parent": "E1.4/1",
+      "batch": "B06",
+      "lane": "tray",
+      "requires": [
+        "E1.1/3",
+        "E8.1/1.b",
+        "E1.0/1.b"
+      ],
+      "gates": [],
+      "boundary": "Single popup owner, fixed mark and Commander visibility navigation contract",
+      "release": "V1",
+      "plan": "coding-plans/e1-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E4.2/1",
+      "parent": "E4.2/1",
+      "batch": "B06",
+      "lane": "materials",
+      "requires": [
+        "E4.1/1"
+      ],
+      "gates": [
+        "PROCESSORS"
+      ],
+      "boundary": "Measured format matrix and pinned processors; no paid generation",
+      "release": "V1",
+      "plan": "coding-plans/e4-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.4/2",
+      "parent": "E1.4/2",
+      "batch": "B07",
+      "lane": "tray",
+      "requires": [
+        "E1.4/1",
+        "E1.2/2",
+        "E1.3/2"
+      ],
+      "gates": [],
+      "boundary": "Authorized paged overview/rails with stable order and recovery",
+      "release": "V1",
+      "plan": "coding-plans/e1-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.5/1",
+      "parent": "E1.5/1",
+      "batch": "B07",
+      "lane": "commander",
+      "requires": [
+        "E1.1/3",
+        "E1.3/2",
+        "E8.1/1.b",
+        "E1.4/1"
+      ],
+      "gates": [],
+      "boundary": "Independent chat/blob/caption visibility with tray contract binding",
+      "release": "V1",
+      "plan": "coding-plans/e1-5.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.5/2",
+      "parent": "E1.5/2",
+      "batch": "B07",
+      "lane": "commander",
+      "requires": [
+        "E1.5/1",
+        "E2.2/1"
+      ],
+      "gates": [],
+      "boundary": "Compact/expanded composer, canonical history and nonduplicated captions",
+      "release": "V1",
+      "plan": "coding-plans/e1-5.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.5/3",
+      "parent": "E1.5/3",
+      "batch": "B07",
+      "lane": "commander",
+      "requires": [
+        "E1.5/2"
+      ],
+      "gates": [],
+      "boundary": "Layered blob/hover controls and resizing; simulated connection labelled as such",
+      "release": "V1",
+      "plan": "coding-plans/e1-5.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E2.3/1",
+      "parent": "E2.3/1",
+      "batch": "B08",
+      "lane": "context",
+      "requires": [
+        "E1.2/2",
+        "E2.2/1",
+        "E7.3/1"
+      ],
+      "gates": [],
+      "boundary": "Canonical snapshot catch-up and event invalidation, initially existing execution path",
+      "release": "V1",
+      "plan": "coding-plans/e2-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E2.3/2",
+      "parent": "E2.3/2",
+      "batch": "B08",
+      "lane": "context",
+      "requires": [
+        "E2.3/1",
+        "E2.1/2"
+      ],
+      "gates": [],
+      "boundary": "Origin-bound filtered summaries; distributed recheck attached to execution closure",
+      "release": "V1",
+      "plan": "coding-plans/e2-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E2.4/1",
+      "parent": "E2.4/1",
+      "batch": "B08",
+      "lane": "task",
+      "requires": [
+        "E1.1/3",
+        "E1.3/2",
+        "E1.4/2",
+        "E2.2/1"
+      ],
+      "gates": [],
+      "boundary": "Actual TaskDetail adaptation, fixed composer and canonical manual replies",
+      "release": "V1",
+      "plan": "coding-plans/e2-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.6/1",
+      "parent": "E1.6/1",
+      "batch": "B09",
+      "lane": "panel",
+      "requires": [
+        "E1.4/2",
+        "E1.5/3",
+        "E2.1/1"
+      ],
+      "gates": [],
+      "boundary": "Measured usable bounds/camera and keyboard geometry",
+      "release": "V1",
+      "plan": "coding-plans/e1-6.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.6/2",
+      "parent": "E1.6/2",
+      "batch": "B09",
+      "lane": "panel",
+      "requires": [
+        "E1.6/1"
+      ],
+      "gates": [],
+      "boundary": "Cancellable lifecycle transitions and reduced-motion equivalence",
+      "release": "V1",
+      "plan": "coding-plans/e1-6.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.6/3",
+      "parent": "E1.6/3",
+      "batch": "B09",
+      "lane": "panel",
+      "requires": [
+        "E1.6/2"
+      ],
+      "gates": [],
+      "boundary": "Deliberate reference reveal/glow; do not steal active input",
+      "release": "V1",
+      "plan": "coding-plans/e1-6.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.1/2.a",
+      "parent": "E8.1/2",
+      "batch": "B09",
+      "lane": "settings",
+      "requires": [
+        "E1.6/3",
+        "E1.5/3",
+        "E1.4/2",
+        "E8.1/1.b"
+      ],
+      "gates": [],
+      "boundary": "Appearance/workspace controls with save/reset/contrast and consumer checks",
+      "release": "V1",
+      "plan": "coding-plans/e8-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E7.3/2",
+      "parent": "E7.3/2",
+      "batch": "B10",
+      "lane": "attention",
+      "requires": [
+        "E7.3/1",
+        "E1.3/2",
+        "E2.2/1",
+        "E2.4/1",
+        "E1.6/3"
+      ],
+      "gates": [],
+      "boundary": "Real right-side items and movable questions using canonical answer owners",
+      "release": "V1",
+      "plan": "coding-plans/e7-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E2.4/2",
+      "parent": "E2.4/2",
+      "batch": "B10",
+      "lane": "task",
+      "requires": [
+        "E2.4/1",
+        "E7.3/2",
+        "E1.4/2",
+        "E4.1/1"
+      ],
+      "gates": [],
+      "boundary": "All five real task-entry routes and lifecycle; recheck with final format renderer in B17",
+      "release": "V1",
+      "plan": "coding-plans/e2-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E1.0/2",
+      "parent": "E1.0/2",
+      "batch": "B10",
+      "lane": "design",
+      "requires": [
+        "E2.4/2",
+        "E1.6/3",
+        "E1.5/3"
+      ],
+      "gates": [
+        "ACTUAL_UI_HOST"
+      ],
+      "boundary": "Reproduce user's original task failure chain in actual target host",
+      "release": "V1",
+      "plan": "coding-plans/e1-0.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.1/2.b",
+      "parent": "E8.1/2",
+      "batch": "B10",
+      "lane": "settings",
+      "requires": [
+        "E7.3/2",
+        "E8.1/1.b"
+      ],
+      "gates": [],
+      "boundary": "Attention controls consume shared policy; speech controls remain unavailable until B18",
+      "release": "V1",
+      "plan": "coding-plans/e8-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.1/1.c",
+      "parent": "E8.1/1",
+      "batch": "B11",
+      "lane": "security",
+      "requires": [
+        "E8.1/1.a",
+        "E3.1/1.a"
+      ],
+      "gates": [
+        "D3_DESIGN",
+        "SECURITY_OWNER"
+      ],
+      "boundary": "Purpose-bound credential common-resolver and mutation/export enforcement",
+      "release": "V1",
+      "plan": "coding-plans/e8-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.1/1.d",
+      "parent": "E8.1/1",
+      "batch": "B11",
+      "lane": "budget",
+      "requires": [
+        "E8.1/1.a"
+      ],
+      "gates": [
+        "D3_DESIGN",
+        "SECURITY_OWNER"
+      ],
+      "boundary": "Canonical shared Budget reservation/settlement/stop writers and concurrency qualification",
+      "release": "V1",
+      "plan": "coding-plans/e8-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E2.2/2.a",
+      "parent": "E2.2/2",
+      "batch": "B12",
+      "lane": "execution",
+      "requires": [
+        "E2.2/1"
+      ],
+      "gates": [
+        "CMD",
+        "WORKER_PUBLICATION"
+      ],
+      "boundary": "Canonical admitted execution, accepted output-slot binding and cancellation authority producer",
+      "release": "V1",
+      "plan": "coding-plans/e2-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.0/1.b",
+      "parent": "E6.0/1",
+      "batch": "B12",
+      "lane": "browser",
+      "requires": [
+        "E6.0/1.a"
+      ],
+      "gates": [
+        "BROWSER_APPROVAL"
+      ],
+      "boundary": "Real contained automation attachment and approval/recovery evidence",
+      "release": "V1",
+      "plan": "coding-plans/e6-0.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.0/2",
+      "parent": "E6.0/2",
+      "batch": "B12",
+      "lane": "cloud",
+      "requires": [
+        "E6.0/1.b"
+      ],
+      "gates": [
+        "CLOUD_ENV"
+      ],
+      "boundary": "Cloud headed capture/input/controller qualification",
+      "release": "V1",
+      "plan": "coding-plans/e6-0.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.0/3",
+      "parent": "E6.0/3",
+      "batch": "B12",
+      "lane": "local",
+      "requires": [
+        "E6.0/1.b"
+      ],
+      "gates": [
+        "LOCAL_WORKER"
+      ],
+      "boundary": "Local outbound-worker capture/input qualification, independent of cloud success",
+      "release": "V1",
+      "plan": "coding-plans/e6-0.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E4.2/2",
+      "parent": "E4.2/2",
+      "batch": "B13",
+      "lane": "materials",
+      "requires": [
+        "E4.2/1",
+        "E2.2/2.a",
+        "E1.2/1",
+        "E1.6/3"
+      ],
+      "gates": [
+        "WORKER_PUBLICATION",
+        "PROCESSORS",
+        "INDEX"
+      ],
+      "boundary": "Isolated processors, publication/index writer and authorized retrieval/display",
+      "release": "V1",
+      "plan": "coding-plans/e4-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E4.1/2",
+      "parent": "E4.1/2",
+      "batch": "B13",
+      "lane": "materials",
+      "requires": [
+        "E4.1/1",
+        "E4.2/2"
+      ],
+      "gates": [],
+      "boundary": "Final intake status/index acceptance; original stays usable during other failures",
+      "release": "V1",
+      "plan": "coding-plans/e4-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E4.3/1",
+      "parent": "E4.3/1",
+      "batch": "B13",
+      "lane": "materials",
+      "requires": [
+        "E4.1/2",
+        "E4.2/2",
+        "E2.2/2.a"
+      ],
+      "gates": [],
+      "boundary": "Immutable artifact versions, accepted worker publication and receipt identity",
+      "release": "V1",
+      "plan": "coding-plans/e4-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E2.2/2.b",
+      "parent": "E2.2/2",
+      "batch": "B14",
+      "lane": "execution",
+      "requires": [
+        "E2.2/2.a",
+        "E4.3/1"
+      ],
+      "gates": [],
+      "boundary": "Original-conversation result/reply repair from saved publication; no second admission",
+      "release": "V1",
+      "plan": "coding-plans/e2-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.1/2",
+      "parent": "E3.1/2",
+      "batch": "B14",
+      "lane": "voice",
+      "requires": [
+        "E3.1/1.a",
+        "E8.1/1.c",
+        "E8.1/1.d",
+        "E2.2/2.a",
+        "E1.5/3"
+      ],
+      "gates": [
+        "PROVIDER_ACCESS"
+      ],
+      "boundary": "OpenAI session implementation then real authorized handoff/live qualification",
+      "release": "V1",
+      "plan": "coding-plans/e3-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.1/1",
+      "parent": "E6.1/1",
+      "batch": "B14",
+      "lane": "browser",
+      "requires": [
+        "E6.0/1.b"
+      ],
+      "gates": [
+        "BROWSER_APPROVAL"
+      ],
+      "boundary": "Admitted session/tab ownership; no dependency on both streaming placements being finished",
+      "release": "V1",
+      "plan": "coding-plans/e6-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.1/2.a",
+      "parent": "E6.1/2",
+      "batch": "B14",
+      "lane": "browser",
+      "requires": [
+        "E6.1/1"
+      ],
+      "gates": [
+        "BROWSER_APPROVAL"
+      ],
+      "boundary": "Reviewed canonical approval/recovery binding and common driver/authority tests; real both-placement acceptance remains /2.b",
+      "release": "V1",
+      "plan": "coding-plans/e6-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.2/1.a",
+      "parent": "E6.2/1",
+      "batch": "B14",
+      "lane": "browser",
+      "requires": [
+        "E6.1/2.a",
+        "E1.1/3",
+        "E1.6/3"
+      ],
+      "gates": [],
+      "completionGates": [],
+      "boundary": "Common capability-aware BrowserPanel frame/state contract for both placements; inert authorized descriptors only, no cloud transport or live-view credit",
+      "release": "V1",
+      "plan": "coding-plans/e6-2.md",
+      "status": "not_started",
+      "acceptance": "Common producer code and specified pure negative tests reviewed before either placement consumes it; actual cloud enforcement remains in the .b package and local tests in E6.3."
+    },
+    {
+      "id": "E6.2/2.a",
+      "parent": "E6.2/2",
+      "batch": "B14",
+      "lane": "browser",
+      "requires": [
+        "E6.2/1.a"
+      ],
+      "gates": [],
+      "completionGates": [],
+      "boundary": "Shared browser-control-state reducer, epoch/request/ack and coordinate conversion contract/tests; no claim of worker enforcement",
+      "release": "V1",
+      "plan": "coding-plans/e6-2.md",
+      "status": "not_started",
+      "acceptance": "Common producer code and specified pure negative tests reviewed before either placement consumes it; actual cloud enforcement remains in the .b package and local tests in E6.3."
+    },
+    {
+      "id": "E5.1/1",
+      "parent": "E5.1/1",
+      "batch": "B15",
+      "lane": "blocks",
+      "requires": [
+        "E4.3/1",
+        "E4.2/2",
+        "E1.1/3",
+        "E1.2/1",
+        "E1.3/1.b",
+        "E2.1/2"
+      ],
+      "gates": [],
+      "boundary": "Reviewed block schemas and renderer registry using immutable authorized sources",
+      "release": "V1",
+      "plan": "coding-plans/e5-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E5.1/2",
+      "parent": "E5.1/2",
+      "batch": "B15",
+      "lane": "blocks",
+      "requires": [
+        "E5.1/1",
+        "E1.2/2",
+        "E1.3/2",
+        "E2.2/2.b"
+      ],
+      "gates": [],
+      "boundary": "Registered checkpoint inputs, governed actions and recovery",
+      "release": "V1",
+      "plan": "coding-plans/e5-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E7.1/1",
+      "parent": "E7.1/1",
+      "batch": "B15",
+      "lane": "routines",
+      "requires": [
+        "E2.2/2.b"
+      ],
+      "gates": [],
+      "boundary": "Explicit routine edits through existing scheduler/approval authority",
+      "release": "V1",
+      "plan": "coding-plans/e7-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E7.1/2",
+      "parent": "E7.1/2",
+      "batch": "B15",
+      "lane": "routines",
+      "requires": [
+        "E7.1/1"
+      ],
+      "gates": [],
+      "boundary": "DST/overlap/denial and originating-result recovery",
+      "release": "V1",
+      "plan": "coding-plans/e7-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.2/1",
+      "parent": "E3.2/1",
+      "batch": "B15",
+      "lane": "voice",
+      "requires": [
+        "E3.1/2",
+        "E1.5/3",
+        "E2.1/2"
+      ],
+      "gates": [],
+      "boundary": "Independent live connection/mic/speaker/stop state",
+      "release": "V1",
+      "plan": "coding-plans/e3-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.2/2",
+      "parent": "E3.2/2",
+      "batch": "B15",
+      "lane": "voice",
+      "requires": [
+        "E3.2/1",
+        "E2.3/2",
+        "E2.2/2.b"
+      ],
+      "gates": [],
+      "boundary": "Real interruption/reconnect/generation fencing and outcome reconciliation",
+      "release": "V1",
+      "plan": "coding-plans/e3-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.2/1.b",
+      "parent": "E6.2/1",
+      "batch": "B15",
+      "lane": "cloud",
+      "requires": [
+        "E6.0/2",
+        "E6.1/2.a",
+        "E1.1/3",
+        "E1.6/3",
+        "E6.2/1.a"
+      ],
+      "gates": [
+        "CLOUD_ENV"
+      ],
+      "boundary": "Bind qualified cloud transport into the common BrowserPanel; real cloud view, identity, expiry and stale-stream tests",
+      "release": "V1",
+      "plan": "coding-plans/e6-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.2/2.b",
+      "parent": "E6.2/2",
+      "batch": "B15",
+      "lane": "cloud",
+      "requires": [
+        "E6.2/1.b",
+        "E6.2/2.a"
+      ],
+      "gates": [],
+      "boundary": "Takeover, controller epochs, view loss and reconnect",
+      "release": "V1",
+      "plan": "coding-plans/e6-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.3/1",
+      "parent": "E6.3/1",
+      "batch": "B15",
+      "lane": "local",
+      "requires": [
+        "E6.0/3",
+        "E6.1/2.a",
+        "E1.1/3",
+        "E1.6/3",
+        "E6.2/1.a",
+        "E6.2/2.a"
+      ],
+      "gates": [
+        "LOCAL_WORKER"
+      ],
+      "boundary": "Authorized remote local-browser panel",
+      "release": "V1",
+      "plan": "coding-plans/e6-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.3/2",
+      "parent": "E6.3/2",
+      "batch": "B15",
+      "lane": "local",
+      "requires": [
+        "E6.3/1",
+        "E2.2/1"
+      ],
+      "gates": [],
+      "boundary": "Local worker offline/reconnect and focus/input recovery",
+      "release": "V1",
+      "plan": "coding-plans/e6-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E5.2/1.b",
+      "parent": "E5.2/1",
+      "batch": "B16",
+      "lane": "host",
+      "requires": [
+        "E5.2/1.a",
+        "E5.1/2",
+        "E4.3/1"
+      ],
+      "gates": [
+        "HOST_OWNER"
+      ],
+      "boundary": "Real isolated-host malicious-fixture/resource/teardown qualification",
+      "release": "V1",
+      "plan": "coding-plans/e5-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E5.2/2",
+      "parent": "E5.2/2",
+      "batch": "B16",
+      "lane": "host",
+      "requires": [
+        "E5.2/1.b",
+        "E1.2/2",
+        "E1.3/2",
+        "E2.2/2.b"
+      ],
+      "gates": [
+        "TOOL_SECURITY"
+      ],
+      "boundary": "Generation-fenced capability bridge/grants/action links and checkpoint recovery",
+      "release": "V1",
+      "plan": "coding-plans/e5-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E7.2/1",
+      "parent": "E7.2/1",
+      "batch": "B16",
+      "lane": "routines",
+      "requires": [
+        "E7.1/2",
+        "E2.2/2.b"
+      ],
+      "gates": [
+        "TERMINAL_WRITERS"
+      ],
+      "boundary": "Durable standing authority and terminal-owner intent/outbox binding",
+      "release": "V1",
+      "plan": "coding-plans/e7-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E7.2/2",
+      "parent": "E7.2/2",
+      "batch": "B16",
+      "lane": "routines",
+      "requires": [
+        "E7.2/1"
+      ],
+      "gates": [],
+      "boundary": "Deduplicated follow-up recovery and revoked-authority tests",
+      "release": "V1",
+      "plan": "coding-plans/e7-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.3/1",
+      "parent": "E3.3/1",
+      "batch": "B16",
+      "lane": "gemini",
+      "requires": [
+        "E3.2/2"
+      ],
+      "gates": [
+        "PROVIDER_ACCESS"
+      ],
+      "boundary": "Gemini-specific contract, adapter and independent live conformance",
+      "release": "V1",
+      "plan": "coding-plans/e3-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.3/2",
+      "parent": "E3.3/2",
+      "batch": "B16",
+      "lane": "elevenlabs",
+      "requires": [
+        "E3.2/2"
+      ],
+      "gates": [
+        "PROVIDER_ACCESS"
+      ],
+      "boundary": "ElevenLabs-specific contract, adapter and independent live conformance",
+      "release": "V1",
+      "plan": "coding-plans/e3-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E4.3/2",
+      "parent": "E4.3/2",
+      "batch": "B16",
+      "lane": "media",
+      "requires": [
+        "E4.3/1",
+        "E2.2/2.b",
+        "E8.1/1.c",
+        "E8.1/1.d"
+      ],
+      "gates": [
+        "MEDIA_PROVIDER"
+      ],
+      "boundary": "Each retained media adapter, spend/resolver enforcement and immutable output recovery",
+      "release": "V1",
+      "plan": "coding-plans/e4-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.1/1.b",
+      "parent": "E3.1/1",
+      "batch": "B16",
+      "lane": "voice",
+      "requires": [
+        "E3.1/2",
+        "E3.2/2"
+      ],
+      "gates": [
+        "PROVIDER_ACCESS"
+      ],
+      "boundary": "Complete the original OpenAI live qualification matrix with actual controls, reconnect, outcome recovery, usage and cleanup; closes deferred /1 runtime acceptance",
+      "release": "V1",
+      "plan": "coding-plans/e3-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.4/1",
+      "parent": "E6.4/1",
+      "batch": "B17",
+      "lane": "browser",
+      "requires": [
+        "E6.2/2.b",
+        "E6.3/2",
+        "E6.1/2.b"
+      ],
+      "gates": [],
+      "boundary": "Both-placement panel/session/task lifetime and resource release",
+      "release": "V1",
+      "plan": "coding-plans/e6-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.4/2",
+      "parent": "E6.4/2",
+      "batch": "B17",
+      "lane": "browser",
+      "requires": [
+        "E6.4/1",
+        "E4.1/2",
+        "E4.3/1"
+      ],
+      "gates": [],
+      "boundary": "Authorized upload/download publication and deduplication",
+      "release": "V1",
+      "plan": "coding-plans/e6-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.4/3",
+      "parent": "E6.4/3",
+      "batch": "B17",
+      "lane": "browser",
+      "requires": [
+        "E6.4/2"
+      ],
+      "gates": [
+        "PROFILE"
+      ],
+      "boundary": "Saved-account/profile reuse and purge across both placements",
+      "release": "V1",
+      "plan": "coding-plans/e6-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E6.1/2.b",
+      "parent": "E6.1/2",
+      "batch": "B17",
+      "lane": "browser",
+      "requires": [
+        "E6.1/2.a",
+        "E6.2/2.b",
+        "E6.3/2"
+      ],
+      "gates": [
+        "BROWSER_APPROVAL"
+      ],
+      "completionGates": [],
+      "boundary": "Complete approval/stranded-answer/uncertain-effect/takeover matrix in both actual local and cloud integrations; closes deferred authority acceptance",
+      "release": "V1",
+      "plan": "coding-plans/e6-1.md",
+      "status": "not_started",
+      "acceptance": "Run every original E6.1/2 real-worker case in both placements; a common recording-driver pass does not close this package."
+    },
+    {
+      "id": "E7.3/3",
+      "parent": "E7.3/3",
+      "batch": "B18",
+      "lane": "attention",
+      "requires": [
+        "E7.3/2",
+        "E3.2/2",
+        "E7.2/2"
+      ],
+      "gates": [],
+      "boundary": "Cross-device sound/speech delivery claims, terminal-result integration and deduplication",
+      "release": "V1",
+      "plan": "coding-plans/e7-3.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.1/2.c",
+      "parent": "E8.1/2",
+      "batch": "B18",
+      "lane": "settings",
+      "requires": [
+        "E3.3/1",
+        "E3.3/2",
+        "E4.3/2",
+        "E7.3/3",
+        "E8.1/1.c",
+        "E8.1/1.d"
+      ],
+      "gates": [],
+      "boundary": "Voice/media readiness and notification controls; Budget stays in its own editor",
+      "release": "V1",
+      "plan": "coding-plans/e8-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.1/2.d",
+      "parent": "E8.1/2",
+      "batch": "B18",
+      "lane": "settings",
+      "requires": [
+        "E6.4/3",
+        "E8.1/1.b"
+      ],
+      "gates": [],
+      "boundary": "Browser quality/account/profile settings with actual consumers",
+      "release": "V1",
+      "plan": "coding-plans/e8-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.1/2.e",
+      "parent": "E8.1/2",
+      "batch": "B19",
+      "lane": "settings",
+      "requires": [
+        "E8.1/2.a",
+        "E8.1/2.b",
+        "E8.1/2.c",
+        "E8.1/2.d",
+        "E5.2/2"
+      ],
+      "gates": [],
+      "boundary": "Exhaustive retained-settings audit and cross-consumer reset/migration/rollback",
+      "release": "V1",
+      "plan": "coding-plans/e8-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E0.1/2.b",
+      "parent": "E0.1/2",
+      "batch": "B19",
+      "lane": "coord",
+      "requires": [
+        "E8.1/2.e",
+        "E7.2/2",
+        "E5.2/2"
+      ],
+      "gates": [],
+      "boundary": "Final source/producer/owner evidence and controlled upstream synchronization closure",
+      "release": "V1",
+      "plan": "coding-plans/e0-1.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.2/1",
+      "parent": "E8.2/1",
+      "batch": "B20",
+      "lane": "release",
+      "requires": [
+        "E0.1/1",
+        "E0.1/2.a",
+        "E1.0/1.a",
+        "E1.0/1.b",
+        "E8.1/1.a",
+        "E3.1/1.a",
+        "E5.2/1.a",
+        "E6.0/1.a",
+        "E1.1/1",
+        "E1.3/1.a",
+        "E1.1/2",
+        "E1.1/3",
+        "E8.1/1.b",
+        "E1.2/1",
+        "E1.3/1.b",
+        "E1.2/2",
+        "E2.1/1",
+        "E2.1/2",
+        "E2.2/1",
+        "E7.3/1",
+        "E4.1/1",
+        "E1.3/2",
+        "E1.4/1",
+        "E4.2/1",
+        "E1.4/2",
+        "E1.5/1",
+        "E1.5/2",
+        "E1.5/3",
+        "E2.3/1",
+        "E2.3/2",
+        "E2.4/1",
+        "E1.6/1",
+        "E1.6/2",
+        "E1.6/3",
+        "E8.1/2.a",
+        "E7.3/2",
+        "E2.4/2",
+        "E1.0/2",
+        "E8.1/2.b",
+        "E8.1/1.c",
+        "E8.1/1.d",
+        "E2.2/2.a",
+        "E6.0/1.b",
+        "E6.0/2",
+        "E6.0/3",
+        "E4.2/2",
+        "E4.1/2",
+        "E4.3/1",
+        "E2.2/2.b",
+        "E3.1/2",
+        "E6.1/1",
+        "E6.1/2.a",
+        "E6.2/1.a",
+        "E6.2/2.a",
+        "E5.1/1",
+        "E5.1/2",
+        "E7.1/1",
+        "E7.1/2",
+        "E3.2/1",
+        "E3.2/2",
+        "E6.2/1.b",
+        "E6.2/2.b",
+        "E6.3/1",
+        "E6.3/2",
+        "E5.2/1.b",
+        "E5.2/2",
+        "E7.2/1",
+        "E7.2/2",
+        "E3.3/1",
+        "E3.3/2",
+        "E4.3/2",
+        "E3.1/1.b",
+        "E6.4/1",
+        "E6.4/2",
+        "E6.4/3",
+        "E6.1/2.b",
+        "E7.3/3",
+        "E8.1/2.c",
+        "E8.1/2.d",
+        "E8.1/2.e",
+        "E0.1/2.b"
+      ],
+      "gates": [],
+      "boundary": "All V1 integrated real-provider/worker/host evidence and per-slice UAT records",
+      "release": "V1",
+      "plan": "coding-plans/e8-2.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E8.2/2",
+      "parent": "E8.2/2",
+      "batch": "B20",
+      "lane": "release",
+      "requires": [
+        "E8.2/1"
+      ],
+      "gates": [],
+      "boundary": "Rollback/migration/revocation/long-session rehearsal and accepted V1 release closure",
+      "release": "V1",
+      "plan": "coding-plans/e8-2.md",
+      "status": "not_started",
+      "completionGates": [
+        "V1_ACCEPTANCE"
+      ],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.4/1",
+      "parent": "E3.4/1",
+      "batch": "B21",
+      "lane": "voice",
+      "requires": [
+        "E8.2/2"
+      ],
+      "gates": [
+        "V2_APPROVAL",
+        "PROVIDER_ACCESS"
+      ],
+      "boundary": "Later split recognition/synthesis qualification and integration",
+      "release": "V2",
+      "plan": "coding-plans/e3-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.4/2",
+      "parent": "E3.4/2",
+      "batch": "B21",
+      "lane": "local",
+      "requires": [
+        "E8.2/2",
+        "E3.4/1"
+      ],
+      "gates": [
+        "V2_APPROVAL",
+        "LOCAL_SPEECH"
+      ],
+      "boundary": "Local speech OS/hardware/model qualification and integration",
+      "release": "V2",
+      "plan": "coding-plans/e3-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    },
+    {
+      "id": "E3.4/3",
+      "parent": "E3.4/3",
+      "batch": "B22",
+      "lane": "release",
+      "requires": [
+        "E3.4/1",
+        "E3.4/2"
+      ],
+      "gates": [],
+      "boundary": "V2 regression/configuration/rollout preserving all V1 realtime behavior",
+      "release": "V2",
+      "plan": "coding-plans/e3-4.md",
+      "status": "not_started",
+      "completionGates": [],
+      "acceptance": "The linked original increment tests and recovery criteria apply to this delivery boundary. Deferred cross-slice checks remain open until the later named package; no partial parent completion."
+    }
+  ],
+  "executionRules": {
+    "batchSemantics": "Priority slots, not all-previous-slot barriers or separately mandated approval rounds. A package runs only after its explicit requires edges, applicable entry gates, resource ownership and approved scope are satisfied.",
+    "parentCompletion": "All child packages and original increment acceptance must pass; suffixes partition delivery, never add scope.",
+    "maximumImplementers": 2,
+    "maximumIndependentReviewers": 1,
+    "implementationAuthorization": "Not granted by this sequencing packet. Approve bounded batch scope after discussion; routine in-scope engineering corrections need no repeated permission.",
+    "externalGateSemantics": "Entry binding/environment and completion qualification are different. Discovery may produce a reviewed binding before consumer coding. Missing real upstream producers block consumers; writing a protocol is not evidence of runtime readiness.",
+    "resourceRule": "One writer per shared schema/migration chain, shared exports, authority route/service or panel controller; integrator serializes overlapping changes. Different lane labels do not prove disjoint files.",
+    "handoffSemantics": "requires refers to accepted package delivery, not full parent-increment closure. acceptanceAfter records deferred original acceptance. A frozen contract handoff can unblock a consumer while its parent awaits that consumer test."
+  }
+}

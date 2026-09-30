@@ -1,0 +1,89 @@
+{"label":"types","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"green","command":["corepack","pnpm","exec","tsc","--project","/workspace/evidence/f4-types.json"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:13:45.065Z"}
+packages/adapter-utils/src/server-utils.ts(76,12): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+packages/adapter-utils/src/streaming-login.ts(137,11): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+packages/adapter-utils/src/streaming-login.ts(145,11): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+packages/adapters/codex-local/src/server/app-server/jsonrpc-client.ts(363,16): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+packages/adapters/codex-local/src/server/app-server/jsonrpc-client.ts(364,16): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+packages/adapters/codex-local/src/server/login.ts(106,23): error TS2339: Property 'once' does not exist on type 'ChildProcess'.
+packages/adapters/codex-local/src/server/login.ts(114,23): error TS2339: Property 'once' does not exist on type 'ChildProcess'.
+packages/db/src/backup-lib.ts(367,11): error TS2339: Property 'once' does not exist on type 'ChildProcess'.
+packages/db/src/backup-lib.ts(368,11): error TS2339: Property 'once' does not exist on type 'ChildProcess'.
+packages/db/src/backup-lib.ts(368,25): error TS7006: Parameter 'code' implicitly has an 'any' type.
+packages/db/src/backup-lib.ts(368,31): error TS7006: Parameter 'signal' implicitly has an 'any' type.
+server/src/__tests__/blocked-task-fixture.test.ts(98,59): error TS2339: Property 'once' does not exist on type 'Server'.
+server/src/__tests__/helpers/embedded-pg-port.ts(27,14): error TS2339: Property 'once' does not exist on type 'Server'.
+server/src/__tests__/helpers/embedded-pg-port.ts(28,14): error TS2339: Property 'once' does not exist on type 'Server'.
+server/src/routes/authz-tenant.ts(62,20): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(12,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(15,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(37,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(40,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(40,41): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(44,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(45,13): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(50,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(58,13): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(63,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(64,13): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(74,16): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(74,38): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(83,13): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(84,34): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(93,20): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(94,26): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(98,9): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(99,9): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(101,40): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(125,53): error TS2304: Cannot find name 'Actor'.
+server/src/routes/authz.ts(141,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(144,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(147,20): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(148,20): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(149,18): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(153,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(156,20): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(158,18): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(164,18): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(166,16): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(181,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(182,14): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(182,55): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/routes/authz.ts(186,11): error TS2339: Property 'actor' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/src/services/extraction-cli.ts(542,10): error TS2339: Property 'on' does not exist on type 'ChildProcessWithoutNullStreams'.
+server/src/services/extraction-cli.ts(542,23): error TS7006: Parameter 'code' implicitly has an 'any' type.
+server/src/services/extraction-cli.ts(543,10): error TS2339: Property 'on' does not exist on type 'ChildProcessWithoutNullStreams'.
+server/src/services/internal-agent/cli-mode.ts(1514,22): error TS2339: Property 'on' does not exist on type 'ChildProcessWithoutNullStreams'.
+server/src/services/internal-agent/cli-mode.ts(1774,8): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+server/src/services/internal-agent/cli-mode.ts(1778,8): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+server/src/services/internal-agent/cli-mode.ts(1779,8): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+server/src/services/internal-agent/cli-mode.ts(1930,12): error TS2339: Property 'on' does not exist on type 'ChildProcessWithoutNullStreams'.
+server/src/services/internal-agent/cli-mode.ts(1930,24): error TS7006: Parameter 'code' implicitly has an 'any' type.
+server/src/services/internal-agent/cli-mode.ts(1931,12): error TS2339: Property 'on' does not exist on type 'ChildProcessWithoutNullStreams'.
+server/src/services/internal-agent/cli-summarizer.ts(92,11): error TS2339: Property 'on' does not exist on type 'ChildProcessWithoutNullStreams'.
+server/src/services/internal-agent/cli-summarizer.ts(100,11): error TS2339: Property 'on' does not exist on type 'ChildProcessWithoutNullStreams'.
+server/src/services/internal-agent/codex-exec.ts(199,10): error TS2339: Property 'on' does not exist on type 'ChildProcessWithoutNullStreams'.
+server/src/services/internal-agent/codex-exec.ts(199,23): error TS7006: Parameter 'code' implicitly has an 'any' type.
+server/src/services/internal-agent/codex-exec.ts(200,10): error TS2339: Property 'on' does not exist on type 'ChildProcessWithoutNullStreams'.
+server/src/services/plugin-worker-manager.ts(663,16): error TS2339: Property 'on' does not exist on type 'Interface'.
+server/src/services/plugin-worker-manager.ts(669,22): error TS2339: Property 'on' does not exist on type 'Interface'.
+server/src/services/plugin-worker-manager.ts(676,11): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+server/src/services/plugin-worker-manager.ts(676,23): error TS7006: Parameter 'code' implicitly has an 'any' type.
+server/src/services/plugin-worker-manager.ts(676,29): error TS7006: Parameter 'signal' implicitly has an 'any' type.
+server/src/services/plugin-worker-manager.ts(681,11): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+server/src/services/plugin-worker-manager.ts(681,24): error TS7006: Parameter 'err' implicitly has an 'any' type.
+server/src/services/plugin-worker-manager.ts(965,20): error TS2339: Property 'once' does not exist on type 'ChildProcess'.
+server/src/services/plugin-worker-manager.ts(988,20): error TS2339: Property 'once' does not exist on type 'ChildProcess'.
+server/src/services/plugin-worker-manager.ts(1019,20): error TS2339: Property 'once' does not exist on type 'ChildProcess'.
+server/src/services/workspace-runtime.ts(563,11): error TS2339: Property 'on' does not exist on type 'ChildProcessByStdio<null, Readable, Readable>'.
+server/src/services/workspace-runtime.ts(564,11): error TS2339: Property 'on' does not exist on type 'ChildProcessByStdio<null, Readable, Readable>'.
+server/src/services/workspace-runtime.ts(564,24): error TS7006: Parameter 'code' implicitly has an 'any' type.
+server/src/services/workspace-runtime.ts(1672,12): error TS2339: Property 'on' does not exist on type 'Server'.
+server/src/services/workspace-runtime.ts(2538,17): error TS2339: Property 'on' does not exist on type 'ChildProcess'.
+server/src/services/workspace-runtime.ts(2538,29): error TS7006: Parameter 'code' implicitly has an 'any' type.
+server/src/services/workspace-runtime.ts(2538,35): error TS7006: Parameter 'signal' implicitly has an 'any' type.
+server/src/services/workspace-runtime.ts(3609,13): error TS2339: Property 'on' does not exist on type 'ChildProcessByStdio<null, Readable, Readable>'.
+server/src/services/workspace-runtime.ts(3609,26): error TS7006: Parameter 'err' implicitly has an 'any' type.
+server/src/services/workspace-runtime.ts(3612,13): error TS2339: Property 'on' does not exist on type 'ChildProcessByStdio<null, Readable, Readable>'.
+server/src/services/workspace-runtime.ts(3612,26): error TS7006: Parameter 'code' implicitly has an 'any' type.
+
+RESULT {"label":"types","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"green","command":["corepack","pnpm","exec","tsc","--project","/workspace/evidence/f4-types.json"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:13:45.065Z","code":2,"signal":null,"timeout":false,"elapsedSeconds":12.145,"changed":[]}

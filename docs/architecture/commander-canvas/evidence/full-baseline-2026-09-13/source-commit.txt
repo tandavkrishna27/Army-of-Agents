@@ -1,0 +1,12 @@
+commit 4aebfa0f4aaf011cfd85347246c18d3cbde305ba
+Author:     TK <tandavkrishna.sh@gmail.com>
+AuthorDate: Sat Sep 12 23:45:54 2026 +0530
+Commit:     TK <tandavkrishna.sh@gmail.com>
+CommitDate: Sat Sep 12 23:45:54 2026 +0530
+
+    test: make blocked-task fixture startup and cleanup explicit
+
+ server/src/__tests__/blocked-task-fixture.test.ts  | 107 +++++++++++++++++++++
+ .../blocked-task-scan.integration.test.ts          |  79 +++++----------
+ .../src/__tests__/helpers/blocked-task-fixture.ts  |  83 ++++++++++++++++
+ 3 files changed, 212 insertions(+), 57 deletions(-)

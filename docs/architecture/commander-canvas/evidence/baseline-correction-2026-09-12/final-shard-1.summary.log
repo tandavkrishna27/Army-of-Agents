@@ -1,0 +1,759 @@
+Sanitized suite lines and terminal results; full output in matching .log.gz.
+
+{"label":"final-shard-1","phase":"final","cwd":"/workspace/qualified","sha":"b5cc42643223c433a8263564c7142761472a13d9","patchSha256":"5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936","command":["corepack","pnpm","exec","vitest","run","--shard=1/4"],"startedAt":"2026-09-12T15:58:58.689Z"}
+ ✓  @armyofagents/server  src/__tests__/discussion-flow-qa.test.ts (46 tests) 511ms
+   ✓ Discussion Flow QA > 9. Archive and restore: create → archive → verify status change > archives a discussion by updating status to archived  447ms
+ ✓  @armyofagents/server  src/__tests__/thread-deliverables-approve.test.ts (29 tests) 101ms
+ ✓  @armyofagents/server  src/__tests__/aoa-dispatcher.test.ts (16 tests) 42ms
+ ✓  @armyofagents/server  src/__tests__/job-control-legacy-grants.contract.test.ts (16 tests) 39ms
+ ✓  @armyofagents/server  src/__tests__/agent-runtime-decisions.test.ts (65 tests) 73ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-reconcile.test.ts (40 tests) 39ms
+ ✓  @armyofagents/server  src/__tests__/execution-workspaces-archive.test.ts (28 tests) 83ms
+ ✓  @armyofagents/worker-protocol  src/capabilities.test.ts (53 tests) 25ms
+ ✓  @armyofagents/server  src/__tests__/task-run-batch-workload.test.ts (85 tests) 17ms
+ ✓  @armyofagents/server  src/__tests__/thread-agent-actions.test.ts (47 tests) 34ms
+ ✓  @armyofagents/server  src/__tests__/mcp-connectors-routes.test.ts (86 tests) 140ms
+ ✓  @armyofagents/server  src/services/internal-agent/__tests__/crew-post-e2e.live.test.ts (5 tests | 3 skipped) 2ms
+ ✓  @armyofagents/server  src/__tests__/providers-routes.test.ts (35 tests) 89ms
+ ✓  @armyofagents/server  src/__tests__/company-skills-install-guard.test.ts (27 tests) 114ms
+ ✓  @armyofagents/server  src/__tests__/memory-qa.test.ts (40 tests) 15ms
+ ✓  @armyofagents/server  src/__tests__/cockpit-approvals.test.ts (17 tests) 15ms
+ ✓  @armyofagents/server  src/__tests__/upgrade-auth.test.ts (43 tests) 20ms
+ ✓  @armyofagents/server  src/__tests__/de-06-object-access-audit.integration.test.ts (12 tests) 17486ms
+ ✓  @armyofagents/server  src/__tests__/job-placement.integration.test.ts (24 tests) 17902ms
+   ✓ JOB-009 slice A schema and role boundaries > [I-04] rejects replay when any canonical placement authority fact changes  490ms
+ ✓  @armyofagents/server  src/__tests__/service-generation-rollout.integration.test.ts (15 tests) 17696ms
+ ✓  @armyofagents/server  src/__tests__/de-11-retention-audit.integration.test.ts (10 tests) 17074ms
+ ✓  @armyofagents/server  src/__tests__/agent-loop.test.ts (22 tests) 17ms
+ ✓  @armyofagents/server  src/__tests__/service-reconciler.integration.test.ts (17 tests) 17874ms
+   ✓ SVC-002 — the reconciler converges desired state into exactly one instance > T1b(ii) — a pass SERIALIZES per service: a second pass on the SAME service waits, a different service does not  444ms
+ ✓  @armyofagents/server  src/__tests__/environments-routes.test.ts (33 tests) 83ms
+ ✓  @armyofagents/server  src/__tests__/mcp-connector-oauth-route.test.ts (24 tests) 70ms
+ ✓  @armyofagents/server  src/__tests__/company-portability-budget-policies.test.ts (14 tests) 20ms
+ ✓  @armyofagents/server  src/__tests__/company-portability-finance-events.test.ts (14 tests) 41ms
+ ✓  @armyofagents/server  src/__tests__/secret-broker.integration.test.ts (17 tests) 17504ms
+ ✓  @armyofagents/server  src/__tests__/service-liveness-deadline.integration.test.ts (13 tests) 17205ms
+ ✓  @armyofagents/server  src/__tests__/onboarding-journey-route.test.ts (28 tests) 34ms
+ ✓  @armyofagents/server  src/__tests__/one-shot-sandbox-cli.test.ts (31 tests) 22ms
+ ✓  @armyofagents/worker-protocol  src/job.test.ts (60 tests) 29ms
+ ↓  @armyofagents/server  src/__tests__/thread-v2-real-e2e.integration.test.ts (2 tests | 2 skipped)
+ ✓  @armyofagents/server  src/__tests__/routines-service-revisions.test.ts (18 tests) 12ms
+ ✓  @armyofagents/server  src/__tests__/aoa-runner-task-execution.test.ts (15 tests) 78ms
+ ✓  @armyofagents/server  src/__tests__/tenant-adversarial.property.integration.test.ts (11 tests) 18811ms
+   ✓ TEN-005 tenant adversarial property suite (H-01, E2-available surfaces) > fails closed with no existence disclosure across all E2 surfaces for seed=1  495ms
+   ✓ TEN-005 tenant adversarial property suite (H-01, E2-available surfaces) > fails closed with no existence disclosure across all E2 surfaces for seed=7  303ms
+   ✓ TEN-005 tenant adversarial property suite (H-01, E2-available surfaces) > fails closed with no existence disclosure across all E2 surfaces for seed=13  446ms
+   ✓ TEN-005 tenant adversarial property suite (H-01, E2-available surfaces) > fails closed with no existence disclosure across all E2 surfaces for seed=42  469ms
+   ✓ TEN-005 tenant adversarial property suite (H-01, E2-available surfaces) > fails closed with no existence disclosure across all E2 surfaces for seed=101  321ms
+   ✓ TEN-005 tenant adversarial property suite (H-01, E2-available surfaces) > fails closed with no existence disclosure across all E2 surfaces for seed=1337  312ms
+   ✓ TEN-005 tenant adversarial property suite (H-01, E2-available surfaces) > fails closed with no existence disclosure across all E2 surfaces for seed=20260809  327ms
+   ✓ TEN-005 tenant adversarial property suite (H-01, E2-available surfaces) > fails closed with no existence disclosure across all E2 surfaces for seed=2147483647  439ms
+ ✓  @armyofagents/server  src/__tests__/service-health-projection.integration.test.ts (11 tests) 17412ms
+ ✓  @armyofagents/server  src/services/__tests__/mcp-connectors.test.ts (47 tests) 10ms
+ ✓  @armyofagents/adapter-claude-local  src/server/__tests__/ambient-config.test.ts (48 tests | 2 skipped) 234ms
+ ✓  @armyofagents/server  src/__tests__/thread-controller-action-gate.test.ts (12 tests) 16ms
+ ✓  @armyofagents/server  src/__tests__/cli-008-unit-b-byte-source.integration.test.ts (5 tests) 79ms
+ ✓  @armyofagents/server  src/__tests__/hub-items-routes.test.ts (31 tests) 111ms
+ ✓  @armyofagents/server  src/__tests__/memory-review-hub.test.ts (14 tests) 149ms
+ ✓  @armyofagents/server  src/__tests__/agent-instructions-service.test.ts (14 tests) 119ms
+ ✓  @armyofagents/server  src/__tests__/job-fencing.integration.test.ts (7 tests) 17419ms
+   ✓ JOB-004 lease renewal and active-fence enforcement > rejects an expired, wrong-fence, revoked-target, or terminal-attempt renewal without mutating  341ms
+   ✓ JOB-004 lease renewal and active-fence enforcement > uses a fresh SQL clock in the mutation: a lease that expires WHILE the transaction runs cannot renew  334ms
+ ✓  @armyofagents/server  src/__tests__/u0-d1-placement-reachability.test.ts (6 tests) 13ms
+ ✓  @armyofagents/adapter-claude-local  src/__tests__/execute-target.test.ts (6 tests) 147ms
+ ✓  @armyofagents/server  src/__tests__/job-fence-surface.contract.test.ts (8 tests) 20ms
+ ✓  @armyofagents/adapter-codex-local  src/server/__tests__/appserver-driver.test.ts (15 tests) 14ms
+ ✓  @armyofagents/server  src/__tests__/company-portability-quota-windows.test.ts (11 tests) 25ms
+ ✓  @armyofagents/server  src/__tests__/unified-org-tree.test.ts (17 tests) 8ms
+ ✓  @armyofagents/server  src/__tests__/crew-task-execution.e2e.test.ts (3 tests) 42ms
+ ✓  @armyofagents/server  src/__tests__/issues-responsible-user-routes.test.ts (20 tests) 68ms
+ ✓  @armyofagents/server  src/__tests__/mcp-read-tools.test.ts (27 tests) 81ms
+ ✓  @armyofagents/server  src/services/__tests__/thread-events.test.ts (17 tests) 13ms
+ ✓  @armyofagents/server  src/__tests__/crew-repair.integration.test.ts (37 tests) 22900ms
+   ✓ crew provisioning repair (real PostgreSQL) > adopts a `@legacy` crew pointer-only, un-freezing it without touching content  384ms
+   ✓ crew provisioning repair (real PostgreSQL) > leaves the follow-up content change to agentUpdatePolicy  327ms
+   ✓ crew provisioning repair (real PostgreSQL) > writes NOTHING when a required skill cannot be installed  302ms
+   ✓ crew provisioning repair (real PostgreSQL) > writes skill rows byte-identical to the real installer, not a hand-rolled copy  423ms
+   ✓ crew provisioning repair (real PostgreSQL) > adopts a PARTIALLY renamed legacy crew without leaving a member behind  314ms
+   ✓ crew provisioning repair (real PostgreSQL) > repairs degraded companies, caps productive work, leaves healthy ones alone  570ms
+   ✓ crew provisioning repair (real PostgreSQL) > a fail-closed company does not consume budget, so it cannot starve the queue  416ms
+ ✓  @armyofagents/server  src/__tests__/job-shadow-comparator.test.ts (21 tests) 312ms
+   ✓ S1 — an uncompared field is never reported as agreement > never counts a caller-derived field as compared, across 2000 randomized snapshots  305ms
+ ✓  @armyofagents/server  src/__tests__/workspace-git-api.test.ts (25 tests) 75ms
+ ✓  @armyofagents/server  src/__tests__/proactive-checks.test.ts (17 tests) 17ms
+ ✓  @armyofagents/server  src/__tests__/reap-orphaned-runs.test.ts (12 tests) 14ms
+ ✓  @armyofagents/server  src/__tests__/outbound-url-guard.test.ts (79 tests) 37ms
+ ✓  @armyofagents/server  src/__tests__/git-service.test.ts (44 tests) 1572ms
+ ✓  @armyofagents/server  src/__tests__/integration/budget.test.ts (10 tests) 11ms
+ ✓  @armyofagents/server  src/__tests__/service-health-projection.test.ts (15 tests) 8ms
+ ✓  @armyofagents/server  src/__tests__/teams-qa.test.ts (5 tests) 19ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-company-customized.test.ts (10 tests) 45ms
+ ✓  @armyofagents/server  src/__tests__/service-control-audit.test.ts (10 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/aoa-heartbeat-kind-guard.test.ts (3 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/agents-adapter-test-environment-route.test.ts (7 tests) 49ms
+ ✓  @armyofagents/server  src/__tests__/company-portability-env-inputs.test.ts (13 tests) 26ms
+ ✓  @armyofagents/server  src/__tests__/hub-items-lifecycle.test.ts (20 tests) 23ms
+ ✓  @armyofagents/server  src/__tests__/company-plugin-upgrade-rollback.test.ts (9 tests) 16ms
+ ✓  @armyofagents/server  src/__tests__/join-approve-authority-clamp.test.ts (12 tests) 46ms
+ ✓  @armyofagents/server  src/services/__tests__/adjutant-context.test.ts (14 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/issue-status-event.test.ts (8 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/de-19-memory-denial-audit.integration.test.ts (11 tests) 15470ms
+ ✓  @armyofagents/server  src/__tests__/egress-proxy.integration.test.ts (9 tests) 15990ms
+ ✓  @armyofagents/browser-runtime  src/__tests__/approval.test.ts (26 tests) 27ms
+ ✓  @armyofagents/server  src/__tests__/cockpit-pinned.test.ts (9 tests) 8ms
+ ✓  @armyofagents/server  src/__tests__/company-portability-projects.test.ts (14 tests) 12ms
+ ✓  @armyofagents/server  src/__tests__/eval-memory-keeper-suite.test.ts (19 tests) 55ms
+ ✓  @armyofagents/server  src/__tests__/de-21-live-events-upgrade-denial-audit.integration.test.ts (13 tests) 15304ms
+ ✓  @armyofagents/server  src/__tests__/routines-service.test.ts (17 tests) 18ms
+ ✓  @armyofagents/server  src/__tests__/tenant-rls-enforcement.integration.test.ts (10 tests) 15548ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-trigger-enabled.test.ts (14 tests) 11ms
+ ✓  @armyofagents/server  src/__tests__/warm-sandbox-reaper-reclaim.test.ts (13 tests) 15ms
+ ✓  @armyofagents/server  src/__tests__/job-audit-parity.integration.test.ts (13 tests) 16277ms
+ ✓  @armyofagents/server  src/__tests__/mig-010-unit-2-3-pass.integration.test.ts (8 tests) 17364ms
+   ✓ MIG-010 Unit 2.3 — the reconciliation pass, made runnable > ★ the CLI REFUSES an owner DATABASE_URL — the role gate is not decorative  1180ms
+   ✓ MIG-010 Unit 2.3 — the reconciliation pass, made runnable > ★ the CLI RUNS as aoa_operator, end to end, and exits 0  974ms
+ ✓  @armyofagents/server  src/__tests__/hub-items-emit.integration.test.ts (10 tests) 15940ms
+ ✓  @armyofagents/server  src/__tests__/shared-types-contract.test.ts (60 tests) 11ms
+ ✓  @armyofagents/server  src/__tests__/d18-autonomy-dial-split.test.ts (33 tests) 127ms
+ ✓  @armyofagents/server  src/__tests__/mt-import-authz.integration.test.ts (9 tests) 16399ms
+ ✓  @armyofagents/server  src/__tests__/permissions.test.ts (30 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/cli-006-projector-wiring.test.ts (21 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/classify-probe.test.ts (35 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/crew-provisioning.test.ts (16 tests) 8ms
+ ✓  @armyofagents/db  src/__tests__/worker-operation-receipts-schema.integration.test.ts (6 tests) 15550ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-agent-merge.test.ts (19 tests) 12ms
+ ✓  @armyofagents/server  src/__tests__/de-14-startup-safety-audit.test.ts (10 tests) 147ms
+ ✓  @armyofagents/server  src/__tests__/composed-loop-real-server.integration.test.ts (2 tests) 19387ms
+   ✓ Leg B Part 1 — the composed poll loop leases a REAL server-offered attempt over the REAL routes (embedded PostgreSQL) > ★ negative control — a NON-lease-eligible attempt is NOT offered, so the composed loop hands off nothing  2042ms
+ ✓  @armyofagents/server  src/services/__tests__/crew-run-result-delivery.test.ts (11 tests) 12ms
+ ✓  @armyofagents/server  src/__tests__/d18-autonomy-dial-split.integration.test.ts (6 tests) 13316ms
+ ✓  packages/worker-daemon  src/__tests__/dep-011-slice-2a.component.test.ts (8 tests) 42ms
+ ✓  @armyofagents/server  src/__tests__/budget-hooks.test.ts (13 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/skill-bundle-materializer.test.ts (23 tests) 596ms
+ ✓  @armyofagents/server  src/__tests__/eager-workspace.test.ts (9 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/threads-scope-deps.test.ts (5 tests) 7ms
+ ✓  @armyofagents/sandbox-e2b-provider  src/__tests__/svc-008a-escalation-reachability.test.ts (7 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/semantic-search.test.ts (13 tests) 11ms
+ ✓  @armyofagents/server  src/__tests__/team-service.test.ts (8 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/owned-labels-mint.test.ts (11 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/issues-routes-create-fk-validation.test.ts (16 tests) 60ms
+ ✓  @armyofagents/server  src/__tests__/issue-context-bundles.test.ts (10 tests) 8ms
+ ✓  @armyofagents/worker-keystore  src/__tests__/install-layout.test.ts (25 tests) 7ms
+ ✓  packages/worker-daemon  src/__tests__/enrollment-bootstrap.test.ts (12 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/memory-feedback.test.ts (15 tests) 6ms
+ ✓  @armyofagents/shared  src/__tests__/marketplace-schema.test.ts (47 tests) 13ms
+ ✓  packages/worker-daemon  src/__tests__/enrollment-input.test.ts (27 tests) 14ms
+ ✓  @armyofagents/server  src/__tests__/finance-service.test.ts (14 tests) 10ms
+ ✓  @armyofagents/worker-protocol  src/canonical-json.test.ts (23 tests) 10ms
+ ✓  @armyofagents/server  src/__tests__/dispatcher-controller-skip-terminal.test.ts (2 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/execution-secret-handle-mint.test.ts (24 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/commander-runtime-approvals-routes.test.ts (8 tests) 42ms
+ ✓  @armyofagents/server  src/__tests__/confirm-stale-permissions.test.ts (2 tests) 29ms
+ ✓  packages/worker-daemon  src/__tests__/supervisor-secret-materialization.test.ts (11 tests) 75ms
+ ✓  @armyofagents/server  src/__tests__/identity-backfill.test.ts (12 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/provider-key-callers.test.ts (22 tests) 37ms
+ ✓  @armyofagents/server  src/__tests__/runtime-hooks-route.test.ts (13 tests) 43ms
+ ✓  @armyofagents/server  src/__tests__/execution-secret-resolve-worker.integration.test.ts (3 tests) 9614ms
+ ✓  @armyofagents/server  src/__tests__/de01-read-half-alternatives.integration.test.ts (10 tests) 12153ms
+ ✓  @armyofagents/server  src/__tests__/hub-items-sweeper.integration.test.ts (5 tests) 9332ms
+ ↓  @armyofagents/sandbox-e2b-provider  src/__tests__/keyed-dat-009-artifact-export.test.ts (4 tests | 4 skipped)
+ ✓  @armyofagents/server  src/__tests__/operator-break-glass.test.ts (6 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/company-create-atomicity.integration.test.ts (7 tests) 9423ms
+ ✓  packages/worker-daemon  src/__tests__/supervisor-happy.component.test.ts (15 tests) 28ms
+ ✓  @armyofagents/server  src/__tests__/dispatcher-run-count-brake.test.ts (2 tests) 5ms
+ ✓  packages/adapter-manager  src/__tests__/reaper-truth-client.test.ts (16 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/extraction-cli-path.test.ts (3 tests) 10ms
+ ✓  @armyofagents/server  src/__tests__/commander-skill-triggering-suite.test.ts (16 tests) 46ms
+ ✓  packages/worker-daemon  src/__tests__/control-command-delivery.test.ts (16 tests) 10ms
+ ✓  packages/worker-daemon  src/__tests__/supervisor-hung-stage-input.test.ts (4 tests) 99ms
+ ✓  @armyofagents/server  src/__tests__/confirm-route-output-refs.test.ts (2 tests) 25ms
+ ✓  packages/adapter-utils  src/execution-target-docker.test.ts (13 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/secret-resolve-authz.test.ts (18 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/agent-in-review-guard.test.ts (9 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/mention-resolver-humans-coverage.test.ts (9 tests) 8ms
+ ✓  @armyofagents/server  src/__tests__/browser-job-config.test.ts (29 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-install-plugin.test.ts (8 tests) 8ms
+ ✓  @armyofagents/server  src/__tests__/plugin-admin-authz.test.ts (57 tests) 120ms
+ ✓  @armyofagents/server  src/__tests__/crew-budget-wired.test.ts (3 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/performance-qa.test.ts (27 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/founder-messages-access.test.ts (4 tests) 26ms
+ ✓  @armyofagents/server  src/__tests__/cli-mode-exit-code.test.ts (20 tests) 11ms
+ ✓  packages/worker-daemon  src/__tests__/event-outbox-recovery.component.test.ts (6 tests) 2298ms
+   ✓ event-outbox-recovery — acceptance set (slice 5) > crash between send/ACK + duplicate send: recover + resend, the server DEDUPS by seq (no double count)  558ms
+   ✓ event-outbox-recovery — acceptance set (slice 5) > sequence recovery: a restart resumes uploads from acceptedThroughSeq + 1  550ms
+   ✓ event-outbox-recovery — acceptance set (slice 5) > corrupt-row quarantine is NON-FATAL: prefix uploads, the poison stream stops, other streams still drain  532ms
+   ✓ event-outbox-recovery — acceptance set (slice 5) > corrupt-row is fail-closed even when the prefix upload is NOT immediately accepted (transient) — no silent zombie stream  450ms
+ ✓  @armyofagents/server  src/__tests__/sandbox-skill-staging.test.ts (3 tests) 170ms
+ ✓  @armyofagents/server  src/services/internal-agent/__tests__/cli-invocation-stdin.test.ts (8 tests) 2816ms
+   ✓ resolveCliInvocation — claude stdin prompt delivery (W1 fix) > plain path: args carry NO user content; stdinPrompt is the raw prompt  791ms
+   ✓ resolveCliInvocation — external MCP connectors in the claude config (Task 3) > no extraMcpServers → the config FILE contains ONLY aoa (no-connector byte-identity)  303ms
+ ✓  @armyofagents/server  src/__tests__/thread-action-keys.test.ts (14 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/set-task-status-tool.test.ts (13 tests) 7ms
+ ✓  packages/worker-daemon  src/__tests__/svc-008a-fake-provider-conformance.test.ts (10 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/c2-thread-post-scope-proposal.test.ts (7 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/debrief-push-inbox.test.ts (8 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/crew-board-filter.test.ts (19 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/gvisor-sandbox-config.test.ts (11 tests) 5ms
+ ✓  @armyofagents/db  src/__tests__/job-events-schema.integration.test.ts (7 tests) 12687ms
+ ✓  @armyofagents/server  src/__tests__/hub-items-budget-reconcile.test.ts (6 tests) 14ms
+ ✓  @armyofagents/server  src/__tests__/internal-agent-confirm.test.ts (1 test) 22ms
+ ✓  @armyofagents/server  src/__tests__/crew-skill-assignment-e2e.test.ts (8 tests) 12187ms
+ ✓  @armyofagents/server  src/__tests__/event-listener.test.ts (8 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/comment-wakeup-outbox.integration.test.ts (11 tests) 13638ms
+   ✓ comment wakeup outbox (real DB) > does NOT double-dispatch on a re-drain after a mark-done crash (idempotent consumer)  540ms
+ ✓  @armyofagents/server  src/__tests__/heartbeat-provider-resolution.test.ts (7 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/job-source-governance-matrix.test.ts (12 tests) 6ms
+ ✓  @armyofagents/adapter-codex-local  src/server/session-id-cap.test.ts (11 tests) 296ms
+ ✓  @armyofagents/server  src/__tests__/notification-digest.test.ts (8 tests) 31ms
+ ✓  @armyofagents/server  src/__tests__/crew-output-capture.test.ts (4 tests) 41ms
+ ✓  @armyofagents/server  src/__tests__/hub-curation-tools.test.ts (11 tests) 39ms
+ ✓  @armyofagents/adapter-gemini-local  src/server/__tests__/execute-mcp-gate.test.ts (6 tests) 187ms
+ ✓  @armyofagents/db  src/__tests__/job-leasing-migration-upgrade.integration.test.ts (2 tests) 16401ms
+ ✓  packages/worker-daemon  src/__tests__/poll-session-terminal.component.test.ts (4 tests) 72ms
+ ✓  @armyofagents/server  src/__tests__/task-run-instructions-bundle.test.ts (15 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/rollout-rollback-liveness.test.ts (6 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/agent-runtime-decisions-realrepo.test.ts (2 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/adapter-manager-control-lease-truth.integration.test.ts (4 tests) 17498ms
+ ✓  @armyofagents/worker-keystore  src/__tests__/desktop-host-refuses-dispatch.test.ts (7 tests) 10ms
+ ✓  @armyofagents/server  src/__tests__/tool-registry.test.ts (14 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/redaction-event-egress.test.ts (17 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/control-plane-signing-key.test.ts (14 tests) 12ms
+ ✓  @armyofagents/db  src/__tests__/job-leasing-lock-order.integration.test.ts (1 test) 18550ms
+ ✓  @armyofagents/browser-runtime  src/__tests__/path-adapter.test.ts (18 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/p2-thread-tools.test.ts (9 tests) 6ms
+ ✓  @armyofagents/adapter-claude-local  src/__tests__/runtime-hook-settings.test.ts (20 tests) 11ms
+ ✓  @armyofagents/server  src/__tests__/attach-task-artifact-tool.test.ts (8 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/workspace-cleanup-retry-sweeper.test.ts (9 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/heartbeat-workspace-session.test.ts (16 tests) 4ms
+ ✓  @armyofagents/server  src/services/internal-agent/aoa-agents/__tests__/runner-binding-resolution.test.ts (12 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/job-shadow-admissibility.test.ts (14 tests) 8ms
+ ✓  @armyofagents/server  src/__tests__/crew-cancellation.test.ts (2 tests) 4ms
+ ✓  @armyofagents/shared  src/__tests__/redaction.test.ts (90 tests) 8ms
+ ✓  @armyofagents/server  src/__tests__/hermes-local-adapter.test.ts (10 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/w1a-crew-assignment.integration.test.ts (1 test) 19763ms
+ ✓  packages/worker-daemon  src/__tests__/poll-ack-failures.component.test.ts (4 tests) 79ms
+ ✓  @armyofagents/server  src/__tests__/routines-routes-revisions.test.ts (9 tests) 36ms
+ ✓  @armyofagents/server  src/__tests__/query-human-context-tool.test.ts (7 tests) 8ms
+ ✓  @armyofagents/browser-runtime  src/__tests__/listening-ports.test.ts (17 tests) 5ms
+ ✓  @armyofagents/adapter-codex-local  src/server/__tests__/execute-appserver-env-scrub-fu23.test.ts (5 tests) 57ms
+ ✓  packages/worker-daemon  src/__tests__/enrollment-ticket.test.ts (21 tests) 11ms
+ ✓  @armyofagents/shared  src/validators/__tests__/company-brain-graph.test.ts (15 tests) 6ms
+ ✓  @armyofagents/sandbox-e2b-provider  src/__tests__/stage-files.test.ts (8 tests) 5ms
+ ✓  @armyofagents/adapter-claude-local  src/__tests__/hook-forward.test.ts (6 tests) 246ms
+ ✓  @armyofagents/server  src/__tests__/migration-0119-thread-workspace-xor-contract.test.ts (13 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/threads-routes-contract.test.ts (7 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/fs-jail.test.ts (23 tests) 71ms
+ ✓  @armyofagents/server  src/__tests__/hub-curation.test.ts (9 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/commander-chat-foundation.integration.test.ts (1 test) 3ms
+ ✓  @armyofagents/server  src/__tests__/dr-reenroll-revoke.integration.test.ts (3 tests) 22335ms
+ ✓  @armyofagents/server  src/__tests__/environment-warm-acquire.integration.test.ts (1 test) 22512ms
+ ↓  @armyofagents/server  src/__tests__/commander-skill-triggering.acceptance.test.ts (1 test | 1 skipped)
+ ✓  @armyofagents/server  src/__tests__/board-auth-cli-challenge.test.ts (4 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/projects-routes-rce.test.ts (14 tests) 42ms
+ ✓  @armyofagents/server  src/__tests__/artifact-version-auth.test.ts (9 tests) 43ms
+ ✓  @armyofagents/server  src/__tests__/cli-008-staged-input-contract.test.ts (6 tests) 5ms
+ ✓  packages/worker-daemon  src/__tests__/poll-outage.component.test.ts (3 tests) 182ms
+ ✓  @armyofagents/server  src/__tests__/search-thread-filters.test.ts (7 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/distributed-execution-exclusions.test.ts (5 tests) 86ms
+ ✓  @armyofagents/shared  src/validators/agent.test.ts (26 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/acquire-execution-context.test.ts (6 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/extraction-debrief-key.test.ts (2 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/artifact-add-version-parent.test.ts (4 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-update-checker-plugins.test.ts (10 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/assertboard-pairing.test.ts (2 tests) 11ms
+ ✓  @armyofagents/server  src/__tests__/protected-agents.test.ts (17 tests) 4ms
+ ✓  packages/provider-wire  src/__tests__/capability.test.ts (14 tests) 7ms
+ ✓  packages/adapter-manager  src/__tests__/reaper-loop.test.ts (10 tests) 8ms
+ ✓  @armyofagents/server  src/__tests__/approvals-resubmit-authz.test.ts (6 tests) 32ms
+ ✓  packages/worker-daemon  src/__tests__/startup-reconcile-lifecycle.test.ts (6 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/thread-orchestration-state-schema.test.ts (16 tests) 5ms
+ ✓  packages/adapter-manager  src/__tests__/capability-verify.test.ts (10 tests) 25ms
+ ✓  @armyofagents/db  src/__tests__/execution-target-revocations-schema.integration.test.ts (9 tests) 25156ms
+ ✓  @armyofagents/server  src/__tests__/threads-scope-crystallization.test.ts (3 tests) 10ms
+ ✓  @armyofagents/server  src/__tests__/heartbeat-skill-auto-enable-integration.test.ts (6 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/skill-content.test.ts (10 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/routes-auth-profile.test.ts (8 tests) 30ms
+ ✓  @armyofagents/server  src/__tests__/heartbeat-process-tracking.test.ts (8 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/reconcile-autonomy-scale.test.ts (6 tests) 556ms
+   ✓ reconcileAutonomyScale > runs all three clamps inside ONE transaction and returns every row count  553ms
+ ✓  packages/worker-daemon  src/__tests__/control-commands.test.ts (17 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/inbound-routing-level-setting.test.ts (14 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/company-portability-crew-provisioning.test.ts (2 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/runtime-provider-keys.test.ts (5 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/memory-folder-seeds.test.ts (11 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/heartbeat-terminal-latch.test.ts (6 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/cli-006-canary-credential-binding.test.ts (9 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/inbox-router-rewire.test.ts (5 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/cli-006-canary-rollout-mode.test.ts (10 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/issues-comment-reassign-atomicity.integration.test.ts (6 tests) 27409ms
+ ✓  @armyofagents/server  src/__tests__/cli-summarizer-sandbox.test.ts (4 tests) 4ms
+ ✓  packages/worker-daemon  src/__tests__/poll-backpressure.test.ts (4 tests) 58ms
+ ✓  @armyofagents/server  src/__tests__/admin-marketplace-auth-stack.test.ts (8 tests) 30ms
+ ✓  @armyofagents/server  src/__tests__/job-quotas.integration.test.ts (6 tests) 28529ms
+ ✓  @armyofagents/server  src/__tests__/sidebar-badges.test.ts (3 tests) 18ms
+ ✓  @armyofagents/server  src/__tests__/provider-readiness-upsert.integration.test.ts (5 tests) 28535ms
+ ✓  @armyofagents/server  src/__tests__/extraction.test.ts (2 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/worker-hello-refresh.test.ts (7 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/sandbox-file-movement-stagein.test.ts (3 tests) 19ms
+ ✓  @armyofagents/server  src/services/internal-agent/aoa-agents/__tests__/crew-run-log.test.ts (6 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/heartbeat-process-tree-kill.integration.test.ts (1 test) 159ms
+ ✓  @armyofagents/server  src/__tests__/execution-kill-switch-policy.test.ts (10 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/commander-action-confirmation.test.ts (5 tests) 5ms
+ ✓  packages/worker-networked-host  src/__tests__/make-run-provider.test.ts (6 tests) 5ms
+ ✓  packages/worker-daemon  src/__tests__/logger-redaction.test.ts (8 tests) 9ms
+ ✓  @armyofagents/worker-protocol  src/ids.test.ts (11 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/team-imports-routes-contract.test.ts (4 tests) 771ms
+   ✓ teamImportsRoutes -- conformance + contract > exports a factory function (not a top-level Router)  708ms
+ ✓  packages/worker-daemon  src/patch/__tests__/rename-and-schema.test.ts (5 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-routes.test.ts (5 tests) 20ms
+ ✓  packages/worker-daemon  src/__tests__/durable-event-sink.test.ts (6 tests) 2610ms
+   ✓ durable-event-sink — verbatim persist + fsync-before-return (D3/D4) > fsync-commits BEFORE returning — a second store handle sees the pending row  397ms
+   ✓ durable-event-sink — verbatim persist + fsync-before-return (D3/D4) > accepts the FULL union — persists produced AND not-yet-produced kinds alike  702ms
+   ✓ durable-event-sink — verbatim persist + fsync-before-return (D3/D4) > FAILS CLOSED on a producer seq-collision (D2) — surfaces SeqCollisionError to the producer  404ms
+   ✓ durable-event-sink — verbatim persist + fsync-before-return (D3/D4) > FAILS CLOSED on backpressure (D4) — never silently drops a terminal-class event  620ms
+ ✓  @armyofagents/server  src/__tests__/discussions-routes-contract.test.ts (5 tests) 565ms
+   ✓ discussionRoutes contract > exports a discussionRoutes factory function  562ms
+ ✓  packages/worker-daemon  src/__tests__/startup-quarantine-sweep.component.test.ts (3 tests) 58ms
+ ✓  @armyofagents/server  src/__tests__/home-board-layout-service.test.ts (7 tests) 5ms
+ ✓  @armyofagents/db  src/__tests__/apply-pending-migrations-advisory-lock.test.ts (7 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/platform-default-environment-materialization.integration.test.ts (2 tests) 28977ms
+ ✓  @armyofagents/server  src/__tests__/api-common.test.ts (17 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/human-context-service.test.ts (2 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/link-entry-seq.integration.test.ts (3 tests) 29673ms
+ ✓  @armyofagents/db  src/__tests__/migration-snapshot-runbook.integration.test.ts (3 tests) 12489ms
+ ✓  @armyofagents/server  src/__tests__/extraction-engine.test.ts (11 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/artifact-orphan-sweeper.test.ts (9 tests) 5ms
+ ✓  packages/worker-daemon  src/__tests__/session-renewal-threshold.test.ts (7 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/crew-memory-scoped.test.ts (4 tests) 4ms
+ ✓  @armyofagents/worker-protocol  src/errors.test.ts (14 tests) 5ms
+ ✓  @armyofagents/server  src/services/__tests__/mcp-connectors-env.test.ts (12 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/p2-post-entry-tool.test.ts (5 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/inbox-router-reclaim.test.ts (6 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/threads-catchup.test.ts (2 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/workspace-run-command-shell.test.ts (3 tests) 624ms
+   ✓ runWorkspaceCommand — platform shell (A-M13) > refuses persisted cleanup commands in cloud_auth before spawning a shell  621ms
+ ✓  @armyofagents/adapter-opencode-local  src/server/execute-target.test.ts (1 test) 57ms
+ ✓  @armyofagents/server  src/__tests__/folder-grant-binding.test.ts (8 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/memory-live-events.test.ts (3 tests) 4ms
+ ✓  @armyofagents/db  src/__tests__/execution-targets-org-delete-cascade.integration.test.ts (1 test) 28962ms
+ ✓  @armyofagents/server  src/__tests__/agents-update-concurrency.integration.test.ts (3 tests) 29140ms
+ ✓  packages/adapter-manager  src/__tests__/error-fence.test.ts (4 tests) 29ms
+ ✓  @armyofagents/server  src/__tests__/commander-adapter-turn.test.ts (2 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/c2-thread-create-link.test.ts (15 tests) 6ms
+ ✓  @armyofagents/db  src/__tests__/aoa-sentinels-migration.test.ts (16 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/job-convert-orchestrator.test.ts (4 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/companies-scope-pushdown.test.ts (6 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/c2-memory-extract-candidates.test.ts (6 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/company-portability-warnings.test.ts (6 tests) 7ms
+ ✓  @armyofagents/server  src/services/internal-agent/__tests__/runtime-attachments.test.ts (8 tests) 4ms
+ ✓  packages/worker-daemon  src/__tests__/reconcile-outage-alert.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/execution-targets-worker-token.test.ts (8 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-notifications.test.ts (3 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/migration-0117-discussions-thread-coord-contract.test.ts (9 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/cursor-local-adapter-environment.test.ts (3 tests) 54ms
+ ✓  @armyofagents/server  src/__tests__/p2-notify-owner-tool.test.ts (5 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/migration-0188-organizations-contract.test.ts (12 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/crew-seeding.test.ts (6 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/command-staff-seeding.test.ts (9 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-install-package.test.ts (4 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/inbox-dismissals-service.test.ts (5 tests) 3ms
+ ✓  @armyofagents/adapter-codex-local  src/server/auth-status.test.ts (18 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/human-capabilities-service.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/cursor-local-skill-injection.test.ts (3 tests) 14ms
+ ✓  packages/worker-daemon  src/__tests__/artifact-commit-client.test.ts (4 tests) 5ms
+ ✓  @armyofagents/cli  src/__tests__/board-auth.test.ts (8 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/teams-service-update-manifest.test.ts (4 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/quota-windows-dedup.integration.test.ts (3 tests) 28450ms
+ ✓  @armyofagents/server  src/__tests__/debrief-redirect.test.ts (7 tests) 594ms
+   ✓ debrief deprecation + redirect > debriefRoutes factory is still exported  589ms
+ ✓  @armyofagents/server  src/__tests__/commander-company-name.test.ts (3 tests) 2ms
+ ✓  @armyofagents/db  src/__tests__/hub-items-schema.test.ts (8 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/invite-claim.test.ts (4 tests) 5ms
+ ✓  @armyofagents/db  src/__tests__/crew-run-log-pointer-schema.test.ts (5 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/provider-resolution-materialize.test.ts (10 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/platform-default-environment.test.ts (10 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/mcp-connector-command-safety.test.ts (34 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/activity-human-filters.test.ts (5 tests) 32ms
+ ✓  @armyofagents/db  src/__tests__/classify-lease-truth-row.test.ts (17 tests) 2ms
+ ✓  packages/provider-wire  src/__tests__/codec.test.ts (8 tests) 4ms
+ ✓  @armyofagents/adapter-claude-local  src/__tests__/operator-provisioning-invariant.test.ts (1 test) 20ms
+ ✓  @armyofagents/server  src/__tests__/budget-validators.test.ts (13 tests) 7ms
+ ✓  @armyofagents/server  src/__tests__/storage-s3-presign.test.ts (4 tests) 42ms
+ ✓  @armyofagents/server  src/__tests__/rls-canary.integration.test.ts (1 test) 20652ms
+ ✓  packages/worker-daemon  src/__tests__/lease-renewal-rejected.test.ts (3 tests) 136ms
+ ✓  @armyofagents/server  src/__tests__/environments-lease-created-at-db-clock.integration.test.ts (2 tests) 19628ms
+ ✓  @armyofagents/server  src/__tests__/heartbeat-task-context.test.ts (7 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/memory-actor-resolver.test.ts (8 tests) 6ms
+ ✓  @armyofagents/db  src/__tests__/migration-0197-populated-upgrade.integration.test.ts (1 test) 2684ms
+ ✓  @armyofagents/server  src/__tests__/compaction-failure-notice.test.ts (4 tests) 14ms
+ ✓  packages/worker-daemon  src/__tests__/self-model-assembly.test.ts (6 tests) 10ms
+ ✓  @armyofagents/server  src/__tests__/memory-assets-upload-routes.test.ts (2 tests) 1176ms
+   ✓ memory-assets upload route > uploads a file, creates an asset row, and returns it (no job created)  1170ms
+ ✓  @armyofagents/sandbox-e2b-provider  src/__tests__/real-transport-helpers.test.ts (7 tests) 4ms
+ ✓  @armyofagents/server  src/services/__tests__/mcp-connector-oauth-bundle.test.ts (12 tests) 8ms
+ ✓  @armyofagents/server  src/__tests__/invite-summary.test.ts (3 tests) 24ms
+ ✓  packages/adapter-utils  src/__tests__/strip-connector-run-bearers.test.ts (7 tests) 2ms
+ ✓  packages/worker-daemon  src/__tests__/event-upload-client.test.ts (4 tests) 7ms
+ ✓  @armyofagents/worker-keystore  src/__tests__/blob-path.test.ts (8 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/cloud-auth-no-instance-admin-minted.test.ts (6 tests) 5ms
+ ✓  @armyofagents/server  src/services/internal-agent/__tests__/artifact-query-company.test.ts (7 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/dr-staging-rollout-invariants.test.ts (4 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/agent-shortname-collision.test.ts (12 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/memory-on-close.test.ts (3 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/auth-commander-jwt.test.ts (2 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/trust-scores.test.ts (12 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/provider-key-fallback-owner-hop.test.ts (3 tests) 2ms
+ ✓  @armyofagents/adapter-cursor-local  src/server/execute-provider-sandbox.test.ts (1 test) 959ms
+   ✓ cursor provider-sandbox execution > syncs Cursor skills into a sandbox-local HOME before running  958ms
+ ✓  @armyofagents/adapter-claude-local  src/__tests__/bedrock.test.ts (17 tests) 3ms
+ ✓  @armyofagents/adapter-gemini-local  src/server/__tests__/sandbox-env-allowlist.test.ts (1 test) 7ms
+ ✓  packages/worker-daemon  src/snapshot/__tests__/review-oversize-read.test.ts (2 tests) 12ms
+ ✓  @armyofagents/server  src/__tests__/memory-move-pin.test.ts (3 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/server-shutdown.test.ts (3 tests) 5ms
+ ✓  @armyofagents/db  src/__tests__/compose-database-url.test.ts (8 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-startup-maintenance.test.ts (4 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/provider-credential-bindings.test.ts (4 tests) 4ms
+ ✓  packages/worker-daemon  src/__tests__/poll-empty.component.test.ts (3 tests) 58ms
+ ✓  @armyofagents/server  src/__tests__/cockpit-scope.test.ts (7 tests) 4ms
+ ✓  @armyofagents/adapter-claude-local  src/__tests__/sandbox-env-allowlist.test.ts (1 test) 16ms
+ ✓  @armyofagents/server  src/services/internal-agent/aoa-agents/__tests__/runner-model-resolution.test.ts (7 tests) 3ms
+ ✓  packages/worker-daemon  src/__tests__/public-surface-dispatch.test.ts (3 tests) 2ms
+ ✓  @armyofagents/adapter-claude-local  src/server/__tests__/login.test.ts (4 tests) 5ms
+ ✓  packages/worker-daemon  src/__tests__/poll-offer-ack.component.test.ts (2 tests) 54ms
+ ✓  @armyofagents/server  src/__tests__/secrets-schema-integration.test.ts (1 test) 16687ms
+ ✓  @armyofagents/server  src/__tests__/deliverable-workspace-mode.test.ts (8 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/db-errors.test.ts (10 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/commander-run-jwt.test.ts (6 tests) 5ms
+ ✓  @armyofagents/db  src/__tests__/non-owner-connection-contract.test.ts (3 tests) 763ms
+   ✓ non-owner connection close contract > forwards the caller's exact timeout bound to postgres.js end  535ms
+ ✓  @armyofagents/adapter-codex-local  src/server/__tests__/parse-shared.test.ts (7 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/marketplace-install-idempotency.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/error-handler.test.ts (7 tests) 36ms
+ ✓  @armyofagents/server  src/__tests__/mcp-bridge-tool-discovery-auth.test.ts (3 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/issues-origin-kind-schema.test.ts (4 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/heartbeat-project-env-merge.test.ts (7 tests) 2ms
+ ✓  packages/worker-daemon  src/__tests__/concurrency.test.ts (7 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/storage-tenant-scope.test.ts (8 tests) 5ms
+ ✓  @armyofagents/server  src/__tests__/tenant-read-only.integration.test.ts (7 tests) 16073ms
+ ✓  @armyofagents/server  src/__tests__/storage-local-provider.test.ts (3 tests) 31ms
+ ✓  packages/adapter-utils  src/__tests__/child-stdin-epipe.test.ts (2 tests) 39ms
+ ✓  @armyofagents/server  src/__tests__/execution-workspaces-unique-integration.test.ts (1 test) 16160ms
+ ✓  @armyofagents/server  src/__tests__/goals-service-create.test.ts (1 test) 4ms
+ ✓  @armyofagents/server  src/__tests__/job-shadow-admissibility.integration.test.ts (6 tests) 12941ms
+ ✓  @armyofagents/server  src/__tests__/hub-curation.integration.test.ts (1 test) 16146ms
+ ✓  @armyofagents/server  src/__tests__/runtime-hook-baseurl.test.ts (17 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/evals/chronicler-card-eval.test.ts (5 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/integration-test-hygiene.test.ts (2 tests) 26ms
+ ✓  @armyofagents/server  src/__tests__/user-profiles-route-patch.test.ts (4 tests) 39ms
+ ✓  @armyofagents/shared  src/__tests__/commander-output-refs.test.ts (8 tests) 6ms
+ ✓  packages/worker-daemon  src/__tests__/quarantine-grant-finalize.component.test.ts (2 tests) 71ms
+ ✓  packages/worker-daemon  src/__tests__/lease-renewal-per-lease-cap.test.ts (1 test) 68ms
+ ✓  @armyofagents/server  src/__tests__/seed-existing-backfill-migration.test.ts (5 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/migration-0099-execution-workspaces-contract.test.ts (5 tests) 6ms
+ ✓  @armyofagents/adapter-codex-local  src/server/__tests__/execute-app-server.model-config.test.ts (2 tests) 13ms
+ ✓  @armyofagents/server  src/__tests__/commander-probe-config.test.ts (3 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/agent-loop-history.test.ts (1 test) 12ms
+ ✓  packages/worker-daemon  src/__tests__/provider-idempotency-replay.test.ts (3 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/reorder-partial-nullout.test.ts (3 tests) 3ms
+ ✓  packages/worker-daemon  src/__tests__/destroy-failure.test.ts (3 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/issue-monitor-scheduler.test.ts (3 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/agent-loop-compaction.test.ts (1 test) 4ms
+ ✓  @armyofagents/server  src/__tests__/rls-canary-unit.test.ts (4 tests) 6ms
+ ✓  packages/worker-daemon  src/__tests__/lease-renewal-shutdown.test.ts (2 tests) 40ms
+ ✓  @armyofagents/server  src/__tests__/seed-company-root-folder.test.ts (2 tests) 5ms
+ ✓  @armyofagents/shared  src/__tests__/organization-validators.test.ts (8 tests) 8ms
+ ✓  packages/worker-daemon  src/__tests__/cleanup-authority-denial.test.ts (2 tests) 5ms
+ ✓  packages/worker-daemon  src/__tests__/list-inspect-pagination.test.ts (2 tests) 4ms
+ ✓  packages/worker-daemon  src/__tests__/lease-renewal-deadline-lapse.test.ts (1 test) 63ms
+ ✓  @armyofagents/server  src/services/internal-agent/__tests__/ask-human-crew-actor.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/memory-projection.test.ts (4 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/cloud-environment-policy.test.ts (9 tests) 4ms
+ ✓  packages/worker-daemon  src/__tests__/quarantine-requires-device-session.test.ts (2 tests) 46ms
+ ✓  @armyofagents/server  src/__tests__/backfill-crew-origin-kind.test.ts (4 tests) 745ms
+   ✓ backfillCrewOriginKind > calls db.update().set().where() and returns { updated: rowCount }  743ms
+ ✓  @armyofagents/server  src/__tests__/plugin-loader-host-cleanup.test.ts (2 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/internal-agent-config-reensure.test.ts (6 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/use-skill-enforcement.test.ts (8 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/admin-users-cloud-denial.test.ts (5 tests) 33ms
+ ✓  @armyofagents/server  src/__tests__/find-humans-tool.test.ts (2 tests) 4ms
+ ✓  @armyofagents/server  src/services/heartbeat-stop-metadata.test.ts (4 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/connector-catalog-isolation.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/tool-manifest.test.ts (7 tests) 13ms
+ ✓  packages/worker-daemon  src/__tests__/event-outbox-shutdown.test.ts (3 tests) 2ms
+ ✓  @armyofagents/adapter-codex-local  src/__tests__/skill-injection.test.ts (2 tests) 3ms
+ ✓  packages/worker-daemon  src/__tests__/transport-headers.contract.test.ts (3 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/environment-probe-local-write.test.ts (4 tests) 14ms
+ ✓  @armyofagents/server  src/__tests__/companies-destructive-authz.test.ts (3 tests) 23ms
+ ✓  @armyofagents/server  src/__tests__/agent-read-sites-org-filter.test.ts (8 tests) 4ms
+ ✓  @armyofagents/db  src/__tests__/organization-memberships-schema.test.ts (4 tests) 2ms
+ ✓  @armyofagents/shared  src/viewer-show-ref.test.ts (7 tests) 6ms
+ ✓  @armyofagents/server  src/__tests__/commander-options-prompt.test.ts (7 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/aoa-env.test.ts (3 tests) 2ms
+ ✓  @armyofagents/shared  src/__tests__/issue-workspace-policy.test.ts (4 tests) 7ms
+ ✓  @armyofagents/shared  src/validators/company-portability-import-target.test.ts (4 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/instance-health-cloud-plugin-policy.test.ts (2 tests) 5ms
+ ✓  @armyofagents/server  src/services/internal-agent/__tests__/stream-json-chunk-boundaries.test.ts (2 tests) 16ms
+ ✓  @armyofagents/server  src/__tests__/artifact-lifecycle-schema-contract.test.ts (3 tests) 3ms
+ ✓  packages/worker-daemon  src/__tests__/fence-close-idempotent-terminal.test.ts (1 test) 2ms
+ ✓  @armyofagents/shared  src/__tests__/hub-validators.test.ts (2 tests) 3ms
+ ✓  @armyofagents/db  src/__tests__/organizations-schema.test.ts (5 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/worker-admission-rate-limit.test.ts (5 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/seed-commander-bundle.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/resolve-crew-adapter-model-override.test.ts (7 tests) 3ms
+ ✓  @armyofagents/server  src/services/__tests__/mcp-connector-emergency-policy.test.ts (8 tests) 4ms
+ ✓  @armyofagents/server  src/services/__tests__/mcp-connector-oauth-policy.test.ts (4 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/aoa-extraction-instruction-contract.test.ts (2 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/memory-folder-path-migration.test.ts (4 tests) 3ms
+ ✓  @armyofagents/db  src/__tests__/migration-journal-contiguity.test.ts (4 tests) 15ms
+ ✓  @armyofagents/server  src/__tests__/office-render-limits.test.ts (5 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/hub-items-lane-resolve.test.ts (6 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/team-slug.test.ts (10 tests) 4ms
+ ✓  @armyofagents/db  src/__tests__/execution-targets-schema.test.ts (3 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/tool-summary.test.ts (5 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/execution-workspaces-idempotency.test.ts (3 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/commander-update-identity.test.ts (5 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/aoa-extraction-migrated.test.ts (1 test) 3ms
+ ✓  packages/adapter-utils  src/remote-execution-env.test.ts (3 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/embedding-queue-schema-contract.test.ts (4 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/dev-escape-hatch.test.ts (6 tests) 4ms
+ ✓  @armyofagents/shared  src/validators/project-workspace-reserved-metadata.test.ts (3 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/commander-cli-parse-confirm.test.ts (5 tests) 4ms
+ ✓  @armyofagents/server  src/__tests__/agent-task-disposition-contract.test.ts (1 test) 6ms
+ ✓  @armyofagents/server  src/__tests__/agents-kind-normalize.test.ts (2 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/secret-provider-registry.test.ts (1 test) 2ms
+ ✓  @armyofagents/server  src/__tests__/thread-scope-schema-contract.test.ts (3 tests) 3ms
+ ✓  @armyofagents/server  src/services/internal-agent/__tests__/mcp-bridge-output-refs-throw.test.ts (1 test) 2ms
+ ✓  @armyofagents/server  src/__tests__/environments-commander-lease.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/aoa-triggers.test.ts (1 test) 3ms
+ ✓  @armyofagents/server  src/__tests__/org-spend-route.test.ts (2 tests) 23ms
+ ✓  @armyofagents/server  src/__tests__/crew-cost-caps.test.ts (3 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/authz-assert.test.ts (4 tests) 3ms
+ ✓  @armyofagents/adapter-gemini-local  src/server/__tests__/parse-v038.test.ts (3 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/project-git-cache.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/services/__tests__/viewer-control.test.ts (4 tests) 3ms
+ ✓  @armyofagents/adapter-cursor-cloud  src/server/test.test.ts (1 test) 2ms
+ ✓  @armyofagents/server  src/__tests__/artifact-routes-authz.test.ts (1 test) 1ms
+ ✓  @armyofagents/shared  src/__tests__/issue-responsible-user-schema.test.ts (3 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/commander-browser-use.test.ts (3 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/default-skill-seeder.test.ts (2 tests) 2ms
+ ✓  @armyofagents/server  src/services/internal-agent/__tests__/mcp-result-schema.test.ts (3 tests) 3ms
+ ✓  @armyofagents/shared  src/__tests__/department-function-types.test.ts (3 tests) 4ms
+ ✓  @armyofagents/db  src/__tests__/migration-0197-route-prefix-contract.test.ts (2 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/provider-connections-schema.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/crew-triggers.test.ts (5 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/memory-core-block.test.ts (3 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/aoa-runner-provider-resolution.test.ts (2 tests) 2ms
+ ✓  @armyofagents/db  src/__tests__/assets-cascade.test.ts (2 tests) 2ms
+ ✓  @armyofagents/shared  src/__tests__/user-entity-follows.test.ts (1 test) 5ms
+ ✓  @armyofagents/server  src/__tests__/commander-skills-inline.test.ts (2 tests) 2ms
+ ✓  @armyofagents/cli  src/__tests__/doctor-json.test.ts (1 test) 2ms
+ ✓  @armyofagents/server  src/__tests__/crew-cost-model.test.ts (3 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/git-branch-parse.test.ts (3 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/plugin-trust-tiers.test.ts (4 tests) 3ms
+ ✓  @armyofagents/adapter-pi-local  src/server/models.test.ts (3 tests) 9ms
+ ✓  @armyofagents/server  src/__tests__/run-cost-rate-model.test.ts (3 tests) 2ms
+ ✓  @armyofagents/server  src/__tests__/assert-company-access-failclosed.test.ts (1 test) 3ms
+ ✓  @armyofagents/server  src/__tests__/onboarding-legacy-state-normalize.test.ts (2 tests) 3ms
+ ✓  @armyofagents/server  src/__tests__/onboarding-progress-schema.test.ts (2 tests) 2ms
+ ✓  @armyofagents/server  src/services/__tests__/invite-role-metadata.test.ts (2 tests) 2ms
+ ✓  @armyofagents/adapter-openclaw  src/server/test.test.ts (1 test) 2ms
+ ✓  @armyofagents/server  src/services/internal-agent/__tests__/stdout-discipline.test.ts (1 test) 2ms
+ ✓  @armyofagents/ui  src/components/providers/__tests__/ProviderReadinessCard.test.tsx (83 tests) 411ms
+ ✓  @armyofagents/ui  src/__tests__/finance-components.test.tsx (41 tests) 390ms
+ ✓  @armyofagents/ui  src/__tests__/home/useBoardEdit.test.ts (59 tests) 94ms
+ ✓  @armyofagents/server  src/__tests__/bootstrap-ceo-cloud-auth.test.ts (2 tests) 2ms
+ ✓  @armyofagents/ui  src/components/settings/__tests__/MCPConnectorsSection.test.tsx (33 tests) 867ms
+ ✓  @armyofagents/ui  src/__tests__/CompanyImport.test.tsx (22 tests) 896ms
+ ✓  @armyofagents/ui  src/components/threads/__tests__/ScopeTab.test.tsx (45 tests) 994ms
+ ✓  @armyofagents/ui  src/onboarding/inflight/__tests__/BraindumpStep.test.tsx (23 tests) 771ms
+ ✓  @armyofagents/ui  src/components/threads/__tests__/threadViewerModel.test.ts (21 tests) 8ms
+ ✓  @armyofagents/ui  src/onboarding/inflight/__tests__/DefineDepartments.test.tsx (14 tests) 763ms
+ ✓  @armyofagents/ui  src/components/viewers/__tests__/SharedContentViewer.test.tsx (23 tests) 270ms
+ ✓  @armyofagents/ui  src/__tests__/ProjectDetailWorkspaces.test.tsx (16 tests) 1117ms
+   ✓ ProjectDetail — Workspaces tab > opens workspace source modals from Settings  481ms
+ ✓  @armyofagents/ui  src/__tests__/home/HomeBoard.queries.test.tsx (2 tests) 374ms
+ ✓  @armyofagents/ui  src/components/settings/sections/__tests__/MarketplaceUpdatesPanel.test.tsx (13 tests) 358ms
+ ✓  @armyofagents/ui  src/__tests__/MemoryTree.test.tsx (15 tests) 614ms
+ ✓  @armyofagents/ui  src/components/marketplace/__tests__/CatalogCard.test.tsx (18 tests) 339ms
+ ✓  @armyofagents/ui  src/onboarding/inflight/__tests__/CreateAgents.test.tsx (12 tests) 617ms
+ ✓  @armyofagents/ui  src/__tests__/transcript/StructuredRunBlock.test.tsx (13 tests) 173ms
+ ✓  @armyofagents/ui  src/__tests__/home/DiscussionsWidget.test.tsx (12 tests) 330ms
+ ✓  @armyofagents/ui  src/components/memory/__tests__/MemoryGraphViewer.test.tsx (7 tests) 444ms
+ ✓  @armyofagents/ui  src/__tests__/home/ArrangeToolbar.test.tsx (15 tests) 467ms
+ ✓  @armyofagents/ui  src/onboarding/__tests__/FlowEngine.test.tsx (7 tests) 237ms
+ ✓  @armyofagents/ui  src/onboarding/inflight/__tests__/FirstJobStep.test.tsx (9 tests) 354ms
+ ✓  @armyofagents/ui  src/__tests__/AgentCard.test.tsx (11 tests) 191ms
+ ✓  @armyofagents/ui  src/components/team/__tests__/AddMemberDialog.test.tsx (10 tests) 1921ms
+   ✓ AddMemberDialog — invite link mechanics > shows the created link with honest TTL, auto-copies it, and offers only Done  487ms
+   ✓ AddMemberDialog — invite is the primary path > gates direct add behind an explicit confirmation  349ms
+ ✓  @armyofagents/ui  src/components/commander/__tests__/openPreviewChoreography.test.ts (12 tests) 4ms
+ ✓  @armyofagents/ui  src/__tests__/SessionOverflowMenu.test.tsx (15 tests) 82ms
+ ✓  @armyofagents/ui  src/__tests__/PrivacyTab.test.tsx (14 tests) 295ms
+ ✓  @armyofagents/ui  src/__tests__/OperationsSection.test.tsx (13 tests) 519ms
+ ✓  @armyofagents/ui  src/__tests__/home/ApprovalsWidget.test.tsx (12 tests) 289ms
+ ✓  @armyofagents/ui  src/__tests__/CommandPalette.test.tsx (4 tests) 637ms
+ ✓  @armyofagents/ui  src/components/work-questions/WorkQuestionPanel.test.tsx (10 tests) 275ms
+ ✓  @armyofagents/ui  src/components/__tests__/SecondarySidebar.test.tsx (17 tests) 101ms
+ ✓  @armyofagents/ui  src/__tests__/home/ActionQueueWidget.test.tsx (9 tests) 205ms
+ ✓  @armyofagents/ui  src/onboarding/steps/__tests__/EnvironmentStep.test.tsx (6 tests) 276ms
+ ✓  @armyofagents/ui  src/onboarding/inflight/__tests__/InFlightFlow.test.tsx (8 tests) 391ms
+ ✓  @armyofagents/ui  src/onboarding/steps/__tests__/DepartmentStep.test.tsx (8 tests) 447ms
+ ✓  @armyofagents/ui  src/lib/__tests__/composerDraft.test.ts (7 tests) 29ms
+ ✓  @armyofagents/ui  src/components/settings/__tests__/PluginsSection.test.tsx (5 tests) 314ms
+ ✓  @armyofagents/server  src/__tests__/secret-create-organization-id.integration.test.ts (1 test) 13942ms
+ ✓  @armyofagents/ui  src/__tests__/navigation.test.tsx (11 tests) 97ms
+ ✓  @armyofagents/ui  src/context/__tests__/threadLiveUpdates.test.ts (6 tests) 9ms
+ ✓  @armyofagents/ui  src/components/team/__tests__/ManifestEditor.test.tsx (7 tests) 277ms
+ ✓  @armyofagents/ui  src/lib/__tests__/memoryTabs.test.ts (13 tests) 5ms
+ ✓  @armyofagents/ui  src/components/memory/__tests__/MemoryViewer.test.tsx (7 tests) 119ms
+ ✓  @armyofagents/ui  src/components/hub/__tests__/hubViewerModel.test.ts (20 tests) 7ms
+ ✓  @armyofagents/ui  src/__tests__/useHomeBoardLayout.test.tsx (6 tests) 496ms
+ ✓  @armyofagents/ui  src/__tests__/home/AddWidgetMenu.test.tsx (8 tests) 309ms
+ ✓  @armyofagents/ui  src/components/settings/sections/__tests__/CommanderSection.execution.test.tsx (1 test) 203ms
+ ✓  @armyofagents/ui  src/components/hub/__tests__/HubShell.layout.test.tsx (5 tests) 346ms
+ ✓  @armyofagents/ui  src/components/hub/__tests__/HubActionBar.test.tsx (7 tests) 293ms
+ ✓  @armyofagents/ui  src/__tests__/useSidebarOrder.test.tsx (6 tests) 2354ms
+   ✓ useSidebarOrder > setOrder is optimistic and debounces the PATCH  461ms
+   ✓ useSidebarOrder > setOrder coalesces rapid successive changes into one PATCH  459ms
+   ✓ useSidebarOrder > resetToDefault cancels a pending debounced PATCH  1258ms
+ ✓  @armyofagents/ui  src/components/marketplace/install/__tests__/PackageInstallModal.test.tsx (5 tests) 363ms
+ ✓  @armyofagents/ui  src/components/skills/__tests__/SkillLibrary.test.tsx (13 tests) 246ms
+ ✓  @armyofagents/ui  src/components/workspace/__tests__/MemorySection.test.tsx (6 tests) 124ms
+ ✓  @armyofagents/ui  src/__tests__/MapTopology.test.ts (4 tests) 28ms
+ ✓  @armyofagents/ui  src/components/settings/__tests__/useSettingsSidebar.test.tsx (7 tests) 190ms
+ ✓  @armyofagents/ui  src/components/threads/__tests__/RoutingDialControl.test.tsx (7 tests) 203ms
+ ✓  @armyofagents/ui  src/components/composer/ComposerMentionMenu.test.tsx (14 tests) 159ms
+ ✓  @armyofagents/ui  src/components/memory/graph/__tests__/CompanyGraphCanvas.test.tsx (6 tests) 281ms
+ ✓  @armyofagents/ui  src/components/ui/__tests__/avatar.test.tsx (19 tests) 55ms
+ ✓  @armyofagents/ui  src/__tests__/MarketplaceSearch.test.tsx (5 tests) 148ms
+ ✓  @armyofagents/ui  src/__tests__/DependencyChain.test.tsx (4 tests) 102ms
+ ✓  @armyofagents/ui  src/__tests__/CommanderEmptyState.test.tsx (8 tests) 206ms
+ ✓  @armyofagents/ui  src/components/threads/__tests__/ThreadBoard.test.tsx (5 tests) 284ms
+ ✓  @armyofagents/ui  src/__tests__/RunDetailContainer.test.tsx (3 tests) 68ms
+ ✓  @armyofagents/ui  src/__tests__/Me.test.tsx (7 tests) 391ms
+ ✓  @armyofagents/ui  src/components/commander/commanderInputModel.test.ts (12 tests) 17ms
+ ✓  @armyofagents/ui  src/__tests__/RoutineTriggerPatch.test.ts (6 tests) 4ms
+ ✓  @armyofagents/ui  src/__tests__/NewIssueDialog-workspacePolicy.test.tsx (2 tests) 504ms
+ ✓  @armyofagents/ui  src/__tests__/ChatPaneCaption.test.tsx (11 tests) 168ms
+ ✓  @armyofagents/ui  src/components/__tests__/NewAgentDialog.firstagent.test.tsx (2 tests) 377ms
+ ✓  @armyofagents/ui  src/components/skills/__tests__/SkillViewerHeader.test.tsx (7 tests) 255ms
+ ✓  @armyofagents/ui  src/lib/code-highlight.test.ts (10 tests) 16ms
+ ✓  @armyofagents/ui  src/__tests__/AgentConfigForm.model-key.test.tsx (2 tests) 777ms
+   ✓ AgentConfigForm model API key binding > binds an OpenAI secret into codex_local env without manual env-row editing  653ms
+ ✓  @armyofagents/ui  src/api/__tests__/braindump-api.test.ts (10 tests) 7ms
+ ✓  @armyofagents/ui  src/hooks/__tests__/useMemoryViewMode.test.tsx (8 tests) 29ms
+ ✓  @armyofagents/ui  src/__tests__/ProjectProperties-workspacePolicy.test.tsx (2 tests) 69ms
+ ✓  @armyofagents/ui  src/components/threads/__tests__/scopeGrouping.test.ts (8 tests) 5ms
+ ✓  @armyofagents/ui  src/components/memory/graph/__tests__/LocalGraphPreview.test.tsx (3 tests) 166ms
+ ✓  @armyofagents/ui  src/__tests__/Issues.access-403.test.tsx (2 tests) 162ms
+ ✓  @armyofagents/ui  src/__tests__/filterConversationsByTitle.test.ts (8 tests) 4ms
+ ✓  @armyofagents/ui  src/onboarding/motion/__tests__/ConstellationBg.test.tsx (5 tests) 41ms
+ ✓  @armyofagents/ui  src/onboarding/steps/__tests__/CommanderStep.test.tsx (5 tests) 146ms
+ ✓  @armyofagents/ui  src/__tests__/CreateFolderDialog.test.tsx (4 tests) 469ms
+ ✓  @armyofagents/ui  src/__tests__/MemoryTree.folderPendingBadge.test.tsx (1 test) 203ms
+ ✓  @armyofagents/ui  src/__tests__/ImageGalleryModal.test.tsx (8 tests) 367ms
+ ✓  @armyofagents/ui  src/components/skills/__tests__/SkillBody.test.tsx (5 tests) 124ms
+ ✓  @armyofagents/ui  src/hooks/__tests__/useOperationStatus.test.ts (2 tests) 124ms
+ ✓  @armyofagents/ui  src/components/settings/sections/environment-target-form.test.ts (7 tests) 5ms
+ ✓  @armyofagents/ui  src/__tests__/CommanderRosterTab.test.tsx (6 tests) 203ms
+ ✓  @armyofagents/ui  src/__tests__/MemoryFolderActionsMenu.test.tsx (5 tests) 436ms
+ ✓  @armyofagents/ui  src/__tests__/AgentConfigForm.test-environment-target.test.tsx (1 test) 388ms
+   ✓ AgentConfigForm adapter environment test > sends the selected default environment id when testing the adapter  387ms
+ ✓  @armyofagents/ui  src/lib/__tests__/env-redaction.test.ts (7 tests) 5ms
+ ✓  @armyofagents/ui  src/components/work-questions/WorkQuestionInlineList.test.tsx (4 tests) 181ms
+ ✓  @armyofagents/ui  src/__tests__/transcript/live-run-state.test.ts (3 tests) 5ms
+ ✓  @armyofagents/ui  src/__tests__/ExpiresAtChip.test.tsx (10 tests) 46ms
+ ✓  @armyofagents/ui  src/components/SystemNotice.test.tsx (3 tests) 83ms
+ ✓  @armyofagents/ui  src/components/settings/sections/__tests__/MarketplacePrefsSection.test.tsx (2 tests) 240ms
+ ✓  @armyofagents/ui  src/__tests__/storage-migration.test.ts (5 tests) 4ms
+ ✓  @armyofagents/ui  src/components/commander/CommanderInput.test.tsx (3 tests) 130ms
+ ✓  @armyofagents/ui  src/components/IssueMonitorActivityCard.test.tsx (3 tests) 60ms
+ ✓  @armyofagents/ui  src/components/MarkdownBody.test.tsx (4 tests) 74ms
+ ✓  @armyofagents/ui  src/components/skills/__tests__/SkillFilePathStrip.test.tsx (6 tests) 187ms
+ ✓  @armyofagents/ui  src/__tests__/SourceTextDrawer.test.tsx (3 tests) 170ms
+ ✓  @armyofagents/ui  src/components/ErrorBoundary.test.tsx (3 tests) 165ms
+ ✓  @armyofagents/ui  src/components/__tests__/ToastViewport.test.tsx (3 tests) 144ms
+ ✓  @armyofagents/ui  src/components/ui/__tests__/section-header.test.tsx (7 tests) 42ms
+ ✓  @armyofagents/ui  src/components/commander/commanderPaneModel.test.ts (3 tests) 3ms
+ ✓  @armyofagents/ui  src/components/InternalAgentPanel.inputRefs.test.tsx (3 tests) 5ms
+ ✓  @armyofagents/ui  src/__tests__/RoutineTitleWithVariables.test.tsx (5 tests) 40ms
+ ✓  @armyofagents/ui  src/components/threads/__tests__/SystemEntryCard.test.tsx (3 tests) 136ms
+ ✓  @armyofagents/ui  src/components/viewers/__tests__/artifact-version-viewer.test.ts (2 tests) 2ms
+ ✓  @armyofagents/ui  src/api/__tests__/marketplace-filters.test.ts (4 tests) 2ms
+ ✓  @armyofagents/ui  src/__tests__/adapter-utils.test.ts (12 tests) 3ms
+ ✓  @armyofagents/ui  src/components/marketplace/__tests__/SearchTypeahead.test.tsx (2 tests) 334ms
+   ✓ SearchTypeahead > shows dropdown with matches after typing  313ms
+ ✓  @armyofagents/ui  src/components/SecretBindingPicker.test.tsx (1 test) 204ms
+ ✓  @armyofagents/ui  src/__tests__/InputAddMenu.test.tsx (4 tests) 293ms
+ ✓  @armyofagents/ui  src/__tests__/useWorkspacePermissions.test.ts (3 tests) 3ms
+ ✓  @armyofagents/ui  src/api/__tests__/marketplace-api.test.ts (2 tests) 3ms
+ ✓  @armyofagents/ui  src/onboarding/motion/__tests__/usePrefersReducedMotion.test.ts (2 tests) 12ms
+ ✓  @armyofagents/ui  src/onboarding/motion/__tests__/AgentCharacter.test.tsx (4 tests) 48ms
+ ✓  @armyofagents/ui  src/components/skills/__tests__/SkillSourceIcon.test.tsx (5 tests) 31ms
+ ✓  @armyofagents/ui  src/__tests__/internal-agent-api.test.ts (1 test) 10ms
+ ✓  @armyofagents/ui  src/components/threads/__tests__/newThreadModel.test.ts (6 tests) 3ms
+ ✓  @armyofagents/ui  src/components/marketplace/__tests__/TrustBadge.test.tsx (4 tests) 49ms
+ ✓  @armyofagents/ui  src/__tests__/dialog.test.tsx (4 tests) 24ms
+ ✓  @armyofagents/ui  src/components/commander/useCommanderViewerCollapsed.test.ts (4 tests) 12ms
+ ✓  @armyofagents/ui  src/components/commander/viewer/TaskDetailTabBody.test.tsx (2 tests) 20ms
+ ✓  @armyofagents/ui  src/lib/__tests__/lobbyActiveItem.test.ts (5 tests) 1ms
+ ✓  @armyofagents/ui  src/components/InternalAgentPanel.duration.test.tsx (2 tests) 2ms
+ ✓  @armyofagents/ui  src/__tests__/AgentSaveWarnings.test.tsx (3 tests) 70ms
+ ✓  @armyofagents/ui  src/__tests__/task-assignee.test.ts (4 tests) 2ms
+ ✓  @armyofagents/ui  src/onboarding/motion/__tests__/LoadingDots.test.tsx (3 tests) 18ms
+ ✓  @armyofagents/ui  src/components/InternalAgentPanel.scroll.test.tsx (4 tests) 1ms
+ ✓  @armyofagents/ui  src/adapters/sandboxed-parser-worker.test.ts (2 tests) 1ms
+ ✓  @armyofagents/server  src/__tests__/distributed-execution-db-startup.integration.test.ts (74 tests) 249074ms
+   ✓ distributed-execution non-owner startup gate > aborts a FLAG-OFF boot when the definer function's ACL has drifted  13285ms
+   ✓ distributed-execution non-owner startup gate > keeps the real flag-off server usable with a non-superuser execution_targets owner  3920ms
+   ✓ distributed-execution non-owner startup gate > performs zero migration-loader, E3 environment, or serving-pool work in real flag-off bootstrap  18239ms
+   ✓ distributed-execution non-owner startup gate > fails closed before serving when the aoa_app connection cannot open  3386ms
+   ✓ distributed-execution non-owner startup gate > fails closed before serving when the aoa_operator connection cannot open  3145ms
+   ✓ distributed-execution non-owner startup gate > drops driver causes and SQL payloads from the direct error and closed structured log  342ms
+   ✓ distributed-execution non-owner startup gate > accepts only the exact aoa_app certificate DML allowlist and denies operator access  3457ms
+   ✓ distributed-execution non-owner startup gate > rejects an owner-pool fallback for aoa_app even when that connection opens  3193ms
+   ✓ distributed-execution non-owner startup gate > rejects an owner-pool fallback for aoa_operator even when that connection opens  2920ms
+   ✓ distributed-execution non-owner startup gate > rejects a superuser session masked as aoa_app before the real server reaches health  3327ms
+   ✓ distributed-execution non-owner startup gate > rejects a superuser session masked as aoa_operator before the real server reaches health  3161ms
+   ✓ distributed-execution non-owner startup gate > rejects an operator-granted view over company_secrets before serving  3099ms
+   ✓ distributed-execution non-owner startup gate > rejects an exact-named app role with inherited secret authority  3002ms
+   ✓ distributed-execution non-owner startup gate > rejects an exact-named operator role with a stale table grant  3028ms
+   ✓ distributed-execution non-owner startup gate > rejects an exact-named operator role that owns an application object  3334ms
+   ✓ distributed-execution non-owner startup gate > rejects replication authority on an exact-named serving role  3019ms
+   ✓ distributed-execution non-owner startup gate > proves the public startup API exhausts both max-four pools through the real transaction-advisory barrier and leaves no peer  396ms
+   ✓ distributed-execution non-owner startup gate > creates a fresh key, controller, and exact deadline for two calls through one isolated module  10385ms
+   ✓ distributed-execution non-owner startup gate > spends one monotonic deadline across sequential owner and concurrent app/operator phases  5315ms
+   ✓ distributed-execution non-owner startup gate > uses a dedicated owner transaction while every literal input-owner slot is reserved  367ms
+   ✓ distributed-execution non-owner startup gate > settles the real owner timeout-setup-pending stage before returning from an external abort  340ms
+   ✓ distributed-execution non-owner startup gate > settles the real owner backend-identity-pending stage before returning from an external abort  343ms
+   ✓ distributed-execution non-owner startup gate > runs and cancels the migration ledger on a dedicated owner participant  483ms
+   ✓ distributed-execution non-owner startup gate > causally bounds and settles a statement-timeout-free migration-pending query  5340ms
+   ✓ distributed-execution non-owner startup gate > causally bounds and settles a statement-timeout-free app-authority-pending query  5452ms
+   ✓ distributed-execution non-owner startup gate > causally bounds and settles a statement-timeout-free operator-authority-pending query  5409ms
+   ✓ distributed-execution non-owner startup gate > promptly settles dedicated-owner migration-pending after the exact startup controller is externally aborted  359ms
+   ✓ distributed-execution non-owner startup gate > promptly settles dedicated-owner owner-exclusive-pending after the exact startup controller is externally aborted  629ms
+   ✓ distributed-execution non-owner startup gate > promptly settles app-authority-pending after the exact startup controller is externally aborted  413ms
+   ✓ distributed-execution non-owner startup gate > promptly settles operator-authority-pending after the exact startup controller is externally aborted  573ms
+   ✓ distributed-execution non-owner startup gate > promptly settles app-negative-pending after the exact startup controller is externally aborted  715ms
+   ✓ distributed-execution non-owner startup gate > promptly settles operator-negative-pending after the exact startup controller is externally aborted  567ms
+   ✓ distributed-execution non-owner startup gate > promptly settles app-positive-pending after the exact startup controller is externally aborted  554ms
+   ✓ distributed-execution non-owner startup gate > promptly settles operator-positive-pending after the exact startup controller is externally aborted  557ms
+   ✓ distributed-execution non-owner startup gate > bounds owner cleanup acquisition on a normal returned close while the shared pool is reserved  516ms
+   ✓ distributed-execution non-owner startup gate > preserves the startup failure while bounding later owner cleanup acquisition  2504ms
+   ✓ distributed-execution non-owner startup gate > does not cancel unrelated legacy-owner work after a completed dedicated-owner transaction  459ms
+   ✓ distributed-execution non-owner startup gate > bounds and awaits a pending owner cleanup query on normal returned close  5504ms
+   ✓ distributed-execution non-owner startup gate > bounds and awaits a pending owner cleanup query after startup failure  7317ms
+   ✓ distributed-execution non-owner startup gate > settles and tears down every advisory participant for each failure/timeout/forced-end phase without payload-bearing diagnostics  27183ms
+   ✓ distributed-execution non-owner startup gate > rejects every real catalog relkind substitution, including a column-only serving relation  469ms
+   ✓ distributed-execution non-owner startup gate > checks grant-option ACL tuples independently on every derived relation and non-dropped user column  69227ms
+   ✓ distributed-execution non-owner startup gate > loads none of the flag-on job-control graph while disabled  2872ms
+   ✓ distributed-execution non-owner startup gate > proves the module-load sentinel reaches every guarded module while enabled  2994ms
+   ✓ distributed-execution non-owner startup gate > threads the identical metrics instance through the real flag-on startup and app composition  3040ms
+ ✓  @armyofagents/ui  src/components/InternalAgentPanel.outputRefs.test.tsx (1 test) 2ms
+ Test Files  648 passed | 3 skipped (651)
+      Tests  6318 passed | 12 skipped (6330)
+   Start at  15:58:59
+   Duration  254.32s (transform 27.74s, setup 4.46s, collect 268.25s, tests 1281.58s, environment 56.55s, prepare 26.58s)
+
+
+RESULT {"label":"final-shard-1","phase":"final","cwd":"/workspace/qualified","sha":"b5cc42643223c433a8263564c7142761472a13d9","patchSha256":"5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936","command":["corepack","pnpm","exec","vitest","run","--shard=1/4"],"startedAt":"2026-09-12T15:58:58.689Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":254.933,"changedSource":[]}

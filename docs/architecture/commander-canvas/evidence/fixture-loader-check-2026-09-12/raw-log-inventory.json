@@ -1,0 +1,12 @@
+[
+  {
+    "file": "exports-tsx.log",
+    "bytes": 933,
+    "sha256": "0dd25e4dfc1aa49edfba5b1146a1ed1d8c601550e2b65ad5ec8bc7a7f29f0f95"
+  },
+  {
+    "file": "shard-4-gated.log",
+    "bytes": 4546194,
+    "sha256": "6301a82d5c371801d5dc0c4c73ce12b0000577e9f25a4124f18e1223671472eb"
+  }
+]

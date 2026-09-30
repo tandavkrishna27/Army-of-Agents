@@ -1,0 +1,36 @@
+{
+  "approvedPlan": "8503adb40dd6e53350b8775336866a2d00d87bdd",
+  "base": "9200a66c42633019349de937a8b97979acac0f7a",
+  "correction": "b5cc42643223c433a8263564c7142761472a13d9",
+  "sourcePublication": "local only; no remote source publication authorized",
+  "image": "sha256:b977d0f785d96029d8d4c0790b6bf1c2a4c72e0f26319808e7ba2e9d966a1ac3",
+  "networkBefore": {},
+  "uid": 1000,
+  "gid": 1000,
+  "sourceFiles": [
+    "server/src/__tests__/outbound-url-guard.test.ts",
+    "server/src/__tests__/filesystem-routes.test.ts",
+    "server/src/routes/filesystem.ts"
+  ],
+  "patches": [
+    {
+      "file": "dns-fixture.patch",
+      "authorHead": "9200a66c42633019349de937a8b97979acac0f7a",
+      "sha256": "a39fdd5c7307f02f7c3f6583ef8c9f5b3b65d04ce77eb0b861d076ef46baaac0"
+    },
+    {
+      "file": "opener-red.patch",
+      "authorHead": "0912b374295e4754c5001bc5481512d1d587dc5c",
+      "sha256": "3f75e9d58cfe099a9dd2ee833473e5f5bbadf2918144c409305715bd42718354"
+    },
+    {
+      "file": "opener-green.patch",
+      "authorHead": "0912b374295e4754c5001bc5481512d1d587dc5c",
+      "sha256": "2b77e25883a71b50eae3013d5b07b6ef6b64968e1fdfa358d30bd486c1d301a7"
+    }
+  ],
+  "notes": [
+    "Host and Linux Git abbreviate index object IDs to different lengths. Exact cumulative diff comparison was normalized with --abbrev=9; file content and patch application were unchanged. Runner patchSha256 uses Linux Git default formatting; exported patch hashes are separately recorded.",
+    "No correction source or protocol change arose from this metadata-only comparison adjustment."
+  ]
+}

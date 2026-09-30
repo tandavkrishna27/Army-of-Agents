@@ -1,0 +1,3490 @@
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+UPDATE 0
+UPDATE 0
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+INSERT 0 0
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+DROP INDEX
+UPDATE 0
+UPDATE 0
+UPDATE 0
+UPDATE 0
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+DO
+COMMIT
+BEGIN
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+COMMIT
+BEGIN
+DO
+CREATE TABLE
+CREATE TABLE
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+DO
+DO
+DO
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+psql:/candidate/0042_curly_siren.sql:69: NOTICE:  identifier "discussion_annotations_discussion_entry_id_discussion_entries_id_fk" will be truncated to "discussion_annotations_discussion_entry_id_discussion_entries_i"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0042_curly_siren.sql:74: NOTICE:  identifier "discussion_extracted_items_discussion_entry_id_discussion_entries_id_fk" will be truncated to "discussion_extracted_items_discussion_entry_id_discussion_entri"
+ALTER TABLE
+psql:/candidate/0042_curly_siren.sql:75: NOTICE:  identifier "discussion_extracted_items_suggested_department_id_projects_id_fk" will be truncated to "discussion_extracted_items_suggested_department_id_projects_id_"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0042_curly_siren.sql:78: NOTICE:  identifier "discussion_extracted_items_selected_memory_id_memory_items_id_fk" will be truncated to "discussion_extracted_items_selected_memory_id_memory_items_id_f"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0043_milky_famine.sql:114: NOTICE:  identifier "internal_agent_messages_conversation_id_internal_agent_conversations_id_fk" will be truncated to "internal_agent_messages_conversation_id_internal_agent_conversa"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0050_elite_spencer_smythe.sql:96: NOTICE:  identifier "execution_workspaces_project_workspace_id_project_workspaces_id_fk" will be truncated to "execution_workspaces_project_workspace_id_project_workspaces_id"
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0050_elite_spencer_smythe.sql:98: NOTICE:  identifier "execution_workspaces_derived_from_execution_workspace_id_execution_workspaces_id_fk" will be truncated to "execution_workspaces_derived_from_execution_workspace_id_execut"
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0050_elite_spencer_smythe.sql:100: NOTICE:  identifier "workspace_operations_execution_workspace_id_execution_workspaces_id_fk" will be truncated to "workspace_operations_execution_workspace_id_execution_workspace"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0050_elite_spencer_smythe.sql:104: NOTICE:  identifier "workspace_runtime_services_project_workspace_id_project_workspaces_id_fk" will be truncated to "workspace_runtime_services_project_workspace_id_project_workspa"
+ALTER TABLE
+psql:/candidate/0050_elite_spencer_smythe.sql:105: NOTICE:  identifier "workspace_runtime_services_execution_workspace_id_execution_workspaces_id_fk" will be truncated to "workspace_runtime_services_execution_workspace_id_execution_wor"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0050_elite_spencer_smythe.sql:108: NOTICE:  identifier "workspace_runtime_services_started_by_run_id_heartbeat_runs_id_fk" will be truncated to "workspace_runtime_services_started_by_run_id_heartbeat_runs_id_"
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0050_elite_spencer_smythe.sql:117: NOTICE:  identifier "workspace_runtime_services_company_execution_workspace_status_idx" will be truncated to "workspace_runtime_services_company_execution_workspace_status_i"
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+UPDATE 0
+COMMIT
+BEGIN
+UPDATE 0
+UPDATE 0
+UPDATE 0
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0062_heartbeat_liveness_and_watchdog.sql:18: NOTICE:  column "context_snapshot" of relation "heartbeat_runs" already exists, skipping
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:242: NOTICE:  constraint "heartbeat_run_watchdog_decisions_company_id_companies_id_fk" of relation "heartbeat_run_watchdog_decisions" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:244: NOTICE:  constraint "heartbeat_run_watchdog_decisions_run_id_heartbeat_runs_id_fk" of relation "heartbeat_run_watchdog_decisions" does not exist, skipping
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:252: NOTICE:  identifier "heartbeat_run_watchdog_decisions_evaluation_issue_id_issues_id_fk" will be truncated to "heartbeat_run_watchdog_decisions_evaluation_issue_id_issues_id_"
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:252: NOTICE:  constraint "heartbeat_run_watchdog_decisions_evaluation_issue_id_issues_id_" of relation "heartbeat_run_watchdog_decisions" does not exist, skipping
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:254: NOTICE:  identifier "heartbeat_run_watchdog_decisions_created_by_agent_id_agents_id_fk" will be truncated to "heartbeat_run_watchdog_decisions_created_by_agent_id_agents_id_"
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:254: NOTICE:  constraint "heartbeat_run_watchdog_decisions_created_by_agent_id_agents_id_" of relation "heartbeat_run_watchdog_decisions" does not exist, skipping
+ALTER TABLE
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:256: NOTICE:  identifier "heartbeat_run_watchdog_decisions_created_by_run_id_heartbeat_runs_id_fk" will be truncated to "heartbeat_run_watchdog_decisions_created_by_run_id_heartbeat_ru"
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:256: NOTICE:  constraint "heartbeat_run_watchdog_decisions_created_by_run_id_heartbeat_ru" of relation "heartbeat_run_watchdog_decisions" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:262: NOTICE:  identifier "heartbeat_run_watchdog_decisions_evaluation_issue_id_issues_id_fk" will be truncated to "heartbeat_run_watchdog_decisions_evaluation_issue_id_issues_id_"
+ALTER TABLE
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:264: NOTICE:  identifier "heartbeat_run_watchdog_decisions_created_by_agent_id_agents_id_fk" will be truncated to "heartbeat_run_watchdog_decisions_created_by_agent_id_agents_id_"
+ALTER TABLE
+psql:/candidate/0066_complete_fk_cascade_sweep.sql:266: NOTICE:  identifier "heartbeat_run_watchdog_decisions_created_by_run_id_heartbeat_runs_id_fk" will be truncated to "heartbeat_run_watchdog_decisions_created_by_run_id_heartbeat_ru"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE INDEX
+COMMIT
+BEGIN
+UPDATE 0
+CREATE INDEX
+DO
+DO
+COMMIT
+BEGIN
+UPDATE 0
+UPDATE 0
+UPDATE 0
+UPDATE 0
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+UPDATE 0
+COMMIT
+BEGIN
+INSERT 0 0
+INSERT 0 0
+COMMIT
+BEGIN
+UPDATE 0
+COMMIT
+BEGIN
+CREATE TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+DO
+COMMIT
+BEGIN
+CREATE TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:23: NOTICE:  relation "file_import_jobs" already exists, skipping
+psql:/candidate/0084_cuddly_mandrill.sql:40: NOTICE:  relation "memory_assets" already exists, skipping
+CREATE TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:52: NOTICE:  relation "memory_extraction_batches" already exists, skipping
+CREATE TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:75: NOTICE:  relation "memory_extractions" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:88: NOTICE:  relation "memory_folders" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:98: NOTICE:  relation "memory_relations" already exists, skipping
+psql:/candidate/0084_cuddly_mandrill.sql:113: NOTICE:  relation "memory_retrievals" already exists, skipping
+DROP INDEX
+DROP INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:116: NOTICE:  index "marketplace_company_settings_company_id_unique" does not exist, skipping
+ALTER TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:118: NOTICE:  column "agent_id" of relation "memory_items" already exists, skipping
+ALTER TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:119: NOTICE:  column "validation_count" of relation "memory_items" already exists, skipping
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:120: NOTICE:  column "last_validated_at" of relation "memory_items" already exists, skipping
+psql:/candidate/0084_cuddly_mandrill.sql:121: NOTICE:  column "pinned_to_skill" of relation "memory_items" already exists, skipping
+psql:/candidate/0084_cuddly_mandrill.sql:122: NOTICE:  column "import_job_id" of relation "memory_items" already exists, skipping
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:123: NOTICE:  column "folder_path" of relation "memory_items" already exists, skipping
+ALTER TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:124: NOTICE:  column "last_accessed_by_user_id" of relation "memory_items" already exists, skipping
+ALTER TABLE
+psql:/candidate/0084_cuddly_mandrill.sql:125: NOTICE:  column "founder_pinned_to_top" of relation "memory_items" already exists, skipping
+ALTER TABLE
+ALTER TABLE
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+psql:/candidate/0084_cuddly_mandrill.sql:151: NOTICE:  relation "file_import_jobs_company_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:152: NOTICE:  relation "file_import_jobs_status_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:153: NOTICE:  relation "file_import_jobs_pending_idx" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:154: NOTICE:  relation "memory_assets_company_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:155: NOTICE:  relation "memory_assets_company_folder_idx" already exists, skipping
+psql:/candidate/0084_cuddly_mandrill.sql:156: NOTICE:  relation "memory_assets_import_job_idx" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:157: NOTICE:  relation "memory_extraction_batches_company_created_idx" already exists, skipping
+psql:/candidate/0084_cuddly_mandrill.sql:158: NOTICE:  relation "memory_extraction_batches_company_status_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:159: NOTICE:  relation "memory_extractions_company_status_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:160: NOTICE:  relation "memory_extractions_batch_idx" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:161: NOTICE:  relation "memory_extractions_result_memory_item_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:162: NOTICE:  relation "memory_extractions_company_created_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:163: NOTICE:  relation "memory_folders_company_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:164: NOTICE:  relation "memory_folders_dept_path_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:165: NOTICE:  relation "memory_folders_unique_path_per_company" already exists, skipping
+psql:/candidate/0084_cuddly_mandrill.sql:166: NOTICE:  relation "memory_relations_from_to_kind_uq" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:167: NOTICE:  relation "memory_relations_company_from_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:168: NOTICE:  relation "memory_relations_company_to_idx" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:169: NOTICE:  relation "memory_relations_company_kind_idx" already exists, skipping
+psql:/candidate/0084_cuddly_mandrill.sql:170: NOTICE:  relation "memory_retrievals_run_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:171: NOTICE:  relation "memory_retrievals_company_created_idx" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:172: NOTICE:  relation "memory_retrievals_agent_created_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:173: NOTICE:  relation "memory_retrievals_item_created_idx" already exists, skipping
+DO
+DO
+DO
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:177: NOTICE:  relation "memory_items_agent_scope_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:178: NOTICE:  relation "memory_items_pinned_skill_idx" already exists, skipping
+psql:/candidate/0084_cuddly_mandrill.sql:179: NOTICE:  relation "memory_items_folder_path_idx" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0084_cuddly_mandrill.sql:180: NOTICE:  relation "memory_items_founder_pinned_idx" already exists, skipping
+CREATE INDEX
+COMMIT
+BEGIN
+DROP INDEX
+ALTER TABLE
+ALTER TABLE
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+UPDATE 0
+UPDATE 0
+UPDATE 0
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0095_cooing_risque.sql:68: NOTICE:  identifier "company_secret_provider_configs_created_by_agent_id_agents_id_fk" will be truncated to "company_secret_provider_configs_created_by_agent_id_agents_id_f"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0095_cooing_risque.sql:85: NOTICE:  identifier "company_secrets_provider_config_id_company_secret_provider_configs_id_fk" will be truncated to "company_secrets_provider_config_id_company_secret_provider_conf"
+ALTER TABLE
+COMMIT
+BEGIN
+DROP INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+psql:/candidate/0098_romantic_agent_zero.sql:25: NOTICE:  identifier "issue_context_bundle_items_bundle_id_issue_context_bundles_id_fk" will be truncated to "issue_context_bundle_items_bundle_id_issue_context_bundles_id_f"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+UPDATE 0
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+psql:/candidate/0108_military_george_stacy.sql:22: NOTICE:  relation "issue_context_bundle_items" already exists, skipping
+CREATE TABLE
+CREATE TABLE
+psql:/candidate/0108_military_george_stacy.sql:34: NOTICE:  relation "issue_context_bundles" already exists, skipping
+DO
+DO
+DO
+psql:/candidate/0108_military_george_stacy.sql:46: NOTICE:  identifier "issue_context_bundle_items_bundle_id_issue_context_bundles_id_fk" will be truncated to "issue_context_bundle_items_bundle_id_issue_context_bundles_id_f"
+psql:/candidate/0108_military_george_stacy.sql:46: NOTICE:  identifier "issue_context_bundle_items_bundle_id_issue_context_bundles_id_fk" will be truncated to "issue_context_bundle_items_bundle_id_issue_context_bundles_id_f"
+LINE 2:   ALTER TABLE "issue_context_bundle_items" ADD CONSTRAINT "i...
+          ^
+psql:/candidate/0108_military_george_stacy.sql:46: NOTICE:  identifier "issue_context_bundle_items_bundle_id_issue_context_bundles_id_fk" will be truncated to "issue_context_bundle_items_bundle_id_issue_context_bundles_id_f"
+DO
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0108_military_george_stacy.sql:72: NOTICE:  relation "issue_context_bundle_items_company_bundle_idx" already exists, skipping
+CREATE INDEX
+CREATE INDEX
+psql:/candidate/0108_military_george_stacy.sql:74: NOTICE:  relation "issue_context_bundle_items_company_type_source_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0108_military_george_stacy.sql:76: NOTICE:  relation "issue_context_bundles_company_target_idx" already exists, skipping
+psql:/candidate/0108_military_george_stacy.sql:78: NOTICE:  relation "issue_context_bundles_company_source_idx" already exists, skipping
+CREATE INDEX
+psql:/candidate/0108_military_george_stacy.sql:80: NOTICE:  relation "execution_workspaces_active_task_workspace_uq" already exists, skipping
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0109_cultured_devos.sql:81: NOTICE:  identifier "discussion_entry_attachments_discussion_entry_id_discussion_entries_id_fk" will be truncated to "discussion_entry_attachments_discussion_entry_id_discussion_ent"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0109_cultured_devos.sql:84: NOTICE:  identifier "scope_item_dependencies_blocker_item_id_discussion_extracted_items_id_fk" will be truncated to "scope_item_dependencies_blocker_item_id_discussion_extracted_it"
+ALTER TABLE
+psql:/candidate/0109_cultured_devos.sql:85: NOTICE:  identifier "scope_item_dependencies_blocked_item_id_discussion_extracted_items_id_fk" will be truncated to "scope_item_dependencies_blocked_item_id_discussion_extracted_it"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0109_cultured_devos.sql:94: NOTICE:  identifier "thread_plan_steps_linked_item_id_discussion_extracted_items_id_fk" will be truncated to "thread_plan_steps_linked_item_id_discussion_extracted_items_id_"
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+UPDATE 0
+UPDATE 0
+UPDATE 0
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0114_new_scarecrow.sql:73: NOTICE:  identifier "internal_agent_runtime_approvals_conversation_id_internal_agent_conversations_id_fk" will be truncated to "internal_agent_runtime_approvals_conversation_id_internal_agent"
+ALTER TABLE
+psql:/candidate/0114_new_scarecrow.sql:74: NOTICE:  identifier "internal_agent_runtime_approvals_run_id_internal_agent_runs_id_fk" will be truncated to "internal_agent_runtime_approvals_run_id_internal_agent_runs_id_"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0114_new_scarecrow.sql:83: NOTICE:  identifier "task_outputs_runtime_service_id_workspace_runtime_services_id_fk" will be truncated to "task_outputs_runtime_service_id_workspace_runtime_services_id_f"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+psql:/candidate/0115_enable_pgvector.sql:32: NOTICE:  extension "vector" already exists, skipping
+DO
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+ALTER TABLE
+UPDATE 0
+UPDATE 0
+DO
+COMMIT
+BEGIN
+DO
+ALTER TABLE
+ALTER TABLE
+DO
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+psql:/candidate/0123_discussions_vector_stub.sql:47: NOTICE:  column "summary_embedding" of relation "discussions" already exists, skipping
+ALTER TABLE
+psql:/candidate/0123_discussions_vector_stub.sql:50: NOTICE:  column "embedding" of relation "discussion_extracted_items" already exists, skipping
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+psql:/candidate/0124_pale_vapor.sql:16: NOTICE:  identifier "thread_orchestration_state_last_processed_entry_id_discussion_entries_id_fk" will be truncated to "thread_orchestration_state_last_processed_entry_id_discussion_e"
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0132_mixed_morg.sql:30: NOTICE:  identifier "environment_leases_execution_workspace_id_execution_workspaces_id_fk" will be truncated to "environment_leases_execution_workspace_id_execution_workspaces_"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+DO
+DO
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+DO
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+psql:/candidate/0140_furry_bloodscream.sql:2: NOTICE:  identifier "memory_retrievals_conversation_id_internal_agent_conversations_id_fk" will be truncated to "memory_retrievals_conversation_id_internal_agent_conversations_"
+psql:/candidate/0140_furry_bloodscream.sql:2: NOTICE:  identifier "memory_retrievals_conversation_id_internal_agent_conversations_id_fk" will be truncated to "memory_retrievals_conversation_id_internal_agent_conversations_"
+LINE 1: DO $$ BEGIN ALTER TABLE "memory_retrievals" ADD CONSTRAINT "...
+                    ^
+psql:/candidate/0140_furry_bloodscream.sql:2: NOTICE:  identifier "memory_retrievals_conversation_id_internal_agent_conversations_id_fk" will be truncated to "memory_retrievals_conversation_id_internal_agent_conversations_"
+DO
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:89: NOTICE:  identifier "thread_agent_actions_committed_entry_id_discussion_entries_id_fk" will be truncated to "thread_agent_actions_committed_entry_id_discussion_entries_id_f"
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:90: NOTICE:  identifier "thread_agent_actions_committed_scope_version_id_thread_scope_versions_id_fk" will be truncated to "thread_agent_actions_committed_scope_version_id_thread_scope_ve"
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:91: NOTICE:  identifier "thread_agent_actions_committed_scope_item_id_thread_scope_items_id_fk" will be truncated to "thread_agent_actions_committed_scope_item_id_thread_scope_items"
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:93: NOTICE:  identifier "thread_scope_artifact_links_scope_version_id_thread_scope_versions_id_fk" will be truncated to "thread_scope_artifact_links_scope_version_id_thread_scope_versi"
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:95: NOTICE:  identifier "thread_scope_artifact_links_artifact_version_id_artifact_versions_id_fk" will be truncated to "thread_scope_artifact_links_artifact_version_id_artifact_versio"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:98: NOTICE:  identifier "thread_scope_items_extracted_item_id_discussion_extracted_items_id_fk" will be truncated to "thread_scope_items_extracted_item_id_discussion_extracted_items"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:106: NOTICE:  identifier "thread_scope_versions_base_version_id_thread_scope_versions_id_fk" will be truncated to "thread_scope_versions_base_version_id_thread_scope_versions_id_"
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:107: NOTICE:  identifier "thread_scope_versions_proposal_entry_id_discussion_entries_id_fk" will be truncated to "thread_scope_versions_proposal_entry_id_discussion_entries_id_f"
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:122: NOTICE:  identifier "issue_context_bundles_source_scope_version_id_thread_scope_versions_id_fk" will be truncated to "issue_context_bundles_source_scope_version_id_thread_scope_vers"
+ALTER TABLE
+psql:/candidate/0142_sweet_rogue.sql:123: NOTICE:  identifier "issue_context_bundles_source_scope_item_id_thread_scope_items_id_fk" will be truncated to "issue_context_bundles_source_scope_item_id_thread_scope_items_i"
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+DROP INDEX
+DELETE 0
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+UPDATE 0
+UPDATE 0
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+DO
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+DO
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE INDEX
+COMMIT
+BEGIN
+UPDATE 0
+UPDATE 0
+ALTER TABLE
+UPDATE 0
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+DO
+DO
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+DO
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+DROP INDEX
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0170_blue_princess_powerful.sql:129: NOTICE:  identifier "work_question_continuation_requests_question_id_work_questions_id_fk" will be truncated to "work_question_continuation_requests_question_id_work_questions_"
+ALTER TABLE
+psql:/candidate/0170_blue_princess_powerful.sql:130: NOTICE:  identifier "work_question_continuation_requests_target_agent_id_agents_id_fk" will be truncated to "work_question_continuation_requests_target_agent_id_agents_id_f"
+ALTER TABLE
+psql:/candidate/0170_blue_princess_powerful.sql:131: NOTICE:  identifier "work_question_continuation_requests_target_conversation_id_internal_agent_conversations_id_fk" will be truncated to "work_question_continuation_requests_target_conversation_id_inte"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0170_blue_princess_powerful.sql:135: NOTICE:  identifier "work_questions_execution_workspace_id_execution_workspaces_id_fk" will be truncated to "work_questions_execution_workspace_id_execution_workspaces_id_f"
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0170_blue_princess_powerful.sql:137: NOTICE:  identifier "work_questions_source_discussion_entry_id_discussion_entries_id_fk" will be truncated to "work_questions_source_discussion_entry_id_discussion_entries_id"
+psql:/candidate/0170_blue_princess_powerful.sql:138: NOTICE:  identifier "work_questions_source_commander_conversation_id_internal_agent_conversations_id_fk" will be truncated to "work_questions_source_commander_conversation_id_internal_agent_"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+DROP INDEX
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+DO
+DO
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+UPDATE 0
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+psql:/candidate/0184_connectors.sql:31: NOTICE:  identifier "company_mcp_connector_agents_connector_id_company_mcp_connectors_id_fk" will be truncated to "company_mcp_connector_agents_connector_id_company_mcp_connector"
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+DO
+DO
+psql:/candidate/0185_tiresome_warlock.sql:30: NOTICE:  identifier "agent_provider_credential_bindings_credential_id_provider_credentials_id_fk" will be truncated to "agent_provider_credential_bindings_credential_id_provider_crede"
+psql:/candidate/0185_tiresome_warlock.sql:30: NOTICE:  identifier "agent_provider_credential_bindings_credential_id_provider_credentials_id_fk" will be truncated to "agent_provider_credential_bindings_credential_id_provider_crede"
+LINE 1: DO $$ BEGIN ALTER TABLE "agent_provider_credential_bindings"...
+                    ^
+psql:/candidate/0185_tiresome_warlock.sql:30: NOTICE:  identifier "agent_provider_credential_bindings_credential_id_provider_credentials_id_fk" will be truncated to "agent_provider_credential_bindings_credential_id_provider_crede"
+DO
+psql:/candidate/0185_tiresome_warlock.sql:31: NOTICE:  identifier "agent_provider_credential_bindings_approved_by_user_id_user_id_fk" will be truncated to "agent_provider_credential_bindings_approved_by_user_id_user_id_"
+psql:/candidate/0185_tiresome_warlock.sql:31: NOTICE:  identifier "agent_provider_credential_bindings_approved_by_user_id_user_id_fk" will be truncated to "agent_provider_credential_bindings_approved_by_user_id_user_id_"
+LINE 1: DO $$ BEGIN ALTER TABLE "agent_provider_credential_bindings"...
+                    ^
+psql:/candidate/0185_tiresome_warlock.sql:31: NOTICE:  identifier "agent_provider_credential_bindings_approved_by_user_id_user_id_fk" will be truncated to "agent_provider_credential_bindings_approved_by_user_id_user_id_"
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+INSERT 0 1
+UPDATE 0
+INSERT 0 0
+INSERT 0 0
+ALTER TABLE
+ALTER TABLE
+DROP INDEX
+CREATE INDEX
+DROP INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+UPDATE 0
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+DO
+ALTER TABLE
+DO
+INSERT 0 0
+UPDATE 0
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+DROP INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+CREATE INDEX
+UPDATE 0
+DELETE 0
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+psql:/candidate/0202_lethal_vance_astro.sql:45: NOTICE:  identifier "mcp_connector_oauth_flows_connector_id_company_mcp_connectors_id_fk" will be truncated to "mcp_connector_oauth_flows_connector_id_company_mcp_connectors_i"
+psql:/candidate/0202_lethal_vance_astro.sql:45: NOTICE:  identifier "mcp_connector_oauth_flows_connector_id_company_mcp_connectors_id_fk" will be truncated to "mcp_connector_oauth_flows_connector_id_company_mcp_connectors_i"
+LINE 2:  ALTER TABLE "mcp_connector_oauth_flows" ADD CONSTRAINT "mcp...
+         ^
+psql:/candidate/0202_lethal_vance_astro.sql:45: NOTICE:  identifier "mcp_connector_oauth_flows_connector_id_company_mcp_connectors_id_fk" will be truncated to "mcp_connector_oauth_flows_connector_id_company_mcp_connectors_i"
+DO
+psql:/candidate/0202_lethal_vance_astro.sql:49: NOTICE:  identifier "mcp_connector_oauth_refresh_leases_secret_id_company_secrets_id_fk" will be truncated to "mcp_connector_oauth_refresh_leases_secret_id_company_secrets_id"
+psql:/candidate/0202_lethal_vance_astro.sql:49: NOTICE:  identifier "mcp_connector_oauth_refresh_leases_secret_id_company_secrets_id_fk" will be truncated to "mcp_connector_oauth_refresh_leases_secret_id_company_secrets_id"
+LINE 2:  ALTER TABLE "mcp_connector_oauth_refresh_leases" ADD CONSTR...
+         ^
+psql:/candidate/0202_lethal_vance_astro.sql:49: NOTICE:  identifier "mcp_connector_oauth_refresh_leases_secret_id_company_secrets_id_fk" will be truncated to "mcp_connector_oauth_refresh_leases_secret_id_company_secrets_id"
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+psql:/candidate/0206_flaky_christian_walker.sql:2: NOTICE:  identifier "environment_leases_commander_conversation_id_internal_agent_conversations_id_fk" will be truncated to "environment_leases_commander_conversation_id_internal_agent_con"
+ALTER TABLE
+psql:/candidate/0206_flaky_christian_walker.sql:6: NOTICE:  identifier "environment_leases_company_commander_conv_environment_status_idx" will be truncated to "environment_leases_company_commander_conv_environment_status_id"
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+DO
+GRANT
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0211_tenant_rls_enforcement.sql:24: NOTICE:  policy "jobs_tenant_isolation" for relation "jobs" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0211_tenant_rls_enforcement.sql:34: NOTICE:  policy "job_attempts_tenant_isolation" for relation "job_attempts" does not exist, skipping
+CREATE POLICY
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0211_tenant_rls_enforcement.sql:44: NOTICE:  policy "leases_tenant_isolation" for relation "leases" does not exist, skipping
+CREATE POLICY
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0211_tenant_rls_enforcement.sql:54: NOTICE:  policy "workers_tenant_isolation" for relation "workers" does not exist, skipping
+CREATE POLICY
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0211_tenant_rls_enforcement.sql:64: NOTICE:  policy "services_tenant_isolation" for relation "services" does not exist, skipping
+CREATE POLICY
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0211_tenant_rls_enforcement.sql:74: NOTICE:  policy "service_instances_tenant_isolation" for relation "service_instances" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0211_tenant_rls_enforcement.sql:84: NOTICE:  policy "job_artifacts_tenant_isolation" for relation "job_artifacts" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0211_tenant_rls_enforcement.sql:94: NOTICE:  policy "job_secret_handles_tenant_isolation" for relation "job_secret_handles" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+DO
+ALTER ROLE
+DO
+ALTER ROLE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0213_e2_serving_role_correction.sql:134: NOTICE:  policy "execution_targets_tenant_serving" for relation "execution_targets" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+psql:/candidate/0213_e2_serving_role_correction.sql:141: NOTICE:  policy "workers_platform_operator" for relation "workers" does not exist, skipping
+CREATE POLICY
+DROP POLICY
+psql:/candidate/0213_e2_serving_role_correction.sql:149: NOTICE:  policy "execution_targets_platform_operator" for relation "execution_targets" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+DO
+DO
+ALTER ROLE
+REVOKE
+REVOKE
+REVOKE
+GRANT
+DO
+DO
+ALTER ROLE
+REVOKE
+REVOKE
+REVOKE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+GRANT
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+UPDATE 0
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+DO
+ALTER ROLE
+REVOKE
+GRANT
+GRANT
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0218_job_control_submission_rls.sql:32: NOTICE:  policy "job_outbox_tenant_isolation" for relation "job_outbox" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+UPDATE 0
+DO
+INSERT 0 0
+UPDATE 0
+DO
+psql:/candidate/0219_worker_enrollment.sql:125: NOTICE:  identifier "worker_enrollment_code_routes_candidate_organization_id_organizations_id_fk" will be truncated to "worker_enrollment_code_routes_candidate_organization_id_organiz"
+psql:/candidate/0219_worker_enrollment.sql:125: NOTICE:  identifier "worker_enrollment_code_routes_candidate_organization_id_organizations_id_fk" will be truncated to "worker_enrollment_code_routes_candidate_organization_id_organiz"
+LINE 1: DO $$ BEGIN ALTER TABLE "worker_enrollment_code_routes" ADD ...
+                    ^
+psql:/candidate/0219_worker_enrollment.sql:125: NOTICE:  identifier "worker_enrollment_code_routes_candidate_organization_id_organizations_id_fk" will be truncated to "worker_enrollment_code_routes_candidate_organization_id_organiz"
+DO
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+DO
+DO
+DO
+DO
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+DO
+DO
+ALTER ROLE
+ALTER ROLE
+REVOKE
+REVOKE
+REVOKE
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+GRANT
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0221_worker_enrollment_rls.sql:77: NOTICE:  policy "worker_enrollment_code_routes_tenant_isolation" for relation "worker_enrollment_code_routes" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+psql:/candidate/0221_worker_enrollment_rls.sql:85: NOTICE:  policy "worker_enrollment_codes_tenant_isolation" for relation "worker_enrollment_codes" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+psql:/candidate/0221_worker_enrollment_rls.sql:93: NOTICE:  policy "worker_proof_replays_tenant_isolation" for relation "worker_proof_replays" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+psql:/candidate/0221_worker_enrollment_rls.sql:101: NOTICE:  policy "worker_enrollment_code_routes_platform_operator" for relation "worker_enrollment_code_routes" does not exist, skipping
+CREATE POLICY
+psql:/candidate/0221_worker_enrollment_rls.sql:109: NOTICE:  policy "worker_enrollment_code_routes_operator_discovery" for relation "worker_enrollment_code_routes" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+psql:/candidate/0221_worker_enrollment_rls.sql:116: NOTICE:  policy "worker_enrollment_codes_platform_operator" for relation "worker_enrollment_codes" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+psql:/candidate/0221_worker_enrollment_rls.sql:124: NOTICE:  policy "worker_proof_replays_platform_operator" for relation "worker_proof_replays" does not exist, skipping
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+psql:/candidate/0221_worker_enrollment_rls.sql:148: NOTICE:  policy "execution_targets_tenant_enrollment_update" for relation "execution_targets" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+DO
+COMMIT
+BEGIN
+GRANT
+GRANT
+COMMIT
+BEGIN
+ALTER TABLE
+DO
+COMMIT
+BEGIN
+GRANT
+GRANT
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+DO
+DO
+DO
+DO
+UPDATE 0
+DO
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0228_job_leasing_rls.sql:20: NOTICE:  policy "worker_operation_receipts_tenant_isolation" for relation "worker_operation_receipts" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+DO
+COMMIT
+BEGIN
+CREATE TABLE
+DROP INDEX
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0231_worker_lease_rejections_rls.sql:20: NOTICE:  policy "worker_lease_rejections_tenant_isolation" for relation "worker_lease_rejections" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+DO
+DO
+REVOKE
+REVOKE
+REVOKE
+GRANT
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0233_distributed_cutover_marker_rls.sql:46: NOTICE:  policy "distributed_cutover_markers_operator_write" for relation "distributed_cutover_markers" does not exist, skipping
+CREATE POLICY
+DROP POLICY
+psql:/candidate/0233_distributed_cutover_marker_rls.sql:54: NOTICE:  policy "distributed_cutover_markers_app_read" for relation "distributed_cutover_markers" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+DO
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0235_job_events_rls.sql:23: NOTICE:  policy "job_events_tenant_isolation" for relation "job_events" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0235_job_events_rls.sql:47: NOTICE:  policy "job_projection_receipts_tenant_isolation" for relation "job_projection_receipts" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+DO
+DO
+CREATE INDEX
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0237_job_control_commands_rls.sql:23: NOTICE:  policy "job_control_commands_tenant_isolation" for relation "job_control_commands" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+ALTER TABLE
+COMMIT
+BEGIN
+DO
+DO
+REVOKE
+REVOKE
+REVOKE
+GRANT
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0239_execution_target_revocations_rls.sql:53: NOTICE:  policy "execution_target_revocations_operator_write" for relation "execution_target_revocations" does not exist, skipping
+CREATE POLICY
+psql:/candidate/0239_execution_target_revocations_rls.sql:61: NOTICE:  policy "execution_target_revocations_app_read" for relation "execution_target_revocations" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+CREATE POLICY
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+ALTER TABLE
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0253_folder_grants_rls.sql:24: NOTICE:  policy "folder_grants_tenant_isolation" for relation "folder_grants" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+CREATE TABLE
+DO
+COMMIT
+BEGIN
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0255_worker_admission_rate_limit_rls.sql:25: NOTICE:  policy "worker_admission_rate_limits_tenant_isolation" for relation "worker_admission_rate_limits" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+CREATE TABLE
+DO
+psql:/candidate/0256_dizzy_bedlam.sql:33: NOTICE:  identifier "legacy_resource_reconciliation_environment_lease_id_environment_leases_id_fk" will be truncated to "legacy_resource_reconciliation_environment_lease_id_environment"
+psql:/candidate/0256_dizzy_bedlam.sql:33: NOTICE:  identifier "legacy_resource_reconciliation_environment_lease_id_environment_leases_id_fk" will be truncated to "legacy_resource_reconciliation_environment_lease_id_environment"
+LINE 2:  ALTER TABLE "legacy_resource_reconciliation" ADD CONSTRAINT...
+         ^
+psql:/candidate/0256_dizzy_bedlam.sql:33: NOTICE:  identifier "legacy_resource_reconciliation_environment_lease_id_environment_leases_id_fk" will be truncated to "legacy_resource_reconciliation_environment_lease_id_environment"
+DO
+psql:/candidate/0256_dizzy_bedlam.sql:38: NOTICE:  identifier "legacy_resource_reconciliation_environment_id_environments_id_fk" will be truncated to "legacy_resource_reconciliation_environment_id_environments_id_f"
+psql:/candidate/0256_dizzy_bedlam.sql:38: NOTICE:  identifier "legacy_resource_reconciliation_environment_id_environments_id_fk" will be truncated to "legacy_resource_reconciliation_environment_id_environments_id_f"
+LINE 2:  ALTER TABLE "legacy_resource_reconciliation" ADD CONSTRAINT...
+         ^
+psql:/candidate/0256_dizzy_bedlam.sql:38: NOTICE:  identifier "legacy_resource_reconciliation_environment_id_environments_id_fk" will be truncated to "legacy_resource_reconciliation_environment_id_environments_id_f"
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+DO
+DO
+REVOKE
+REVOKE
+REVOKE
+GRANT
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0256_dizzy_bedlam.sql:90: NOTICE:  policy "legacy_resource_reconciliation_operator_write" for relation "legacy_resource_reconciliation" does not exist, skipping
+CREATE POLICY
+psql:/candidate/0256_dizzy_bedlam.sql:98: NOTICE:  policy "legacy_resource_reconciliation_app_read" for relation "legacy_resource_reconciliation" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+CREATE TABLE
+CREATE TABLE
+DO
+DO
+DO
+DO
+CREATE INDEX
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0257_volatile_spencer_smythe.sql:57: NOTICE:  policy "live_event_log_tenant_isolation" for relation "live_event_log" does not exist, skipping
+CREATE POLICY
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0257_volatile_spencer_smythe.sql:81: NOTICE:  policy "live_event_sequences_tenant_isolation" for relation "live_event_sequences" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+REVOKE
+GRANT
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+REVOKE
+GRANT
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+UPDATE 0
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+DO
+DO
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+psql:/candidate/0264_public_patch.sql:120: NOTICE:  policy "service_generations_tenant_isolation" for relation "service_generations" does not exist, skipping
+CREATE POLICY
+COMMIT
+BEGIN
+CREATE INDEX
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE FUNCTION
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+COMMIT
+BEGIN
+DROP FUNCTION
+DROP FUNCTION
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+COMMIT
+BEGIN
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+COMMIT
+BEGIN
+CREATE TABLE
+psql:/candidate/0269_groovy_lila_cheney.sql:21: NOTICE:  identifier "legacy_reconciliation_passes_organization_id_organizations_id_fk" will be truncated to "legacy_reconciliation_passes_organization_id_organizations_id_f"
+psql:/candidate/0269_groovy_lila_cheney.sql:21: NOTICE:  identifier "legacy_reconciliation_passes_organization_id_organizations_id_fk" will be truncated to "legacy_reconciliation_passes_organization_id_organizations_id_f"
+LINE 2:  ALTER TABLE "legacy_reconciliation_passes" ADD CONSTRAINT "...
+         ^
+psql:/candidate/0269_groovy_lila_cheney.sql:21: NOTICE:  identifier "legacy_reconciliation_passes_organization_id_organizations_id_fk" will be truncated to "legacy_reconciliation_passes_organization_id_organizations_id_f"
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+DO
+DO
+REVOKE
+REVOKE
+REVOKE
+GRANT
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0269_groovy_lila_cheney.sql:94: NOTICE:  policy "legacy_reconciliation_passes_operator_write" for relation "legacy_reconciliation_passes" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+COMMIT
+BEGIN
+DROP FUNCTION
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0272_browser_request_decision_binding.sql:22: NOTICE:  constraint "agent_runtime_decisions_legacy_binding_all_or_nothing" of relation "agent_runtime_decisions" does not exist, skipping
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+psql:/candidate/0274_activity_log_denial_sink.sql:30: NOTICE:  constraint "activity_log_organization_id_organizations_id_fk" of relation "activity_log" does not exist, skipping
+ALTER TABLE
+CREATE INDEX
+ALTER TABLE
+psql:/candidate/0274_activity_log_denial_sink.sql:33: NOTICE:  constraint "activity_log_company_or_denial_check" of relation "activity_log" does not exist, skipping
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+DO
+CREATE INDEX
+COMMIT
+BEGIN
+CREATE INDEX
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+COMMIT
+BEGIN
+ALTER TABLE
+DO
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+COMMIT
+BEGIN
+psql:/candidate/0281_provider_credential_broker.sql:31: NOTICE:  function public.resolve_provider_assignment_candidates(uuid,uuid,text) does not exist, skipping
+DROP FUNCTION
+psql:/candidate/0281_provider_credential_broker.sql:33: NOTICE:  function public.resolve_company_secret_bundle(uuid,uuid,pg_catalog.int4,text,text,text) does not exist, skipping
+DROP FUNCTION
+DROP FUNCTION
+psql:/candidate/0281_provider_credential_broker.sql:35: NOTICE:  function public.record_company_secret_access(uuid,uuid,pg_catalog.int4,text,text,text,text,text,uuid,uuid,uuid,text,text,text) does not exist, skipping
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+REVOKE
+GRANT
+COMMIT
+BEGIN
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT

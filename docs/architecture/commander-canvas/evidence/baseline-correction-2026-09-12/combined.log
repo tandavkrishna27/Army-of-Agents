@@ -1,0 +1,15 @@
+{"label":"combined","phase":"targeted","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/server","server/src/__tests__/filesystem-routes.test.ts","server/src/__tests__/outbound-url-guard.test.ts","server/src/__tests__/mcp-connector-install-adversarial.test.ts"],"startedAt":"2026-09-12T15:56:26.141Z"}
+
+ RUN  v3.2.6 /workspace/corrected
+
+ ✓  @armyofagents/server  src/__tests__/outbound-url-guard.test.ts (79 tests) 32ms
+ ✓  @armyofagents/server  src/__tests__/filesystem-routes.test.ts (14 tests) 55ms
+ ✓  @armyofagents/server  src/__tests__/mcp-connector-install-adversarial.test.ts (154 tests) 443ms
+
+ Test Files  3 passed (3)
+      Tests  247 passed (247)
+   Start at  15:56:26
+   Duration  3.05s (transform 1.83s, setup 0ms, collect 4.15s, tests 530ms, environment 0ms, prepare 109ms)
+
+
+RESULT {"label":"combined","phase":"targeted","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/server","server/src/__tests__/filesystem-routes.test.ts","server/src/__tests__/outbound-url-guard.test.ts","server/src/__tests__/mcp-connector-install-adversarial.test.ts"],"startedAt":"2026-09-12T15:56:26.141Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":3.562,"changedSource":[]}

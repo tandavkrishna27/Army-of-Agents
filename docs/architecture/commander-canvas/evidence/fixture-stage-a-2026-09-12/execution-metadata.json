@@ -1,0 +1,15 @@
+{
+  "source": "b5cc42643223c433a8263564c7142761472a13d9",
+  "diagnosticPatchSha256": "0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c",
+  "changedPaths": [
+    "packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts"
+  ],
+  "container": "universe-preparation-e9637db9",
+  "image": "node@sha256:b977d0f785d96029d8d4c0790b6bf1c2a4c72e0f26319808e7ba2e9d966a1ac3",
+  "uidGid": "1000:1000",
+  "network": "disconnected; inspected as {}",
+  "cleanup": "container stopped between diagnostic invocations and after final log preservation",
+  "localEvidence": "C:\\Users\\TK\\AppData\\Local\\Temp\\universe-fixture-stage-a-5558c9523949402285269313d571136d",
+  "scope": "Stage A only; no repair/full qualification/source publication/adoption",
+  "logTransformation": "ANSI escapes and trailing whitespace removed; full shard compressed; raw hashes retained"
+}

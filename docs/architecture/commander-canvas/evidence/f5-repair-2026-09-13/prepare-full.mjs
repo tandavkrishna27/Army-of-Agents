@@ -1,0 +1,10 @@
+import {execFileSync} from 'node:child_process';
+import {existsSync,mkdirSync,writeFileSync} from 'node:fs';
+const cwd='/workspace/f5-qualified-baseline-20260913';
+if(existsSync(cwd))throw Error('Checkout already exists');
+execFileSync('git',['clone','--no-hardlinks','/workspace/full-baseline-20260913',cwd],{stdio:'inherit'});
+execFileSync('git',['fetch','/workspace/f5-source.bundle','HEAD'],{cwd,stdio:'inherit'});
+execFileSync('git',['checkout','--detach','fcab5a112aeac8385733f528396e65d258c02dfb'],{cwd,stdio:'inherit'});
+if(execFileSync('git',['rev-parse','HEAD'],{cwd,encoding:'utf8'}).trim()!=='fcab5a112aeac8385733f528396e65d258c02dfb')throw Error('Wrong fcab5a112aeac8385733f528396e65d258c02dfb');
+if(execFileSync('git',['status','--porcelain'],{cwd,encoding:'utf8'}).trim())throw Error('Dirty checkout');
+console.log('Fresh exact-commit checkout ready');

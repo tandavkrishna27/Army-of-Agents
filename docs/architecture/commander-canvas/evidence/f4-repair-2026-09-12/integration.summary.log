@@ -1,0 +1,9 @@
+2026-09-12 18:15:07.454 UTC [231] LOG:  database system is shut down
+ ✓  @armyofagents/db  src/__tests__/backup-lib-non-system-schemas.test.ts (2 tests) 4402ms
+2026-09-12 18:15:12.334 UTC [282] LOG:  database system is shut down
+ ✓  @armyofagents/server  src/__tests__/blocked-task-scan.integration.test.ts (4 tests) 8076ms
+2026-09-12 18:15:12.613 UTC [304] LOG:  database system is shut down
+ ✓  @armyofagents/server  src/__tests__/runtime-provider-keys-with-secret.integration.test.ts (5 tests) 4939ms
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+   Duration  11.03s (transform 3.06s, setup 0ms, collect 7.57s, tests 17.42s, environment 0ms, prepare 126ms)

@@ -1,0 +1,49 @@
+{"label":"install","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","install","--offline","--frozen-lockfile"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:17.562Z"}
+Scope: all 35 workspace projects
+(node:56) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +1495
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 1495, reused 1490, downloaded 0, added 1495, done
+ WARN  Failed to create bin at /workspace/f4-repair/packages/adapter-manager/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/create-paperclip-plugin/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/examples/plugin-authoring-smoke-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/examples/plugin-kitchen-sink-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/examples/plugin-hello-world-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/examples/plugin-file-browser-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/provider-capability/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/sandbox-e2b-provider/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/worker-networked-host/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/worker-keystore/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/provider-wire/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/server/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/server/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/sdk/dist/dev-cli.js'
+
+devDependencies:
++ @changesets/cli 2.30.0
++ @playwright/test 1.59.1
++ cross-env 7.0.3
++ drizzle-orm 0.45.2
++ esbuild 0.28.1
++ tsx 4.22.4
++ typescript 5.9.3
++ vitest 3.2.6
+
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/create-paperclip-plugin/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/create-paperclip-plugin/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/examples/plugin-authoring-smoke-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/examples/plugin-authoring-smoke-example/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/examples/plugin-file-browser-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/examples/plugin-file-browser-example/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/examples/plugin-hello-world-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/examples/plugin-hello-world-example/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/plugins/examples/plugin-kitchen-sink-example/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/plugins/examples/plugin-kitchen-sink-example/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/provider-capability/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/provider-capability/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/sandbox-e2b-provider/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/sandbox-e2b-provider/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/provider-wire/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/provider-wire/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/worker-keystore/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/worker-keystore/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/adapter-manager/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/adapter-manager/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/packages/worker-networked-host/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/packages/worker-networked-host/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+ WARN  Failed to create bin at /workspace/f4-repair/server/node_modules/.bin/paperclip-plugin-dev-server. ENOENT: no such file or directory, open '/workspace/f4-repair/server/node_modules/@armyofagents/plugin-sdk/dist/dev-cli.js'
+ WARN  Failed to create bin at /workspace/f4-repair/server/node_modules/.bin/aoa-worker-daemon. ENOENT: no such file or directory, open '/workspace/f4-repair/server/node_modules/@armyofagents/worker-daemon/dist/bin/worker-daemon.js'
+Done in 4.7s
+
+RESULT {"label":"install","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","install","--offline","--frozen-lockfile"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:17.562Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":5.068,"changed":[]}

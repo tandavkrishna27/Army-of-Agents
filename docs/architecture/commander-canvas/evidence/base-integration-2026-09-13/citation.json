@@ -1,0 +1,19 @@
+{
+  "label": "citation",
+  "sha": "bef01d9cc6947e25ec87df21e747eafdbe497527",
+  "command": [
+    "node",
+    "scripts/check-register-citation-integrity.mjs"
+  ],
+  "cwd": "/workspace/integrated-baseline-20260913",
+  "startedAt": "2026-09-13T10:07:04.691Z",
+  "code": 0,
+  "signal": null,
+  "timeout": false,
+  "elapsedSeconds": 0.274,
+  "changed": [],
+  "report": null,
+  "unhandled": false,
+  "accepted": true,
+  "safeToContinue": true
+}

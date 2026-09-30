@@ -1,0 +1,22 @@
+{
+  "label": "build0",
+  "sha": "fcab5a112aeac8385733f528396e65d258c02dfb",
+  "command": [
+    "corepack",
+    "pnpm",
+    "--filter",
+    "@armyofagents/worker-protocol",
+    "build"
+  ],
+  "cwd": "/workspace/f5-qualified-baseline-20260913",
+  "startedAt": "2026-09-12T21:01:54.483Z",
+  "code": 0,
+  "signal": null,
+  "timeout": false,
+  "elapsedSeconds": 1.989,
+  "changed": [],
+  "report": null,
+  "unhandled": false,
+  "accepted": true,
+  "safeToContinue": true
+}

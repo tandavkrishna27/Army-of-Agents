@@ -1,0 +1,13 @@
+{"label":"green","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"green","command":["corepack","pnpm","exec","vitest","run","server/src/__tests__/blocked-task-fixture.test.ts"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:13:35.896Z"}
+
+ RUN  v3.2.6 /workspace/f4-repair
+
+ ✓  @armyofagents/server  src/__tests__/blocked-task-fixture.test.ts (12 tests) 12ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  18:13:36
+   Duration  220ms (transform 28ms, setup 0ms, collect 28ms, tests 12ms, environment 0ms, prepare 39ms)
+
+
+RESULT {"label":"green","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"green","command":["corepack","pnpm","exec","vitest","run","server/src/__tests__/blocked-task-fixture.test.ts"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:13:35.896Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":0.939,"changed":[]}

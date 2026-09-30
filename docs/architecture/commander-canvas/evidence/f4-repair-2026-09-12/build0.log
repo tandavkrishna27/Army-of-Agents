@@ -1,0 +1,7 @@
+{"label":"build0","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","--filter","@armyofagents/worker-protocol","build"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:31.970Z"}
+
+> @armyofagents/worker-protocol@0.1.0 build /workspace/f4-repair/packages/worker-protocol
+> tsc
+
+
+RESULT {"label":"build0","sha":"b5cc42643223c433a8263564c7142761472a13d9","stage":"bootstrap","command":["corepack","pnpm","--filter","@armyofagents/worker-protocol","build"],"cwd":"/workspace/f4-repair","startedAt":"2026-09-12T18:12:31.970Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":2.098,"changed":[]}

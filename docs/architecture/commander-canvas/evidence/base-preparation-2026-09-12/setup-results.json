@@ -1,0 +1,80 @@
+[
+  {
+    "phase": "setup",
+    "kind": "base",
+    "sha": "183e46a9c65fc3105c7e3d125629276814df7dbb",
+    "cwd": "/workspace/base",
+    "command": "node --version",
+    "startedAt": "2026-09-12T14:10:54.897Z",
+    "logPath": "/workspace/logs/base-node-version.log",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.01
+  },
+  {
+    "phase": "setup",
+    "kind": "base",
+    "sha": "183e46a9c65fc3105c7e3d125629276814df7dbb",
+    "cwd": "/workspace/base",
+    "command": "corepack pnpm --version",
+    "startedAt": "2026-09-12T14:10:54.907Z",
+    "logPath": "/workspace/logs/base-pnpm-version.log",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 1.639
+  },
+  {
+    "phase": "setup",
+    "kind": "base",
+    "sha": "183e46a9c65fc3105c7e3d125629276814df7dbb",
+    "cwd": "/workspace/base",
+    "command": "corepack pnpm install --frozen-lockfile",
+    "startedAt": "2026-09-12T14:10:56.547Z",
+    "logPath": "/workspace/logs/base-install.log",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 44.997
+  },
+  {
+    "phase": "setup",
+    "kind": "candidate",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "cwd": "/workspace/candidate",
+    "command": "node --version",
+    "startedAt": "2026-09-12T14:11:42.127Z",
+    "logPath": "/workspace/logs/candidate-node-version.log",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.008
+  },
+  {
+    "phase": "setup",
+    "kind": "candidate",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "cwd": "/workspace/candidate",
+    "command": "corepack pnpm --version",
+    "startedAt": "2026-09-12T14:11:42.135Z",
+    "logPath": "/workspace/logs/candidate-pnpm-version.log",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.166
+  },
+  {
+    "phase": "setup",
+    "kind": "candidate",
+    "sha": "9200a66c42633019349de937a8b97979acac0f7a",
+    "cwd": "/workspace/candidate",
+    "command": "corepack pnpm install --frozen-lockfile",
+    "startedAt": "2026-09-12T14:11:42.301Z",
+    "logPath": "/workspace/logs/candidate-install.log",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 4.986
+  }
+]

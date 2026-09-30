@@ -1,0 +1,11 @@
+{
+  "kind": "pre-publication-working-tree-verification",
+  "branch": "codex/universe-interface",
+  "parentCommit": "8fa8b964a7300eb7125def094df6a92fffb58bc8",
+  "adoptedApplicationBase": "b48132dac0f3435e017915e1e21ef1d66a39d0cd",
+  "nonDocumentationDifferencesFromAdoptedBase": [],
+  "allChangedPathsUnderUniverseDocs": true,
+  "featureImplementationStarted": false,
+  "graphSha256": "f220a984f5776a8e61d9b53e27f4268d92b83f8f575dd7fe61652c490a0ff126",
+  "runtimeChecks": "Not repeated: documentation-only delta; unchanged adopted source has its existing baseline certificate."
+}

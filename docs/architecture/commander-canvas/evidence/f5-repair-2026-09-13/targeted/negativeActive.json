@@ -1,0 +1,45 @@
+{
+  "label": "negativeActive",
+  "sha": "4aebfa0f4aaf011cfd85347246c18d3cbde305ba",
+  "command": [
+    "corepack",
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "packages/db/src/__tests__/backup-fixture.test.ts",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile.json=/workspace/f5-repair-target-logs/negativeActive-tests.json"
+  ],
+  "startedAt": "2026-09-12T21:00:02.993Z",
+  "beforeHashes": {
+    "packages/db/src/__tests__/backup-fixture.test.ts": {
+      "type": "file",
+      "value": "ec035e5c1f1ebc87125850224cf773ed67466c570824561e934db4171ce6e65d"
+    },
+    "packages/db/src/__tests__/helpers/backup-fixture.ts": {
+      "type": "file",
+      "value": "d54e61536f60e19b581b5f7bbf364f124e1320c800143d62dc60182c98b084d9"
+    },
+    "packages/db/src/__tests__/backup-lib-non-system-schemas.test.ts": {
+      "type": "file",
+      "value": "f3952b659c64b0e04786a431e6254c8a579a764f1abef8ea26f18e3fdf31cd34"
+    }
+  },
+  "code": 1,
+  "signal": null,
+  "timeout": false,
+  "endedAt": "2026-09-12T21:00:03.951Z",
+  "changed": [],
+  "tests": {
+    "total": 16,
+    "passed": 15,
+    "failed": 1,
+    "pending": 0,
+    "success": false
+  },
+  "unhandled": false,
+  "expectedRed": true,
+  "accepted": true
+}

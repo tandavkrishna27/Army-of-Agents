@@ -1,0 +1,13 @@
+{"label":"dns-fixture","phase":"targeted","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"fe7cd2c72735645f113e708b920a60b543968a7df88085fae63559be01154042","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/server","server/src/__tests__/outbound-url-guard.test.ts"],"startedAt":"2026-09-12T15:54:54.096Z"}
+
+ RUN  v3.2.6 /workspace/corrected
+
+ ✓  @armyofagents/server  src/__tests__/outbound-url-guard.test.ts (79 tests) 28ms
+
+ Test Files  1 passed (1)
+      Tests  79 passed (79)
+   Start at  15:54:54
+   Duration  208ms (transform 45ms, setup 0ms, collect 52ms, tests 28ms, environment 0ms, prepare 35ms)
+
+
+RESULT {"label":"dns-fixture","phase":"targeted","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"fe7cd2c72735645f113e708b920a60b543968a7df88085fae63559be01154042","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/server","server/src/__tests__/outbound-url-guard.test.ts"],"startedAt":"2026-09-12T15:54:54.096Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":0.657,"changedSource":[]}

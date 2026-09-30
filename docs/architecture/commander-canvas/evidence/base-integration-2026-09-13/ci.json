@@ -1,0 +1,2068 @@
+{
+  "pr": {
+    "baseRefOid": "664bc7e13c57bba37bf6bf1b838b1649fb0ec2dd",
+    "headRefOid": "bef01d9cc6947e25ec87df21e747eafdbe497527",
+    "mergeStateStatus": "CLEAN",
+    "reviewDecision": "",
+    "reviewRequests": [],
+    "reviews": [],
+    "state": "OPEN"
+  },
+  "checks": [
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103709556401",
+      "name": "ci-required",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707795249",
+      "name": "brand-check",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582762",
+      "name": "verify (4)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582759",
+      "name": "lint",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582798",
+      "name": "verify (1)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582755",
+      "name": "verify (2)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582769",
+      "name": "e2e",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582731",
+      "name": "migrations",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582797",
+      "name": "e2e-pgvector",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582736",
+      "name": "browser",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582802",
+      "name": "verify (3)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707583255",
+      "name": "distributed-contract",
+      "state": "SKIPPED"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707558867",
+      "name": "changes",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707558994",
+      "name": "worker-protocol-contract-bytes (windows-latest)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707558882",
+      "name": "worker-protocol-contract-bytes (ubuntu-latest)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707558726",
+      "name": "policy",
+      "state": "SUCCESS"
+    }
+  ],
+  "run": {
+    "conclusion": "success",
+    "headSha": "bef01d9cc6947e25ec87df21e747eafdbe497527",
+    "jobs": [
+      {
+        "completedAt": "2026-09-13T10:10:07Z",
+        "conclusion": "success",
+        "databaseId": 103707558726,
+        "name": "policy",
+        "startedAt": "2026-09-13T10:08:00Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:02Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:08Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:08Z",
+            "conclusion": "success",
+            "name": "Block manual lockfile edits",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:11Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:11Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:20Z",
+            "conclusion": "success",
+            "name": "Distributed execution foundation contracts",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:22Z",
+            "conclusion": "success",
+            "name": "Evidence-ledger immutability (QA/handoff records are write-once)",
+            "number": 7,
+            "startedAt": "2026-09-13T10:08:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:22Z",
+            "conclusion": "success",
+            "name": "Threat-control audit debt (an unaudited Critical control must not sit forever)",
+            "number": 8,
+            "startedAt": "2026-09-13T10:08:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:23Z",
+            "conclusion": "success",
+            "name": "Register citation integrity (source citations must not silently rot)",
+            "number": 9,
+            "startedAt": "2026-09-13T10:08:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:23Z",
+            "conclusion": "success",
+            "name": "Worker protocol dependency boundary",
+            "number": 10,
+            "startedAt": "2026-09-13T10:08:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:24Z",
+            "conclusion": "success",
+            "name": "Worker daemon dependency boundary",
+            "number": 11,
+            "startedAt": "2026-09-13T10:08:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:24Z",
+            "conclusion": "success",
+            "name": "Sandbox fake provider dependency boundary",
+            "number": 12,
+            "startedAt": "2026-09-13T10:08:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:25Z",
+            "conclusion": "success",
+            "name": "Sandbox e2b provider dependency boundary",
+            "number": 13,
+            "startedAt": "2026-09-13T10:08:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:25Z",
+            "conclusion": "success",
+            "name": "Sandbox coding adapter disposition coverage (CLI-002)",
+            "number": 14,
+            "startedAt": "2026-09-13T10:08:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:25Z",
+            "conclusion": "success",
+            "name": "Shared device-proof canonicalization vectors",
+            "number": 15,
+            "startedAt": "2026-09-13T10:08:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:25Z",
+            "conclusion": "success",
+            "name": "Workspace-snapshot hash vectors (DAT-001)",
+            "number": 16,
+            "startedAt": "2026-09-13T10:08:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:25Z",
+            "conclusion": "success",
+            "name": "Artifact-commit verification vectors (DAT-002)",
+            "number": 17,
+            "startedAt": "2026-09-13T10:08:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:25Z",
+            "conclusion": "success",
+            "name": "Workspace-patch diff + apply vectors (DAT-003)",
+            "number": 18,
+            "startedAt": "2026-09-13T10:08:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:12Z",
+            "conclusion": "success",
+            "name": "Frozen worker-protocol v1 consumer (E1)",
+            "number": 19,
+            "startedAt": "2026-09-13T10:08:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:12Z",
+            "conclusion": "success",
+            "name": "Programme dependency graph (the plan may not schedule work behind an unscheduled blocker)",
+            "number": 20,
+            "startedAt": "2026-09-13T10:09:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:12Z",
+            "conclusion": "success",
+            "name": "Worker route-path parity (WRK-008)",
+            "number": 21,
+            "startedAt": "2026-09-13T10:09:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:37Z",
+            "conclusion": "success",
+            "name": "Gate-clause wiring (an epic may not claim a capability nothing calls)",
+            "number": 22,
+            "startedAt": "2026-09-13T10:09:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:37Z",
+            "conclusion": "success",
+            "name": "Finding ownership (an open finding must name an owner, or say it has none)",
+            "number": 23,
+            "startedAt": "2026-09-13T10:09:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:37Z",
+            "conclusion": "success",
+            "name": "Register id uniqueness (an id must name one thing)",
+            "number": 24,
+            "startedAt": "2026-09-13T10:09:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:39Z",
+            "conclusion": "success",
+            "name": "SDK capability premise (a negative claim about a dependency is a claim)",
+            "number": 25,
+            "startedAt": "2026-09-13T10:09:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:39Z",
+            "conclusion": "success",
+            "name": "Guard inventory (every check declares what runs it)",
+            "number": 26,
+            "startedAt": "2026-09-13T10:09:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:50Z",
+            "conclusion": "success",
+            "name": "Invisible control characters (a shell must not write a regex escape)",
+            "number": 27,
+            "startedAt": "2026-09-13T10:09:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:51Z",
+            "conclusion": "success",
+            "name": "W7U1 output-probe decision logic (proven WITHOUT the key)",
+            "number": 28,
+            "startedAt": "2026-09-13T10:09:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:51Z",
+            "conclusion": "success",
+            "name": "W10B egress-enforcement decision logic (proven WITHOUT the key)",
+            "number": 29,
+            "startedAt": "2026-09-13T10:09:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:52Z",
+            "conclusion": "success",
+            "name": "Release admission gate (REL-004)",
+            "number": 30,
+            "startedAt": "2026-09-13T10:09:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:52Z",
+            "conclusion": "success",
+            "name": "Test-suite inventory (may not silently shrink)",
+            "number": 31,
+            "startedAt": "2026-09-13T10:09:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:52Z",
+            "conclusion": "success",
+            "name": "Execution census (a test file that nothing runs is not coverage)",
+            "number": 32,
+            "startedAt": "2026-09-13T10:09:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:53Z",
+            "conclusion": "success",
+            "name": "Dispatch-composition declaration guards (WRK-008 slice 2b)",
+            "number": 33,
+            "startedAt": "2026-09-13T10:09:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:53Z",
+            "conclusion": "success",
+            "name": "Browser-spawn boot-root guard (BRW-hostspawn-gate)",
+            "number": 34,
+            "startedAt": "2026-09-13T10:09:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:54Z",
+            "conclusion": "success",
+            "name": "Previously-unrun guard self-tests (TRACK-002)",
+            "number": 35,
+            "startedAt": "2026-09-13T10:09:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:54Z",
+            "conclusion": "success",
+            "name": "Browser-lane execution guard self-test (BRW-002)",
+            "number": 36,
+            "startedAt": "2026-09-13T10:09:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:54Z",
+            "conclusion": "success",
+            "name": "Embedded-secret scan self-test (DSK-003)",
+            "number": 37,
+            "startedAt": "2026-09-13T10:09:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:54Z",
+            "conclusion": "success",
+            "name": "Desktop installer admission (DSK-003)",
+            "number": 38,
+            "startedAt": "2026-09-13T10:09:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:55Z",
+            "conclusion": "success",
+            "name": "Desktop update admission (DSK-004)",
+            "number": 39,
+            "startedAt": "2026-09-13T10:09:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:55Z",
+            "conclusion": "success",
+            "name": "Desktop staging manifest (DSK-003)",
+            "number": 40,
+            "startedAt": "2026-09-13T10:09:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:55Z",
+            "conclusion": "success",
+            "name": "Secret-resolve authorization vectors (DAT-004)",
+            "number": 41,
+            "startedAt": "2026-09-13T10:09:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:55Z",
+            "conclusion": "success",
+            "name": "Desktop surface stays disabled (DSK-00 / I22 clauses 6+7)",
+            "number": 42,
+            "startedAt": "2026-09-13T10:09:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:55Z",
+            "conclusion": "success",
+            "name": "Egress-policy destination vectors (DAT-005)",
+            "number": 43,
+            "startedAt": "2026-09-13T10:09:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:56Z",
+            "conclusion": "success",
+            "name": "Egress-policy destination-BYPASS vectors (DEP-008)",
+            "number": 44,
+            "startedAt": "2026-09-13T10:09:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:56Z",
+            "conclusion": "success",
+            "name": "Staging manifest config contract (DEP-006)",
+            "number": 45,
+            "startedAt": "2026-09-13T10:09:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:56Z",
+            "conclusion": "success",
+            "name": "CI lane routing invariants (DEP-004)",
+            "number": 46,
+            "startedAt": "2026-09-13T10:09:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:56Z",
+            "conclusion": "success",
+            "name": "CI timeout caps derive from budgets bounded by declared measurements (E3-F036 class)",
+            "number": 47,
+            "startedAt": "2026-09-13T10:09:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:57Z",
+            "conclusion": "success",
+            "name": "Workflow-verdict manifest completeness (DEP-013)",
+            "number": 48,
+            "startedAt": "2026-09-13T10:09:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:58Z",
+            "conclusion": "success",
+            "name": "Verdict consumer is alive (DEP-013)",
+            "number": 49,
+            "startedAt": "2026-09-13T10:09:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:58Z",
+            "conclusion": "success",
+            "name": "Validate Dockerfile deps stage",
+            "number": 50,
+            "startedAt": "2026-09-13T10:09:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:58Z",
+            "conclusion": "success",
+            "name": "Validate split-image deps stages (DEP-001)",
+            "number": 51,
+            "startedAt": "2026-09-13T10:09:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:58Z",
+            "conclusion": "success",
+            "name": "Image admission verifier (DEP-001)",
+            "number": 52,
+            "startedAt": "2026-09-13T10:09:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:59Z",
+            "conclusion": "success",
+            "name": "Split-image Dockerfile static checks (DEP-001)",
+            "number": 53,
+            "startedAt": "2026-09-13T10:09:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:59Z",
+            "conclusion": "success",
+            "name": "Validate dependency resolution when manifests change",
+            "number": 54,
+            "startedAt": "2026-09-13T10:09:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:59Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 106,
+            "startedAt": "2026-09-13T10:09:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:59Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 107,
+            "startedAt": "2026-09-13T10:09:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:59Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 108,
+            "startedAt": "2026-09-13T10:09:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:59Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 109,
+            "startedAt": "2026-09-13T10:09:59Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707558726"
+      },
+      {
+        "completedAt": "2026-09-13T10:08:09Z",
+        "conclusion": "success",
+        "databaseId": 103707558867,
+        "name": "changes",
+        "startedAt": "2026-09-13T10:08:00Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:01Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:07Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:07Z",
+            "conclusion": "success",
+            "name": "Detect non-doc + distributed path-class changes",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:07Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:07Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 7,
+            "startedAt": "2026-09-13T10:08:07Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707558867"
+      },
+      {
+        "completedAt": "2026-09-13T10:08:11Z",
+        "conclusion": "success",
+        "databaseId": 103707558882,
+        "name": "worker-protocol-contract-bytes (ubuntu-latest)",
+        "startedAt": "2026-09-13T10:08:00Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:01Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:07Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:08Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:08Z",
+            "conclusion": "success",
+            "name": "Verify contract manifest bytes (mutation corpus + committed --check)",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:08Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 7,
+            "startedAt": "2026-09-13T10:08:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:09Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 8,
+            "startedAt": "2026-09-13T10:08:08Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:09Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 9,
+            "startedAt": "2026-09-13T10:08:09Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707558882"
+      },
+      {
+        "completedAt": "2026-09-13T10:08:26Z",
+        "conclusion": "success",
+        "databaseId": 103707558994,
+        "name": "worker-protocol-contract-bytes (windows-latest)",
+        "startedAt": "2026-09-13T10:08:00Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:02Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:16Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:21Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:22Z",
+            "conclusion": "success",
+            "name": "Verify contract manifest bytes (mutation corpus + committed --check)",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:21Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:22Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 7,
+            "startedAt": "2026-09-13T10:08:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:25Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 8,
+            "startedAt": "2026-09-13T10:08:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:25Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 9,
+            "startedAt": "2026-09-13T10:08:25Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707558994"
+      },
+      {
+        "completedAt": "2026-09-13T10:09:49Z",
+        "conclusion": "success",
+        "databaseId": 103707582731,
+        "name": "migrations",
+        "startedAt": "2026-09-13T10:08:13Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:14Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:37Z",
+            "conclusion": "success",
+            "name": "Initialize containers",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:40Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:43Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:44Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:00Z",
+            "conclusion": "success",
+            "name": "Install dependencies",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:14Z",
+            "conclusion": "success",
+            "name": "Build packages/db (drizzle config reads from dist/)",
+            "number": 7,
+            "startedAt": "2026-09-13T10:09:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:35Z",
+            "conclusion": "success",
+            "name": "Schema\u2194migration drift gate (E8-F005)",
+            "number": 8,
+            "startedAt": "2026-09-13T10:09:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:35Z",
+            "conclusion": "success",
+            "name": "Schema\u2194migration drift gate self-test (E8-F005 decision logic + wiring)",
+            "number": 9,
+            "startedAt": "2026-09-13T10:09:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:40Z",
+            "conclusion": "success",
+            "name": "Apply all migrations from scratch",
+            "number": 10,
+            "startedAt": "2026-09-13T10:09:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:41Z",
+            "conclusion": "success",
+            "name": "Verify migration chain integrity",
+            "number": 11,
+            "startedAt": "2026-09-13T10:09:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:47Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 19,
+            "startedAt": "2026-09-13T10:09:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:47Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 20,
+            "startedAt": "2026-09-13T10:09:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:47Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 21,
+            "startedAt": "2026-09-13T10:09:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:48Z",
+            "conclusion": "success",
+            "name": "Stop containers",
+            "number": 22,
+            "startedAt": "2026-09-13T10:09:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:48Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 23,
+            "startedAt": "2026-09-13T10:09:48Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582731"
+      },
+      {
+        "completedAt": "2026-09-13T10:09:21Z",
+        "conclusion": "success",
+        "databaseId": 103707582736,
+        "name": "browser",
+        "startedAt": "2026-09-13T10:08:13Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:14Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:19Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:22Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:23Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:41Z",
+            "conclusion": "success",
+            "name": "Install dependencies",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:03Z",
+            "conclusion": "success",
+            "name": "Install Chromium",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:03Z",
+            "conclusion": "success",
+            "name": "Allow Chromium's OS sandbox (unprivileged user namespaces)",
+            "number": 7,
+            "startedAt": "2026-09-13T10:09:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:05Z",
+            "conclusion": "success",
+            "name": "Build the runtime (the teardown tests spawn dist/runner.js)",
+            "number": 8,
+            "startedAt": "2026-09-13T10:09:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:12Z",
+            "conclusion": "success",
+            "name": "Run the browser clauses",
+            "number": 9,
+            "startedAt": "2026-09-13T10:09:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:12Z",
+            "conclusion": "success",
+            "name": "Prove the browser suite was not skipped",
+            "number": 10,
+            "startedAt": "2026-09-13T10:09:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:19Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 18,
+            "startedAt": "2026-09-13T10:09:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:19Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 19,
+            "startedAt": "2026-09-13T10:09:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:20Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 20,
+            "startedAt": "2026-09-13T10:09:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:20Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 21,
+            "startedAt": "2026-09-13T10:09:20Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582736"
+      },
+      {
+        "completedAt": "2026-09-13T10:25:47Z",
+        "conclusion": "success",
+        "databaseId": 103707582755,
+        "name": "verify (2)",
+        "startedAt": "2026-09-13T10:08:13Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:15Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:20Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:28Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:30Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:28Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:47Z",
+            "conclusion": "success",
+            "name": "Install dependencies",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:00Z",
+            "conclusion": "success",
+            "name": "Build dist-only leaves (required by typecheck + tests)",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:12:42Z",
+            "conclusion": "success",
+            "name": "Typecheck",
+            "number": 7,
+            "startedAt": "2026-09-13T10:09:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:22:22Z",
+            "conclusion": "success",
+            "name": "Run tests",
+            "number": 8,
+            "startedAt": "2026-09-13T10:12:42Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:25Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 9,
+            "startedAt": "2026-09-13T10:22:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:26Z",
+            "conclusion": "success",
+            "name": "Worker protocol package import smoke",
+            "number": 10,
+            "startedAt": "2026-09-13T10:25:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:28Z",
+            "conclusion": "success",
+            "name": "SDK capability premise (live surface - E8-F007)",
+            "number": 11,
+            "startedAt": "2026-09-13T10:25:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:37Z",
+            "conclusion": "success",
+            "name": "Tool contract freshness",
+            "number": 12,
+            "startedAt": "2026-09-13T10:25:28Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:43Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 22,
+            "startedAt": "2026-09-13T10:25:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:43Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 23,
+            "startedAt": "2026-09-13T10:25:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:43Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 24,
+            "startedAt": "2026-09-13T10:25:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:43Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-09-13T10:25:43Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582755"
+      },
+      {
+        "completedAt": "2026-09-13T10:09:27Z",
+        "conclusion": "success",
+        "databaseId": 103707582759,
+        "name": "lint",
+        "startedAt": "2026-09-13T10:08:14Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:16Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:22Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:29Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:33Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:29Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:51Z",
+            "conclusion": "success",
+            "name": "Install dependencies",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:19Z",
+            "conclusion": "success",
+            "name": "Lint server (no-floating-promises IDOR guard)",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:51Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:25Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 10,
+            "startedAt": "2026-09-13T10:09:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:25Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 11,
+            "startedAt": "2026-09-13T10:09:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:25Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 12,
+            "startedAt": "2026-09-13T10:09:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:25Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-13T10:09:25Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582759"
+      },
+      {
+        "completedAt": "2026-09-13T10:24:39Z",
+        "conclusion": "success",
+        "databaseId": 103707582762,
+        "name": "verify (4)",
+        "startedAt": "2026-09-13T10:08:14Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:16Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:20Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:23Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:24Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:43Z",
+            "conclusion": "success",
+            "name": "Install dependencies",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:56Z",
+            "conclusion": "success",
+            "name": "Build dist-only leaves (required by typecheck + tests)",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:12:38Z",
+            "conclusion": "success",
+            "name": "Typecheck",
+            "number": 7,
+            "startedAt": "2026-09-13T10:08:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:21:16Z",
+            "conclusion": "success",
+            "name": "Run tests",
+            "number": 8,
+            "startedAt": "2026-09-13T10:12:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:18Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 9,
+            "startedAt": "2026-09-13T10:21:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:19Z",
+            "conclusion": "success",
+            "name": "Worker protocol package import smoke",
+            "number": 10,
+            "startedAt": "2026-09-13T10:24:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:21Z",
+            "conclusion": "success",
+            "name": "SDK capability premise (live surface - E8-F007)",
+            "number": 11,
+            "startedAt": "2026-09-13T10:24:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:30Z",
+            "conclusion": "success",
+            "name": "Tool contract freshness",
+            "number": 12,
+            "startedAt": "2026-09-13T10:24:21Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:36Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 22,
+            "startedAt": "2026-09-13T10:24:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:36Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 23,
+            "startedAt": "2026-09-13T10:24:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:36Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 24,
+            "startedAt": "2026-09-13T10:24:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:36Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-09-13T10:24:36Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582762"
+      },
+      {
+        "completedAt": "2026-09-13T10:21:55Z",
+        "conclusion": "success",
+        "databaseId": 103707582769,
+        "name": "e2e",
+        "startedAt": "2026-09-13T10:08:13Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:16Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:20Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:23Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:24Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:40Z",
+            "conclusion": "success",
+            "name": "Install dependencies",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:10:57Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:10:57Z",
+            "conclusion": "success",
+            "name": "Pin marketplace catalog fixture for stable e2e",
+            "number": 7,
+            "startedAt": "2026-09-13T10:10:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:11:19Z",
+            "conclusion": "success",
+            "name": "Install Playwright",
+            "number": 8,
+            "startedAt": "2026-09-13T10:10:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:11:19Z",
+            "conclusion": "success",
+            "name": "Generate Paperclip config",
+            "number": 9,
+            "startedAt": "2026-09-13T10:11:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:21:46Z",
+            "conclusion": "success",
+            "name": "Run e2e tests",
+            "number": 10,
+            "startedAt": "2026-09-13T10:11:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:21:48Z",
+            "conclusion": "success",
+            "name": "Upload Playwright report",
+            "number": 11,
+            "startedAt": "2026-09-13T10:21:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:21:52Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 20,
+            "startedAt": "2026-09-13T10:21:48Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:21:52Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 21,
+            "startedAt": "2026-09-13T10:21:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:21:52Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 22,
+            "startedAt": "2026-09-13T10:21:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:21:52Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 23,
+            "startedAt": "2026-09-13T10:21:52Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582769"
+      },
+      {
+        "completedAt": "2026-09-13T10:13:23Z",
+        "conclusion": "success",
+        "databaseId": 103707582797,
+        "name": "e2e-pgvector",
+        "startedAt": "2026-09-13T10:08:13Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:14Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:38Z",
+            "conclusion": "success",
+            "name": "Initialize containers",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:40Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:43Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:45Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:09:02Z",
+            "conclusion": "success",
+            "name": "Install dependencies",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:12:01Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 7,
+            "startedAt": "2026-09-13T10:09:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:12:01Z",
+            "conclusion": "success",
+            "name": "Pin marketplace catalog fixture for stable e2e",
+            "number": 8,
+            "startedAt": "2026-09-13T10:12:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:12:23Z",
+            "conclusion": "success",
+            "name": "Install Playwright",
+            "number": 9,
+            "startedAt": "2026-09-13T10:12:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:13:14Z",
+            "conclusion": "success",
+            "name": "Run pgvector e2e specs",
+            "number": 10,
+            "startedAt": "2026-09-13T10:12:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:13:15Z",
+            "conclusion": "success",
+            "name": "Upload Playwright report",
+            "number": 11,
+            "startedAt": "2026-09-13T10:13:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:13:21Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 19,
+            "startedAt": "2026-09-13T10:13:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:13:21Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 20,
+            "startedAt": "2026-09-13T10:13:21Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:13:21Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 21,
+            "startedAt": "2026-09-13T10:13:21Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:13:21Z",
+            "conclusion": "success",
+            "name": "Stop containers",
+            "number": 22,
+            "startedAt": "2026-09-13T10:13:21Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:13:21Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 23,
+            "startedAt": "2026-09-13T10:13:21Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582797"
+      },
+      {
+        "completedAt": "2026-09-13T10:24:57Z",
+        "conclusion": "success",
+        "databaseId": 103707582798,
+        "name": "verify (1)",
+        "startedAt": "2026-09-13T10:08:13Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:14Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:20Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:25Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:28Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:44Z",
+            "conclusion": "success",
+            "name": "Install dependencies",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:28Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:55Z",
+            "conclusion": "success",
+            "name": "Build dist-only leaves (required by typecheck + tests)",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:12:11Z",
+            "conclusion": "success",
+            "name": "Typecheck",
+            "number": 7,
+            "startedAt": "2026-09-13T10:08:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:22:01Z",
+            "conclusion": "success",
+            "name": "Run tests",
+            "number": 8,
+            "startedAt": "2026-09-13T10:12:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:40Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 9,
+            "startedAt": "2026-09-13T10:22:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:40Z",
+            "conclusion": "success",
+            "name": "Worker protocol package import smoke",
+            "number": 10,
+            "startedAt": "2026-09-13T10:24:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:42Z",
+            "conclusion": "success",
+            "name": "SDK capability premise (live surface - E8-F007)",
+            "number": 11,
+            "startedAt": "2026-09-13T10:24:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:49Z",
+            "conclusion": "success",
+            "name": "Tool contract freshness",
+            "number": 12,
+            "startedAt": "2026-09-13T10:24:42Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:54Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 22,
+            "startedAt": "2026-09-13T10:24:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:54Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 23,
+            "startedAt": "2026-09-13T10:24:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:54Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 24,
+            "startedAt": "2026-09-13T10:24:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:24:54Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-09-13T10:24:54Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582798"
+      },
+      {
+        "completedAt": "2026-09-13T10:20:57Z",
+        "conclusion": "success",
+        "databaseId": 103707582802,
+        "name": "verify (3)",
+        "startedAt": "2026-09-13T10:08:12Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:08:15Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:08:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:20Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:08:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:27Z",
+            "conclusion": "success",
+            "name": "Setup pnpm",
+            "number": 3,
+            "startedAt": "2026-09-13T10:08:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:28Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 4,
+            "startedAt": "2026-09-13T10:08:27Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:46Z",
+            "conclusion": "success",
+            "name": "Install dependencies",
+            "number": 5,
+            "startedAt": "2026-09-13T10:08:28Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:08:56Z",
+            "conclusion": "success",
+            "name": "Build dist-only leaves (required by typecheck + tests)",
+            "number": 6,
+            "startedAt": "2026-09-13T10:08:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:11:46Z",
+            "conclusion": "success",
+            "name": "Typecheck",
+            "number": 7,
+            "startedAt": "2026-09-13T10:08:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:18:20Z",
+            "conclusion": "success",
+            "name": "Run tests",
+            "number": 8,
+            "startedAt": "2026-09-13T10:11:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:20:40Z",
+            "conclusion": "success",
+            "name": "Build",
+            "number": 9,
+            "startedAt": "2026-09-13T10:18:20Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:20:41Z",
+            "conclusion": "success",
+            "name": "Worker protocol package import smoke",
+            "number": 10,
+            "startedAt": "2026-09-13T10:20:40Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:20:42Z",
+            "conclusion": "success",
+            "name": "SDK capability premise (live surface - E8-F007)",
+            "number": 11,
+            "startedAt": "2026-09-13T10:20:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:20:50Z",
+            "conclusion": "success",
+            "name": "Tool contract freshness",
+            "number": 12,
+            "startedAt": "2026-09-13T10:20:42Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:20:54Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 22,
+            "startedAt": "2026-09-13T10:20:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:20:55Z",
+            "conclusion": "success",
+            "name": "Post Setup pnpm",
+            "number": 23,
+            "startedAt": "2026-09-13T10:20:54Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:20:55Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 24,
+            "startedAt": "2026-09-13T10:20:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:20:55Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 25,
+            "startedAt": "2026-09-13T10:20:55Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707582802"
+      },
+      {
+        "completedAt": "2026-09-13T10:08:10Z",
+        "conclusion": "skipped",
+        "databaseId": 103707583255,
+        "name": "distributed-contract",
+        "startedAt": "2026-09-13T10:08:10Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707583255"
+      },
+      {
+        "completedAt": "2026-09-13T10:10:19Z",
+        "conclusion": "success",
+        "databaseId": 103707795249,
+        "name": "brand-check",
+        "startedAt": "2026-09-13T10:10:12Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:10:14Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:10:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:10:16Z",
+            "conclusion": "success",
+            "name": "Checkout repository",
+            "number": 2,
+            "startedAt": "2026-09-13T10:10:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:10:17Z",
+            "conclusion": "success",
+            "name": "Setup Node.js",
+            "number": 3,
+            "startedAt": "2026-09-13T10:10:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:10:17Z",
+            "conclusion": "success",
+            "name": "Check for stale Paperclip references in user-facing surfaces",
+            "number": 4,
+            "startedAt": "2026-09-13T10:10:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:10:18Z",
+            "conclusion": "success",
+            "name": "Forbidden tokens scan (.forbidden-tokens.json)",
+            "number": 5,
+            "startedAt": "2026-09-13T10:10:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:10:18Z",
+            "conclusion": "success",
+            "name": "Post Setup Node.js",
+            "number": 9,
+            "startedAt": "2026-09-13T10:10:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:10:18Z",
+            "conclusion": "success",
+            "name": "Post Checkout repository",
+            "number": 10,
+            "startedAt": "2026-09-13T10:10:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:10:18Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 11,
+            "startedAt": "2026-09-13T10:10:18Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103707795249"
+      },
+      {
+        "completedAt": "2026-09-13T10:25:52Z",
+        "conclusion": "success",
+        "databaseId": 103709556401,
+        "name": "ci-required",
+        "startedAt": "2026-09-13T10:25:49Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-13T10:25:50Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-13T10:25:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:50Z",
+            "conclusion": "success",
+            "name": "Evaluate required gate",
+            "number": 2,
+            "startedAt": "2026-09-13T10:25:50Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-13T10:25:50Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 3,
+            "startedAt": "2026-09-13T10:25:50Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732/job/103709556401"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/MeteoriteLabs/AoA/actions/runs/34751057732"
+  },
+  "localSourceTree": {
+    "head": "bef01d9cc6947e25ec87df21e747eafdbe497527",
+    "ciMerge": "f909cd9b141711d9a9b9de4fa24686396c33d0ea",
+    "base": "664bc7e13c57bba37bf6bf1b838b1649fb0ec2dd",
+    "tree": "421ffef177180137ba8a65aca799b4b81b502228",
+    "equalCandidateTree": true
+  },
+  "gatePassed": true
+}

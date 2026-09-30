@@ -1,0 +1,422 @@
+{
+  "isolated": [
+    {
+      "fixture": "backup-non-system",
+      "stage": "data-dir",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:41.577Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "data-dir",
+      "event": "end",
+      "elapsedMs": 1,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:41.579Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "backup-dir",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:41.579Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "backup-dir",
+      "event": "end",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:41.579Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "port",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:41.579Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "port",
+      "event": "end",
+      "elapsedMs": 3,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:41.583Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "initialise",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:41.583Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "initialise",
+      "event": "end",
+      "elapsedMs": 2174,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.757Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "start",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.757Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "start",
+      "event": "end",
+      "elapsedMs": 25,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.783Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "create-database",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.783Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "create-database",
+      "event": "end",
+      "elapsedMs": 72,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.854Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "schema",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.856Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "schema",
+      "event": "end",
+      "elapsedMs": 11,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.866Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-table",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.866Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-table",
+      "event": "end",
+      "elapsedMs": 3,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.869Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-row",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.869Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-row",
+      "event": "end",
+      "elapsedMs": 2,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.871Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-table",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.871Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-table",
+      "event": "end",
+      "elapsedMs": 2,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.873Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-row",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.873Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-row",
+      "event": "end",
+      "elapsedMs": 2,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.875Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "seed-client-end",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.875Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "seed-client-end",
+      "event": "end",
+      "elapsedMs": 1,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.876Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "stop",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:43.971Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "stop",
+      "event": "end",
+      "elapsedMs": 625,
+      "pid": 670,
+      "utc": "2026-09-12T16:37:44.596Z"
+    }
+  ],
+  "shard-4": [
+    {
+      "fixture": "backup-non-system",
+      "stage": "data-dir",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:08.630Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "data-dir",
+      "event": "end",
+      "elapsedMs": 1,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:08.631Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "backup-dir",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:08.631Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "backup-dir",
+      "event": "end",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:08.632Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "port",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:08.632Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "port",
+      "event": "end",
+      "elapsedMs": 3,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:08.635Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "initialise",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:08.635Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "initialise",
+      "event": "end",
+      "elapsedMs": 5778,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.413Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "start",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.413Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "start",
+      "event": "end",
+      "elapsedMs": 51,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.464Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "create-database",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.464Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "create-database",
+      "event": "end",
+      "elapsedMs": 108,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.572Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "schema",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.573Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "schema",
+      "event": "end",
+      "elapsedMs": 14,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.587Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-table",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.587Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-table",
+      "event": "end",
+      "elapsedMs": 5,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.592Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-row",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.592Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "journal-row",
+      "event": "end",
+      "elapsedMs": 2,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.594Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-table",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.594Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-table",
+      "event": "end",
+      "elapsedMs": 3,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.597Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-row",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.597Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "users-row",
+      "event": "end",
+      "elapsedMs": 2,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.599Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "seed-client-end",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.599Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "seed-client-end",
+      "event": "end",
+      "elapsedMs": 2,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.601Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "stop",
+      "event": "start",
+      "elapsedMs": 0,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:14.725Z"
+    },
+    {
+      "fixture": "backup-non-system",
+      "stage": "stop",
+      "event": "end",
+      "elapsedMs": 1770,
+      "pid": 8654,
+      "utc": "2026-09-12T16:39:16.495Z"
+    }
+  ]
+}

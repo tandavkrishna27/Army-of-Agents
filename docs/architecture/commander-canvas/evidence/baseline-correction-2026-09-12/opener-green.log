@@ -1,0 +1,13 @@
+{"label":"opener-green","phase":"targeted","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/server","server/src/__tests__/filesystem-routes.test.ts"],"startedAt":"2026-09-12T15:56:22.908Z"}
+
+ RUN  v3.2.6 /workspace/corrected
+
+ ✓  @armyofagents/server  src/__tests__/filesystem-routes.test.ts (14 tests) 51ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  15:56:23
+   Duration  1.98s (transform 890ms, setup 0ms, collect 1.77s, tests 51ms, environment 0ms, prepare 40ms)
+
+
+RESULT {"label":"opener-green","phase":"targeted","cwd":"/workspace/corrected","sha":"9200a66c42633019349de937a8b97979acac0f7a","patchSha256":"5fe36a41f95d97dd410c590b1fc016b8ef5f19d63fc52789c30fc3f132661936","command":["corepack","pnpm","exec","vitest","run","--project=@armyofagents/server","server/src/__tests__/filesystem-routes.test.ts"],"startedAt":"2026-09-12T15:56:22.908Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":2.595,"changedSource":[]}

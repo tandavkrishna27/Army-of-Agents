@@ -1,0 +1,11 @@
+{"label":"sdk-build","phase":"setup","cwd":"/workspace/fixture-diagnostics","sha":"b5cc42643223c433a8263564c7142761472a13d9","patchSha256":"0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c","command":["corepack","pnpm","--filter","@armyofagents/plugin-sdk","build"],"startedAt":"2026-09-12T16:45:28.973Z"}
+
+> @armyofagents/plugin-sdk@1.0.0 build /workspace/fixture-diagnostics/packages/plugins/sdk
+> pnpm --filter @armyofagents/shared build && tsc
+
+
+> @armyofagents/shared@0.2.7 build /workspace/fixture-diagnostics/packages/shared
+> tsc
+
+
+RESULT {"label":"sdk-build","phase":"setup","cwd":"/workspace/fixture-diagnostics","sha":"b5cc42643223c433a8263564c7142761472a13d9","patchSha256":"0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c","command":["corepack","pnpm","--filter","@armyofagents/plugin-sdk","build"],"startedAt":"2026-09-12T16:45:28.973Z","code":0,"signal":null,"timeout":false,"elapsedSeconds":5.851,"changedSource":[]}

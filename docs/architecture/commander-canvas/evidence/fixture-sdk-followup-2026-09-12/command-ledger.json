@@ -1,0 +1,63 @@
+[
+  {
+    "label": "sdk-build",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c",
+    "command": [
+      "corepack",
+      "pnpm",
+      "--filter",
+      "@armyofagents/plugin-sdk",
+      "build"
+    ],
+    "startedAt": "2026-09-12T16:45:28.973Z",
+    "code": 0,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 5.851,
+    "changedSource": []
+  },
+  {
+    "label": "sdk-exports",
+    "phase": "setup",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c",
+    "command": [
+      "node",
+      "--input-type=module",
+      "-e",
+      "await import('./packages/plugins/sdk/dist/index.js'); await import('./packages/plugins/sdk/dist/testing.js')"
+    ],
+    "startedAt": "2026-09-12T16:45:41.188Z",
+    "code": 1,
+    "signal": null,
+    "timeout": false,
+    "elapsedSeconds": 0.068,
+    "changedSource": []
+  },
+  {
+    "label": "shard-4-sdk",
+    "phase": "diagnostic",
+    "cwd": "/workspace/fixture-diagnostics",
+    "sha": "b5cc42643223c433a8263564c7142761472a13d9",
+    "patchSha256": "0bef3abd63312e8877af950249cd28c3dfafac1e265fff9fe29326f2f8388e4c",
+    "command": [
+      "corepack",
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--shard=4/4"
+    ],
+    "startedAt": "2026-09-12T16:45:42.237Z",
+    "outcome": "ABORTED_INVALID",
+    "reason": "Launched in error after prerequisite export check failed; container stopped on discovery",
+    "completedTestResult": false,
+    "postRunManifestAvailable": false,
+    "containerStoppedAt": "2026-09-12T16:45:58.824587433Z",
+    "containerExitCode": 137
+  }
+]

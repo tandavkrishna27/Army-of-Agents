@@ -1,0 +1,30 @@
+{
+  "upstream": "408555f2316537b5475290175657213ec975085e",
+  "universe_source": "a996d507bb54fa9d4623ffd6ca9a9c95d321d550",
+  "candidate_sql_sha256": "8dbe5d06f8999080e16eee0d51c94718ef098bc32b0ca3517af02fadcd82680a",
+  "checks": [
+    {
+      "universe_tables": 3,
+      "upstream_marker_columns": 3,
+      "database": "universe_fresh"
+    },
+    {
+      "universe_tables": 3,
+      "upstream_marker_columns": 3,
+      "database": "universe_upgrade"
+    },
+    {
+      "universe_tables": 3,
+      "upstream_marker_columns": 3,
+      "database": "universe_drizzle_fresh",
+      "migration_receipts": 284
+    },
+    {
+      "universe_tables": 3,
+      "upstream_marker_columns": 3,
+      "database": "universe_drizzle_upgrade",
+      "migration_receipts": 284
+    }
+  ],
+  "scope": "DDL and Drizzle history checks only; not production applyPendingMigrations wrapper or full combined-application qualification"
+}
