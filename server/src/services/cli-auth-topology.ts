@@ -286,7 +286,7 @@ export async function detectProviderCli(
     args,
   ) => execFile(command, args, { timeout: 5_000 }),
 ): Promise<{ cliInstalled: boolean; cliVersion: string | null; cliVersionSupported: boolean }> {
-  const command = provider === "openai" ? "codex" : "claude";
+  const command = resolveProviderCliCommand(provider, process.platform);
   try {
     const result = await run(command, ["--version"]);
     const version = /\b(\d+\.\d+\.\d+)\b/.exec(`${result.stdout} ${result.stderr ?? ""}`)?.[1] ?? null;
@@ -295,6 +295,14 @@ export async function detectProviderCli(
   } catch {
     return { cliInstalled: false, cliVersion: null, cliVersionSupported: false };
   }
+}
+
+export function resolveProviderCliCommand(
+  provider: "openai" | "anthropic",
+  platform: NodeJS.Platform,
+): string {
+  const command = provider === "openai" ? "codex" : "claude";
+  return platform === "win32" ? `${command}.cmd` : command;
 }
 
 /**

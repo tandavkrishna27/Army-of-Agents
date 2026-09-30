@@ -6,6 +6,7 @@ import {
   resolveCliAuthTopology,
   resolveScopedCliAuthHome,
   detectProviderCli,
+  resolveProviderCliCommand,
 } from "../services/cli-auth-topology.js";
 
 describe("CLI authentication topology", () => {
@@ -110,6 +111,9 @@ describe("CLI authentication topology", () => {
   });
 
   it("detects pinned CLI compatibility without trusting unknown versions", async () => {
+    expect(resolveProviderCliCommand("openai", "win32")).toBe("codex.cmd");
+    expect(resolveProviderCliCommand("anthropic", "win32")).toBe("claude.cmd");
+    expect(resolveProviderCliCommand("anthropic", "linux")).toBe("claude");
     await expect(
       detectProviderCli("openai", async () => ({ stdout: "codex-cli 0.145.3" })),
     ).resolves.toMatchObject({ cliInstalled: true, cliVersionSupported: true });
