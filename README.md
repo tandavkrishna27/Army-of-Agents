@@ -6,7 +6,7 @@
 
 Run people and AI agents from one governed control plane for goals, work, context, and outcomes.
 
-[Website](https://armyofagents.org) · [Documentation](docs/) · [Issues](https://github.com/tandavkrishna27/Army-of-Agents/issues)
+[Website](https://armyofagents.org) ï¿½ [Documentation](docs/) ï¿½ [Issues](https://github.com/tandavkrishna27/Army-of-Agents/issues)
 
 [![CI](https://github.com/tandavkrishna27/Army-of-Agents/actions/workflows/pr.yml/badge.svg)](https://github.com/tandavkrishna27/Army-of-Agents/actions/workflows/pr.yml)
 [![Node.js 20+](https://img.shields.io/badge/node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -19,6 +19,7 @@ Army of Agents gives organizations one control plane for people, AI agents, goal
 ## Contents
 
 - [What is Army of Agents?](#what-is-army-of-agents)
+- [Universe UI](#universe-ui)
 - [How it works](#how-it-works)
 - [Core capabilities](#core-capabilities)
 - [Supported runtimes](#supported-runtimes)
@@ -45,6 +46,14 @@ It helps you:
 - review activity, artifacts, and outcomes.
 
 Agents perform work. Army of Agents provides the organization in which that work happens.
+
+## Universe UI
+
+> **Under development** â€” Universe UI is an evolving interactive interface for coordinating people and AI agents. The screenshots below are an early visual concept and may change as implementation progresses.
+
+![Universe UI â€” collaborative workspace](docs/images/universe-ui-1.jpg)
+
+![Universe UI â€” agent interaction view](docs/images/universe-ui-2.jpg)
 
 ## How it works
 
