@@ -275,6 +275,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build plugin SDK for tests
+        # Several server tests import @armyofagents/plugin-sdk. Its package
+        # exports point at dist/*, so a fresh CI checkout must build it before
+        # Vitest can resolve the workspace package. The old monolithic verify
+        # job got this as a side effect of the preceding typecheck step; the
+        # split unit-tests job needs the dependency explicitly.
+        run: node scripts/build-plugin-sdk-locked.mjs
+
       - name: Run Vitest
         # Do not shard the root Vitest workspace here. The suite contains
         # project-level mocks and setup assumptions that pass as a full run but
