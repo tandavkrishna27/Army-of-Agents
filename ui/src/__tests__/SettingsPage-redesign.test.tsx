@@ -274,7 +274,7 @@ describe("SettingsPage redesign — Phase F shell", () => {
     renderSettings();
     // Defensive: catch silent drift in section count.
     const totalItems = SETTINGS_SECTIONS.flatMap((g) => g.items).length;
-    expect(totalItems).toBe(16);
+    expect(totalItems).toBe(17);
     // Each label appears in both the desktop sidebar and the mobile sub-nav pill row
     // (CSS media queries that hide one or the other are not evaluated in JSDOM).
     expect(screen.getAllByText("General").length).toBeGreaterThan(0);
