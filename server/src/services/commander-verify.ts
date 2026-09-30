@@ -33,6 +33,12 @@ export function commanderProbeUsesApiKey(
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function usesCanonicalLocalCliAuth(): boolean {
+  const deploymentMode = process.env.AOA_DEPLOYMENT_MODE?.trim() || "local_trusted";
+  const installProfile = process.env.AOA_INSTALL_PROFILE?.trim() || "local_single_user";
+  return deploymentMode === "local_trusted" && installProfile === "local_single_user";
+}
+
 /**
  * Resolve the config Commander verify should probe with (Plan 3 / §6.1, Codex
  * P1 #8). Loads the Commander AGENT via internal_agent_config.agent_id (the
@@ -80,6 +86,13 @@ export async function resolveCommanderProbeConfig(
   const provider =
     adapterType === "codex_local" ? "openai" : adapterType === "claude_local" ? "anthropic" : null;
   if (!provider) return resolved;
+  // In the local single-user profile, the operator's existing subscription
+  // login is the intended credential source. Keep the provider CLI on its
+  // canonical user home so `codex login`/`claude auth login` performed outside
+  // AoA is visible to both verification and the first Commander run. Remote,
+  // tenant, and hosted profiles remain scoped below and never borrow a host
+  // login across users.
+  if (usesCanonicalLocalCliAuth()) return resolved;
   const authHome = resolveScopedCliAuthHome({
     executionTargetId: process.env.AOA_EXECUTION_TARGET_ID ?? "control-plane",
     companyId,

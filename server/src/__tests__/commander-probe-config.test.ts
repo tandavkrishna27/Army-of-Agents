@@ -65,9 +65,18 @@ describe("resolveCommanderProbeConfig (Plan 3 T1)", () => {
   it("uses the caller-scoped CLI home when there is no linked Commander agent", async () => {
     const d = db([[]]); // no internal_agent_config agent link
     const cfg = await resolveCommanderProbeConfig(d, "c1", "claude_local", "u1");
+    expect(cfg.env ?? {}).not.toHaveProperty("CLAUDE_CONFIG_DIR");
+    expect(resolveAdapterConfigForRuntime).not.toHaveBeenCalled();
+  });
+
+  it("keeps scoped CLI homes for authenticated deployments", async () => {
+    vi.stubEnv("AOA_DEPLOYMENT_MODE", "authenticated");
+    vi.stubEnv("AOA_INSTALL_PROFILE", "hosted_multi_tenant");
+    const d = db([[]]);
+    const cfg = await resolveCommanderProbeConfig(d, "c1", "claude_local", "u1");
     expect(cfg).toMatchObject({
       env: { CLAUDE_CONFIG_DIR: expect.stringMatching(/[\\/]anthropic$/) },
     });
-    expect(resolveAdapterConfigForRuntime).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
   });
 });
