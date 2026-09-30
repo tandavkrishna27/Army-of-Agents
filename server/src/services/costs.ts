@@ -4,6 +4,7 @@ import { activityLog, agents, companies, costEvents, heartbeatRuns, issues, proj
 import { notFound, unprocessable } from "../errors.js";
 import { budgetService } from "./budgets.js";
 import { logger } from "../middleware/logger.js";
+import { lockBudgetAuthority } from "./budget-capacity.js";
 
 export interface CostDateRange {
   from?: Date;
@@ -45,6 +46,13 @@ export function costService(db: Db) {
     createEvent: async (
       companyId: string,
       data: Omit<typeof costEvents.$inferInsert, "companyId" | "agentId"> & { agentId: string },
+      // JOB-012 — the authoritative-cost bridge charges via this path but drives
+      // budget evaluation SYNCHRONOUSLY inside its own tenant transaction (so an
+      // incident is visible in the same committed state and can trigger an
+      // exactly-once cancel). Passing `deferBudgetEvaluation` suppresses the legacy
+      // fire-and-forget below WITHOUT changing behavior for any existing caller
+      // (default false). New rate/idempotency columns flow through `data` unchanged.
+      options?: { deferBudgetEvaluation?: boolean },
     ) => {
       const agent = await db
         .select()
@@ -58,6 +66,7 @@ export function costService(db: Db) {
       }
 
       const event = await db.transaction(async (tx) => {
+        await lockBudgetAuthority(tx as unknown as Db, companyId);
         const event = await tx
           .insert(costEvents)
           .values({
@@ -107,10 +116,13 @@ export function costService(db: Db) {
         return event;
       });
 
-      // Fire-and-forget budget evaluation
-      budgetService(db).evaluateCostEvent(agent.id, companyId).catch((err) =>
-        logger.error({ err }, "budget evaluation failed after cost event")
-      );
+      // Fire-and-forget budget evaluation (skipped when the caller drives it
+      // synchronously — JOB-012 authoritative-cost bridge).
+      if (!options?.deferBudgetEvaluation) {
+        budgetService(db).evaluateCostEvent(agent.id, companyId).catch((err) =>
+          logger.error({ err }, "budget evaluation failed after cost event")
+        );
+      }
 
       return event;
     },
@@ -328,7 +340,7 @@ export function costService(db: Db) {
     },
 
     // Sum of cost events within a rolling window anchored on occurredAt.
-    // AoA-specific shape: a single aggregated row per call. AoA's
+    // AoA-specific shape: a single aggregated row per call. Paperclip's
     // windowSpend returns per-provider breakdowns across all three windows;
     // AoA surfaces per-window totals and leaves per-provider detail to
     // byProvider + quota-windows snapshots.

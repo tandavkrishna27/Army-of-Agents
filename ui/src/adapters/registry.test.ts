@@ -35,7 +35,7 @@ describe("ui adapter registry", () => {
     expect(listUIAdapters().some((adapter) => adapter.type === "external_test")).toBe(true);
   });
 
-  it("registers AoA parity adapters as built-ins", () => {
+  it("registers Paperclip parity adapters as built-ins", () => {
     expect(findUIAdapter("acpx_local")?.label).toMatch(/ACPX/i);
     expect(findUIAdapter("cursor_cloud")?.label).toMatch(/Cursor Cloud/i);
     expect(findUIAdapter("grok_local")?.label).toMatch(/Grok/i);

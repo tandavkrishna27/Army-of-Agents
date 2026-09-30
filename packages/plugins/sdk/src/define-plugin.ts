@@ -1,5 +1,5 @@
 /**
- * `definePlugin` — the top-level helper for authoring a AoA plugin.
+ * `definePlugin` — the top-level helper for authoring a Paperclip plugin.
  *
  * Plugin authors call `definePlugin()` and export the result as the default
  * export from their worker entrypoint. The host imports the worker module,
@@ -203,7 +203,7 @@ export interface PluginDefinition {
 }
 
 // ---------------------------------------------------------------------------
-// AoAPlugin — the sealed object returned by definePlugin()
+// PaperclipPlugin — the sealed object returned by definePlugin()
 // ---------------------------------------------------------------------------
 
 /**
@@ -214,7 +214,7 @@ export interface PluginDefinition {
  *
  * @see PLUGIN_SPEC.md §14 — SDK Surface
  */
-export interface AoAPlugin {
+export interface PaperclipPlugin {
   /** The original plugin definition passed to `definePlugin()`. */
   readonly definition: PluginDefinition;
 }
@@ -224,14 +224,14 @@ export interface AoAPlugin {
 // ---------------------------------------------------------------------------
 
 /**
- * Define a AoA plugin.
+ * Define a Paperclip plugin.
  *
  * Call this function in your worker entrypoint and export the result as the
  * default export. The host will import the module and call lifecycle methods
  * on the returned object.
  *
  * @param definition - Plugin lifecycle handlers
- * @returns A sealed `AoAPlugin` object for the host to consume
+ * @returns A sealed `PaperclipPlugin` object for the host to consume
  *
  * @example
  * ```ts
@@ -253,6 +253,6 @@ export interface AoAPlugin {
  *
  * @see PLUGIN_SPEC.md §14.1 — Example SDK Shape
  */
-export function definePlugin(definition: PluginDefinition): AoAPlugin {
+export function definePlugin(definition: PluginDefinition): PaperclipPlugin {
   return Object.freeze({ definition });
 }

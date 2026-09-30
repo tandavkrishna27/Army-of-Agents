@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, Express 5, Drizzle ORM (NEVER raw SQL migrations), React + Vite + Tailwind v4, zod, vitest. pnpm workspace.
 
-**Worktree:** All work happens in `C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-commander` on branch `feat/v1-commander-chat`. Dependencies already installed (`pnpm install` is done).
+**Worktree:** All work happens in `C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-commander` on branch `feat/v1-commander-chat`. Dependencies already installed (`pnpm install` is done).
 
 **Test commands:**
 - Server/packages tests (run from repo root): `pnpm vitest run <path>` (root `test` script is plain vitest)

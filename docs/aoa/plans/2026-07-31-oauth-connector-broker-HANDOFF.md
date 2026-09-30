@@ -44,7 +44,7 @@ and guard-commented in code. The single "real users can use it" gate is **produc
 - `mcp-connectors-followups.md` — running follow-up list for the whole connectors initiative.
 
 **Persistent memory (this machine):**
-`C:\Users\TK\.claude\projects\C--Users-TK-OneDrive-Desktop-Claude-Data-Upstream-AoA-AoA-2-5\memory\`
+`C:\Users\TK\.claude\projects\C--Users-TK-OneDrive-Desktop-Claude-Data-Paperclip-AoA-AoA-2-5\memory\`
 - `oauth-connector-broker-plan.md` — the authoritative running state of THIS work.
 - `mcp-connectors-initiative.md` — the broader connectors initiative (Decisions #110, FU list).
 - `claude-mcp-header-delivery-verified.md` — proof claude 2.1.126 delivers the MCP bearer on tool calls (the runtime-delivery premise).

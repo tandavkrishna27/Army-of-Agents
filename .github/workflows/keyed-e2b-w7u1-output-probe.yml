@@ -1,0 +1,237 @@
+name: Keyed E2B — W7U1 output probe pack
+
+# W7U1's LIVE lane. ONE keyed run answers three questions that source analysis cannot
+# settle, and it must be able to answer NO to each of them as cleanly as it answers yes.
+#
+#   PROBE T (gate)      Does the RESOLVED template actually carry `claude` and `codex` on
+#                       PATH — the assertion e2b/e2b.Dockerfile's final layer makes at build
+#                       time, re-made against the image that answered? It runs FIRST and
+#                       GATES probe A, so a stale, half-built or explicitly bare image stops
+#                       the run BEFORE any model tokens are spent (E7-F022). A name is not a
+#                       filesystem: `resolveTemplate` fixes the name, this checks the image.
+#   PROBE A (decisive)  Can a real `claude` / `codex`, invoked under the EXACT
+#                       PRODUCTION ARGV (`buildSandboxInvocation`), write a file inside
+#                       the sandbox at all? With four arms: A0 harness control, A1 the
+#                       production argv, A2 the same prompt TEMPLATE with the permission
+#                       posture added INSIDE the probe (A1 and A2 differ additionally on
+#                       the two lines naming each arm's own target path and nonce — arm
+#                       separation, exactly as A0's path requires), A3 a negative control
+#                       that forbids writing.
+#   PROBE B             Does the configured TEMPLATE already pre-fill a candidate output
+#                       path? If it does, every location-based output convention is
+#                       satisfiable with no agent at all — E7-F020's class, with an
+#                       input no protocol surface can see.
+#   PROBE C             Do the stream handlers deliver from real E2B?
+#
+# It BUILDS NO OUTPUT MECHANISM, MUTATES NO GATE, COUNTER OR REGISTER, and touches no
+# database. It creates short-TTL sandboxes, writes and reads files inside them, and
+# leaves a DURABLE record of the verdict: a structured JSON artefact plus a rendered
+# `$GITHUB_STEP_SUMMARY` block, both written on a RED run as well as a green one.
+#
+# ★★★ DURABILITY IS NOT DECORATION HERE. E7-F025 measured that this repo's sibling keyed
+# lane already fired twice (`.github/keyed-e2b-trigger` re-fires #3 and #4) and that NO
+# document records either outcome — the honest state of that measurement is "fired and
+# unrecorded", so the next session re-asks the question. A pack whose verdict lives only in
+# a job log loses the founder's ONE authorised run the same way.
+#
+# ★ THIS LANE DOES NOT FIRE ON A SOURCE CHANGE, AND THAT IS DELIBERATE — it is the one
+# place this pack departs from its sibling keyed lanes. `keyed-e2b-unit-d.yml` lists the
+# module under test in `paths` on purpose, so an edit to the emitted shape cannot
+# quietly return it to argued-not-observed. Here the run SPENDS MODEL TOKENS against the
+# founder's authorisation, so an automatic re-fire would consume an authorisation nobody
+# gave. The ONLY `paths` entry is the trigger file, and that file is deliberately NOT
+# created by the pack's own PR: merging this workflow therefore fires nothing.
+#
+# ★★ HOW TO FIRE IT — two routes, because a brand-new workflow cannot always bootstrap
+# itself. `workflow_dispatch` by name works for a workflow GitHub has already INDEXED;
+# a lane that has never run may answer `HTTP 404: workflow ... not found on the default
+# branch` (measured on `keyed-e2b-egress-constraint-probe.yml`, 2026-09-04). The push
+# route always works:
+#
+#     gh workflow run keyed-e2b-w7u1-output-probe.yml --ref docs/replatform-program
+#     # if that 404s:
+#     echo "W7U1 probe pack run #1 (<date>): <why>" >> .github/keyed-e2b-w7u1-output-probe-trigger
+#     # `-am` cannot stage a file git has never seen, and this one does not exist yet:
+#     git add .github/keyed-e2b-w7u1-output-probe-trigger
+#     git commit -m "chore(w7u1): fire the output probe pack" && git push
+#
+# Full operator instructions, including cost and how to read each three-state result:
+#   docs/replatform/epics/E7-coding-e2b/tickets/W7U1-output-probe-runbook.md
+#
+# ★★★ SECRETS. `E2B_API_KEY` already exists as a repo secret. `OPENAI_API_KEY` exists
+# too, so probe A's codex arm runs with NO operator action. `ANTHROPIC_API_KEY` does
+# NOT exist as a repo secret at the time of writing (`gh secret list`, 2026-09-06) —
+# `thread-v2-e2e.yml` references it and it has never been set — so probe A's claude arm
+# reports `inconclusive-because-no-model-provider-key` until an operator adds it. No key
+# is written into the repository, printed, or embedded in a fixture; every string the
+# pack emits is passed through its own redactor first.
+
+on:
+  workflow_dispatch:
+    inputs:
+      e2b_template:
+        # ★★★ EMPTY DOES **NOT** MEAN BARE "base" ON THIS LANE, AND THAT DIVERGENCE FROM
+        # ITS SIBLINGS IS THE POINT. Every other keyed lane pipes this input straight into
+        # `E2B_TEMPLATE`, and E7-F022 measured the consequence: an omitted input "silently
+        # defaults to the bare `base` template", which has NO agent CLIs. For a lane whose
+        # subject is the invocation SHAPE that costs nothing; for THIS pack it would spend
+        # the founder's one authorised, token-spending run on an image with no agent in it.
+        # So `resolveTemplate` (scripts/lib/w7u1-agent-output-probe.mjs) resolves an omitted
+        # input to "aoa-base" — the alias e2b/e2b.Dockerfile builds with claude+codex
+        # asserted on PATH — and the RESOLVED id is printed at the top of the report and
+        # carried in the durable record. An explicit alias is honoured verbatim.
+        description: 'E2B sandbox template alias. Empty = "aoa-base" (the CLI-bearing template), NOT bare "base".'
+        required: false
+        default: ""
+        type: string
+  push:
+    branches:
+      - docs/replatform-program
+    paths:
+      # The trigger file, and NOTHING else — see the note above. Editing the pack's own
+      # source must not spend a run.
+      - ".github/keyed-e2b-w7u1-output-probe-trigger"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keyed-e2b-w7u1-output-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      # The one place the record's path is written down. The pack writes it; the fallback
+      # step guarantees it exists; the upload step retrieves it.
+      W7U1_RECORD_PATH: ${{ github.workspace }}/w7u1-record/w7u1-output-probe-record.json
+      # ★ THE SHELL FALLBACK'S COPY OF THE DEFAULT. The pack itself resolves the template in
+      # JS (`resolveTemplate`); this duplicate exists only so the fallback record can still
+      # name the image when the pack never reached its reporting stage. The two are PINNED
+      # together by `evaluateDurableRecord`'s `default-template-mismatch` clause, exercised
+      # in the required `policy` job — they cannot drift into naming different images.
+      W7U1_DEFAULT_TEMPLATE: aoa-base
+    # Two agent sandboxes (npm install + four arms each, every agent arm capped at
+    # 180 s) plus two cheap ones. The in-test budget is 50 minutes; this cap sits
+    # outside it so a job-level kill names the job, not an innocent step.
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build dist-only leaves
+        # Mirrors `keyed-e2b-unit-d.yml`'s proven block. The pack's own imports are
+        # `e2b`, two relative modules inside `src`, one zero-import pure leaf under
+        # `server/src`, and one zero-import pure leaf under `scripts/lib` — but the
+        # provider package DECLARES these workspace deps and the selective build is
+        # cheap next to a wrong-reason red.
+        run: |
+          pnpm --filter @armyofagents/worker-protocol build
+          pnpm --filter @armyofagents/worker-daemon build
+          pnpm --filter @armyofagents/sandbox-fake-provider build
+          pnpm --filter @armyofagents/sandbox-provider-contract build
+
+      - name: Run the W7U1 output probe pack against REAL E2B
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          E2B_TEMPLATE: ${{ inputs.e2b_template }}
+          # The model-provider keys. Each is read by exactly one arm of probe A and is
+          # delivered to the sandbox as a per-command env var, never as an argv element
+          # and never into a file in the repository.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: pnpm --filter @armyofagents/sandbox-e2b-provider exec vitest run src/__tests__/keyed-w7u1-agent-output-probe.test.ts
+
+      - name: Durable record — guarantee one exists, and put it on the run page
+        # ★★★ `always()` IS LOAD-BEARING, NOT HYGIENE. The run that most needs a durable
+        # record is the INCONCLUSIVE one — "run me again, and here is why" — and that is
+        # exactly the run a success-gated step throws away. `evaluateDurableRecord`
+        # (scripts/lib/w7u1-agent-output-probe.mjs, asserted against THIS file in the
+        # required `policy` job) reds if this guard or the upload's guard is removed.
+        #
+        # The pack writes the real record itself, with every probe's three-state verdict and
+        # reason. This step only guarantees that SOMETHING durable exists when the pack died
+        # before its own reporting stage — a crash, a failed install, a lost secret — because
+        # "the lane ran and left nothing" is the failure E7-F025 recorded.
+        if: always()
+        env:
+          E2B_TEMPLATE_INPUT: ${{ inputs.e2b_template }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -u
+          mkdir -p "$(dirname "$W7U1_RECORD_PATH")"
+          if [ ! -s "$W7U1_RECORD_PATH" ]; then
+            RESOLVED_TEMPLATE="${E2B_TEMPLATE_INPUT:-}"
+            RESOLVED_SOURCE="explicit"
+            if [ -z "$RESOLVED_TEMPLATE" ]; then
+              RESOLVED_TEMPLATE="$W7U1_DEFAULT_TEMPLATE"
+              RESOLVED_SOURCE="default-cli-bearing"
+            fi
+            cat > "$W7U1_RECORD_PATH" <<EOF
+          {
+            "schema": "aoa.w7u1.output-probe-record/2",
+            "generatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commitSha": "${GITHUB_SHA}",
+            "workflowRunUrl": "${RUN_URL}",
+            "runNonce": "unknown",
+            "template": { "resolved": "${RESOLVED_TEMPLATE}", "source": "${RESOLVED_SOURCE}", "note": "resolved by the workflow fallback; the pack itself never reported", "carriesAgentClis": $([ "$RESOLVED_TEMPLATE" = "$W7U1_DEFAULT_TEMPLATE" ] && echo true || echo false) },
+            "disposition": { "disposition": "inconclusive", "exitCode": 1, "detail": "the pack produced NO record: it did not reach its own reporting stage. Read the job log for the step that failed." },
+            "probes": [],
+            "armEvidence": []
+          }
+          EOF
+            {
+              echo "### W7U1 output probe pack — NO RESULT"
+              echo
+              echo "The pack did not reach its reporting stage, so no probe verdict exists."
+              echo "Resolved template: \`${RESOLVED_TEMPLATE}\` (${RESOLVED_SOURCE}). Commit: \`${GITHUB_SHA}\`."
+              echo
+              echo "This lane is NOT a measurement of anything. Re-dispatch after fixing the failing step."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "Durable record at $W7U1_RECORD_PATH:"
+          cat "$W7U1_RECORD_PATH"
+
+      - name: Upload the durable W7U1 probe record
+        # ★ `always()` FOR THE SAME REASON as the step above, and named so
+        # `evaluateDurableRecord` can find it: a guarded upload of some OTHER artefact must
+        # not satisfy the rule.
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: w7u1-output-probe-record
+          path: ${{ env.W7U1_RECORD_PATH }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Fail if the pack SKIPPED (a skip is not a measurement)
+        # ★ THE POSITIVE CONTROL. `describe.skip` without a key is a GREEN vitest run, so
+        # a lane that lost its secret would report success while proving nothing — this
+        # programme's single most repeated defect class. Assert the key was present.
+        # The MODEL key needs no equivalent guard here: probe A returns
+        # `inconclusive-because-no-model-provider-key` without one, and an inconclusive
+        # probe already fails the pack.
+        if: always()
+        run: |
+          if [ -z "${E2B_API_KEY}" ]; then
+            echo "::error::E2B_API_KEY was empty — the W7U1 probe pack SKIPPED and measured NOTHING."
+            exit 1
+          fi
+          echo "E2B_API_KEY was present; the pack ran for real. Read the job summary for the three-state verdicts."
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}

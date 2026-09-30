@@ -183,7 +183,7 @@ jobs:
           target="$DEPLOY_USER@$DEPLOY_HOST"
           echo "Snapshotting DB before the one-way 0188 marker..."
           ssh "${ssh_options[@]}" "$target" \
-            "docker exec aoa-db-1 pg_dump -U aoa aoa > '$DEPLOY_ROOT/pre-0188-snapshot-$DEPLOY_SHA.sql' && wc -c '$DEPLOY_ROOT/pre-0188-snapshot-$DEPLOY_SHA.sql'"
+            "docker exec aoa-db-1 pg_dump -U paperclip paperclip > '$DEPLOY_ROOT/pre-0188-snapshot-$DEPLOY_SHA.sql' && wc -c '$DEPLOY_ROOT/pre-0188-snapshot-$DEPLOY_SHA.sql'"
           echo "Recording 0188 marker (instance_settings.general.migrationSnapshots += 0188)..."
           # SQL is base64 to avoid SSH/YAML quoting. Decodes to:
           #   INSERT INTO instance_settings (singleton_key, general)
@@ -193,10 +193,10 @@ jobs:
           #                 || '{"migrationSnapshots":["0188"]}'::jsonb, updated_at = now();
           printf '%s' 'SU5TRVJUIElOVE8gaW5zdGFuY2Vfc2V0dGluZ3MgKHNpbmdsZXRvbl9rZXksIGdlbmVyYWwpIFZBTFVFUyAoJ2RlZmF1bHQnLCAneyJtaWdyYXRpb25TbmFwc2hvdHMiOlsiMDE4OCJdfSc6Ompzb25iKSBPTiBDT05GTElDVCAoc2luZ2xldG9uX2tleSkgRE8gVVBEQVRFIFNFVCBnZW5lcmFsID0gQ09BTEVTQ0UoaW5zdGFuY2Vfc2V0dGluZ3MuZ2VuZXJhbCwgJ3t9Jzo6anNvbmIpIHx8ICd7Im1pZ3JhdGlvblNuYXBzaG90cyI6WyIwMTg4Il19Jzo6anNvbmIsIHVwZGF0ZWRfYXQgPSBub3coKTs=' \
             | base64 -d \
-            | ssh "${ssh_options[@]}" "$target" 'docker exec -i aoa-db-1 psql -U aoa -d aoa -v ON_ERROR_STOP=1'
+            | ssh "${ssh_options[@]}" "$target" 'docker exec -i aoa-db-1 psql -U paperclip -d paperclip -v ON_ERROR_STOP=1'
           echo "Verifying marker contains 0188..."
           marker="$(ssh "${ssh_options[@]}" "$target" \
-            "docker exec -i aoa-db-1 psql -U aoa -d aoa -tAc \"SELECT general->'migrationSnapshots' FROM instance_settings WHERE singleton_key = 'default';\"")"
+            "docker exec -i aoa-db-1 psql -U paperclip -d paperclip -tAc \"SELECT general->'migrationSnapshots' FROM instance_settings WHERE singleton_key = 'default';\"")"
           echo "recorded: $marker"
           case "$marker" in
             *0188*) echo "OK: 0188 marker present";;
@@ -279,10 +279,10 @@ jobs:
           echo "Seeding founder permission grants for active-member founders..."
           printf '%s' 'SU5TRVJUIElOVE8gcHJpbmNpcGFsX3Blcm1pc3Npb25fZ3JhbnRzIChjb21wYW55X2lkLCBwcmluY2lwYWxfdHlwZSwgcHJpbmNpcGFsX2lkLCBwZXJtaXNzaW9uX2tleSwgc2NvcGUsIGdyYW50ZWRfYnlfdXNlcl9pZCkgU0VMRUNUIHVyLmNvbXBhbnlfaWQsICd1c2VyJywgdXIudXNlcl9pZCwgcGsua2V5LCBOVUxMLCB1ci51c2VyX2lkIEZST00gdXNlcl9yb2xlcyB1ciBKT0lOIGNvbXBhbnlfbWVtYmVyc2hpcHMgY20gT04gY20uY29tcGFueV9pZCA9IHVyLmNvbXBhbnlfaWQgQU5EIGNtLnByaW5jaXBhbF90eXBlID0gJ3VzZXInIEFORCBjbS5wcmluY2lwYWxfaWQgPSB1ci51c2VyX2lkIEFORCBjbS5zdGF0dXMgPSAnYWN0aXZlJyBDUk9TUyBKT0lOIChWQUxVRVMgKCdhZ2VudHM6Y3JlYXRlJyksKCd1c2VyczppbnZpdGUnKSwoJ3VzZXJzOm1hbmFnZV9wZXJtaXNzaW9ucycpLCgndGFza3M6YXNzaWduJyksKCd0YXNrczphc3NpZ25fc2NvcGUnKSwoJ2pvaW5zOmFwcHJvdmUnKSkgQVMgcGsoa2V5KSBXSEVSRSB1ci5yb2xlID0gJ2ZvdW5kZXInIE9OIENPTkZMSUNUIChjb21wYW55X2lkLCBwcmluY2lwYWxfdHlwZSwgcHJpbmNpcGFsX2lkLCBwZXJtaXNzaW9uX2tleSkgRE8gTk9USElORzs=' \
             | base64 -d \
-            | ssh "${ssh_options[@]}" "$target" 'docker exec -i aoa-db-1 psql -U aoa -d aoa -v ON_ERROR_STOP=1'
+            | ssh "${ssh_options[@]}" "$target" 'docker exec -i aoa-db-1 psql -U paperclip -d paperclip -v ON_ERROR_STOP=1'
           echo "Verifying: number of founders now holding agents:create..."
           count="$(ssh "${ssh_options[@]}" "$target" \
-            "docker exec -i aoa-db-1 psql -U aoa -d aoa -tAc \"SELECT count(*) FROM principal_permission_grants WHERE permission_key = 'agents:create';\"")"
+            "docker exec -i aoa-db-1 psql -U paperclip -d paperclip -tAc \"SELECT count(*) FROM principal_permission_grants WHERE permission_key = 'agents:create';\"")"
           echo "founders with agents:create grant: $count"
 
       - name: Upload and deploy tested revision

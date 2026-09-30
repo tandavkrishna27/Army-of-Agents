@@ -43,7 +43,7 @@ import {
 } from "./marketplace-install/managed-skills-root.js";
 
 // ---------------------------------------------------------------------------
-// RuntimeSkillEntry describes a skill available to an agent at runtime.
+// RuntimeSkillEntry — replaces PaperclipSkillEntry from Paperclip
 // ---------------------------------------------------------------------------
 
 export interface RuntimeSkillEntry {
@@ -79,7 +79,7 @@ interface ImportedSkill {
 }
 
 interface SkillSourceMeta {
-  sourceKind: "github" | "skills_sh" | "aoa_bundled" | "url" | "local" | "catalog" | "unknown";
+  sourceKind: "github" | "skills_sh" | "paperclip_bundled" | "url" | "local" | "catalog" | "unknown";
   owner?: string | null;
   repo?: string | null;
   skillPath?: string | null;
@@ -1338,14 +1338,14 @@ export async function discoverProjectWorkspaceSkillDirectories(
 }
 
 // ---------------------------------------------------------------------------
-// Skill reference resolution (ref → CompanySkill)
+// Skill reference resolution (Paperclip-style: ref → CompanySkill)
 // ---------------------------------------------------------------------------
 
 /**
  * Resolves a string reference (id / canonical key / slug) to a CompanySkill
  * from an in-memory list. Returns { skill, ambiguous } so callers can
  * distinguish "not found" from "multiple skills share this slug".
- * Resolves a skill reference against the company skill library.
+ * Mirrors Paperclip's resolveSkillReference exactly.
  */
 export function resolveSkillReferenceByIdentifier(
   skills: CompanySkill[],
@@ -2856,7 +2856,7 @@ export function companySkillService(db: Db) {
   function deriveSourceBadge(skill: CompanySkill): CompanySkillSourceBadge {
     const meta = getSkillMeta(skill);
     if (meta.sourceKind === "skills_sh") return "skills_sh";
-    if (meta.sourceKind === "aoa_bundled") return "aoa";
+    if (meta.sourceKind === "paperclip_bundled") return "paperclip";
     if (skill.sourceType === "github") return "github";
     if (skill.sourceType === "url") return "url";
     if (skill.sourceType === "local_path") return "local";

@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "id": "batch-cancel-during-execution",
+  "workloadType": "batch",
+  "purpose": "Cancellation during adapter execution kills the process tree and fences output.",
+  "source": {
+    "kind": "task_run",
+    "runId": "run_NFK0PFP4EFFZQQZR80XS32MM9X",
+    "issueId": "issue_5KJZ1H4YPDXKH1GWCE211M5ZHV"
+  },
+  "organization": {
+    "id": "org_6P9QWKEFK1G6WY6BY64JBC34PW",
+    "name": "Umbrella Analytics"
+  },
+  "company": {
+    "id": "company_T3Y3VYPA2CCPW5KKSBFWVJZK39",
+    "name": "Umbrella Analytics HQ",
+    "organizationId": "org_6P9QWKEFK1G6WY6BY64JBC34PW"
+  },
+  "requester": {
+    "type": "founder",
+    "id": "user-founder-2",
+    "displayName": "Boris Founder"
+  },
+  "executor": {
+    "type": "worker",
+    "id": "cloud-worker-batch-2"
+  },
+  "placement": {
+    "targetPolicy": "pinned_generation",
+    "provider": "e2b",
+    "region": "us-east-1",
+    "generation": 1
+  },
+  "inputBase": {
+    "workspaceBaseId": "wsbase-v6n35vxcp8exxdxjknqtsk6s1x",
+    "gitRemote": "https://git.example.com/umbrella/etl.git",
+    "gitRef": "refs/heads/main",
+    "baseDigest": "7bc6d5e3e55b7dac36e8ce7d5d8d7d5253d5d75a59534699215d379390c4fd25",
+    "immutable": true
+  },
+  "identity": {
+    "jobId": "job_CPFNFN740QBB0GNVP8DR22FMHY",
+    "attempts": [
+      {
+        "attempt": 1,
+        "workerId": "worker_1MEKXMJB2C172T12PCP1FN72Q2",
+        "leaseId": "lease_32H39MPAK60G75A184EV87TKE5",
+        "fenceToken": 100
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "submit"
+    },
+    {
+      "action": "lease_and_ack"
+    },
+    {
+      "action": "execute_adapter",
+      "emits": [
+        "attempt_started",
+        "log"
+      ]
+    },
+    {
+      "action": "request_cancel",
+      "at": "running"
+    },
+    {
+      "action": "kill_process_tree",
+      "emits": [
+        "terminal"
+      ]
+    },
+    {
+      "action": "attempt_late_upload"
+    }
+  ],
+  "failureInjection": {
+    "point": "running",
+    "effect": "cancel_requested"
+  },
+  "expectedEvents": [
+    {
+      "protocolVersion": 1,
+      "eventId": "XK46ZEDEWJ6E636EN2DSVPZZKM",
+      "eventType": "attempt_started",
+      "organizationId": "org_6P9QWKEFK1G6WY6BY64JBC34PW",
+      "companyId": "company_T3Y3VYPA2CCPW5KKSBFWVJZK39",
+      "workerId": "worker_1MEKXMJB2C172T12PCP1FN72Q2",
+      "jobId": "job_CPFNFN740QBB0GNVP8DR22FMHY",
+      "attempt": 1,
+      "leaseId": "lease_32H39MPAK60G75A184EV87TKE5",
+      "fenceToken": 100,
+      "seq": 1,
+      "occurredAt": "2026-08-08T12:00:00.000Z",
+      "payload": {},
+      "eventDigest": "c362cc8ce85a9e3d99c986ce371628c5d821d9d99dd593fa464c61e6acc6efbd"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "YW4C2149CKBBHW3Z9HWRFQSYT3",
+      "eventType": "log",
+      "organizationId": "org_6P9QWKEFK1G6WY6BY64JBC34PW",
+      "companyId": "company_T3Y3VYPA2CCPW5KKSBFWVJZK39",
+      "workerId": "worker_1MEKXMJB2C172T12PCP1FN72Q2",
+      "jobId": "job_CPFNFN740QBB0GNVP8DR22FMHY",
+      "attempt": 1,
+      "leaseId": "lease_32H39MPAK60G75A184EV87TKE5",
+      "fenceToken": 100,
+      "seq": 2,
+      "occurredAt": "2026-08-08T12:00:05.000Z",
+      "payload": {
+        "detail": "adapter running",
+        "stage": "execute"
+      },
+      "eventDigest": "a1d482e0eca85381eaeb798ce58e215438ea35abfd253d7982d8cdd2ea5062c0"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "76PZ1SQTZQE1QZ57EKV0HF2MZ0",
+      "eventType": "cancel_requested",
+      "organizationId": "org_6P9QWKEFK1G6WY6BY64JBC34PW",
+      "companyId": "company_T3Y3VYPA2CCPW5KKSBFWVJZK39",
+      "workerId": "worker_1MEKXMJB2C172T12PCP1FN72Q2",
+      "jobId": "job_CPFNFN740QBB0GNVP8DR22FMHY",
+      "attempt": 1,
+      "leaseId": "lease_32H39MPAK60G75A184EV87TKE5",
+      "fenceToken": 100,
+      "seq": 3,
+      "occurredAt": "2026-08-08T12:00:09.000Z",
+      "payload": {
+        "reason": "founder_requested_cancel"
+      },
+      "eventDigest": "ce7a06fd99c9cc397ae094b1027b43580a4d7dccdab0a55bb45257dd5ca1c355"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "RH5G50RZM95BJC9RCG7BBTV2NV",
+      "eventType": "terminal",
+      "organizationId": "org_6P9QWKEFK1G6WY6BY64JBC34PW",
+      "companyId": "company_T3Y3VYPA2CCPW5KKSBFWVJZK39",
+      "workerId": "worker_1MEKXMJB2C172T12PCP1FN72Q2",
+      "jobId": "job_CPFNFN740QBB0GNVP8DR22FMHY",
+      "attempt": 1,
+      "leaseId": "lease_32H39MPAK60G75A184EV87TKE5",
+      "fenceToken": 100,
+      "seq": 4,
+      "occurredAt": "2026-08-08T12:00:10.000Z",
+      "payload": {
+        "detail": "sandbox process tree killed",
+        "code": "cancelled"
+      },
+      "eventDigest": "7467a563289e6727800785d8a969f24b92f48d3951693887f88a1028f6cc6d07"
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "maxTotalCents": 500,
+    "observedTotalCents": 40,
+    "tokenBudget": 200000,
+    "observedTokens": 8100
+  },
+  "timing": {
+    "queuedAt": "2026-08-08T11:59:55.000Z",
+    "startedAt": "2026-08-08T12:00:00.000Z",
+    "finishedAt": "2026-08-08T12:00:10.000Z",
+    "maxWallClockMs": 600000,
+    "observedWallClockMs": 10000
+  },
+  "cleanup": {
+    "authority": "resource_bound_cleanup",
+    "scope": "attempt:worker_1MEKXMJB2C172T12PCP1FN72Q2",
+    "idempotent": true,
+    "deadlineMs": 15000,
+    "restoresEffectAuthority": false
+  },
+  "control": {
+    "cancellation": "requested_during_execution",
+    "productApproval": "none",
+    "runtimeDecision": "none"
+  },
+  "expected": {
+    "terminalState": "cancelled",
+    "artifacts": [],
+    "auditActions": [
+      "job.cancel_requested",
+      "sandbox.killed",
+      "job.cancelled"
+    ],
+    "forbiddenEffects": [
+      "late_artifact_commit",
+      "late_secret_fetch",
+      "automatic_retry"
+    ]
+  }
+}

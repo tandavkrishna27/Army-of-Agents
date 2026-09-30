@@ -23,14 +23,24 @@ From **this** directory (it contains `e2b.Dockerfile`):
 
 ```bash
 e2b auth login          # or: export E2B_ACCESS_TOKEN=e2b_...
-e2b template build --name aoa-base --dockerfile e2b.Dockerfile
+e2b template create aoa-base -d e2b.Dockerfile
 ```
 
 This builds the image and registers it on your E2B account under the alias
 `aoa-base`, printing a template ID. The final Dockerfile step (`command -v claude
 && command -v codex`) makes the build **fail** if either CLI is missing, so a
-successful build guarantees the template is correct. (Exact CLI flags can vary by
-`@e2b/cli` version — see https://e2b.dev/docs if `--name`/`--dockerfile` differ.)
+successful build guarantees the template is correct.
+
+> **CORRECTED 2026-09-01.** This block used to say
+> `e2b template build --name aoa-base --dockerfile e2b.Dockerfile`, and that command is
+> DEPRECATED AND GUTTED as of `@e2b/cli` v2.18.0: `--help` shows `Arguments: template  unused`
+> and no options besides `-h`. It swallows the flags, prints a deprecation banner, and **exits
+> without building anything** — an 814-byte log, no error, no template. So the old instruction
+> did not fail loudly; it succeeded silently and left you with nothing, and the first symptom
+> was `env: 'claude': No such file or directory` at execute time, which reads as an image
+> problem rather than a docs one. Measured and recorded in
+> `docs/replatform/qa/2026-08-31-campaign-blockers-and-fleet-terrain.md`. Optional sizing flags:
+> `--memory-mb 2048 --cpu-count 2`.
 
 ## 3. Point AoA at it
 

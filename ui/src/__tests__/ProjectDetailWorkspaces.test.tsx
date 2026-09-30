@@ -361,7 +361,7 @@ describe("ProjectDetail — Workspaces tab", () => {
     await waitFor(() => {
       expect(projectsApiMock.createWorkspace).toHaveBeenCalledWith(
         mockProject.id,
-        { cwd: "/__aoa_repo_only__", repoUrl: "https://github.com/acme/app" },
+        { cwd: "/__paperclip_repo_only__", repoUrl: "https://github.com/acme/app" },
       );
     });
   });

@@ -85,10 +85,15 @@ pnpm aoa onboard
 
 ## Execution Isolation (cloud_auth)
 
-On `cloud_auth`, every agent, crew, and Commander run — plus the host one-shot
-CLIs (extraction, compaction, readiness probes) — executes inside a per-run E2B
-sandbox, reached through the MCP broker. The control-plane host never runs
-tenant model output directly. Self-hosted deployments (`local_trusted` and
+On `cloud_auth`, every agent, crew, and Commander run — plus supported one-shot
+CLIs (extraction, compaction, and `claude_local`/`codex_local` readiness probes)
+— executes inside E2B. Agent, crew, and Commander runs use the run-JWT/MCP
+broker path. One-shot CLIs instead resolve Company-scoped provider authority and
+call the sandbox provider runtime directly; unsupported readiness adapters fail
+closed. Organization agents may use ephemeral or warm per-agent leases under
+the warm-sandbox policy, crew is ephemeral, and Commander may use warm
+per-conversation or ephemeral-per-turn leases. The control-plane host never
+runs tenant model output directly. Self-hosted deployments (`local_trusted` and
 single-tenant `authenticated`) are unchanged: they spawn host-direct with the
 in-process MCP bridge, and the D1 unsandboxed-multitenant guard is a no-op.
 
@@ -96,19 +101,22 @@ in-process MCP bridge, and the D1 unsandboxed-multitenant guard is a no-op.
 
 | Run kind | `local_trusted` / `authenticated` (self-hosted) | `cloud_auth` (multi-tenant) |
 |----------|--------------------------------------------------|-----------------------------|
-| Org agent | host-direct or docker (operator choice) | ephemeral E2B sandbox via broker |
+| Org agent | host-direct or docker (operator choice) | E2B via broker; ephemeral or warm per-agent reuse by policy |
 | Crew agent | host-direct or docker | ephemeral E2B sandbox via broker (always ephemeral) |
 | **Commander** | **host-direct spawn + in-process bridge (byte-identical)** | **warm per-conversation E2B sandbox via broker (Commander run-JWT); ephemeral-per-turn if `warmCommanderConversations=false`** |
-| Readiness probes / compaction | host-direct | ephemeral one-shot E2B sandbox |
+| Extraction / compaction | host-direct | direct ephemeral one-shot E2B provider-runtime call |
+| Readiness probes | host-direct | direct ephemeral one-shot E2B call for `claude_local`/`codex_local`; unsupported adapters fail closed |
 
-Every real dispatch passes a resolved `provider-sandbox` execution target into
-the D1 guard (`assertUnsandboxedMultitenantAllowed`). A `null`/`local` target
-(acquire failed) still fails closed on `cloud_auth` — there is no silent host
-fallback. The guard is a **closed refuse-enumeration** (refuses local +
-docker-family, permits everything else), so a future tenant-operated
-`remote-tenant-runner` is an allowed category by construction; the reserved
-driver name (`RESERVED_TENANT_RUNNER_DRIVER = "remote-runner"`) is documented
-but not yet admitted in v1.
+Every agent, crew, and Commander dispatch passes a resolved `provider-sandbox`
+execution target into the D1 guard (`assertUnsandboxedMultitenantAllowed`). A
+`null`/`local` target (acquire failed) still fails closed on `cloud_auth` — there
+is no silent host fallback. One-shot CLIs use a separate fail-closed path:
+environment acquisition and the sandbox-driver check must succeed before the
+direct provider-runtime call. The D1 guard is a **closed refuse-enumeration**
+(refuses local + docker-family, permits everything else), so a future
+tenant-operated `remote-tenant-runner` is an allowed category by construction;
+the reserved driver name (`RESERVED_TENANT_RUNNER_DRIVER = "remote-runner"`) is
+documented but not yet admitted in v1.
 
 ### Instance experimental settings (Commander warm sandboxes)
 

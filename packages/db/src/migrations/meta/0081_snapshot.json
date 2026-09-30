@@ -7286,21 +7286,21 @@
                                                                                           "type":  "text",
                                                                                           "primaryKey":  false,
                                                                                           "notNull":  true,
-                                                                                          "default":  "\u0027aoa-feedback-envelope-v2\u0027"
+                                                                                          "default":  "\u0027paperclip-feedback-envelope-v2\u0027"
                                                                                       },
                                                                    "bundle_version":  {
                                                                                           "name":  "bundle_version",
                                                                                           "type":  "text",
                                                                                           "primaryKey":  false,
                                                                                           "notNull":  true,
-                                                                                          "default":  "\u0027aoa-feedback-bundle-v2\u0027"
+                                                                                          "default":  "\u0027paperclip-feedback-bundle-v2\u0027"
                                                                                       },
                                                                    "payload_version":  {
                                                                                            "name":  "payload_version",
                                                                                            "type":  "text",
                                                                                            "primaryKey":  false,
                                                                                            "notNull":  true,
-                                                                                           "default":  "\u0027aoa-feedback-v1\u0027"
+                                                                                           "default":  "\u0027paperclip-feedback-v1\u0027"
                                                                                        },
                                                                    "payload_digest":  {
                                                                                           "name":  "payload_digest",

@@ -68,7 +68,7 @@ describe.skipIf(process.platform === "win32")("worker token round-trip (real DB,
     const token = createWorkerToken();
     const [row] = await db
       .insert(executionTargets)
-      .values({ organizationId: ORG, slug: "wkr-1", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "offline", workerTokenHash: hashWorkerToken(token) })
+      .values({ organizationId: ORG, scope: "organization", targetAuthorityKey: `organization:${ORG}`, slug:"wkr-1", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "offline", workerTokenHash: hashWorkerToken(token) })
       .returning();
     expect(await resolveWorkerTargetId(db, token)).toBe(row!.id); // token → id
     expect(await resolveWorkerTargetId(db, row!.id)).toBeNull(); // raw PK → nothing
@@ -83,7 +83,7 @@ describe.skipIf(process.platform === "win32")("worker token round-trip (real DB,
     const token = createWorkerToken();
     const [row] = await db
       .insert(executionTargets)
-      .values({ organizationId: ORG, slug: "wkr-disabled", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "disabled", workerTokenHash: hashWorkerToken(token) })
+      .values({ organizationId: ORG, scope: "organization", targetAuthorityKey: `organization:${ORG}`, slug:"wkr-disabled", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "disabled", workerTokenHash: hashWorkerToken(token) })
       .returning();
     const { updated } = await registerWorkerHeartbeat(db, { targetId: row!.id, status: "active" });
     expect(updated).toBe(0); // guard: WHERE excludes the disabled row → nothing updated
@@ -99,7 +99,7 @@ describe.skipIf(process.platform === "win32")("worker token round-trip (real DB,
     const token = createWorkerToken();
     const [row] = await db
       .insert(executionTargets)
-      .values({ organizationId: ORG, slug: "wkr-active", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "active", workerTokenHash: hashWorkerToken(token) })
+      .values({ organizationId: ORG, scope: "organization", targetAuthorityKey: `organization:${ORG}`, slug:"wkr-active", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "active", workerTokenHash: hashWorkerToken(token) })
       .returning();
     expect(row!.lastSeenAt).toBeNull(); // never heartbeated yet
     const { updated } = await registerWorkerHeartbeat(db, { targetId: row!.id, status: "draining" });
@@ -117,7 +117,7 @@ describe.skipIf(process.platform === "win32")("worker token round-trip (real DB,
     const token1 = createWorkerToken();
     const [row] = await db
       .insert(executionTargets)
-      .values({ organizationId: ORG, slug: "wkr-2", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "offline", workerTokenHash: hashWorkerToken(token1) })
+      .values({ organizationId: ORG, scope: "organization", targetAuthorityKey: `organization:${ORG}`, slug:"wkr-2", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "offline", workerTokenHash: hashWorkerToken(token1) })
       .returning();
     const rotated = await rotateExecutionTargetWorkerToken(db, { organizationId: ORG, targetId: row!.id });
     expect(rotated?.target.id).toBe(row!.id);
@@ -131,7 +131,7 @@ describe.skipIf(process.platform === "win32")("worker token round-trip (real DB,
     const token = createWorkerToken();
     const [row] = await db
       .insert(executionTargets)
-      .values({ organizationId: ORG, slug: "wkr-revoked", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "active", workerTokenHash: hashWorkerToken(token) })
+      .values({ organizationId: ORG, scope: "organization", targetAuthorityKey: `organization:${ORG}`, slug:"wkr-revoked", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "active", workerTokenHash: hashWorkerToken(token) })
       .returning();
 
     const revoked = await revokeExecutionTargetWorkerToken(db, { organizationId: ORG, targetId: row!.id });
@@ -154,7 +154,7 @@ describe.skipIf(process.platform === "win32")("worker token round-trip (real DB,
     const token = createWorkerToken();
     const [target] = await db
       .insert(executionTargets)
-      .values({ organizationId: ORG, slug: "wkr-3", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "active", workerTokenHash: hashWorkerToken(token) })
+      .values({ organizationId: ORG, scope: "organization", targetAuthorityKey: `organization:${ORG}`, slug:"wkr-3", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "active", workerTokenHash: hashWorkerToken(token) })
       .returning();
     await db.execute(sql`INSERT INTO environments (company_id, name, execution_target_id) VALUES (${CO}, 'prod', ${target!.id})`);
     const got = (await environmentService(db).list(CO))[0]! as Record<string, unknown>;

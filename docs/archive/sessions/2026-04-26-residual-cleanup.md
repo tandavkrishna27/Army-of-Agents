@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close every test failure, drift item, and spawned-followup that the Upstream → AoA rename branch (`Porting1.1`) intentionally left for a follow-up branch, so the next release ships with a fully green test suite and no known correctness gaps from the rename.
+**Goal:** Close every test failure, drift item, and spawned-followup that the Paperclip → AoA rename branch (`Porting1.1`) intentionally left for a follow-up branch, so the next release ships with a fully green test suite and no known correctness gaps from the rename.
 
 **Architecture:** One sequential branch (`cleanup/2026-04-26`) off `Porting1.1`, organized as twelve independent task units. Tasks are ordered cheapest-and-most-isolated-first so each can ship as its own commit. Tasks 2–3 introduce a shared drizzle-orm mock helper that the rest of the server tests reuse — every later task that imports from `@armyofagents/db` should switch to that helper. Phase 6 (Hermes wire fields) stays deferred and gets a documented decision lock instead of code.
 
@@ -56,7 +56,7 @@ pnpm test:release-smoke  # auth + onboarding against built server
 | `ui/src/__tests__/ProjectDetail*.test.tsx` | **Modify** | Add per-test cleanup so global mocks/state don't leak. |
 | `docs/aoa/reference/decisions.md` | **Modify** | Append Decision #92 "Defer Phase 6 Hermes wire-field rename". |
 | `docs/superpowers/plans/2026-04-26-localstorage-stale-fk-audit.md` | **Create** | Followup #3 audit notes. Output of the audit, not its execution — the actual fixes spin off from this. |
-| `scripts/find-dead-upstream-filters.mjs` | **Create** | Followup #2 — codemod-style audit script; emits a JSON report of dead `[upstream]` log-prefix filter sites (consumers that no longer match anything because the prefix was renamed in commit 97eeddc). |
+| `scripts/find-dead-paperclip-filters.mjs` | **Create** | Followup #2 — codemod-style audit script; emits a JSON report of dead `[paperclip]` log-prefix filter sites (consumers that no longer match anything because the prefix was renamed in commit 97eeddc). |
 
 ---
 
@@ -641,7 +641,7 @@ git commit -m "test(ui): per-test cleanup for ProjectDetail* suites"
 
 ## Task 8: Followup #1 — env-compat unit tests
 
-**Why:** `server/src/env-compat.ts` mirrors `UPSTREAM_*` → `AOA_*` at module load with a "don't clobber" rule and exposes `readAoaEnv` with fallback. There are no tests pinning that contract — if a future refactor flips the precedence, every Upstream-era operator's env file silently breaks. The `loving-taussig-d53441` worktree already has a draft test (`server/src/__tests__/env-compat-mirror.test.ts`); bring it into `Porting1.1` cleanup.
+**Why:** `server/src/env-compat.ts` mirrors `PAPERCLIP_*` → `AOA_*` at module load with a "don't clobber" rule and exposes `readAoaEnv` with fallback. There are no tests pinning that contract — if a future refactor flips the precedence, every Paperclip-era operator's env file silently breaks. The `loving-taussig-d53441` worktree already has a draft test (`server/src/__tests__/env-compat-mirror.test.ts`); bring it into `Porting1.1` cleanup.
 
 **Files:**
 - Create: `server/src/__tests__/env-compat-mirror.test.ts`
@@ -660,39 +660,39 @@ describe("env-compat", () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
-    // Strip every UPSTREAM_ / AOA_ key so each test sets exactly what it needs.
+    // Strip every PAPERCLIP_ / AOA_ key so each test sets exactly what it needs.
     for (const k of Object.keys(process.env)) {
-      if (k.startsWith("UPSTREAM_") || k.startsWith("AOA_")) delete process.env[k];
+      if (k.startsWith("PAPERCLIP_") || k.startsWith("AOA_")) delete process.env[k];
     }
     // Also clear the require cache so the mirror runs again on import.
     // Vitest's vi.resetModules() handles this.
   });
 
-  it("mirrors UPSTREAM_FOO into AOA_FOO when AOA_FOO is unset", async () => {
-    process.env.UPSTREAM_FOO = "bar";
+  it("mirrors PAPERCLIP_FOO into AOA_FOO when AOA_FOO is unset", async () => {
+    process.env.PAPERCLIP_FOO = "bar";
     const { default: _ } = await import("../env-compat.js");
     void _;
     expect(process.env.AOA_FOO).toBe("bar");
   });
 
   it("does NOT overwrite AOA_FOO when both are set", async () => {
-    process.env.UPSTREAM_FOO = "from-upstream";
+    process.env.PAPERCLIP_FOO = "from-paperclip";
     process.env.AOA_FOO = "from-aoa";
     await import("../env-compat.js");
     expect(process.env.AOA_FOO).toBe("from-aoa");
   });
 
-  it("readAoaEnv prefers AOA_FOO over UPSTREAM_FOO", async () => {
+  it("readAoaEnv prefers AOA_FOO over PAPERCLIP_FOO", async () => {
     process.env.AOA_FOO = "aoa-value";
-    process.env.UPSTREAM_FOO = "upstream-value";
+    process.env.PAPERCLIP_FOO = "paperclip-value";
     const { readAoaEnv } = await import("../env-compat.js");
     expect(readAoaEnv("FOO")).toBe("aoa-value");
   });
 
-  it("readAoaEnv falls back to UPSTREAM_FOO when AOA_FOO is unset", async () => {
-    process.env.UPSTREAM_FOO = "upstream-value";
+  it("readAoaEnv falls back to PAPERCLIP_FOO when AOA_FOO is unset", async () => {
+    process.env.PAPERCLIP_FOO = "paperclip-value";
     const { readAoaEnv } = await import("../env-compat.js");
-    expect(readAoaEnv("FOO")).toBe("upstream-value");
+    expect(readAoaEnv("FOO")).toBe("paperclip-value");
   });
 
   it("readAoaEnv returns undefined when neither is set", async () => {
@@ -725,21 +725,21 @@ git commit -m "test(server): pin env-compat mirror + readAoaEnv contract"
 
 ---
 
-## Task 9: Followup #2 — audit dead `[upstream]` log-prefix filters
+## Task 9: Followup #2 — audit dead `[paperclip]` log-prefix filters
 
-**Why:** Commit `97eeddc` renamed the log prefix from `[upstream]` → `[aoa]` in adapters and scripts. Any consumer that *filters* logs by `[upstream]` (alerting rules, log-shipper greps, dev scripts, runbook docs) is now silently dead. We need an audit, not a fix — fixes spin off into deployment-config tickets.
+**Why:** Commit `97eeddc` renamed the log prefix from `[paperclip]` → `[aoa]` in adapters and scripts. Any consumer that *filters* logs by `[paperclip]` (alerting rules, log-shipper greps, dev scripts, runbook docs) is now silently dead. We need an audit, not a fix — fixes spin off into deployment-config tickets.
 
 **Files:**
-- Create: `scripts/find-dead-upstream-filters.mjs`
+- Create: `scripts/find-dead-paperclip-filters.mjs`
 
 - [ ] **Step 1: Write the audit script**
 
-Create `scripts/find-dead-upstream-filters.mjs`:
+Create `scripts/find-dead-paperclip-filters.mjs`:
 
 ```js
 #!/usr/bin/env node
 /**
- * Audit: where does the codebase still filter for the legacy "[upstream]"
+ * Audit: where does the codebase still filter for the legacy "[paperclip]"
  * log prefix? Anything that matches is now dead — adapters and scripts emit
  * "[aoa]" since commit 97eeddc.
  *
@@ -751,7 +751,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
-const PATTERN = /\[upstream\]/i;
+const PATTERN = /\[paperclip\]/i;
 const SKIP_DIRS = new Set([
   "node_modules",
   ".git",
@@ -763,10 +763,10 @@ const SKIP_DIRS = new Set([
   "data",
 ]);
 const ALLOW_LIST_PATTERNS = [
-  /docs\/superpowers\/plans\/2026-04-25-upstream-to-aoa-rename\.md$/,
+  /docs\/superpowers\/plans\/2026-04-25-paperclip-to-aoa-rename\.md$/,
   /docs\/aoa\/reference\/wire-compat\.md$/,
   /\.changeset\/v1-0-0-rc-4-polish-batch\.md$/,
-  /scripts\/find-dead-upstream-filters\.mjs$/, // self
+  /scripts\/find-dead-paperclip-filters\.mjs$/, // self
 ];
 
 function walk(dir) {
@@ -809,13 +809,13 @@ process.exit(findings.length > 0 ? 0 : 0); // exit 0 — informational
 - [ ] **Step 2: Run the audit and inspect output**
 
 ```sh
-node scripts/find-dead-upstream-filters.mjs > tmp-upstream-filters.json
-cat tmp-upstream-filters.json
+node scripts/find-dead-paperclip-filters.mjs > tmp-paperclip-filters.json
+cat tmp-paperclip-filters.json
 ```
 
 Expected: a JSON array. Three buckets to triage:
 
-1. **Dev scripts / Makefile / runbook docs** — fix in this commit (rename `[upstream]` → `[aoa]` or remove if dead).
+1. **Dev scripts / Makefile / runbook docs** — fix in this commit (rename `[paperclip]` → `[aoa]` or remove if dead).
 2. **Test fixtures** — leave alone if they're testing the legacy parser; flag with a comment if they're hot for production.
 3. **Operator-shipped configs** (Datadog, Splunk, k8s log-router) — out of scope; document in `docs/deploy/upgrade-guide.md` under "Update your log filters".
 
@@ -824,8 +824,8 @@ Expected: a JSON array. Three buckets to triage:
 For each item in bucket 1, edit the file:
 
 ```sh
-# Example: scripts/tail-server-logs.sh probably has `grep '[upstream]'`
-# Update to `grep -E '\[(aoa|upstream)\]'` (dual-match for one release)
+# Example: scripts/tail-server-logs.sh probably has `grep '[paperclip]'`
+# Update to `grep -E '\[(aoa|paperclip)\]'` (dual-match for one release)
 ```
 
 Add a "## Log filter migration" section to `docs/deploy/upgrade-guide.md` listing every operator-side filter the audit found.
@@ -833,9 +833,9 @@ Add a "## Log filter migration" section to `docs/deploy/upgrade-guide.md` listin
 - [ ] **Step 4: Delete the temp file and commit**
 
 ```sh
-rm tmp-upstream-filters.json
-git add scripts/find-dead-upstream-filters.mjs docs/deploy/upgrade-guide.md <other touched files>
-git commit -m "chore: audit dead [upstream] log filters; document operator migration"
+rm tmp-paperclip-filters.json
+git add scripts/find-dead-paperclip-filters.mjs docs/deploy/upgrade-guide.md <other touched files>
+git commit -m "chore: audit dead [paperclip] log filters; document operator migration"
 ```
 
 ---
@@ -1075,13 +1075,13 @@ Add at the end of the file:
 ## Decision #92 — Defer Phase 6 Hermes wire-field rename to upstream coordination
 
 **Status:** Deferred (locked 2026-04-26)
-**Context:** The Upstream → AoA rename plan (`docs/superpowers/plans/2026-04-25-upstream-to-aoa-rename.md`) defined Phase 6 as renaming `upstream*` fields in the Hermes adapter wire protocol. Hermes is owned by an external project; renaming our send-side without coordinating their receive-side breaks the integration.
+**Context:** The Paperclip → AoA rename plan (`docs/superpowers/plans/2026-04-25-paperclip-to-aoa-rename.md`) defined Phase 6 as renaming `paperclip*` fields in the Hermes adapter wire protocol. Hermes is owned by an external project; renaming our send-side without coordinating their receive-side breaks the integration.
 
 **Decision:** Phase 6 stays deferred until either (a) the Hermes maintainer confirms readiness for a coordinated rename, or (b) a Hermes adapter v2 ships with both names accepted (one-release migration window).
 
 **Consequences:**
-- Existing Hermes wire fields keep `upstream*` names. Documented as a wire-compat surface in `docs/aoa/reference/wire-compat.md`.
-- Brand-check CI Guard 7 (cross-component string drift) must continue to allow `upstream` matches inside `**/adapters/hermes*` and `packages/adapters/hermes/**`.
+- Existing Hermes wire fields keep `paperclip*` names. Documented as a wire-compat surface in `docs/aoa/reference/wire-compat.md`.
+- Brand-check CI Guard 7 (cross-component string drift) must continue to allow `paperclip` matches inside `**/adapters/hermes*` and `packages/adapters/hermes/**`.
 - Re-open this decision when a coordination window opens. Owner: whoever picks up Hermes adapter work next.
 
 **Reference:** Original Phase 6 spec lives in the rename plan; do not re-litigate without reading it first.
@@ -1144,7 +1144,7 @@ gh pr create --base Porting1.1 --head cleanup/2026-04-26 \
   --body "$(cat <<'EOF'
 ## Summary
 
-Closes the residual cleanup items from the Upstream → AoA rename branch.
+Closes the residual cleanup items from the Paperclip → AoA rename branch.
 
 ## What's in
 
@@ -1155,7 +1155,7 @@ Closes the residual cleanup items from the Upstream → AoA rename branch.
 - e2e mcp-key-flow auth + token-shape fix
 - ProjectDetail* test isolation hardening
 - env-compat unit tests (followup #1)
-- Dead [upstream] log-filter audit + script (followup #2)
+- Dead [paperclip] log-filter audit + script (followup #2)
 - localStorage stale-FK audit (followup #3)
 - Typed 422 + contract test for stale assignee/project FKs (followup #4)
 - Decision #92: Hermes Phase 6 deferral lock
@@ -1188,7 +1188,7 @@ EOF
 - 2 e2e mcp-key-flow failures → Task 6 ✓
 - ProjectDetail* flakiness → Task 7 ✓
 - Followup #1 (env-compat unit tests) → Task 8 ✓
-- Followup #2 (dead [upstream] filter cleanup) → Task 9 ✓
+- Followup #2 (dead [paperclip] filter cleanup) → Task 9 ✓
 - Followup #3 (localStorage stale-FK pattern audit) → Task 10 ✓
 - Followup #4 (typed 422 for stale FKs) → Task 11 ✓
 - Phase 6 Hermes deferral → Task 12 ✓

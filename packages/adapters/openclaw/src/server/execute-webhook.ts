@@ -76,8 +76,8 @@ function buildOpenResponsesWebhookBody(input: {
     metadata: {
       ...toStringRecord(state.payloadTemplate.metadata),
       ...state.aoaEnv,
-      aoa_session_key: state.sessionKey,
-      aoa_stream_transport: "webhook",
+      paperclip_session_key: state.sessionKey,
+      paperclip_stream_transport: "webhook",
     },
   };
 }

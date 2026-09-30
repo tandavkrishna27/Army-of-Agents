@@ -11,7 +11,7 @@ import {
   Loader2,
   MessageSquarePlus,
   Mic,
-  FilePlus2,
+  Paperclip,
   PanelLeft,
   Send,
   Square,
@@ -519,6 +519,8 @@ export function settleRunningToolCalls(messages: LocalMessage[], messageId: stri
 /* ------------------------------------------------------------------ */
 
 interface AgentPanelContentProps {
+  /** Universe changes chrome only; one canonical composer remains mounted. */
+  universeView?: "compact" | "expanded" | "maximized" | "tucked";
   conversationId?: string | null;
   onSelectConversation?: (id: string) => void;
   /**
@@ -547,6 +549,8 @@ interface AgentPanelContentProps {
    */
   sessionsCollapsed?: boolean;
   onSetSessionsCollapsed?: (value: boolean) => void;
+  /** Captured at Send time and retained on Retry; only the dedicated Universe route supplies it. */
+  getUniverseContext?: () => import("@armyofagents/shared").UniverseContext | null;
 }
 
 /**
@@ -566,9 +570,10 @@ interface CommanderSendAttempt {
   refsForTurn: CommanderInputRef[];
   revision: number;
   clientSubmissionId: string;
+  universeContext?: import("@armyofagents/shared").UniverseContext;
 }
 
-export function AgentPanelContent({ conversationId, onSelectConversation, onOpenSessions, enableViewerPanel, cardChrome = false, sessionsCollapsed, onSetSessionsCollapsed }: AgentPanelContentProps = {}) {
+export function AgentPanelContent({ conversationId, onSelectConversation, onOpenSessions, enableViewerPanel, cardChrome = false, sessionsCollapsed, onSetSessionsCollapsed, universeView, getUniverseContext }: AgentPanelContentProps = {}) {
   const { selectedCompanyId } = useCompany();
   const { currentUser } = useTeamAccess(selectedCompanyId);
   const { breadcrumbs } = useBreadcrumbs();
@@ -1028,12 +1033,12 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
 
   const pageContext = breadcrumbs.length > 0 ? breadcrumbs.map((b) => b.label).join(" > ") : null;
   const contextScope = useMemo(
-    () => providedContextScope ?? buildCommanderContextScopeFromPath(location.pathname),
-    [providedContextScope, location.pathname],
+    () => universeView ? { surface: "universe" as const, route: location.pathname } : providedContextScope ?? buildCommanderContextScopeFromPath(location.pathname),
+    [providedContextScope, location.pathname, universeView],
   );
 
   const sendText = useCallback(
-    async (text: string, attachmentAssetIds?: string[], clientSubmissionId?: string): Promise<boolean> => {
+    async (text: string, attachmentAssetIds?: string[], clientSubmissionId?: string, universeContext?: import("@armyofagents/shared").UniverseContext): Promise<boolean> => {
       if (!text || !companyId || streaming) return false;
 
       // New user turn: allow exactly one auto-opened viewer tab for the refs
@@ -1078,7 +1083,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
       let sawError = false;
 
       try {
-        const stream = streamAgentChat(companyId, text, pageContext, controller.signal, conversationId, contextScope, attachmentAssetIds, clientSubmissionId);
+        const stream = streamAgentChat(companyId, text, pageContext, controller.signal, conversationId, contextScope, attachmentAssetIds, clientSubmissionId, universeContext);
 
         for await (const event of stream) {
           if (event.event === "error") sawError = true;
@@ -1120,10 +1125,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
 
   /** Shared send path: submitCommanderInput mints a fresh attempt, the failed-send
    *  banner's Retry replays the stored one (same clientSubmissionId). */
-  const performCommanderSend = useCallback(
-    async (attempt: CommanderSendAttempt) => {
-      const accepted = await sendText(attempt.message, attempt.attachmentAssetIds, attempt.clientSubmissionId);
-      if (accepted) {
+  const settleAcceptedCommanderSend = useCallback((attempt: CommanderSendAttempt) => {
         setSendFailed(false);
         lastAttemptRef.current = null;
         // Retry-success safety: only clear when the draft still matches the
@@ -1139,6 +1141,13 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
           setInputRefs(remaining);
           setAttachmentError(null);
         }
+  }, []);
+
+  const performCommanderSend = useCallback(
+    async (attempt: CommanderSendAttempt) => {
+      const accepted = await sendText(attempt.message, attempt.attachmentAssetIds, attempt.clientSubmissionId, attempt.universeContext);
+      if (accepted) {
+        settleAcceptedCommanderSend(attempt);
       } else {
         // Failure never eats your work (mock §5): the draft + attached refs are
         // all kept — the shared banner offers Retry / Edit / Discard.
@@ -1150,7 +1159,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
         setSendFailed(composerRevisionRef.current === attempt.revision);
       }
     },
-    [sendText],
+    [sendText, settleAcceptedCommanderSend],
   );
 
   const submitCommanderInput = useCallback(
@@ -1160,6 +1169,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
       if ((!trimmed && refsForTurn.length === 0) || uploadingFiles.length > 0 || isOffline) return;
       setSendFailed(false);
       const baseText = trimmed || "Use the referenced context.";
+      const universeContext = getUniverseContext?.() ?? null;
       // Minted ONCE per submission and snapshotted BEFORE the await so the
       // banner's Retry re-sends the exact same attempt (same clientSubmissionId
       // → the server replays if the first request actually landed).
@@ -1170,19 +1180,41 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
         refsForTurn,
         revision: composerRevisionRef.current,
         clientSubmissionId: createComposerSubmissionId(),
+        ...(universeContext ? { universeContext } : {}),
       };
       lastAttemptRef.current = attempt;
       await performCommanderSend(attempt);
     },
-    [performCommanderSend, uploadingFiles.length, isOffline],
+    [performCommanderSend, uploadingFiles.length, isOffline, getUniverseContext],
   );
 
-  /** Banner Retry: re-send the IDENTICAL stored attempt (same clientSubmissionId). */
-  const handleRetryFailedSend = useCallback(() => {
+  /** Banner Retry first observes the canonical receipt. It re-sends the exact
+   * attempt only when the server proves the submission was never accepted. */
+  const handleRetryFailedSend = useCallback(async () => {
     const attempt = lastAttemptRef.current;
     if (!attempt || streamingRef.current || isOffline) return;
-    void performCommanderSend(attempt);
-  }, [performCommanderSend, isOffline]);
+    if (!companyId || !conversationId) {
+      await performCommanderSend(attempt);
+      return;
+    }
+    try {
+      const outcome = await commanderConversationsApi.getSubmissionOutcome(
+        companyId,
+        conversationId,
+        attempt.clientSubmissionId,
+      );
+      if (outcome.state === "accepted" || outcome.state === "completed") {
+        settleAcceptedCommanderSend(attempt);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.agentConversation(companyId) });
+        return;
+      }
+      if (outcome.state === "not_found") await performCommanderSend(attempt);
+      // A canonical failed receipt or an observation failure is deliberately
+      // not resubmitted. The preserved draft remains available to edit/discard.
+    } catch {
+      setSendFailed(true);
+    }
+  }, [companyId, conversationId, isOffline, performCommanderSend, queryClient, settleAcceptedCommanderSend]);
 
   const handleEditFailedSend = useCallback(() => {
     setSendFailed(false);
@@ -1734,7 +1766,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
           selected (the default conversation shows messages with conversationId still
           null). In docked mode it shows only with an active conversation and never the
           toggle (no viewer there). */}
-      {(conversationId || enableViewerPanel) && (
+      {!universeView && (conversationId || enableViewerPanel) && (
         <ChatPaneCaption
           title={activeConv?.title ?? "New chat"}
           messageCount={activeConv?.messageCount ?? messages.length}
@@ -1752,7 +1784,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
       {/* Mobile/tablet Sessions trigger — shown only when there is NO active
           conversation (the caption's Sessions button covers the active case).
           `lg:hidden` keeps the desktop layout completely unchanged. */}
-      {!conversationId && !enableViewerPanel && onOpenSessions && (
+      {!universeView && !conversationId && !enableViewerPanel && onOpenSessions && (
         <div className="lg:hidden shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-border bg-background">
           <button
             type="button"
@@ -1768,15 +1800,15 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
         </div>
       )}
 
-      <MemoryContextStrip
+      {!universeView && <MemoryContextStrip
         strictness="balanced"
         layers={["identity", "domain", "active_context", "working"]}
         surface={contextScope.surface ?? "commander"}
         hasWorkingContext={Boolean(contextScope.taskId || contextScope.goalId || contextScope.projectId || conversationId)}
-      />
+      />}
 
       {/* Mobile close button (absolute overlay, not in flow) */}
-      <Button
+      {!universeView && <Button
         variant="ghost"
         size="icon-sm"
         onClick={closePanel}
@@ -1784,10 +1816,11 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
         className="md:hidden absolute top-2 right-2 z-10"
       >
         <X className="h-4 w-4" />
-      </Button>
+      </Button>}
 
       {/* Messages (fix #11: aria-live for streaming accessibility) */}
       <div
+        data-commander-history
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto px-3 py-3 min-h-0"
         aria-live="polite"
@@ -2132,7 +2165,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
       </div>
 
       {/* Input bar */}
-      <div ref={inputBarRef} className="shrink-0 border-t border-border p-3 relative">
+      <div data-commander-composer ref={inputBarRef} className="shrink-0 border-t border-border p-3 relative">
         {/* Task 9: skill picker — anchored above the input card */}
         <SkillPicker
           open={pickerOpen}
@@ -2262,7 +2295,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
           {/* Rich input — renders skill selections as colored atomic tokens */}
           <CommanderInput
             ref={inputRef}
-            placeholder="Ask the agent..."
+            placeholder={universeView ? "Ask Commander…" : "Ask the agent..."}
             disabled={streaming}
             onSubmit={(text) => void submitCommanderInput(text)}
             onReferenceDrop={({ ref, prompt }) => addInputRef(ref, prompt)}
@@ -2288,7 +2321,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
           />
           {/* Controls row — approved mock §1/§2 order: attach + mention first,
               surface extras (+ skills, voice) after them. */}
-          <div className="flex items-center gap-1.5 px-2 pb-2">
+          <div data-commander-controls className="flex items-center gap-1.5 px-2 pb-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -2297,7 +2330,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
                     aria-label="Attach file"
                     onClick={() => commanderFileInputRef.current?.click()}
                   >
-                    <FilePlus2 className="size-4" aria-hidden="true" />
+                    <Paperclip className="size-4" aria-hidden="true" />
                   </ComposerIconButton>
                 </TooltipTrigger>
                 <TooltipContent side="top">Attach file</TooltipContent>
@@ -2404,7 +2437,7 @@ export function AgentPanelContent({ conversationId, onSelectConversation, onOpen
 
   // No viewer panel (docked usage) — unchanged single column.
   if (!enableViewerPanel || !companyId) {
-    return <div className="flex h-full min-h-0 flex-row overflow-hidden">{chatColumn}</div>;
+    return <div className={cn("flex h-full min-h-0 flex-row", !universeView && "overflow-hidden")}>{chatColumn}</div>;
   }
 
   // Mobile — unchanged: chat + floating pill/Sheet (no Group).

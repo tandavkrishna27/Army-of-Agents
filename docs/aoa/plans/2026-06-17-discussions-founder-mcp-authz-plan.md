@@ -4,7 +4,7 @@
 
 **Goal:** Close a confirmed HIGH-severity authz bypass on the discussions/threads surface: `buildActor()` in `server/src/routes/discussions.ts` grants the founder/role bypass to **non-board bearer tokens** (a founder-created MCP key replays the founder's `userId` → resolves to "founder"), letting that token read other users' private threads, perform privileged writes, and dispatch agents. Restrict the role lookup to interactive **board** actors so MCP/agent tokens are confined to `team_member` (owner/participant-scoped) — the same pattern shipped for the conversation guard in PR #194 (`conversation-authz.ts`, commit `7ae21f3f6`).
 
-**Branch / base:** `fix/discussions-founder-mcp-authz` off `feat/v1-combined` (the live integration branch; `discussions.ts`/`threads.ts` are identical to the commander branch, so this is the right independent base — NOT folded into the commander PR #194, a different surface). Worktree: `C:/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-v1`.
+**Branch / base:** `fix/discussions-founder-mcp-authz` off `feat/v1-combined` (the live integration branch; `discussions.ts`/`threads.ts` are identical to the commander branch, so this is the right independent base — NOT folded into the commander PR #194, a different surface). Worktree: `C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-v1`.
 
 **Tech Stack:** Express, Drizzle, Vitest, the `getActorInfo`/`permissionService` authz layer, `threadService`.
 

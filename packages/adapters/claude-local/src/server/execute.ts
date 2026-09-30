@@ -66,7 +66,7 @@ const AOA_SKILLS_CANDIDATES = [
   path.resolve(__moduleDir, "../../../../../skills"), // dev: src/server/ -> repo root/skills/
 ];
 
-async function resolveAoaSkillsDir(): Promise<string | null> {
+async function resolvePaperclipSkillsDir(): Promise<string | null> {
   for (const candidate of AOA_SKILLS_CANDIDATES) {
     const isDir = await fs.stat(candidate).then((s) => s.isDirectory()).catch(() => false);
     if (isDir) return candidate;
@@ -82,10 +82,10 @@ async function resolveAoaSkillsDir(): Promise<string | null> {
 async function buildSkillsDir(
   dbSkills?: Array<{ key: string; name: string; markdown: string; files?: Array<{ path: string; content: string }> }>,
 ): Promise<string> {
-  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-skills-"));
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-skills-"));
   const target = path.join(tmp, ".claude", "skills");
   await fs.mkdir(target, { recursive: true });
-  const skillsDir = await resolveAoaSkillsDir();
+  const skillsDir = await resolvePaperclipSkillsDir();
   if (skillsDir) {
     const entries = await fs.readdir(skillsDir, { withFileTypes: true });
     for (const entry of entries) {
@@ -175,14 +175,14 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
   const executionTarget = input.executionTarget ?? { type: "local" as const };
 
   const command = asString(config.command, "claude");
-  const workspaceContext = parseObject(context.aoaWorkspace);
+  const workspaceContext = parseObject(context.paperclipWorkspace);
   const workspaceCwd = asString(workspaceContext.cwd, "");
   const workspaceSource = asString(workspaceContext.source, "");
   const workspaceId = asString(workspaceContext.workspaceId, "") || null;
   const workspaceRepoUrl = asString(workspaceContext.repoUrl, "") || null;
   const workspaceRepoRef = asString(workspaceContext.repoRef, "") || null;
-  const workspaceHints = Array.isArray(context.aoaWorkspaces)
-    ? context.aoaWorkspaces.filter(
+  const workspaceHints = Array.isArray(context.paperclipWorkspaces)
+    ? context.paperclipWorkspaces.filter(
         (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
       )
     : [];

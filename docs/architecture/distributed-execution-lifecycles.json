@@ -1,0 +1,252 @@
+{
+  "version": 1,
+  "title": "Distributed Execution Lifecycles",
+  "source": "docs/replatform/program-design.md#core-lifecycle-model",
+  "humanReadablePeer": "docs/architecture/distributed-execution-lifecycles.md",
+  "decision": "Decision #121",
+  "workloadClasses": ["batch", "browser_session", "service"],
+  "shipOrder": ["batch", "browser_session", "service"],
+  "lifecycles": {
+    "job": {
+      "title": "Job lifecycle",
+      "markdownHeading": "## Job lifecycle",
+      "initial": ["queued"],
+      "states": [
+        "queued",
+        "running",
+        "cancel_requested",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "dead_letter"
+      ],
+      "terminal": ["succeeded", "failed", "cancelled", "dead_letter"],
+      "guards": {
+        "dead_letter": "policy_exhausted",
+        "failed": "non_retryable_failure"
+      },
+      "allowed": [
+        { "from": "queued", "to": "running" },
+        { "from": "queued", "to": "cancel_requested" },
+        { "from": "queued", "to": "cancelled" },
+        { "from": "running", "to": "cancel_requested" },
+        { "from": "running", "to": "succeeded" },
+        { "from": "running", "to": "failed", "reason": "non_retryable_failure" },
+        { "from": "running", "to": "dead_letter", "reason": "policy_exhausted" },
+        { "from": "cancel_requested", "to": "cancelled" },
+        { "from": "cancel_requested", "to": "failed", "reason": "non_retryable_failure" },
+        { "from": "cancel_requested", "to": "dead_letter", "reason": "policy_exhausted" }
+      ]
+    },
+    "attempt": {
+      "title": "Attempt lifecycle",
+      "markdownHeading": "## Attempt lifecycle",
+      "initial": ["pending"],
+      "states": [
+        "pending",
+        "offered",
+        "leased",
+        "running",
+        "cancel_requested",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "expired"
+      ],
+      "terminal": ["succeeded", "failed", "cancelled", "expired"],
+      "guards": {},
+      "allowed": [
+        { "from": "pending", "to": "offered" },
+        { "from": "pending", "to": "cancelled" },
+        { "from": "pending", "to": "expired" },
+        { "from": "offered", "to": "leased" },
+        { "from": "offered", "to": "expired" },
+        { "from": "offered", "to": "cancelled" },
+        { "from": "leased", "to": "running" },
+        { "from": "leased", "to": "cancel_requested" },
+        { "from": "leased", "to": "expired" },
+        { "from": "leased", "to": "cancelled" },
+        { "from": "running", "to": "cancel_requested" },
+        { "from": "running", "to": "succeeded" },
+        { "from": "running", "to": "failed" },
+        { "from": "running", "to": "expired" },
+        { "from": "cancel_requested", "to": "cancelled" },
+        { "from": "cancel_requested", "to": "succeeded" },
+        { "from": "cancel_requested", "to": "failed" },
+        { "from": "cancel_requested", "to": "expired" }
+      ]
+    },
+    "lease": {
+      "title": "Lease lifecycle",
+      "markdownHeading": "## Lease lifecycle",
+      "initial": ["offered"],
+      "states": ["offered", "active", "released", "expired", "revoked"],
+      "terminal": ["released", "expired", "revoked"],
+      "guards": {},
+      "allowed": [
+        { "from": "offered", "to": "active" },
+        { "from": "offered", "to": "expired" },
+        { "from": "offered", "to": "revoked" },
+        { "from": "active", "to": "released" },
+        { "from": "active", "to": "expired" },
+        { "from": "active", "to": "revoked" }
+      ]
+    },
+    "browserSession": {
+      "title": "Browser-session lifecycle",
+      "markdownHeading": "## Browser-session lifecycle",
+      "initial": ["queued"],
+      "states": [
+        "queued",
+        "leased",
+        "starting",
+        "active",
+        "waiting_approval",
+        "cancel_requested",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "expired"
+      ],
+      "terminal": ["succeeded", "failed", "cancelled", "expired"],
+      "guards": {},
+      "allowed": [
+        { "from": "queued", "to": "leased" },
+        { "from": "queued", "to": "cancelled" },
+        { "from": "queued", "to": "expired" },
+        { "from": "leased", "to": "starting" },
+        { "from": "leased", "to": "cancel_requested" },
+        { "from": "leased", "to": "cancelled" },
+        { "from": "leased", "to": "expired" },
+        { "from": "starting", "to": "active" },
+        { "from": "starting", "to": "cancel_requested" },
+        { "from": "starting", "to": "failed" },
+        { "from": "starting", "to": "cancelled" },
+        { "from": "starting", "to": "expired" },
+        { "from": "active", "to": "waiting_approval" },
+        { "from": "active", "to": "cancel_requested" },
+        { "from": "active", "to": "succeeded" },
+        { "from": "active", "to": "failed" },
+        { "from": "active", "to": "cancelled" },
+        { "from": "active", "to": "expired" },
+        { "from": "waiting_approval", "to": "active" },
+        { "from": "waiting_approval", "to": "cancel_requested" },
+        { "from": "waiting_approval", "to": "failed" },
+        { "from": "waiting_approval", "to": "cancelled" },
+        { "from": "waiting_approval", "to": "expired" },
+        { "from": "cancel_requested", "to": "cancelled" },
+        { "from": "cancel_requested", "to": "succeeded" },
+        { "from": "cancel_requested", "to": "failed" },
+        { "from": "cancel_requested", "to": "expired" }
+      ]
+    },
+    "serviceDesired": {
+      "title": "Service desired-state lifecycle",
+      "markdownHeading": "## Service desired-state lifecycle",
+      "initial": ["running"],
+      "states": ["running", "paused", "stopped", "deleted"],
+      "terminal": ["deleted"],
+      "guards": {},
+      "allowed": [
+        { "from": "running", "to": "paused" },
+        { "from": "running", "to": "stopped" },
+        { "from": "running", "to": "deleted" },
+        { "from": "paused", "to": "running" },
+        { "from": "paused", "to": "stopped" },
+        { "from": "paused", "to": "deleted" },
+        { "from": "stopped", "to": "running" },
+        { "from": "stopped", "to": "deleted" }
+      ]
+    },
+    "serviceInstance": {
+      "title": "Service-instance lifecycle",
+      "markdownHeading": "## Service-instance lifecycle",
+      "initial": ["pending"],
+      "states": [
+        "pending",
+        "leased",
+        "starting",
+        "healthy",
+        "unhealthy",
+        "stopping",
+        "stopped",
+        "failed",
+        "lost"
+      ],
+      "terminal": ["stopped", "failed", "lost"],
+      "guards": {},
+      "allowed": [
+        { "from": "pending", "to": "leased" },
+        { "from": "pending", "to": "failed" },
+        { "from": "pending", "to": "lost" },
+        { "from": "leased", "to": "starting" },
+        { "from": "leased", "to": "stopping" },
+        { "from": "leased", "to": "failed" },
+        { "from": "leased", "to": "lost" },
+        { "from": "starting", "to": "healthy" },
+        { "from": "starting", "to": "unhealthy" },
+        { "from": "starting", "to": "stopping" },
+        { "from": "starting", "to": "failed" },
+        { "from": "starting", "to": "lost" },
+        { "from": "healthy", "to": "unhealthy" },
+        { "from": "healthy", "to": "stopping" },
+        { "from": "healthy", "to": "failed" },
+        { "from": "healthy", "to": "lost" },
+        { "from": "unhealthy", "to": "healthy" },
+        { "from": "unhealthy", "to": "stopping" },
+        { "from": "unhealthy", "to": "failed" },
+        { "from": "unhealthy", "to": "lost" },
+        { "from": "stopping", "to": "stopped" },
+        { "from": "stopping", "to": "failed" },
+        { "from": "stopping", "to": "lost" }
+      ]
+    }
+  },
+  "forbiddenCrossLifecycleEdges": [
+    {
+      "from": "attempt:running",
+      "to": "serviceInstance:healthy",
+      "reason": "Service health is not a generic attempt terminal; a generic attempt terminal event cannot encode service-instance health."
+    },
+    {
+      "from": "attempt:running",
+      "to": "serviceInstance:stopped",
+      "reason": "Service-instance stop is a service-instance transition, not an attempt terminal."
+    },
+    {
+      "from": "attempt:running",
+      "to": "serviceInstance:lost",
+      "reason": "Instance loss is a service-instance transition, not an attempt terminal."
+    },
+    {
+      "from": "serviceInstance:lost",
+      "to": "attempt:failed",
+      "reason": "A lost instance does not drive a generic attempt terminal; the reconciler replaces the instance with a new attempt and fence."
+    },
+    {
+      "from": "lease:active",
+      "to": "job:succeeded",
+      "reason": "Only the fenced attempt terminal result contributes to aggregate job completion; a lease status never completes a job directly."
+    },
+    {
+      "from": "lease:revoked",
+      "to": "job:failed",
+      "reason": "Lease loss revokes effect authority but never itself fails the job; retry policy may create a new attempt."
+    },
+    {
+      "from": "lease:revoked",
+      "to": "job:dead_letter",
+      "reason": "Dead-letter is reached only through exhausted job retry/reconciliation policy, never directly from a lease terminal."
+    },
+    {
+      "from": "job:running",
+      "to": "attempt:succeeded",
+      "reason": "Job and attempt are distinct state machines; the job machine cannot transition an attempt."
+    },
+    {
+      "from": "attempt:succeeded",
+      "to": "job:succeeded",
+      "reason": "An attempt terminal does not auto-mutate the job; aggregate scheduler state decides job completion."
+    }
+  ]
+}

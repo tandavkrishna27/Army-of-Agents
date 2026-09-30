@@ -88,7 +88,7 @@ beforeAll(async () => {
     db = createDb(connectionString);
 
     // Seed a company (also creates Commander config etc.).
-    const company = await companyService(db).create({ name: "W1a Crew Assignment Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "W1a Crew Assignment Co" } as never);
     companyId = company.id;
 
     // Seed a discussion thread (the thread the action will belong to).

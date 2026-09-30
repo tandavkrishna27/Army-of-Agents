@@ -1,0 +1,210 @@
+{
+  "scripts": {
+    "scripts/check-adapter-manager-boundary.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-artifact-commit-vectors.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-boot-roots-browser-spawn-free.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-boot-roots-provider-free.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-browser-suite-executed.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-bundled-snapshot-inputs.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-ci-lanes.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-ci-timeout-budgets.mjs": {
+      "status": "ci",
+      "reason": "policy job — CI timeout caps derive from budgets bounded by declared measurements (E3-F036 class)"
+    },
+    "scripts/check-d1-compose.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-d1-dispatch-declared.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-dependency-graph.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-desktop-surface-disabled.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-device-proof-vectors.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-distributed-execution-foundation.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-egress-bypass-vectors.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-egress-policy-vectors.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-embedded-secrets.mjs": {
+      "status": "ci_logic_only",
+      "reason": "DSK-003 secret scanner for a desktop artifact. No shippable installer root exists yet (DSK-003-result.md), so the CLI has nothing to scan; its decision logic runs in CI via the named test.",
+      "provenTest": "scripts/lib/__tests__/embedded-secret-scan.test.mjs"
+    },
+    "scripts/check-evidence-immutability.mjs": {
+      "status": "ci",
+      "reason": "policy job, PR events only — it needs a base revision and github.event.pull_request.base.sha is the only trustworthy one (github.event.before is all-zeros on a branch's first push, which would fail open). main is protected, so every evidence record arrives through a PR and is seen. E0-F014 item 3: this is the first production caller of checkEvidenceImmutability."
+    },
+    "scripts/check-execution-census.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-finding-ownership.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-forbidden-tokens.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-frozen-worker-protocol-consumer.mjs": {
+      "status": "ci",
+      "reason": "policy job — pnpm check:frozen-worker-protocol-v1 plus its two self-tests. Wired 2026-08-22: it had existed only as an npm script nothing invoked, which also omitted the required --source-sha."
+    },
+    "scripts/check-gate-clause-wiring.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-guard-inventory.mjs": {
+      "status": "ci",
+      "reason": "policy job — this guard checks the others, and is checked by the same rule it applies"
+    },
+    "scripts/check-image-deps-stages.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-invisible-control-chars.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-register-citation-integrity.mjs": {
+      "status": "ci",
+      "reason": "policy job — verifies every explicit repo-anchored path:LINE citation in the threat register resolves at HEAD (exists/in-range/reaches-code/symbol-anchor), closing the silent-citation-rot class from PR #443. Runs with its self-test."
+    },
+    "scripts/check-register-id-uniqueness.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-release-admission.mjs": {
+      "status": "ci_logic_only",
+      "reason": "REL-004 promotion gate. It has no release directory to check until a promotion pipeline with a recorded allowlist exists (REL-004-result.md §5); its end-to-end CLI suite runs in CI and exercises the real invocation.",
+      "provenTest": "scripts/check-release-admission.test.mjs"
+    },
+    "scripts/check-sandbox-coding-disposition.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-sandbox-e2b-provider-boundary.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-sandbox-fake-provider-boundary.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-schema-migration-drift.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow — the migrations job's E8-F005 schema↔migration drift gate"
+    },
+    "scripts/check-secret-resolve-vectors.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-staging-manifest.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-test-inventory.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-threat-control-audit-debt.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-ticket-graph-coverage.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-verdict-consumer-freshness.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-w10a-sdk-capability-premise.mjs": {
+      "status": "ci",
+      "reason": "policy job runs it (lockfile pin + stale-claim ban, no node_modules needed) and the verify job runs it again with --require-sdk after pnpm install, which is where the live SDK surface is measured. E8-F007."
+    },
+    "scripts/check-worker-daemon-boundary.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-worker-keystore-boundary.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-worker-path-parity.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-worker-protocol-boundary.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-worker-protocol-package.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-workflow-verdict-manifest.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-workspace-patch-vectors.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/check-workspace-snapshot-vectors.mjs": {
+      "status": "ci",
+      "reason": "invoked by a workflow"
+    },
+    "scripts/verify-e3-perf-01-handoff.mjs": {
+      "status": "dormant",
+      "reason": "One-off E3 PERF-01 handoff verifier. Neither it nor its self-test is in any workflow; retained as the record of how that handoff was verified."
+    },
+    "scripts/verify-image-admission.mjs": {
+      "status": "dormant",
+      "reason": "SUPERSEDED by check-release-admission.mjs (REL-004), which calls the same evaluateAdmission across all five artifact classes. This CLI was never invoked by anything — the orphan that REL-004's terrain map found."
+    },
+    "scripts/verify-marketplace-recovery-preflight.mjs": {
+      "status": "dormant",
+      "reason": "One-off preflight from the marketplace supply-chain recovery (PR #313). No self-test and no workflow reference; kept as the record of that recovery."
+    }
+  }
+}

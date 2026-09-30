@@ -81,10 +81,28 @@ export function createMemoryTools(): AgentTool[] {
         const { query, layer, limit } = (params ?? {}) as Record<string, unknown>;
         const maxResults = (limit as number) ?? 20;
 
+        // RBAC gate (DAT-007): query_memory is the broker memory tool U2a MISSED
+        // when it gated find_similar_memory / detect_conflicts / the hnsw tool.
+        // Its downstream `filterQueryResults` → `splitCommanderMemoryItems`
+        // short-circuits on `isFounder(userRole)` (memory-policy.ts), and the
+        // crew broker sets `userRole:"founder"` (broker-tool-context.ts
+        // CREW_SESSION_USER_ROLE) — so without this an agent over the broker
+        // would see every approved company memory, incl. others' private /
+        // invalidated / cross-department rows (#118/#119 violation). Gate the
+        // FETCH in-SQL for the agent actor ONLY (same seam + authoritative-in-SQL
+        // approach as detect_conflicts); board/Commander/founder-human callers
+        // get no `accessConditions` key, so their fetch is byte-unchanged.
+        let accessConditions: SQL[] | undefined;
+        if (ctx.actorType === "agent" && ctx.agentId) {
+          const actor = await actorForAgentRun(ctx.db, ctx.companyId, ctx.agentId);
+          accessConditions = memoryAccessConditions(ctx.db, actor);
+        }
+
         // If query text provided, use multi-path search; otherwise use list with filters.
         if (query) {
           const items = await ctx.services.memory.searchMultiPath(ctx.companyId, query as string, {
             limit: maxResults,
+            ...(accessConditions ? { accessConditions } : {}),
           });
           const auditCandidates =
             typeof ctx.services.memory.searchAuditCandidates === "function"
@@ -139,6 +157,7 @@ export function createMemoryTools(): AgentTool[] {
 
         const items = await ctx.services.memory.list(ctx.companyId, {
           ...(layer ? { layer: layer as string } : {}),
+          ...(accessConditions ? { accessConditions } : {}),
         });
         const split = filterQueryResults({
           items: Array.isArray(items) ? items : [],

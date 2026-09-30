@@ -75,10 +75,13 @@ vi.mock("@/api/onboarding", () => ({
 }));
 
 vi.mock("@/components/LobbyCompanyCard", () => ({
-  LobbyCompanyCard: ({ company, onClick }: any) => (
+  LobbyCompanyCard: ({ company, onClick, onOpenUniverse }: any) => (
+    <>
     <button data-testid={`company-card-${company.id}`} onClick={onClick}>
       {company.name}
     </button>
+    <button aria-label={`Open ${company.name} Universe`} onClick={onOpenUniverse}>Universe</button>
+    </>
   ),
 }));
 
@@ -195,6 +198,13 @@ describe("Lobby", () => {
 
     await user.click(screen.getByTestId("company-card-c1"));
     expect(mockNavigate).toHaveBeenCalledWith("/ACME/home", undefined);
+  });
+
+  it("opens the company's standalone Universe from its card action", async () => {
+    mockCompanyContext.companies = [makeCompany({ id: "c1", name: "Acme", issuePrefix: "ACME" })];
+    renderWithProviders(<Lobby />);
+    await userEvent.click(screen.getByRole("button", { name: "Open Acme Universe" }));
+    expect(mockNavigate).toHaveBeenCalledExactlyOnceWith("/ACME/universe", undefined);
   });
 
   it("surfaces an interrupted founder's organization and resumes its onboarding", async () => {

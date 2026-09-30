@@ -8,6 +8,20 @@ vi.mock("../services/memory-retrieval-audit.js", () => ({
   recordMemoryRetrievals: memoryToolMocks.recordMemoryRetrievals,
 }));
 
+// DAT-007: query_memory now threads the enterprise RBAC gate for agent actors
+// (actorForAgentRun + memoryAccessConditions), which touch the DB. These stubs
+// keep this unit file DB-free — the gate's own row-level correctness is proven
+// in memory-tools-agent-rbac.{unit,integration}.test.ts. Non-agent tests here
+// never invoke either (the gate is `actorType==="agent" && agentId` only).
+vi.mock("../services/memory-access-sql.js", () => ({
+  actorForAgentRun: vi.fn(async (_db: unknown, _companyId: string, agentId: string) => ({
+    kind: "agent",
+    agentId,
+    departmentIds: [],
+  })),
+  memoryAccessConditions: vi.fn(() => []),
+}));
+
 import { createMemoryTools } from "../services/internal-agent/tools/memory-tools.js";
 
 function buildCtx(memory: Record<string, unknown>) {

@@ -115,7 +115,7 @@ Authorization: Bearer {secret}
 Idempotency-Key: {key}
 ```
 
-For HMAC triggers, compute the SHA-256 HMAC over `{timestamp}.{rawBody}`. Send the timestamp in `X-AoA-Timestamp` and the hex digest (optionally prefixed with `sha256=`) in `X-AoA-Signature`. Valid requests return `202`. Public webhook callers do not otherwise need board or agent authentication.
+For HMAC triggers, compute the SHA-256 HMAC over `{timestamp}.{rawBody}`. Send the timestamp in `X-Aoa-Timestamp` and the hex digest (optionally prefixed with `sha256=`) in `X-Aoa-Signature`. The legacy `X-Paperclip-Timestamp` and `X-Paperclip-Signature` names are also accepted. Valid requests return `202`. Public webhook callers do not otherwise need board or agent authentication.
 
 ## Authorization
 

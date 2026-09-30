@@ -1,6 +1,6 @@
 .git
 .github
-.aoa
+.paperclip
 .runtime-research
 .pnpm-store
 node_modules
@@ -9,3 +9,19 @@ coverage
 data
 tmp
 *.log
+
+# WRK-009 — build OUTPUTS must never enter the build context.
+#
+# Both images compile from source inside the image (control-plane:
+# `RUN pnpm --filter ... build`; worker: `RUN tsc -p ...`), so a `dist/` from the
+# developer's machine is never needed — and it is actively harmful: `COPY
+# packages/worker-daemon/ packages/worker-daemon/` carried the local dist in, and
+# `tsc` writes into that same directory WITHOUT removing outputs whose source has
+# gone. A file deleted or moved in source therefore kept shipping in the image.
+#
+# That is exactly how the fabricating fake provider survived being moved out of
+# the production source tree, and it is the same shape as the packages/db
+# migrations bug: a stale artifact surviving a rebuild.
+#
+# It also shrinks the build context substantially (it was transferring ~400MB).
+**/dist

@@ -92,7 +92,7 @@ import type { AdapterExecutionResult } from "../../../adapters/types.js";
 const DB_URL =
   process.env.AOA_TEST_DATABASE_URL ??
   process.env.DATABASE_URL ??
-  "postgres://aoa:aoa@127.0.0.1:54440/aoa";
+  "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip";
 const COMPANY = process.env.AOA_TEST_COMPANY_ID ?? "8d7569f2-43e9-4b57-8709-2a4687364e44";
 const THREAD = process.env.AOA_TEST_THREAD_ID ?? "376592a2-91e6-4327-81fb-8fb7e498b6c4";
 

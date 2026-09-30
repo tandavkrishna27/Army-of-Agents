@@ -1,0 +1,4 @@
+keyed-e2b re-trigger: operator added E2B_API_KEY secret (2026-08-17). Runs CLI-001/002/003 real-E2B keyed cases.
+keyed-e2b re-trigger #2 (2026-08-19): build-step fix (build sandbox-fake-provider so the contract's files-included port-conformance.test compiles) + now includes CLI-004 real-E2B reconciliation keyed cases.
+keyed-e2b re-trigger #3 (2026-08-19): real-E2B driver hardening — argv shell-quoting, base-SandboxError 4xx→not-found classification, terminate-false→not-found, execute default `run`→`true`, TTL test budget. Expect the 8 first-run failures resolved.
+keyed-e2b re-trigger #4 (2026-08-26, Sprint 5 Step 2): fire the real-E2B keyed lane incl. the CLI-006/D2 artifact-commit / patch-integrity case (D2-02's sixth class). Bare `base` template (coreutils only). Proves the provider/adapter primitives on real E2B; does NOT promote E7-1 (that needs the staging-canary campaign).

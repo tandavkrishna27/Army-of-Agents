@@ -10,7 +10,7 @@ import {
   companies,
 } from "@armyofagents/db";
 import type {
-  AoAPluginManifestV1,
+  PaperclipPluginManifestV1,
   PluginStatus,
   InstallPlugin,
   UpdatePluginStatus,
@@ -49,6 +49,12 @@ function isPluginKeyConflict(error: unknown): boolean {
   );
 }
 
+function mapLegacyPaperclipKey(pluginKey: string): string | null {
+  if (pluginKey.startsWith("aoa.")) return `paperclip.${pluginKey.slice(4)}`;
+  if (pluginKey.startsWith("aoa-")) return `paperclip-${pluginKey.slice(4)}`;
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
@@ -56,7 +62,7 @@ function isPluginKeyConflict(error: unknown): boolean {
 /**
  * PluginRegistry – CRUD operations for the `plugins` and `plugin_config`
  * tables.  Follows the same factory-function pattern used by the rest of
- * the AoA service layer.
+ * the Paperclip service layer.
  *
  * This is the lowest-level persistence layer for plugins. Higher-level
  * concerns such as lifecycle state-machine enforcement and capability
@@ -79,19 +85,40 @@ export function pluginRegistryService(db: Db) {
   }
 
   async function getByKey(pluginKey: string) {
-    return db
+    const row = await db
       .select()
       .from(plugins)
       .where(eq(plugins.pluginKey, pluginKey))
       .then((rows) => rows[0] ?? null);
+    if (row) return row;
+    const legacyAlias = mapLegacyPaperclipKey(pluginKey);
+    if (!legacyAlias) return null;
+    return db
+      .select()
+      .from(plugins)
+      .where(eq(plugins.pluginKey, legacyAlias))
+      .then((rows) => rows[0] ?? null);
   }
 
   async function getByKeyScoped(pluginKey: string, companyId: string) {
-    return db
+    const row = await db
       .select()
       .from(plugins)
       .where(
         and(eq(plugins.companyId, companyId), eq(plugins.pluginKey, pluginKey))
+      )
+      .then((rows) => rows[0] ?? null);
+    if (row) return row;
+    const legacyAlias = mapLegacyPaperclipKey(pluginKey);
+    if (!legacyAlias) return null;
+    return db
+      .select()
+      .from(plugins)
+      .where(
+        and(
+          eq(plugins.companyId, companyId),
+          eq(plugins.pluginKey, legacyAlias)
+        )
       )
       .then((rows) => rows[0] ?? null);
   }
@@ -218,7 +245,7 @@ export function pluginRegistryService(db: Db) {
      */
     install: async (
       input: InstallPlugin,
-      manifest: AoAPluginManifestV1,
+      manifest: PaperclipPluginManifestV1,
       companyId?: string
     ) => {
       // Resolve the target company before checking for an existing row so that
@@ -320,7 +347,7 @@ export function pluginRegistryService(db: Db) {
         packageName?: string;
         packagePath?: string | null;
         version?: string;
-        manifest?: AoAPluginManifestV1;
+        manifest?: PaperclipPluginManifestV1;
       }
     ) => {
       const plugin = await getById(id);
@@ -608,7 +635,7 @@ export function pluginRegistryService(db: Db) {
         .then((rows) => rows[0] ?? null),
 
     /**
-     * Create or update a persistent mapping between a AoA object and an
+     * Create or update a persistent mapping between a Paperclip object and an
      * external entity.
      *
      * @param pluginId - The UUID of the plugin.

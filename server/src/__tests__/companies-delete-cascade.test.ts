@@ -96,6 +96,12 @@ vi.mock("drizzle-orm", () => ({
   and: (..._args: unknown[]) => "and",
   eq: (..._args: unknown[]) => "eq",
   count: (..._args: unknown[]) => "count",
+  // `like`/`notLike` back the E0-F013 Decision 3.3 retention split in remove():
+  // the denial rows are NULLed (like) and the ordinary rows deleted
+  // (notDenialNamespace -> notLike). Kept here so the mock mirrors the operators
+  // companies.ts + activity-namespace.ts actually use.
+  like: (..._args: unknown[]) => "like",
+  notLike: (..._args: unknown[]) => "notLike",
   sql: (...args: unknown[]) => args,
 }));
 
@@ -106,6 +112,16 @@ function makeMockDb() {
     transaction: async (cb: (tx: any) => Promise<any>) => {
       const tx = {
         execute: () => Promise.resolve([]),
+        // E0-F013 Decision 3.3 (Q5): remove() NULLs the company's
+        // `security.denied.*` rows before deleting the ordinary ones, so the mock
+        // tx must answer `update(table).set(...).where(...)` as an awaitable. It is
+        // recorded separately from deleteCalls — the delete-order assertions reason
+        // about deletes only.
+        update: (_table: any) => ({
+          set: (..._a: unknown[]) => ({
+            where: (..._a2: unknown[]) => Promise.resolve([]),
+          }),
+        }),
         delete: (table: any) => {
           const name = table?._tableName ?? "unknown";
           deleteCalls.push(name);

@@ -166,6 +166,28 @@ export function createStorageService(provider: StorageProvider): StorageService 
       };
     },
 
+    async putReservedObject(input) {
+      ensureObjectAccess(input.organizationId, input.companyId, input.objectKey);
+      const expectedPrefix = input.organizationId
+        ? `${input.organizationId}/${input.companyId}/universe-intakes/`
+        : `${input.companyId}/universe-intakes/`;
+      if (!input.objectKey.startsWith(expectedPrefix)) {
+        throw forbidden("Object key is not a Universe intake reservation");
+      }
+      if (!(input.body instanceof Buffer) || input.body.length <= 0) {
+        throw unprocessable("Reserved object body must be a non-empty Buffer");
+      }
+      if (hashBuffer(input.body) !== input.sha256) {
+        throw unprocessable("Reserved object hash mismatch");
+      }
+      await provider.putObject({
+        objectKey: input.objectKey,
+        body: input.body,
+        contentType: input.contentType.trim().toLowerCase(),
+        contentLength: input.body.length,
+      });
+    },
+
     async getObject(a: string | null, b: string, c?: string) {
       const [organizationId, companyId, objectKey] = resolveObjectArgs(a, b, c);
       ensureObjectAccess(organizationId, companyId, objectKey);

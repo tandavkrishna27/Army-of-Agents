@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "id": "browser-denied-egress",
+  "workloadType": "browser_session",
+  "purpose": "Browser access to metadata and private networks fails closed.",
+  "source": {
+    "kind": "browser_request"
+  },
+  "organization": {
+    "id": "org_GWQKWMCHA190BV6GMHMFDJBX2M",
+    "name": "Tyrell Systems"
+  },
+  "company": {
+    "id": "company_4N6P3RMSNB49S1VK9QY98TAWYN",
+    "name": "Tyrell Systems HQ",
+    "organizationId": "org_GWQKWMCHA190BV6GMHMFDJBX2M"
+  },
+  "requester": {
+    "type": "agent",
+    "id": "agent-scout-1",
+    "displayName": "Scout Agent"
+  },
+  "executor": {
+    "type": "browser_worker",
+    "id": "cloud-browser-2"
+  },
+  "placement": {
+    "targetPolicy": "single_region_pinned",
+    "provider": "e2b",
+    "region": "us-east-1",
+    "generation": 1
+  },
+  "inputBase": {
+    "workspaceBaseId": "wsbase-h9t034as9bbx5fwfz9n92n57f5",
+    "gitRemote": null,
+    "gitRef": null,
+    "immutable": true
+  },
+  "identity": {
+    "jobId": "job_TX1VN8FS0WPG7GC8H0XFXKH9G3",
+    "attempts": [
+      {
+        "attempt": 1,
+        "workerId": "worker_9MF2CYVSSPZ8DV3ZP5091Y2MT8",
+        "leaseId": "lease_XN9KY9M4Y9GS6N6V1F4WGQP1FQ",
+        "fenceToken": 100
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "submit"
+    },
+    {
+      "action": "lease_and_ack"
+    },
+    {
+      "action": "launch_browser",
+      "emits": [
+        "attempt_started"
+      ]
+    },
+    {
+      "action": "navigate",
+      "at": "http://169.254.169.254/"
+    },
+    {
+      "action": "record_denial",
+      "emits": [
+        "network_denied",
+        "terminal"
+      ]
+    }
+  ],
+  "failureInjection": {
+    "point": "navigation",
+    "effect": "metadata_destination"
+  },
+  "expectedEvents": [
+    {
+      "protocolVersion": 1,
+      "eventId": "CGCETSSJ1VR4DY36WM57MAVNQG",
+      "eventType": "attempt_started",
+      "organizationId": "org_GWQKWMCHA190BV6GMHMFDJBX2M",
+      "companyId": "company_4N6P3RMSNB49S1VK9QY98TAWYN",
+      "workerId": "worker_9MF2CYVSSPZ8DV3ZP5091Y2MT8",
+      "jobId": "job_TX1VN8FS0WPG7GC8H0XFXKH9G3",
+      "attempt": 1,
+      "leaseId": "lease_XN9KY9M4Y9GS6N6V1F4WGQP1FQ",
+      "fenceToken": 100,
+      "seq": 1,
+      "occurredAt": "2026-08-08T12:00:00.000Z",
+      "payload": {},
+      "eventDigest": "a26d9f510368e335e8b9f0712029ed41a56d05134f50965c6263fcf3b3e0ca70"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "Z49SKEVZ44YPYB6YDAXZ2B5DEQ",
+      "eventType": "network_denied",
+      "organizationId": "org_GWQKWMCHA190BV6GMHMFDJBX2M",
+      "companyId": "company_4N6P3RMSNB49S1VK9QY98TAWYN",
+      "workerId": "worker_9MF2CYVSSPZ8DV3ZP5091Y2MT8",
+      "jobId": "job_TX1VN8FS0WPG7GC8H0XFXKH9G3",
+      "attempt": 1,
+      "leaseId": "lease_XN9KY9M4Y9GS6N6V1F4WGQP1FQ",
+      "fenceToken": 100,
+      "seq": 2,
+      "occurredAt": "2026-08-08T12:00:03.000Z",
+      "payload": {
+        "destination": "http://169.254.169.254/",
+        "code": "metadata_destination_blocked",
+        "reason": "link_local_metadata_range"
+      },
+      "eventDigest": "fa2fc060cb21f750ed20fd6afda5119f170a2ed5b280ff9070e90fb4de989b43"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "2WDPMCK5TPA0CEK4WGE25Z321S",
+      "eventType": "terminal",
+      "organizationId": "org_GWQKWMCHA190BV6GMHMFDJBX2M",
+      "companyId": "company_4N6P3RMSNB49S1VK9QY98TAWYN",
+      "workerId": "worker_9MF2CYVSSPZ8DV3ZP5091Y2MT8",
+      "jobId": "job_TX1VN8FS0WPG7GC8H0XFXKH9G3",
+      "attempt": 1,
+      "leaseId": "lease_XN9KY9M4Y9GS6N6V1F4WGQP1FQ",
+      "fenceToken": 100,
+      "seq": 3,
+      "occurredAt": "2026-08-08T12:00:04.000Z",
+      "payload": {
+        "detail": "browser session failed closed",
+        "code": "failed"
+      },
+      "eventDigest": "301e3abf20fb9cd81411cfa91bf3b488d4ef85f99f39b34f88fac8d81aa5bf5f"
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "maxTotalCents": 300,
+    "observedTotalCents": 15,
+    "tokenBudget": 50000,
+    "observedTokens": 3000
+  },
+  "timing": {
+    "queuedAt": "2026-08-08T11:59:56.000Z",
+    "startedAt": "2026-08-08T12:00:00.000Z",
+    "finishedAt": "2026-08-08T12:00:04.000Z",
+    "maxWallClockMs": 300000,
+    "observedWallClockMs": 4000
+  },
+  "cleanup": {
+    "authority": "lease_holder",
+    "scope": "browser_session:job_TX1VN8FS0WPG7GC8H0XFXKH9G3",
+    "idempotent": true,
+    "deadlineMs": 20000,
+    "restoresEffectAuthority": false
+  },
+  "control": {
+    "cancellation": "none",
+    "productApproval": "none",
+    "runtimeDecision": "egress_denied"
+  },
+  "expected": {
+    "terminalState": "failed",
+    "artifacts": [
+      "screenshot"
+    ],
+    "auditActions": [
+      "network.denied",
+      "job.failed"
+    ],
+    "forbiddenEffects": [
+      "metadata_response",
+      "private_network_response",
+      "credential_disclosure"
+    ]
+  }
+}

@@ -1,0 +1,386 @@
+{
+  "schema": "aoa-workspace-snapshot-vectors/v1",
+  "version": "1",
+  "description": "Frozen DAT-001 workspace-snapshot HASH vectors. Each positive vector pins a fully-specified WorkspaceManifestV1 to its two derived digests: `contentRevision` (repeatable content identity — for a content_manifest base, the sha256 of the canonicalized {v:1,caseMode,ignorePolicy,inclusion,entries} subset; for a git_commit base it IS base.revision) and `manifestHash` (sha256 of the canonicalized full manifest). Two independent canonicalizers — the producer's (via @armyofagents/worker-protocol canonicalizeJsonV1) and the from-scratch reference in scripts/check-workspace-snapshot-vectors.mjs — must both reproduce these values, so neither can silently drift. `rejectInputs` are structurally-malformed manifests every implementation must reject. Attack SCENARIOS (symlink/device/case-collision on a real FS) live in temp-dir tests, never here; this file is pure JSON→hash.",
+  "positiveVectors": [
+    {
+      "name": "content_basic",
+      "note": "content_manifest base: a directory plus two files, sorted by UTF-8 byte order (readme.md < src < src/a.txt). revision == contentRevision.",
+      "contentRevision": "db9cfa8053b21260629cd92b334c8159caa518f5f2b15c925777a12f6213ce20",
+      "manifestHash": "266c1b7b72d19d756b2d07d723f4df055e4a0a79d1ba60f869bff188912496a7",
+      "manifest": {
+        "protocolVersion": 1,
+        "organizationId": "11111111-1111-4111-8111-111111111111",
+        "companyId": "22222222-2222-4222-8222-222222222222",
+        "artifactId": "33333333-3333-4333-8333-333333333333",
+        "base": {
+          "kind": "content_manifest",
+          "algorithm": "sha256",
+          "revision": "db9cfa8053b21260629cd92b334c8159caa518f5f2b15c925777a12f6213ce20",
+          "dirty": false,
+          "caseMode": "sensitive",
+          "ignorePolicy": {
+            "kind": "explicit",
+            "digest": "32b77ea359d50a3145ea4ac9b74687c65b664a6e0d2007b7abdf4b6bc8bf1c28"
+          },
+          "inclusion": {
+            "tracked": true,
+            "untracked": "include",
+            "ignored": false
+          }
+        },
+        "snapshotProvenance": {
+          "capturedAt": "2026-08-14T00:00:00.000Z",
+          "sourceTargetId": "44444444-4444-4444-8444-444444444444",
+          "folderGrantId": null,
+          "captureToolVersion": "aoa-worker-daemon/1.0.0"
+        },
+        "entries": [
+          {
+            "path": "readme.md",
+            "kind": "file",
+            "provenance": "untracked",
+            "sizeBytes": 5,
+            "sha256": "045d2d07c2db3b9e6cef022457ee89434045a508c2dadccf9abe182ad633c273",
+            "executable": false
+          },
+          {
+            "path": "src",
+            "kind": "directory",
+            "provenance": "untracked",
+            "sizeBytes": 0,
+            "sha256": null,
+            "executable": false
+          },
+          {
+            "path": "src/a.txt",
+            "kind": "file",
+            "provenance": "untracked",
+            "sizeBytes": 6,
+            "sha256": "b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060",
+            "executable": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "git_basic",
+      "note": "git_commit (sha1) base: two tracked files, one executable (mode 100755). contentRevision IS the git HEAD sha.",
+      "contentRevision": "0123456789abcdef0123456789abcdef01234567",
+      "manifestHash": "1b5d5f5027086d1755d7ea2ab5b2874efacc5060dd9b1bb2d204588ad8de662c",
+      "manifest": {
+        "protocolVersion": 1,
+        "organizationId": "11111111-1111-4111-8111-111111111111",
+        "companyId": "22222222-2222-4222-8222-222222222222",
+        "artifactId": "55555555-5555-4555-8555-555555555555",
+        "base": {
+          "kind": "git_commit",
+          "algorithm": "git_sha1",
+          "revision": "0123456789abcdef0123456789abcdef01234567",
+          "dirty": false,
+          "caseMode": "sensitive",
+          "ignorePolicy": {
+            "kind": "gitignore_plus_aoa",
+            "digest": "88f6a0ccc09596f54b24a3ffc528e0068793d5c57268a6ac2689c7f3c6ffdd30"
+          },
+          "inclusion": {
+            "tracked": true,
+            "untracked": "exclude",
+            "ignored": false
+          }
+        },
+        "snapshotProvenance": {
+          "capturedAt": "2026-08-14T00:00:00.000Z",
+          "sourceTargetId": "44444444-4444-4444-8444-444444444444",
+          "folderGrantId": "66666666-6666-4666-8666-666666666666",
+          "captureToolVersion": "aoa-worker-daemon/1.0.0"
+        },
+        "entries": [
+          {
+            "path": "main.py",
+            "kind": "file",
+            "provenance": "tracked",
+            "sizeBytes": 6,
+            "sha256": "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+            "executable": false
+          },
+          {
+            "path": "run.sh",
+            "kind": "file",
+            "provenance": "tracked",
+            "sizeBytes": 5,
+            "sha256": "d5debe8851ee3230215cc62f58b57677976e5294cc4412dfc15adddfd71df1ba",
+            "executable": true
+          }
+        ]
+      }
+    }
+  ],
+  "rejectInputs": [
+    {
+      "name": "reject_traversal_path",
+      "note": "An entry path with a '..' segment must be rejected (path traversal).",
+      "manifest": {
+        "protocolVersion": 1,
+        "organizationId": "11111111-1111-4111-8111-111111111111",
+        "companyId": "22222222-2222-4222-8222-222222222222",
+        "artifactId": "33333333-3333-4333-8333-333333333333",
+        "base": {
+          "kind": "content_manifest",
+          "algorithm": "sha256",
+          "revision": "db9cfa8053b21260629cd92b334c8159caa518f5f2b15c925777a12f6213ce20",
+          "dirty": false,
+          "caseMode": "sensitive",
+          "ignorePolicy": {
+            "kind": "explicit",
+            "digest": "32b77ea359d50a3145ea4ac9b74687c65b664a6e0d2007b7abdf4b6bc8bf1c28"
+          },
+          "inclusion": {
+            "tracked": true,
+            "untracked": "include",
+            "ignored": false
+          }
+        },
+        "snapshotProvenance": {
+          "capturedAt": "2026-08-14T00:00:00.000Z",
+          "sourceTargetId": "44444444-4444-4444-8444-444444444444",
+          "folderGrantId": null,
+          "captureToolVersion": "aoa-worker-daemon/1.0.0"
+        },
+        "entries": [
+          {
+            "path": "../escape",
+            "kind": "file",
+            "provenance": "untracked",
+            "sizeBytes": 1,
+            "sha256": "045d2d07c2db3b9e6cef022457ee89434045a508c2dadccf9abe182ad633c273",
+            "executable": false
+          }
+        ]
+      },
+      "schemaRejects": true
+    },
+    {
+      "name": "reject_dir_with_hash",
+      "note": "A directory entry carrying a content hash must be rejected.",
+      "manifest": {
+        "protocolVersion": 1,
+        "organizationId": "11111111-1111-4111-8111-111111111111",
+        "companyId": "22222222-2222-4222-8222-222222222222",
+        "artifactId": "33333333-3333-4333-8333-333333333333",
+        "base": {
+          "kind": "content_manifest",
+          "algorithm": "sha256",
+          "revision": "db9cfa8053b21260629cd92b334c8159caa518f5f2b15c925777a12f6213ce20",
+          "dirty": false,
+          "caseMode": "sensitive",
+          "ignorePolicy": {
+            "kind": "explicit",
+            "digest": "32b77ea359d50a3145ea4ac9b74687c65b664a6e0d2007b7abdf4b6bc8bf1c28"
+          },
+          "inclusion": {
+            "tracked": true,
+            "untracked": "include",
+            "ignored": false
+          }
+        },
+        "snapshotProvenance": {
+          "capturedAt": "2026-08-14T00:00:00.000Z",
+          "sourceTargetId": "44444444-4444-4444-8444-444444444444",
+          "folderGrantId": null,
+          "captureToolVersion": "aoa-worker-daemon/1.0.0"
+        },
+        "entries": [
+          {
+            "path": "d",
+            "kind": "directory",
+            "provenance": "untracked",
+            "sizeBytes": 0,
+            "sha256": "045d2d07c2db3b9e6cef022457ee89434045a508c2dadccf9abe182ad633c273",
+            "executable": false
+          }
+        ]
+      },
+      "schemaRejects": true
+    },
+    {
+      "name": "reject_case_collision",
+      "note": "Two paths differing only by case must be rejected.",
+      "manifest": {
+        "protocolVersion": 1,
+        "organizationId": "11111111-1111-4111-8111-111111111111",
+        "companyId": "22222222-2222-4222-8222-222222222222",
+        "artifactId": "33333333-3333-4333-8333-333333333333",
+        "base": {
+          "kind": "content_manifest",
+          "algorithm": "sha256",
+          "revision": "db9cfa8053b21260629cd92b334c8159caa518f5f2b15c925777a12f6213ce20",
+          "dirty": false,
+          "caseMode": "sensitive",
+          "ignorePolicy": {
+            "kind": "explicit",
+            "digest": "32b77ea359d50a3145ea4ac9b74687c65b664a6e0d2007b7abdf4b6bc8bf1c28"
+          },
+          "inclusion": {
+            "tracked": true,
+            "untracked": "include",
+            "ignored": false
+          }
+        },
+        "snapshotProvenance": {
+          "capturedAt": "2026-08-14T00:00:00.000Z",
+          "sourceTargetId": "44444444-4444-4444-8444-444444444444",
+          "folderGrantId": null,
+          "captureToolVersion": "aoa-worker-daemon/1.0.0"
+        },
+        "entries": [
+          {
+            "path": "Foo",
+            "kind": "file",
+            "provenance": "untracked",
+            "sizeBytes": 1,
+            "sha256": "045d2d07c2db3b9e6cef022457ee89434045a508c2dadccf9abe182ad633c273",
+            "executable": false
+          },
+          {
+            "path": "foo",
+            "kind": "file",
+            "provenance": "untracked",
+            "sizeBytes": 1,
+            "sha256": "045d2d07c2db3b9e6cef022457ee89434045a508c2dadccf9abe182ad633c273",
+            "executable": false
+          }
+        ]
+      },
+      "schemaRejects": true
+    },
+    {
+      "name": "reject_algo_revision_mismatch",
+      "note": "A git_sha1 base with a 64-hex revision must be rejected (object-format/revision mismatch).",
+      "manifest": {
+        "protocolVersion": 1,
+        "organizationId": "11111111-1111-4111-8111-111111111111",
+        "companyId": "22222222-2222-4222-8222-222222222222",
+        "artifactId": "55555555-5555-4555-8555-555555555555",
+        "base": {
+          "kind": "git_commit",
+          "algorithm": "git_sha1",
+          "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "dirty": false,
+          "caseMode": "sensitive",
+          "ignorePolicy": {
+            "kind": "gitignore_plus_aoa",
+            "digest": "88f6a0ccc09596f54b24a3ffc528e0068793d5c57268a6ac2689c7f3c6ffdd30"
+          },
+          "inclusion": {
+            "tracked": true,
+            "untracked": "exclude",
+            "ignored": false
+          }
+        },
+        "snapshotProvenance": {
+          "capturedAt": "2026-08-14T00:00:00.000Z",
+          "sourceTargetId": "44444444-4444-4444-8444-444444444444",
+          "folderGrantId": null,
+          "captureToolVersion": "aoa-worker-daemon/1.0.0"
+        },
+        "entries": []
+      },
+      "schemaRejects": true
+    },
+    {
+      "name": "reject_symlink_kind",
+      "note": "A symlink entry kind is not representable in v1 and must be rejected.",
+      "manifest": {
+        "protocolVersion": 1,
+        "organizationId": "11111111-1111-4111-8111-111111111111",
+        "companyId": "22222222-2222-4222-8222-222222222222",
+        "artifactId": "33333333-3333-4333-8333-333333333333",
+        "base": {
+          "kind": "content_manifest",
+          "algorithm": "sha256",
+          "revision": "db9cfa8053b21260629cd92b334c8159caa518f5f2b15c925777a12f6213ce20",
+          "dirty": false,
+          "caseMode": "sensitive",
+          "ignorePolicy": {
+            "kind": "explicit",
+            "digest": "32b77ea359d50a3145ea4ac9b74687c65b664a6e0d2007b7abdf4b6bc8bf1c28"
+          },
+          "inclusion": {
+            "tracked": true,
+            "untracked": "include",
+            "ignored": false
+          }
+        },
+        "snapshotProvenance": {
+          "capturedAt": "2026-08-14T00:00:00.000Z",
+          "sourceTargetId": "44444444-4444-4444-8444-444444444444",
+          "folderGrantId": null,
+          "captureToolVersion": "aoa-worker-daemon/1.0.0"
+        },
+        "entries": [
+          {
+            "path": "link",
+            "kind": "symlink",
+            "provenance": "untracked",
+            "sizeBytes": 1,
+            "sha256": "045d2d07c2db3b9e6cef022457ee89434045a508c2dadccf9abe182ad633c273",
+            "executable": false
+          }
+        ]
+      },
+      "schemaRejects": true
+    },
+    {
+      "name": "reject_unsorted_entries",
+      "note": "Entries not in the pinned UTF-8 byte order must be rejected.",
+      "manifest": {
+        "protocolVersion": 1,
+        "organizationId": "11111111-1111-4111-8111-111111111111",
+        "companyId": "22222222-2222-4222-8222-222222222222",
+        "artifactId": "33333333-3333-4333-8333-333333333333",
+        "base": {
+          "kind": "content_manifest",
+          "algorithm": "sha256",
+          "revision": "db9cfa8053b21260629cd92b334c8159caa518f5f2b15c925777a12f6213ce20",
+          "dirty": false,
+          "caseMode": "sensitive",
+          "ignorePolicy": {
+            "kind": "explicit",
+            "digest": "32b77ea359d50a3145ea4ac9b74687c65b664a6e0d2007b7abdf4b6bc8bf1c28"
+          },
+          "inclusion": {
+            "tracked": true,
+            "untracked": "include",
+            "ignored": false
+          }
+        },
+        "snapshotProvenance": {
+          "capturedAt": "2026-08-14T00:00:00.000Z",
+          "sourceTargetId": "44444444-4444-4444-8444-444444444444",
+          "folderGrantId": null,
+          "captureToolVersion": "aoa-worker-daemon/1.0.0"
+        },
+        "entries": [
+          {
+            "path": "src/a.txt",
+            "kind": "file",
+            "provenance": "untracked",
+            "sizeBytes": 6,
+            "sha256": "b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060",
+            "executable": false
+          },
+          {
+            "path": "readme.md",
+            "kind": "file",
+            "provenance": "untracked",
+            "sizeBytes": 5,
+            "sha256": "045d2d07c2db3b9e6cef022457ee89434045a508c2dadccf9abe182ad633c273",
+            "executable": false
+          }
+        ]
+      },
+      "schemaRejects": false
+    }
+  ]
+}

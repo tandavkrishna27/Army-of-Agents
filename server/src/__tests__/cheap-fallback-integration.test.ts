@@ -48,8 +48,8 @@ beforeAll(async () => {
 
     // Seed: company (only columns that exist in the schema)
     await db.execute(
-      `INSERT INTO companies (id, name)
-       VALUES ('c1000000-0000-0000-0000-000000000001', 'Test Co')`,
+      `INSERT INTO companies (organization_id, id, name)
+       VALUES ('00000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 'Test Co')`,
     );
 
     // Seed: internal_agent_config with cheap_model set

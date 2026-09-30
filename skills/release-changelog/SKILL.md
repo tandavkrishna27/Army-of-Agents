@@ -271,9 +271,9 @@ Output the changelog to `releases/v{version}.md` using this template:
 ### Before You Update
 
 1. **Back up your database.**
-   - SQLite: `cp aoa.db aoa.db.backup`
-   - Postgres: `pg_dump -Fc aoa > aoa-pre-{version}.dump`
-2. **Note your current version:** `aoa --version`
+   - SQLite: `cp paperclip.db paperclip.db.backup`
+   - Postgres: `pg_dump -Fc paperclip > paperclip-pre-{version}.dump`
+2. **Note your current version:** `paperclip --version`
 
 ### After Updating
 

@@ -1,3 +1,9 @@
+// FND-005: this network fetch is NO LONGER part of `pnpm build`/`prebuild`
+// (the authoritative build is network-free and consumes pinned checked-in
+// snapshot inputs verified by scripts/check-bundled-snapshot-inputs.mjs). It is
+// invoked only by the explicit operator command `pnpm refresh:bundled-snapshots`,
+// which re-fetches the catalog and then re-pins the manifest digests. Never call
+// it from build or test.
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 

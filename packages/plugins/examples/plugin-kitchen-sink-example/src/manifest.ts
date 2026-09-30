@@ -1,4 +1,4 @@
-import type { AoAPluginManifestV1 } from "@armyofagents/plugin-sdk";
+import type { PaperclipPluginManifestV1 } from "@armyofagents/plugin-sdk";
 import {
   DEFAULT_CONFIG,
   EXPORT_NAMES,
@@ -11,7 +11,7 @@ import {
   WEBHOOK_KEYS,
 } from "./constants.js";
 
-const manifest: AoAPluginManifestV1 = {
+const manifest: PaperclipPluginManifestV1 = {
   id: PLUGIN_ID,
   apiVersion: 1,
   version: PLUGIN_VERSION,
@@ -158,7 +158,7 @@ const manifest: AoAPluginManifestV1 = {
     {
       name: TOOL_NAMES.companySummary,
       displayName: "Kitchen Sink Company Summary",
-      description: "Summarizes the current company using the AoA domain APIs.",
+      description: "Summarizes the current company using the Paperclip domain APIs.",
       parametersSchema: {
         type: "object",
         properties: {},

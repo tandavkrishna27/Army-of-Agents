@@ -1,0 +1,55 @@
+BRW-004 slice (a) egress-constraint probe #1 (2026-09-04): can the sandbox provider constrain
+a sandbox's OUTBOUND egress at all? BRW-004-terrain §12 lists this among the things it could
+NOT establish, and design §D3 option (b) plus §7 Q2 both rest on the answer. Source cannot
+settle it: AoA's only egress-shaped provider input, `SandboxProviderAcquireInput.egressAllowlist`,
+is written into E2B `Sandbox.create` metadata as a comma-joined string, and its producer's own
+comments call it "NOT a security boundary" — a claim this probe MEASURES rather than quotes.
+
+Differential by construction: sandbox A declares `metadata.egressAllowlist`, sandbox B does
+not, and both run the identical target set from inside the guest. The allowlist has an effect
+only if the not-allowlisted target behaves differently in A than in B. A positive control (the
+allowlisted host must succeed in A) and an apparatus control (an RFC-2606 `.invalid` host must
+fail) both gate the verdict, so a run in which everything fails is reported INCONCLUSIVE rather
+than read as enforcement.
+
+probe #2 (2026-09-04): run 33855470353 was correctly reported INCONCLUSIVE — the apparatus
+control produced NO RESULT LINE in both arms while the three earlier targets returned
+normally. That is the control doing exactly its job: without it, "not_allowlisted REACHED in
+both arms" would have read as a finished measurement while the probe was silently dropping a
+row. Chaining all four targets into one `sh -c` meant whatever swallowed the fourth erased it
+with no trace. Fixed by running ONE command per target, each ending `exit 0` so a failing curl
+cannot throw at the SDK layer (E7-F014: real E2B THROWS on non-zero exit rather than
+returning), with a PROBE/END-delimited line so a truncated line is rejected rather than
+half-read.
+
+Carried forward from run #1 as a real observation, independent of the verdict: the cloud
+instance-metadata endpoint at 169.254.169.254 ANSWERED from inside the sandbox with HTTP 401
+in BOTH arms. It is reachable; only IMDSv2's token requirement stood between the guest and it.
+
+probe #3 (2026-09-04): run 33856410800 printed every target's RAW channel and found it in one
+line. The apparatus control's record came back as TWO lines from the Linux guest —
+"curl: (6) Could not resolve host: ..." then "000" — because curl writes -w output to stdout
+and the error to stderr and 2>&1 interleaves them. On Windows the same command emits them on
+ONE line ("000curl: (6) ..."), which is exactly why the local dry-run passed and the real
+sandbox did not. A dry-run on a different platform is not a control for the real one. Fixed in
+BOTH producer and consumer: the shell flattens the diagnostic to one line (reading $? from the
+assignment, never through a pipe, or $? would be tr's), and the parser matches across newlines
+so the record is assembled rather than silently lost if anything reintroduces one.
+
+probe #4 (2026-09-04) — THE MEASUREMENT, run 33857218680, success, all four rows parsed and both
+controls satisfied:
+
+  allowlisted (positive control)  A: REACHED 200   B: REACHED 200
+  not_allowlisted (the question)  A: REACHED 200   B: REACHED 200
+  link_local_metadata             A: REACHED 401   B: REACHED 401
+  unresolvable (apparatus ctrl)   A: FAILED curl 6 B: FAILED curl 6
+
+VERDICT — the metadata allowlist is INERT. A host that is NOT on the declared allowlist was reached
+from inside the sandbox that declared it, exactly as from the control sandbox that declared none.
+The provider does not constrain outbound egress through the seam AoA production uses, so BRW-004
+design §D3 option (b) is unavailable and the in-sandbox enforcement point (c) is the ONLY layer
+rather than defence in depth.
+
+OBSERVATION, and it is the more serious half: the cloud instance-metadata endpoint answered HTTP 401
+from inside the guest in both arms — a live IMDSv2 token challenge, not a dropped packet. Filed as
+E8-F003 (HIGH, unowned).

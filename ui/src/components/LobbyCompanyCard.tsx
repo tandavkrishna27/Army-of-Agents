@@ -1,4 +1,4 @@
-import { Bell } from "lucide-react";
+import { Bell, Orbit } from "lucide-react";
 import { CompanyPatternIcon } from "./CompanyPatternIcon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ interface LobbyCompanyCardProps {
   stats?: CompanyStats[string];
   statsLoading?: boolean;
   onClick: () => void;
+  onOpenUniverse?: () => void;
 }
 
 /**
@@ -29,7 +30,7 @@ interface LobbyCompanyCardProps {
  *
  * No top color stripe per locked design. Whole card is the click target.
  */
-export function LobbyCompanyCard({ company, stats, statsLoading, onClick }: LobbyCompanyCardProps) {
+export function LobbyCompanyCard({ company, stats, statsLoading, onClick, onOpenUniverse }: LobbyCompanyCardProps) {
   const pendingCount = stats?.pendingApprovalCount ?? 0;
   const unreadCount = stats?.unreadNotificationCount ?? 0;
   const showPending = pendingCount > 0;
@@ -42,6 +43,7 @@ export function LobbyCompanyCard({ company, stats, statsLoading, onClick }: Lobb
   const tasksTodayCount: number | undefined = undefined; // backend TBD
 
   return (
+    <div className="relative">
     <button
       type="button"
       onClick={onClick}
@@ -149,7 +151,7 @@ export function LobbyCompanyCard({ company, stats, statsLoading, onClick }: Lobb
       </div>
 
       {/* Activity section (placeholder until backend exposes recent activity) */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 pr-10">
         <div className="mb-1.5 text-[0.62rem] font-medium uppercase tracking-[0.07em] text-very-dim">
           Recent activity
         </div>
@@ -160,6 +162,12 @@ export function LobbyCompanyCard({ company, stats, statsLoading, onClick }: Lobb
         </div>
       </div>
     </button>
+    {onOpenUniverse && (
+      <button type="button" onClick={onOpenUniverse} aria-label={`Open ${company.name} Universe`} title="Open Universe" className="absolute bottom-5 right-5 flex size-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+        <Orbit className="size-4" aria-hidden="true" />
+      </button>
+    )}
+    </div>
   );
 }
 

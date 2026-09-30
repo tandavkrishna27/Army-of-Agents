@@ -1,0 +1,36 @@
+{
+  "$comment": [
+    "Reviewed exceptions for `check-dependency-graph.mjs`'s undominated-crosswalk-row finding.",
+    "A row is UNDOMINATED when no ticket in it transitively depends on all the others - i.e. the",
+    "crosswalk asserts that a set of tickets together own one current-main execution path, but the",
+    "ticket graph in program-design.md has no path that completes them. That is precisely how",
+    "MIG-005 came to be scheduled without ever depending on DAT-004 (inherited deferral #1).",
+    "",
+    "Every undominated row MUST appear here with a status, a reason and an owner, or the check",
+    "FAILS. This file is a record of known debt, not a blessing: `status: open_gap` means the",
+    "disagreement is real and unresolved. A declaration for a row that is no longer undominated is",
+    "reported as STALE, so an exception cannot outlive the reason it was written for."
+  ],
+  "rows": {
+    "CM-013": {
+      "status": "owned",
+      "owner": "DAT-008",
+      "reason": "The tenant model-provider credential seam. This is the row that produced inherited deferral #1: MIG-005/006/007 declare CLI-005 + JOB-010..014 + MIG-008 and never reach DAT-004/DAT-005, so the cutovers were scheduled in front of a blocker the ticket graph could not express. Now owned by DAT-008 (slices 1-4 landed CI-green). The graph edge is still absent - closing it means adding DAT-008 to the MIG-005/006/007 Depends-on lines, which is a program-design.md edit and belongs with the MIG cutover tickets rather than here."
+    },
+    "CM-009": {
+      "status": "open_gap",
+      "owner": "UNASSIGNED",
+      "reason": "SURFACED BY THIS CHECK ON ITS FIRST RUN, not previously known. Names DAT-004, DAT-005, DAT-007 alongside MIG-005/006/007 - the same shape as CM-013 and the same DAT tickets. DAT-007's own result doc records its core as BLOCKED on a run-JWT fence-binding resolver that needs an architectural decision. Whether the sink cutovers genuinely depend on that resolver is UNVERIFIED and must be answered before MIG-005 goes active."
+    },
+    "CM-008": {
+      "status": "open_gap",
+      "owner": "UNASSIGNED",
+      "reason": "SURFACED BY THIS CHECK ON ITS FIRST RUN, not previously known. Names DAT-001/002/003 (workspace snapshot, artifact commit, patch apply) alongside CLI-002/003, JOB-013/014 and MIG-005/006/007. Same shape as CM-013: the artifact/output seam is asserted to bind the cutovers to DAT work the graph does not connect. UNINVESTIGATED - it may be benign because CLI-003 does reach DAT-003, or it may be a second real gap."
+    },
+    "CM-012": {
+      "status": "open_gap",
+      "owner": "UNASSIGNED",
+      "reason": "SURFACED BY THIS CHECK ON ITS FIRST RUN. Names DEP-006, CLI-001, MIG-008, REL-004 with no completing ticket. Smaller and less alarming than the MIG rows - REL-004 is release-gate work that plausibly should depend on the other three - but it is undominated and therefore recorded rather than assumed benign."
+    }
+  }
+}

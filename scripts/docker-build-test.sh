@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # docker-build-test.sh — Verify the Docker image builds successfully.
 #
-# Ports AoA's scripts/docker-build-test.sh (46 LOC, single-arch)
+# Ports Paperclip's scripts/docker-build-test.sh (46 LOC, single-arch)
 # and extends for Phase H.D5 (multi-arch amd64 + arm64 via buildx).
 #
 # Default mode: native-arch build with binary smoke test (fast; local dev).
@@ -10,7 +10,7 @@
 # --dry-run:     print commands without executing.
 #
 # Skips gracefully when docker/podman is not installed or the daemon is
-# not running — matches AoA's skip-don't-fail pattern.
+# not running — matches Paperclip's skip-don't-fail pattern.
 #
 # Usage:
 #   ./scripts/docker-build-test.sh                 # native-arch build only
@@ -83,7 +83,7 @@ echo "==> Verifying key binaries in image"
 #   base:       ca-certificates, gosu, curl, gh, git, wget, ripgrep, python3
 #   production: openssh-client (ssh), jq
 #   node-global: @anthropic-ai/claude-code, @openai/codex, opencode-ai
-# `claude` check uses `|| true` — AoA does the same because minimal
+# `claude` check uses `|| true` — Paperclip does the same because minimal
 # builds may not include the Claude CLI globally.
 if [ "$dry_run" = true ]; then
   echo "  [dry-run] $RUNTIME run --rm $IMAGE_TAG sh -c '<binary checks>'"

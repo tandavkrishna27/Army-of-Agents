@@ -148,15 +148,15 @@ describe.skipIf(process.platform === "win32")(
       // A dedicated tenant target bound to that org (the row that MUST NOT survive
       // as a promoted NULL-org system row).
       const [{ id: dedicatedId }] = await client<{ id: string }[]>`
-        INSERT INTO execution_targets (id, organization_id, slug, kind, trust_class)
-        VALUES (gen_random_uuid(), ${orgId}, 'cascade-dedicated', 'dedicated_worker', 'dedicated_tenant')
+        INSERT INTO execution_targets (id, organization_id, slug, kind, trust_class, scope, target_authority_key)
+        VALUES (gen_random_uuid(), ${orgId}, 'cascade-dedicated', 'dedicated_worker', 'dedicated_tenant', 'organization', ${`organization:${orgId}`})
         RETURNING id`;
 
       // A system/shared target (organization_id IS NULL) — never a child of any
       // org, so the org delete must NOT touch it.
       const [{ id: systemId }] = await client<{ id: string }[]>`
-        INSERT INTO execution_targets (id, organization_id, slug, kind, trust_class)
-        VALUES (gen_random_uuid(), NULL, 'cascade-system', 'pooled_gvisor', 'shared_multitenant')
+        INSERT INTO execution_targets (id, organization_id, slug, kind, trust_class, scope, target_authority_key)
+        VALUES (gen_random_uuid(), NULL, 'cascade-system', 'pooled_gvisor', 'shared_multitenant', 'platform', 'platform')
         RETURNING id`;
 
       // Preconditions: both rows exist; the dedicated row carries the org FK.

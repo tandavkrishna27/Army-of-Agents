@@ -10,7 +10,7 @@
 
 **Tech Stack:** Express 5, Drizzle, Vitest + supertest, the `getActorInfo`/`assertBoard`/`assertCompanyAccess` authz layer.
 
-**Branch / base:** `fix/authz-cross-tenant-budget-search` off `feat/v1-combined`. Worktree: `C:/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-authz`.
+**Branch / base:** `fix/authz-cross-tenant-budget-search` off `feat/v1-combined`. Worktree: `C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-authz`.
 
 ---
 

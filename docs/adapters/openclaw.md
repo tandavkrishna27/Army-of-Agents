@@ -28,7 +28,7 @@ The `openclaw` adapter wakes an OpenClaw agent over HTTP. The agent runs remotel
 | `headers` | object | No | Extra HTTP headers for all requests |
 | `webhookAuthHeader` | string | No | `Authorization` header value for webhook endpoints requiring auth |
 | `payloadTemplate` | object | No | Additional JSON fields merged into each wake payload |
-| `aoaApiUrl` | string | No | AoA base URL advertised to the OpenClaw agent as `AOA_API_URL` (useful when AoA is behind a proxy) |
+| `paperclipApiUrl` | string | No | AoA base URL advertised to the OpenClaw agent as `AOA_API_URL` (useful when AoA is behind a proxy) |
 | `hookIncludeSessionKey` | boolean | No | Include derived `sessionKey` in `/hooks/agent` webhook payloads (default: `false`) |
 | `timeoutSec` | number | No | SSE request timeout in seconds (default: `0` = no adapter timeout) |
 
@@ -37,7 +37,7 @@ The `openclaw` adapter wakes an OpenClaw agent over HTTP. The agent runs remotel
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `sessionKeyStrategy` | string | No | `fixed` (default), `issue`, or `run` |
-| `sessionKey` | string | No | Fixed session key value when strategy is `fixed` (default: `aoa`) |
+| `sessionKey` | string | No | Fixed session key value when strategy is `fixed` (default: `paperclip`) |
 
 ### Hire-Approved Callback
 

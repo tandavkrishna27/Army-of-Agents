@@ -1,0 +1,264 @@
+name: D1 Merge Train
+
+# DEP-004 — the distributed (D1) merge-train lane. It brings up the isolated
+# docker-compose.d1.yml topology (PostgreSQL, MinIO, Toxiproxy, split control-
+# plane + worker images, the fixture-driven fake provider), runs a BOUNDED E6F
+# subset against the live stack, and — on ANY failure — RETAINS the distributed
+# evidence bundle (per-service logs, worker events, DB-state dump, MinIO object
+# manifests) via actions/upload-artifact so a merge-train failure is never lost.
+#
+# It runs on the merge queue (`merge_group`) and on push to main — NOT on every
+# PR (the fast per-PR contract lane is pr.yml's `distributed-contract` job). The
+# live docker/compose bring-up has no Windows-local substitute; this workflow is
+# the Linux/CI authority. Its static shape (evidence-upload-on-failure) is
+# validated on every PR by the pr.yml `policy` job's "CI lane routing invariants
+# (DEP-004)" step (scripts/check-ci-lanes.mjs), and re-checked here belt-and-
+# suspenders in the "Static topology preflight" step below.
+
+permissions:
+  contents: read
+
+on:
+  merge_group:
+  push:
+    # On `main` this is the merge-train lane (its trigger paths should broaden to
+    # the distributed code the live stack exercises when this workflow lands on
+    # main). On the long-lived integration branch `docs/replatform-program` it is
+    # the E6-D1-FOUNDATION gate-campaign lane: it fires whenever the D1 campaign
+    # machinery changes — which is exactly how the campaign is iterated to green —
+    # and on demand by bumping `docker/d1/campaign.env` (which also selects the
+    # E6F scope: AOA_D1_CAMPAIGN=bounded|foundation). workflow_dispatch is omitted
+    # deliberately: it requires the workflow on the default branch (main), and this
+    # program keeps everything on the one integration branch.
+    branches:
+      - main
+      - docs/replatform-program
+    paths:
+      - ".github/workflows/d1-merge-train.yml"
+      - "docker-compose.d1.yml"
+      # DEP-006 staging render + its config-contract validator: the live e6f-12
+      # compose-engine render/parity proof runs ONLY in this lane, so a staging-only
+      # edit must re-trigger it (mirrors docker-compose.d1.yml being listed).
+      - "docker-compose.staging.yml"
+      - "scripts/check-staging-manifest.mjs"
+      - "scripts/lib/staging-manifest-invariants.mjs"
+      - "docker/**"
+      # WRK-009/F7: `.dockerignore` decides what enters EVERY image build context.
+      # It was not previously a trigger, so a change to it could alter the contents
+      # of both shipped images without the image-building lane ever running.
+      - ".dockerignore"
+      # E6-F012 — THE SAME LESSON, FOR THE MANIFESTS. The workspace manifests and the
+      # lockfile decide what each image INSTALLS (`--filter-prod "X..."` in the deps
+      # stage) and what each image BUILDS (`--filter "X..."`, which traverses
+      # devDependencies too). A single workspace devDependency added to `server`
+      # widened the build selection by five packages at `c3d26657d`, `tsc` died, and
+      # this lane went red for three merges.
+      #
+      # ★ AND THAT COMMIT COULD NOT FIRE THIS LANE. Until this entry existed, the list
+      # above contained NOTHING matching `package.json`, `pnpm-lock.yaml` or
+      # `pnpm-workspace.yaml` — so the exact commit class that re-widens the build
+      # selection could not trigger even the POST-merge consumer, let alone a PR-time
+      # one. It went red only because `c3d26657d` happened to touch `docker/**` too.
+      #
+      # ★★ DO NOT TRIM THESE ENTRIES ON THE GROUNDS THAT A STATIC GUARD COVERS THEM.
+      # `scripts/check-image-deps-stages.mjs` does run on every PR, and it is SILENT ON
+      # THE CLASS NAMED IN THE PARAGRAPH ABOVE. What it checks is the SHAPE of the three
+      # Dockerfiles, conditionally: that a diverging image's `build` stage re-installs
+      # non-prod; that what its build line SELECTS is covered by what its install
+      # selects; and that the divergent packages' manifests are present in that stage.
+      # Against "a workspace devDependency added to `server`" it stays GREEN — correctly,
+      # because the control-plane and adapter-manager build stages `COPY . .` and
+      # re-install non-prod, so a wider dev selection is absorbed by construction. It
+      # never PRINTS a divergence at all; its only passing output is the single line
+      # "split-image deps-stage parity: PASS". Treating it as coverage for a manifest
+      # edit is the mistake this comment exists to prevent.
+      #
+      # What it makes impossible is narrower: removing or `--prod`-ing an absorber that
+      # is load-bearing, narrowing a re-install below what the build line compiles, and
+      # a widening on an image whose build stage copies selectively (the worker). It
+      # builds NO image and reads NO lockfile. The only thing that can observe a
+      # manifest or lockfile change actually breaking an image build is a lane that
+      # builds one — this lane. Hence the entries below.
+      #
+      # Cost, stated rather than hidden: this fires the 45-minute lane on any manifest
+      # or lockfile edit, and `cancel-in-progress: false` means those queue. That is
+      # the deliberate trade — the alternative is the state above, where the one class
+      # of commit that breaks these builds is the one class the lane cannot observe.
+      - "package.json"
+      - "**/package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tests/d1/**"
+      - "scripts/check-d1-compose.mjs"
+      - "scripts/collect-d1-evidence.mjs"
+      - "scripts/check-ci-lanes.mjs"
+      - "scripts/lib/d1-compose-invariants.mjs"
+      - "scripts/lib/d1-evidence-bundle.mjs"
+      - "scripts/lib/image-admission.mjs"
+      - "scripts/lib/ci-lanes.mjs"
+
+concurrency:
+  group: d1-merge-train-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  d1-merge-train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      COMPOSE_FILE_PATH: docker-compose.d1.yml
+      EVIDENCE_DIR: ${{ github.workspace }}/d1-evidence
+      # DEP-001 admission: the compose stack pins images by digest via these vars.
+      # The build step below populates docker/d1/.env. This lane does NOT verify
+      # admission, and until REL-004 nothing else did either — the verifier this
+      # comment used to delegate to had no caller anywhere. The REL-004 gate
+      # (scripts/check-release-admission.mjs) now runs on every PR; wiring it to
+      # THIS lane is not meaningful, because the lane signs and verifies images it
+      # built itself, which proves nothing about approval.
+      AOA_D1_FAKE_PROVIDER_IMAGE: aoa-d1-fake-provider:merge-train
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Static topology preflight (fail fast before bring-up)
+        run: |
+          node scripts/check-d1-compose.mjs
+          node scripts/check-ci-lanes.mjs
+
+      - name: Enable Docker containerd image store (attestation + --load)
+        run: |
+          # docker/images/build.sh (DEP-001) builds with `--provenance --sbom --load`.
+          # The runner's default docker image store rejects that ("Attestation is not
+          # supported for the docker driver") and cannot --load an attestation-carrying
+          # OCI index. Enabling the containerd snapshotter lets the default builder both
+          # PRODUCE the provenance/SBOM attestations (E6F-06 evidence) AND load the
+          # result locally for docker-compose.d1.yml. No image contract is weakened.
+          sudo mkdir -p /etc/docker
+          printf '%s\n' '{ "features": { "containerd-snapshotter": true } }' | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+          for _ in $(seq 1 30); do docker info >/dev/null 2>&1 && break; sleep 1; done
+          docker info --format 'image store driver: {{ .DriverStatus }}'
+
+      - name: Build split D1 images
+        run: |
+          set -euo pipefail
+          # Least-privilege split images (DEP-001) + the fixture-driven fake provider.
+          # build.sh builds control-plane + worker into the local image store and records
+          # their exact tags in docker/images/digests.env.
+          bash docker/images/build.sh
+          docker build -f docker/d1/fake-provider.Dockerfile -t "$AOA_D1_FAKE_PROVIDER_IMAGE" .
+          # Point the compose services at the just-built LOCAL tags. Without this, compose
+          # falls back to the :d1-local-unbuilt defaults for control-plane/worker and tries
+          # to PULL images that were never pushed ("pull access denied for aoa-worker").
+          CP_TAG="$(grep -E '^CONTROL-PLANE_IMAGE=' docker/images/digests.env | cut -d= -f2-)"
+          WK_TAG="$(grep -E '^WORKER_IMAGE=' docker/images/digests.env | cut -d= -f2-)"
+          test -n "$CP_TAG" && test -n "$WK_TAG"
+          {
+            echo "AOA_D1_CONTROL_PLANE_IMAGE=${CP_TAG}"
+            echo "AOA_D1_WORKER_IMAGE=${WK_TAG}"
+          } >> "$GITHUB_ENV"
+          echo "control-plane image: ${CP_TAG}"
+          echo "worker image:        ${WK_TAG}"
+          mkdir -p docker/d1
+          {
+            echo "AOA_D1_FAKE_PROVIDER_IMAGE=${AOA_D1_FAKE_PROVIDER_IMAGE}"
+            echo "AOA_D1_CONTROL_PLANE_IMAGE=${CP_TAG}"
+            echo "AOA_D1_WORKER_IMAGE=${WK_TAG}"
+          } > docker/d1/.env
+
+      - name: Least-privilege assertions on the BUILT images (DEP-001 / WRK-009)
+        run: |
+          set -euo pipefail
+          # WRK-009 — this file asserts, against the images just built above, that the
+          # worker ships NO fabricating test-double provider and no test tree of our own.
+          #
+          # It had NO CI INVOCATION ANYWHERE until this step. `pr.yml` runs only the
+          # STATIC `dockerfile-static.test.mjs` and says the built-image lane "is wired
+          # by DEP-004's image lane" — which does not exist. This job is the only place
+          # in the repo that has a Docker daemon AND both images built, so the
+          # assertions belong here.
+          #
+          # Proof they had never run: the control-plane half read `CONTROL_PLANE_IMAGE`
+          # while build.sh emits `CONTROL-PLANE_IMAGE`, so it would have crashed on
+          # `docker inspect undefined` the very first time it executed. A latent
+          # never-triggered crash IS the evidence of non-execution.
+          # NOT wired here: image-startup-smoke.test.mjs. It has never run either and
+          # carries two defects of its own (the same key-parser bug, plus a `--tmpfs
+          # /worker` that lands root-owned over the Dockerfile's `chown node:node`, so a
+          # non-root worker cannot write its state dir). D1 itself is unaffected — it
+          # mounts the NAMED VOLUME `d1-worker-a-state:/worker`, which Docker initialises
+          # from the image and which therefore keeps that ownership. Fixing the test's
+          # mount semantics is its own ticket; wiring it red here would say the worker
+          # image is broken when it is not.
+          AOA_DEP001_IMAGE_TEST=1 node --test docker/images/__tests__/image-contents.test.mjs
+
+      - name: Bring up the D1 stack
+        run: docker compose -f "$COMPOSE_FILE_PATH" up -d --wait --wait-timeout 300
+
+      - name: Run the E6F campaign (live)
+        env:
+          AOA_D1_LIVE: "1"
+        run: |
+          set -euo pipefail
+          # Scope selector (committed + path-triggered): `bounded` = the smoke +
+          # network-denial subset; `foundation` = the full E6F-01..07 gate campaign
+          # (bounded subset + every authored tests/d1/e6f-*.test.mjs). Bump
+          # docker/d1/campaign.env to switch scope and re-trigger this lane.
+          CAMPAIGN="bounded"
+          if [ -f docker/d1/campaign.env ]; then
+            # shellcheck disable=SC1091
+            . docker/d1/campaign.env
+          fi
+          CAMPAIGN="${AOA_D1_CAMPAIGN:-$CAMPAIGN}"
+          echo "E6F campaign scope: ${CAMPAIGN}"
+          # BOUNDED: the topology network-denial proofs (E6F-05) + one fixture-driven
+          # fake-provider job (E6F-03) — the full submit -> placement -> lease ->
+          # execute -> event path end to end.
+          # WRK-017 adds container-enrol to BOUNDED, not to the e6f-* set, deliberately: it
+          # must run in EVERY scope (a scope selector is exactly the kind of thing that
+          # quietly stops running a check), and an `e6f-` name would run it twice under
+          # `foundation`. Note the bring-up above is already the primary gate — a failed
+          # first enrol is proc.exit(1) with no restart policy, so `up --wait` dies before
+          # this line. These assertions add what a dead container cannot report.
+          BOUNDED="tests/d1/network-denial.test.mjs tests/d1/fake-provider-job.test.mjs tests/d1/container-enrol.test.mjs"
+          # --test-concurrency=1: the E6F files all drive the SAME live control-plane +
+          # DB, so running them in parallel (node --test's default) makes them compete
+          # for the shared stack. E6F-01's 100-race drain asserts "never 5xx", but a
+          # concurrent file's load can push the control-plane into a retryable 503
+          # (internal_unavailable) backpressure response — a cross-test contention flake,
+          # not a lease-race defect. Serial execution makes the live campaign deterministic
+          # (each scenario gets the stack to itself); the per-file docker-exec cost already
+          # dominates, so the wall-clock impact is small.
+          if [ "${CAMPAIGN}" = "foundation" ]; then
+            node --test --test-concurrency=1 ${BOUNDED} tests/d1/e6f-*.test.mjs
+          else
+            node --test --test-concurrency=1 ${BOUNDED}
+          fi
+
+      - name: Collect distributed evidence (on failure)
+        if: failure()
+        run: >-
+          node scripts/collect-d1-evidence.mjs
+          --compose "$COMPOSE_FILE_PATH"
+          --out "$EVIDENCE_DIR"
+          --run-id "${{ github.run_id }}"
+          --reason "d1-merge-train failure on ${{ github.sha }}"
+
+      - name: Upload retained evidence bundle (on failure)
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: d1-merge-train-evidence-${{ github.run_id }}
+          path: ${{ env.EVIDENCE_DIR }}/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Tear down the D1 stack
+        if: always()
+        run: docker compose -f "$COMPOSE_FILE_PATH" down -v --remove-orphans || true

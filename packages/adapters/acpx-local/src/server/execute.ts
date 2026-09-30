@@ -12,27 +12,27 @@ import {
   adapterExecutionTargetSessionIdentity,
 } from "@armyofagents/adapter-utils/execution-target";
 import {
-  DEFAULT_AOA_AGENT_PROMPT_TEMPLATE,
-  applyAoaWorkspaceEnv,
+  DEFAULT_PAPERCLIP_AGENT_PROMPT_TEMPLATE,
+  applyPaperclipWorkspaceEnv,
   asNumber,
   asString,
   buildInvocationEnvForLogs,
-  buildAoaEnv,
+  buildPaperclipEnv,
   ensureAbsoluteDirectory,
   ensurePathInEnv,
   joinPromptSections,
-  materializeAoaSkillCopy,
+  materializePaperclipSkillCopy,
   parseObject,
-  readAoaRuntimeSkillEntries,
-  readAoaIssueWorkModeFromContext,
-  renderAoaWakePrompt,
+  readPaperclipRuntimeSkillEntries,
+  readPaperclipIssueWorkModeFromContext,
+  renderPaperclipWakePrompt,
   renderTemplate,
-  resolveAoaInstanceRootForAdapter,
-  resolveAoaDesiredSkillNames,
+  resolvePaperclipInstanceRootForAdapter,
+  resolvePaperclipDesiredSkillNames,
   rewriteWorkspaceCwdEnvVarsForExecution,
-  shapeAoaWorkspaceContextForExecution,
-  stringifyAoaWakePayload,
-  type AoaSkillEntry,
+  shapePaperclipWorkspaceEnvForExecution,
+  stringifyPaperclipWakePayload,
+  type PaperclipSkillEntry,
 } from "@armyofagents/adapter-utils/server-utils";
 import { shellQuote } from "@armyofagents/adapter-utils";
 import {
@@ -59,7 +59,7 @@ import {
 
 const __moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const WRAPPER_CLEANUP_RETENTION_MS = 15 * 60 * 1000;
-const AOA_MANAGED_CODEX_SKILLS_MANIFEST = ".aoa-managed-skills.json";
+const PAPERCLIP_MANAGED_CODEX_SKILLS_MANIFEST = ".paperclip-managed-skills.json";
 
 type AcpxRuntimeFactory = (options: AcpRuntimeOptions) => AcpRuntime;
 
@@ -101,7 +101,7 @@ interface AcpxPreparedRuntime {
   skillPromptInstructions: string;
   skillsIdentity: Record<string, unknown>;
   childStderrLogPath: string | null;
-  aoaClaudeSettings: AoaClaudeSettingsResult | null;
+  paperclipClaudeSettings: PaperclipClaudeSettingsResult | null;
 }
 
 const defaultWarmHandles = new Map<string, RuntimeCacheEntry>();
@@ -121,21 +121,21 @@ function shortHash(value: unknown): string {
   return createHash("sha256").update(stableJson(value)).digest("hex").slice(0, 16);
 }
 
-function defaultAoaInstanceDir(): string {
-  const home = process.env.AOA_HOME?.trim() || path.join(os.homedir(), ".aoa");
-  const instanceId = process.env.AOA_INSTANCE_ID?.trim() || "default";
-  return resolveAoaInstanceRootForAdapter({
+function defaultPaperclipInstanceDir(): string {
+  const home = process.env.PAPERCLIP_HOME?.trim() || path.join(os.homedir(), ".paperclip");
+  const instanceId = process.env.PAPERCLIP_INSTANCE_ID?.trim() || "default";
+  return resolvePaperclipInstanceRootForAdapter({
     homeDir: home,
     instanceId,
   });
 }
 
 function defaultStateDir(companyId: string, agentId: string): string {
-  return path.join(defaultAoaInstanceDir(), "companies", companyId, "acpx-local", "agents", agentId);
+  return path.join(defaultPaperclipInstanceDir(), "companies", companyId, "acpx-local", "agents", agentId);
 }
 
 function resolveManagedCodexHomeDir(companyId: string): string {
-  return path.join(defaultAoaInstanceDir(), "companies", companyId, "codex-home");
+  return path.join(defaultPaperclipInstanceDir(), "companies", companyId, "codex-home");
 }
 
 function packageRootDir(): string {
@@ -238,7 +238,7 @@ async function prepareManagedCodexHome(input: {
 
   await onLog(
     "stdout",
-    `[aoa] Using AoA-managed ACPX Codex home "${targetHome}" (seeded from "${sourceHome}").\n`,
+    `[aoa] Using Paperclip-managed ACPX Codex home "${targetHome}" (seeded from "${sourceHome}").\n`,
   );
   return targetHome;
 }
@@ -284,11 +284,11 @@ async function hashPathContents(
 }
 
 async function buildSkillSetKey(input: {
-  skills: AoaSkillEntry[];
+  skills: PaperclipSkillEntry[];
   label: string;
 }): Promise<string> {
   const hash = createHash("sha256");
-  hash.update(`aoa-acpx-${input.label}-skills:v1\n`);
+  hash.update(`paperclip-acpx-${input.label}-skills:v1\n`);
   const sorted = [...input.skills].sort((left, right) => left.runtimeName.localeCompare(right.runtimeName));
   for (const entry of sorted) {
     hash.update(`skill:${entry.key}:${entry.runtimeName}\n`);
@@ -299,9 +299,9 @@ async function buildSkillSetKey(input: {
 
 async function resolveSelectedRuntimeSkills(
   config: Record<string, unknown>,
-): Promise<{ allSkills: AoaSkillEntry[]; selectedSkills: AoaSkillEntry[]; desiredSkillNames: string[] }> {
-  const allSkills = await readAoaRuntimeSkillEntries(config, __moduleDir);
-  const desiredSkillNames = resolveAoaDesiredSkillNames(config, allSkills);
+): Promise<{ allSkills: PaperclipSkillEntry[]; selectedSkills: PaperclipSkillEntry[]; desiredSkillNames: string[] }> {
+  const allSkills = await readPaperclipRuntimeSkillEntries(config, __moduleDir);
+  const desiredSkillNames = resolvePaperclipDesiredSkillNames(config, allSkills);
   const desiredSet = new Set(desiredSkillNames);
   return {
     allSkills,
@@ -328,7 +328,7 @@ async function prepareClaudeSkillRuntime(input: {
   for (const entry of selectedSkills) {
     const target = path.join(skillsHome, entry.runtimeName);
     try {
-      const result = await materializeAoaSkillCopy(entry.source, target);
+      const result = await materializePaperclipSkillCopy(entry.source, target);
       if (result.skippedSymlinks.length > 0) {
         await input.onLog(
           "stdout",
@@ -346,7 +346,7 @@ async function prepareClaudeSkillRuntime(input: {
   const selectedNames = selectedSkills.map((entry) => entry.runtimeName).sort();
   const promptInstructions = selectedSkills.length > 0
     ? [
-        "AoA has materialized selected runtime skills for this ACPX Claude session.",
+        "Paperclip has materialized selected runtime skills for this ACPX Claude session.",
         `Skill root: ${skillsHome}`,
         selectedNames.length > 0 ? `Selected skills: ${selectedNames.join(", ")}` : "",
         "When a task calls for one of these skills, read its SKILL.md from that root and follow it.",
@@ -363,13 +363,13 @@ async function prepareClaudeSkillRuntime(input: {
     },
     promptInstructions,
     commandNotes: selectedSkills.length > 0
-      ? [`Materialized ${selectedSkills.length} AoA skill(s) for ACPX Claude at ${skillsHome}.`]
+      ? [`Materialized ${selectedSkills.length} Paperclip skill(s) for ACPX Claude at ${skillsHome}.`]
       : [],
   };
 }
 
 async function readManagedCodexSkillsManifest(skillsHome: string): Promise<Set<string>> {
-  const manifestPath = path.join(skillsHome, AOA_MANAGED_CODEX_SKILLS_MANIFEST);
+  const manifestPath = path.join(skillsHome, PAPERCLIP_MANAGED_CODEX_SKILLS_MANIFEST);
   try {
     const raw = JSON.parse(await fs.readFile(manifestPath, "utf8")) as unknown;
     const parsed = parseObject(raw);
@@ -385,7 +385,7 @@ async function readManagedCodexSkillsManifest(skillsHome: string): Promise<Set<s
 async function writeManagedCodexSkillsManifest(skillsHome: string, skillNames: Iterable<string>): Promise<void> {
   const managedSkillNames = Array.from(new Set(skillNames)).sort();
   await fs.writeFile(
-    path.join(skillsHome, AOA_MANAGED_CODEX_SKILLS_MANIFEST),
+    path.join(skillsHome, PAPERCLIP_MANAGED_CODEX_SKILLS_MANIFEST),
     `${JSON.stringify({ version: 1, managedSkillNames }, null, 2)}\n`,
     "utf8",
   );
@@ -400,8 +400,8 @@ async function removeSkillTarget(target: string): Promise<boolean> {
 
 async function reconcileManagedCodexSkills(input: {
   skillsHome: string;
-  allSkills: AoaSkillEntry[];
-  selectedSkills: AoaSkillEntry[];
+  allSkills: PaperclipSkillEntry[];
+  selectedSkills: PaperclipSkillEntry[];
   onLog: AdapterExecutionContext["onLog"];
 }): Promise<void> {
   const desired = new Set(input.selectedSkills.map((entry) => entry.runtimeName));
@@ -474,7 +474,7 @@ async function prepareCodexSkillRuntime(input: {
   for (const entry of selectedSkills) {
     const target = path.join(skillsHome, entry.runtimeName);
     try {
-      const result = await materializeAoaSkillCopy(entry.source, target);
+      const result = await materializePaperclipSkillCopy(entry.source, target);
       if (result.skippedSymlinks.length > 0) {
         await input.onLog(
           "stdout",
@@ -572,7 +572,7 @@ function buildSessionParams(input: {
   };
 }
 
-interface AoaClaudeSettingsResult {
+interface PaperclipClaudeSettingsResult {
   filePath: string;
   allow: string[];
   additionalDirectories: string[];
@@ -589,28 +589,28 @@ function uniqueSorted(values: Array<string | null | undefined>): string[] {
 // `.claude/settings.local.json` we override the user's potentially-restrictive
 // `~/.claude/settings.json` (e.g. `defaultMode: "dontAsk"`, which silently
 // denies every non-allowlisted tool and never reaches `canUseTool`), and we
-// widen the SDK's Read sandbox to include the AoA state dirs the agent
+// widen the SDK's Read sandbox to include the Paperclip state dirs the agent
 // needs to talk to its own control plane.
-async function writeAoaClaudeSettings(input: {
+async function writePaperclipClaudeSettings(input: {
   cwd: string;
   stateDir: string;
   agentHome: string;
   companyId: string;
-}): Promise<AoaClaudeSettingsResult> {
+}): Promise<PaperclipClaudeSettingsResult> {
   const filePath = path.join(input.cwd, ".claude", "settings.local.json");
-  const instanceRoot = defaultAoaInstanceDir();
+  const instanceRoot = defaultPaperclipInstanceDir();
   const companyRoot = path.join(instanceRoot, "companies", input.companyId);
-  const aoaAdditionalDirectories = uniqueSorted([
+  const paperclipAdditionalDirectories = uniqueSorted([
     input.stateDir,
     input.agentHome,
     companyRoot,
   ]);
-  const aoaAllow = uniqueSorted([
+  const paperclipAllow = uniqueSorted([
     "Bash(curl:*)",
     "Bash(env:*)",
     "Bash(env)",
-    `Bash(${input.cwd}/scripts/aoa-issue-update.sh:*)`,
-    `Bash(${input.cwd}/scripts/aoa:*)`,
+    `Bash(${input.cwd}/scripts/paperclip-issue-update.sh:*)`,
+    `Bash(${input.cwd}/scripts/paperclip:*)`,
   ]);
 
   let existing: Record<string, unknown> = {};
@@ -633,10 +633,10 @@ async function writeAoaClaudeSettings(input: {
   const existingAdditionalDirectories = Array.isArray(existingPerms.additionalDirectories)
     ? (existingPerms.additionalDirectories as unknown[]).filter((value): value is string => typeof value === "string")
     : [];
-  const mergedAllow = uniqueSorted([...existingAllow, ...aoaAllow]);
+  const mergedAllow = uniqueSorted([...existingAllow, ...paperclipAllow]);
   const mergedAdditionalDirectories = uniqueSorted([
     ...existingAdditionalDirectories,
-    ...aoaAdditionalDirectories,
+    ...paperclipAdditionalDirectories,
   ]);
   const existingDefaultMode =
     typeof existingPerms.defaultMode === "string" ? (existingPerms.defaultMode as string) : "";
@@ -696,9 +696,9 @@ async function writeAgentWrapper(input: {
     "  set +a",
     "fi",
     `stderr_dir=${shellQuote(input.childStderrDir)}`,
-    "if [[ -n \"${AOA_RUN_ID:-}\" ]]; then",
+    "if [[ -n \"${PAPERCLIP_RUN_ID:-}\" ]]; then",
     "  mkdir -p \"$stderr_dir\"",
-    "  exec 2> >(tee -a \"$stderr_dir/$AOA_RUN_ID.log\" >&2)",
+    "  exec 2> >(tee -a \"$stderr_dir/$PAPERCLIP_RUN_ID.log\" >&2)",
     "fi",
     `exec ${input.agentCommandShell} "$@"`,
     "",
@@ -739,7 +739,7 @@ async function buildRuntime(input: {
   ctx: AdapterExecutionContext;
 }): Promise<AcpxPreparedRuntime> {
   const { runId, agent, config, context, authToken } = input.ctx;
-  const workspaceContext = parseObject(context.aoaWorkspace);
+  const workspaceContext = parseObject(context.paperclipWorkspace);
   const workspaceCwd = asString(workspaceContext.cwd, "");
   const workspaceSource = asString(workspaceContext.source, "");
   const workspaceStrategy = asString(workspaceContext.strategy, "");
@@ -759,7 +759,7 @@ async function buildRuntime(input: {
   const remoteExecutionIdentity = adapterExecutionTargetSessionIdentity(executionTarget);
   const effectiveExecutionCwd = adapterExecutionTargetRemoteCwd(executionTarget, cwd);
   const executionTargetIsRemote = adapterExecutionTargetIsRemote(executionTarget);
-  const shapedWorkspaceEnv = shapeAoaWorkspaceContextForExecution({
+  const shapedWorkspaceEnv = shapePaperclipWorkspaceEnvForExecution({
     workspaceCwd: effectiveWorkspaceCwd,
     workspaceWorktreePath,
     executionTargetIsRemote,
@@ -780,8 +780,8 @@ async function buildRuntime(input: {
 
   const envConfig = parseObject(config.env);
   const hasExplicitApiKey =
-    typeof envConfig.AOA_API_KEY === "string" && envConfig.AOA_API_KEY.trim().length > 0;
-  const env: Record<string, string> = { ...buildAoaEnv(agent), AOA_RUN_ID: runId };
+    typeof envConfig.PAPERCLIP_API_KEY === "string" && envConfig.PAPERCLIP_API_KEY.trim().length > 0;
+  const env: Record<string, string> = { ...buildPaperclipEnv(agent), PAPERCLIP_RUN_ID: runId };
   const wakeTaskId =
     (typeof context.taskId === "string" && context.taskId.trim()) ||
     (typeof context.issueId === "string" && context.issueId.trim()) ||
@@ -796,17 +796,17 @@ async function buildRuntime(input: {
   const linkedIssueIds = Array.isArray(context.issueIds)
     ? context.issueIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
     : [];
-  const wakePayloadJson = stringifyAoaWakePayload(context.aoaWake);
-  const issueWorkMode = readAoaIssueWorkModeFromContext(context);
-  if (wakeTaskId) env.AOA_TASK_ID = wakeTaskId;
-  if (issueWorkMode) env.AOA_ISSUE_WORK_MODE = issueWorkMode;
-  if (wakeReason) env.AOA_WAKE_REASON = wakeReason;
-  if (wakeCommentId) env.AOA_WAKE_COMMENT_ID = wakeCommentId;
-  if (approvalId) env.AOA_APPROVAL_ID = approvalId;
-  if (approvalStatus) env.AOA_APPROVAL_STATUS = approvalStatus;
-  if (linkedIssueIds.length > 0) env.AOA_LINKED_ISSUE_IDS = linkedIssueIds.join(",");
-  if (wakePayloadJson) env.AOA_WAKE_PAYLOAD_JSON = wakePayloadJson;
-  applyAoaWorkspaceEnv(env, {
+  const wakePayloadJson = stringifyPaperclipWakePayload(context.paperclipWake);
+  const issueWorkMode = readPaperclipIssueWorkModeFromContext(context);
+  if (wakeTaskId) env.PAPERCLIP_TASK_ID = wakeTaskId;
+  if (issueWorkMode) env.PAPERCLIP_ISSUE_WORK_MODE = issueWorkMode;
+  if (wakeReason) env.PAPERCLIP_WAKE_REASON = wakeReason;
+  if (wakeCommentId) env.PAPERCLIP_WAKE_COMMENT_ID = wakeCommentId;
+  if (approvalId) env.PAPERCLIP_APPROVAL_ID = approvalId;
+  if (approvalStatus) env.PAPERCLIP_APPROVAL_STATUS = approvalStatus;
+  if (linkedIssueIds.length > 0) env.PAPERCLIP_LINKED_ISSUE_IDS = linkedIssueIds.join(",");
+  if (wakePayloadJson) env.PAPERCLIP_WAKE_PAYLOAD_JSON = wakePayloadJson;
+  applyPaperclipWorkspaceEnv(env, {
     workspaceCwd: shapedWorkspaceEnv.workspaceCwd,
     workspaceSource,
     workspaceStrategy,
@@ -826,7 +826,7 @@ async function buildRuntime(input: {
   for (const [key, value] of Object.entries(shapedEnvConfig)) {
     if (typeof value === "string") env[key] = value;
   }
-  if (!hasExplicitApiKey && authToken) env.AOA_API_KEY = authToken;
+  if (!hasExplicitApiKey && authToken) env.PAPERCLIP_API_KEY = authToken;
   // For the claude agent, set model via ANTHROPIC_MODEL at startup rather than
   // via session/set_config_option — the ACP server's set_config_option handler
   // validates the value against its internal available-models list and rejects
@@ -840,7 +840,7 @@ async function buildRuntime(input: {
   let skillPromptInstructions = "";
   let skillsIdentity: Record<string, unknown> = { mode: "unsupported" };
   const skillCommandNotes: string[] = [];
-  let aoaClaudeSettings: AoaClaudeSettingsResult | null = null;
+  let paperclipClaudeSettings: PaperclipClaudeSettingsResult | null = null;
   if (acpxAgent === "claude") {
     const preparedSkills = await prepareClaudeSkillRuntime({
       stateDir,
@@ -850,16 +850,16 @@ async function buildRuntime(input: {
     skillPromptInstructions = preparedSkills.promptInstructions;
     skillsIdentity = preparedSkills.identity;
     skillCommandNotes.push(...preparedSkills.commandNotes);
-    aoaClaudeSettings = await writeAoaClaudeSettings({
+    paperclipClaudeSettings = await writePaperclipClaudeSettings({
       cwd,
       stateDir,
       agentHome,
       companyId: agent.companyId,
     });
     skillCommandNotes.push(
-      `Wrote AoA-managed Claude settings to ${aoaClaudeSettings.filePath} (defaultMode=${aoaClaudeSettings.defaultMode}${
-        aoaClaudeSettings.overrodeDontAsk ? "; overrode user dontAsk" : ""
-      }, +${aoaClaudeSettings.additionalDirectories.length} read root(s), +${aoaClaudeSettings.allow.length} allow rule(s)).`,
+      `Wrote Paperclip-managed Claude settings to ${paperclipClaudeSettings.filePath} (defaultMode=${paperclipClaudeSettings.defaultMode}${
+        paperclipClaudeSettings.overrodeDontAsk ? "; overrode user dontAsk" : ""
+      }, +${paperclipClaudeSettings.additionalDirectories.length} read root(s), +${paperclipClaudeSettings.allow.length} allow rule(s)).`,
     );
   } else if (acpxAgent === "codex") {
     const preparedSkills = await prepareCodexSkillRuntime({
@@ -871,10 +871,10 @@ async function buildRuntime(input: {
     skillsIdentity = preparedSkills.identity;
     skillCommandNotes.push(...preparedSkills.commandNotes);
   } else {
-    const desired = resolveAoaDesiredSkillNames(config, await readAoaRuntimeSkillEntries(config, __moduleDir));
+    const desired = resolvePaperclipDesiredSkillNames(config, await readPaperclipRuntimeSkillEntries(config, __moduleDir));
     skillsIdentity = { mode: "custom_unsupported", desiredSkillNames: desired };
     if (desired.length > 0) {
-      skillCommandNotes.push("Selected AoA skills are tracked only; ACPX custom commands do not expose a runtime skill contract yet.");
+      skillCommandNotes.push("Selected Paperclip skills are tracked only; ACPX custom commands do not expose a runtime skill contract yet.");
     }
   }
 
@@ -909,16 +909,16 @@ async function buildRuntime(input: {
     remoteExecutionIdentity,
     skillsIdentity,
     skillPromptInstructions,
-    aoaClaudeSettings: aoaClaudeSettings
+    paperclipClaudeSettings: paperclipClaudeSettings
       ? {
-          allow: aoaClaudeSettings.allow,
-          additionalDirectories: aoaClaudeSettings.additionalDirectories,
-          defaultMode: aoaClaudeSettings.defaultMode,
+          allow: paperclipClaudeSettings.allow,
+          additionalDirectories: paperclipClaudeSettings.additionalDirectories,
+          defaultMode: paperclipClaudeSettings.defaultMode,
         }
       : null,
   });
   const taskKey = asString(input.ctx.runtime.taskKey, "") || wakeTaskId || workspaceId || "default";
-  const sessionKey = `aoa:${agent.companyId}:${agent.id}:${taskKey}:${fingerprint}`;
+  const sessionKey = `paperclip:${agent.companyId}:${agent.id}:${taskKey}:${fingerprint}`;
   const runtimeEnv = ensurePathInEnv({ ...process.env, ...env });
   const loggedEnv = buildInvocationEnvForLogs(env, {
     runtimeEnv,
@@ -953,7 +953,7 @@ async function buildRuntime(input: {
       commandNotes: skillCommandNotes,
     },
     childStderrLogPath,
-    aoaClaudeSettings,
+    paperclipClaudeSettings,
   };
 }
 
@@ -1013,7 +1013,7 @@ async function buildPrompt(ctx: AdapterExecutionContext, resumedSession: boolean
   commandNotes: string[];
 }> {
   const { agent, runId, config, context, onLog } = ctx;
-  const promptTemplate = asString(config.promptTemplate, DEFAULT_AOA_AGENT_PROMPT_TEMPLATE);
+  const promptTemplate = asString(config.promptTemplate, DEFAULT_PAPERCLIP_AGENT_PROMPT_TEMPLATE);
   const instructionsFilePath = asString(config.instructionsFilePath, "").trim();
   const instructionsDir = instructionsFilePath ? `${path.dirname(instructionsFilePath)}/` : "";
   let instructionsPrefix = "";
@@ -1053,12 +1053,12 @@ async function buildPrompt(ctx: AdapterExecutionContext, resumedSession: boolean
     !resumedSession && bootstrapPromptTemplate.trim().length > 0
       ? renderTemplate(bootstrapPromptTemplate, templateData).trim()
       : "";
-  const wakePrompt = renderAoaWakePrompt(context.aoaWake, { resumedSession });
+  const wakePrompt = renderPaperclipWakePrompt(context.paperclipWake, { resumedSession });
   const shouldUseResumeDeltaPrompt = resumedSession && wakePrompt.length > 0;
   const promptInstructionsPrefix = shouldUseResumeDeltaPrompt ? "" : instructionsPrefix;
   const renderedPrompt = shouldUseResumeDeltaPrompt ? "" : renderTemplate(promptTemplate, templateData);
-  const sessionHandoffNote = asString(context.aoaSessionHandoffMarkdown, "").trim();
-  const taskContextNote = asString(context.aoaTaskMarkdown, "").trim();
+  const sessionHandoffNote = asString(context.paperclipSessionHandoffMarkdown, "").trim();
+  const taskContextNote = asString(context.paperclipTaskMarkdown, "").trim();
   const prompt = joinPromptSections([
     promptInstructionsPrefix,
     renderedBootstrapPrompt,
@@ -1307,7 +1307,7 @@ async function cleanupIdleHandles(input: {
       handles: input.handles,
       key,
       entry,
-      reason: "aoa idle cleanup",
+      reason: "paperclip idle cleanup",
     });
   }
 }
@@ -1360,7 +1360,7 @@ function scheduleIdleHandleCleanup(input: {
         handles: input.handles,
         key: input.key,
         entry: input.entry,
-        reason: "aoa idle cleanup",
+        reason: "paperclip idle cleanup",
       });
     })();
   }, delayMs);
@@ -1513,7 +1513,7 @@ export function createAcpxLocalExecutor(deps: ExecuteDeps = {}) {
       });
       await runtime.close({
         handle: sessionHandle,
-        reason: "aoa config cleanup",
+        reason: "paperclip config cleanup",
         discardPersistentState: false,
       }).catch(() => {});
       const existing = warmHandles.get(prepared.sessionKey);
@@ -1561,7 +1561,7 @@ export function createAcpxLocalExecutor(deps: ExecuteDeps = {}) {
         command: prepared.agentCommand ?? prepared.acpxAgent,
         cwd: prepared.cwd,
         commandNotes: [
-          `ACPX runtime embedded in AoA with ${prepared.mode} session mode.`,
+          `ACPX runtime embedded in Paperclip with ${prepared.mode} session mode.`,
           `Effective ACPX permission mode: ${prepared.permissionMode}.`,
           ...(prepared.requestedModel
             ? [
@@ -1623,13 +1623,13 @@ export function createAcpxLocalExecutor(deps: ExecuteDeps = {}) {
             handles: warmHandles,
             key: prepared.sessionKey,
             entry: existing,
-            reason: timedOut ? "aoa timeout cleanup" : `aoa turn ${terminal.status}`,
+            reason: timedOut ? "paperclip timeout cleanup" : `paperclip turn ${terminal.status}`,
             discardPersistentState: terminal.status === "cancelled" || timedOut,
           });
         } else {
           await runtime.close({
             handle: sessionHandle,
-            reason: timedOut ? "aoa timeout cleanup" : `aoa turn ${terminal.status}`,
+            reason: timedOut ? "paperclip timeout cleanup" : `paperclip turn ${terminal.status}`,
             discardPersistentState: terminal.status === "cancelled" || timedOut,
           }).catch(() => {});
         }
@@ -1638,7 +1638,7 @@ export function createAcpxLocalExecutor(deps: ExecuteDeps = {}) {
         if (existing && !warmHandleMatches(existing, runtime, sessionHandle)) {
           await runtime.close({
             handle: sessionHandle,
-            reason: "aoa duplicate warm handle cleanup",
+            reason: "paperclip duplicate warm handle cleanup",
             discardPersistentState: false,
           }).catch(() => {});
         } else {
@@ -1664,12 +1664,12 @@ export function createAcpxLocalExecutor(deps: ExecuteDeps = {}) {
             handles: warmHandles,
             key: prepared.sessionKey,
             entry: existing,
-            reason: "aoa completed turn cleanup",
+            reason: "paperclip completed turn cleanup",
           });
         } else {
           await runtime.close({
             handle: sessionHandle,
-            reason: "aoa completed turn cleanup",
+            reason: "paperclip completed turn cleanup",
             discardPersistentState: false,
           }).catch(() => {});
         }
@@ -1719,7 +1719,7 @@ export function createAcpxLocalExecutor(deps: ExecuteDeps = {}) {
       if (cancel) await cancel(preEmitMessage).catch(() => {});
       await runtime.close({
         handle: sessionHandle,
-        reason: timedOut ? "aoa timeout cleanup" : "aoa error cleanup",
+        reason: timedOut ? "paperclip timeout cleanup" : "paperclip error cleanup",
         discardPersistentState: timedOut,
       }).catch(() => {});
       const existing = warmHandles.get(prepared.sessionKey);

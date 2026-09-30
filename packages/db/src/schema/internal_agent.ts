@@ -264,6 +264,9 @@ export const internalAgentMessages = pgTable(
     // the original turn instead of persisting a duplicate user message or
     // starting a second CLI run. Nullable: assistant/system/tool rows carry none.
     clientSubmissionId: text("client_submission_id"),
+    // Stable identity of the admitted payload. A repeated client submission id
+    // may replay only when this hash still matches the frozen intent.
+    submissionPayloadHash: text("submission_payload_hash"),
 
     // Explicit link from an assistant reply to the user message that triggered
     // it (PR #291 review). Replay must return THIS turn's reply, not simply the
@@ -391,6 +394,19 @@ export const internalAgentRuns = pgTable(
     // transcript could not be opened (or which predates T1) still exists.
     logStore: text("log_store"),
     logRef: text("log_ref"),
+
+    // MIG-006 — the durable distributed-execution handoff marker for a CREW run
+    // whose execution transferred to a worker attempt. Byte-identical to
+    // heartbeat_runs.ts's CLI-006 marker (execution_owner / distributed_job_id /
+    // distributed_attempt_id): `null` (every legacy run) means this process's
+    // adapter executed; 'distributed' means a worker attempt is the terminal
+    // authority and runAoaAgent SUPPRESSED its own adapter.execute. Must be durable
+    // (not in-process state) so a control-plane restart never re-dispatches a
+    // handed-off run, and so the crew terminal projector can bind the run to its
+    // attempt's evidence by (distributed_job_id, distributed_attempt_id).
+    executionOwner: text("execution_owner"),
+    distributedJobId: uuid("distributed_job_id"),
+    distributedAttemptId: uuid("distributed_attempt_id"),
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

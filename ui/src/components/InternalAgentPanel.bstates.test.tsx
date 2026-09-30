@@ -109,6 +109,7 @@ const streamState = vi.hoisted(() => ({
   impl: undefined as ((...args: unknown[]) => AsyncGenerator<unknown>) | undefined,
   calls: [] as unknown[][],
 }));
+const submissionOutcomeMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../api/internal-agent", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../api/internal-agent")>();
@@ -129,6 +130,7 @@ vi.mock("../api/internal-agent", async (importOriginal) => {
     commanderConversationsApi: {
       ...actual.commanderConversationsApi,
       list: vi.fn().mockResolvedValue({ conversations: [] }),
+      getSubmissionOutcome: submissionOutcomeMock,
     },
     conversationMessagesApi: {
       ...actual.conversationMessagesApi,
@@ -207,6 +209,8 @@ beforeEach(() => {
   streamState.impl = failingStream;
   streamState.calls = [];
   uploadFileMock.mockReset();
+  submissionOutcomeMock.mockReset();
+  submissionOutcomeMock.mockResolvedValue({ state: "not_found" });
   window.localStorage.clear();
 });
 
@@ -214,7 +218,7 @@ beforeEach(() => {
 
 describe("Commander composer — B-states (mock §5)", () => {
   it("raises the banner on send failure keeping the draft; Retry replays the IDENTICAL request incl. the same clientSubmissionId; retry-success clears", async () => {
-    renderPanel();
+    renderPanel({ conversationId: "11111111-1111-4111-8111-111111111111" });
     const box = typeInComposer("deploy the beta");
     sendViaEnter(box);
 
@@ -236,11 +240,30 @@ describe("Commander composer — B-states (mock §5)", () => {
       expect(screen.queryByTestId("composer-send-failed-banner")).not.toBeInTheDocument(),
     );
     expect(streamState.calls).toHaveLength(2);
+    expect(submissionOutcomeMock).toHaveBeenCalledWith(
+      "co-1",
+      "11111111-1111-4111-8111-111111111111",
+      first[7],
+    );
     const second = streamState.calls[1];
     expect(second[1]).toBe(first[1]);
     expect(second[7]).toBe(first[7]);
     // Retry-success clears the (non-diverged) draft.
     await waitFor(() => expect(composerInput().textContent).toBe(""));
+  });
+
+  it("observes an accepted canonical receipt and never posts the ambiguous send again", async () => {
+    renderPanel({ conversationId: "11111111-1111-4111-8111-111111111111" });
+    const box = typeInComposer("deploy exactly once");
+    sendViaEnter(box);
+    const banner = await screen.findByTestId("composer-send-failed-banner");
+    submissionOutcomeMock.mockResolvedValue({ state: "accepted", userMessageId: "message-1" });
+
+    fireEvent.click(within(banner).getByRole("button", { name: "Retry" }));
+
+    await waitFor(() => expect(screen.queryByTestId("composer-send-failed-banner")).not.toBeInTheDocument());
+    expect(streamState.calls).toHaveLength(1);
+    expect(composerInput().textContent).toBe("");
   });
 
   it("raises the failed-send banner on an SSE error event (stream ends normally, no throw) — round-3 #3", async () => {

@@ -39,4 +39,9 @@ describe("issuesApi", () => {
       "/companies/company-1/issues?responsibleUserId=user-1&taskScope=all",
     );
   });
+  it("observes a task comment submission with a read-only lookup", async () => {
+    get.mockResolvedValueOnce({ state: "not_found" });
+    await issuesApi.getCommentSubmissionOutcome("task-1", "submission/1");
+    expect(get).toHaveBeenCalledWith("/issues/task-1/comments/submissions/submission%2F1");
+  });
 });

@@ -11,7 +11,7 @@ the raw `AOA_POSTGRES_PASSWORD` straight into a URL string:
 
 ```yaml
 # docker-compose.yml:36
-DATABASE_URL: postgres://${AOA_POSTGRES_USER:-upstream}:${AOA_POSTGRES_PASSWORD:-upstream}@db:5432/${AOA_POSTGRES_DB:-upstream}
+DATABASE_URL: postgres://${AOA_POSTGRES_USER:-paperclip}:${AOA_POSTGRES_PASSWORD:-paperclip}@db:5432/${AOA_POSTGRES_DB:-paperclip}
 ```
 
 Meanwhile the `db` service sets `POSTGRES_PASSWORD` to the **literal** value, so Postgres
@@ -40,7 +40,7 @@ safe). Confirmed real via source inspection.
 
 - **Only one vulnerable site:** `docker-compose.yml:36`.
 - `docker-compose.research.yml` and the `docker/research/*.sh` scripts use hardcoded
-  `upstream:upstream` (no reserved chars) — safe by construction.
+  `paperclip:paperclip` (no reserved chars) — safe by construction.
 - `docker-compose.quickstart.yml` has **no external DB / no `DATABASE_URL`** (embedded
   Postgres) — no exposure.
 - The `psql` tools service uses `PGPASSWORD` (literal) — already correct.
@@ -108,11 +108,11 @@ export function buildDatabaseUrl({ user, password, db }) {
 - `databaseUrlFromEnv` returns **null when no `AOA_POSTGRES_PASSWORD` is set** — i.e. the
   embedded-postgres deployments (`docker-compose.quickstart.yml`, standalone `docker run`)
   that ship no `db` service. Only the multi-service `docker-compose.yml` injects
-  `AOA_POSTGRES_*` (password defaults to `upstream`), so only it assembles a URL. This
+  `AOA_POSTGRES_*` (password defaults to `paperclip`), so only it assembles a URL. This
   keeps the embedded paths on embedded postgres (fix for the second Codex P1 — an
   unconditional assembly would point them at a nonexistent `db:5432` and break boot).
 - CLI mode reads `AOA_POSTGRES_USER/PASSWORD/DB` with the current defaults
-  (`upstream` / `upstream` / `upstream`), prints the URL to stdout (nothing in embedded
+  (`paperclip` / `paperclip` / `paperclip`), prints the URL to stdout (nothing in embedded
   mode); on an invalid db name it prints the error to stderr and exits nonzero (fail-fast).
 - Only `user` and `password` are `encodeURIComponent`-ed; `db` is validated then placed
   literally; `db:5432` are hardcoded constants (revision D — no new `AOA_POSTGRES_HOST/PORT`
@@ -152,9 +152,9 @@ currently receives only `DATABASE_URL`, not the `AOA_POSTGRES_*` vars):
 # Empty by default so the entrypoint assembles it; a host-shell/.env DATABASE_URL
 # still propagates and wins (revision A — keeps override support).
 DATABASE_URL: ${DATABASE_URL:-}
-AOA_POSTGRES_USER: ${AOA_POSTGRES_USER:-upstream}
-AOA_POSTGRES_PASSWORD: ${AOA_POSTGRES_PASSWORD:-upstream}
-AOA_POSTGRES_DB: ${AOA_POSTGRES_DB:-upstream}
+AOA_POSTGRES_USER: ${AOA_POSTGRES_USER:-paperclip}
+AOA_POSTGRES_PASSWORD: ${AOA_POSTGRES_PASSWORD:-paperclip}
+AOA_POSTGRES_DB: ${AOA_POSTGRES_DB:-paperclip}
 ```
 
 - No `AOA_POSTGRES_HOST/PORT` (revision D — builder hardcodes `db:5432`).
@@ -184,7 +184,7 @@ volume requires `ALTER ROLE` or recreating the volume (initdb-time password is p
 ## Edge cases
 
 - **Explicit `DATABASE_URL`** → assembly skipped (research compose, advanced users).
-- **Empty password** → compose `:-upstream` default applies; script defaults to `upstream` for parity.
+- **Empty password** → compose `:-paperclip` default applies; script defaults to `paperclip` for parity.
 - **`%` in password** → `encodeURIComponent` → `%25` → postgres.js decodes back to `%` (no `URIError`).
 - **Existing volumes** → for previously-working (safe) passwords, assembled URL is
   byte-identical to the old raw URL, so `config.json` and env stay consistent; for

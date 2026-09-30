@@ -1,0 +1,513 @@
+name: aoa-d1
+
+# =============================================================================
+# DEP-002 — Isolated D1 distributed test harness compose topology.
+#
+# ADDITIVE + DORMANT: this stack is never brought up by any existing lane. It is
+# exercised only by the DEP-004 D1 merge-train on Linux/CI and by an operator
+# opting in locally. The existing docker-compose*.yml files are untouched.
+#
+# Network-segmentation matrix (plan §2.3; statically enforced by
+# scripts/check-d1-compose.mjs -> scripts/lib/d1-compose-invariants.mjs, and
+# live-proven by tests/d1/*.test.mjs on Linux/CI):
+#
+#   service        data-net  control-net  worker-net  provider-ctl-net
+#   postgres         X          -            -            -
+#   minio            X          X            X            -
+#   control-plane    X          X            X            X
+#   worker-a         -          X            X            X    (NOT data-net)
+#   worker-b         -          X            X            X    (NOT data-net)
+#   fake-provider    -          X            X            X
+#   toxiproxy        X          X            X            -    (in-path proxy)
+#   migrate          X          -            -            -    (privileged)
+#   test-runner      -          X            -            -
+#
+# The LOAD-BEARING invariant is: worker-a / worker-b are NOT attached to data-net,
+# so a worker's TCP connect to postgres:5432 is refused (network-denial test).
+#
+# Images: control-plane / worker / migrate consume DEP-001 admitted signed digests
+# injected via ${AOA_D1_CONTROL_PLANE_IMAGE} / ${AOA_D1_WORKER_IMAGE} (see
+# docker/d1/.env.example + docker/images/allowlist.json). They are NEVER hardcoded
+# in this file. The container build + admission verification is Linux/CI-only.
+# =============================================================================
+
+services:
+  # --- data tier -------------------------------------------------------------
+  postgres:
+    image: ${AOA_D1_POSTGRES_IMAGE:-pgvector/pgvector:pg18}
+    environment:
+      POSTGRES_USER: "aoa"
+      POSTGRES_PASSWORD: "aoa"
+      POSTGRES_DB: "aoa"
+      # PostgreSQL 18's official image moved the default PGDATA to a versioned path
+      # and added a safety check that EXITS when a volume is mounted at the legacy
+      # /var/lib/postgresql/data (docker-library/postgres#1259). Pin PGDATA back to the
+      # mounted path so the d1-postgres-data volume is used and the container starts.
+      PGDATA: "/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aoa -d aoa"]
+      interval: "3s"
+      timeout: "5s"
+      retries: 30
+    volumes:
+      - "d1-postgres-data:/var/lib/postgresql/data"
+    networks:
+      - data-net
+
+  minio:
+    image: ${AOA_D1_MINIO_IMAGE:-minio/minio:latest}
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: "aoa-d1"
+      MINIO_ROOT_PASSWORD: "aoa-d1-secret"
+    # DAT-002 slice-7 — MinIO serves HTTPS on :9000 when public.crt + private.key sit
+    # in /root/.minio/certs (MinIO auto-enables TLS). The frozen artifact grant `url`
+    # is strictly https (httpsUrlSchema), so the live presigned-PUT/GET round-trip
+    # REQUIRES MinIO-over-TLS. The cert is a COMMITTED throwaway CI-only self-signed
+    # cert (SAN=minio,toxiproxy,localhost,127.0.0.1); toxiproxy is L4 and forwards the
+    # opaque TLS bytes to minio:9000 unchanged. The bind is `:ro` (a named volume for
+    # certs is rejected by checkNoSharedRwVolume; a `.`-prefixed ro bind is allowed).
+    healthcheck:
+      # `-k` skips verification of the self-signed cert on the loopback health probe.
+      test: ["CMD-SHELL", "curl -fsSk https://127.0.0.1:9000/minio/health/live || exit 1"]
+      interval: "5s"
+      timeout: "5s"
+      retries: 30
+    volumes:
+      - "d1-minio-data:/data"
+      - "./docker/d1/certs:/root/.minio/certs:ro"
+    networks:
+      - data-net
+      - control-net
+      - worker-net
+
+  # --- proxy tier (in-path fault injection point) ----------------------------
+  toxiproxy:
+    image: ${AOA_D1_TOXIPROXY_IMAGE:-ghcr.io/shopify/toxiproxy:2.9.0}
+    command: ["-host", "0.0.0.0", "-config", "/toxiproxy.json"]
+    healthcheck:
+      test: ["CMD", "/toxiproxy-cli", "list"]
+      interval: "5s"
+      timeout: "3s"
+      retries: 30
+    volumes:
+      - "./docker/d1/toxiproxy.json:/toxiproxy.json:ro"
+    networks:
+      - data-net
+      - control-net
+      - worker-net
+
+  # --- privileged migration job (DEP-003) ------------------------------------
+  migrate:
+    image: ${AOA_D1_CONTROL_PLANE_IMAGE:-aoa-control-plane:d1-local-unbuilt}
+    # DEP-003: run-to-completion PRIVILEGED migration job. Overrides the control-plane
+    # image's app entrypoint to run docker/control-plane/migrate-entrypoint.sh (COPY'd
+    # to /usr/local/bin in docker/control-plane/Dockerfile): the idempotent, non-
+    # destructive schema migrate-job (packages/db/src/migrate-job.ts) THEN the
+    # operator-gated 0188 cutover preflight — both fail-closed under `set -eu`.
+    # `command: []` clears the image's inherited `node dist/index.js` CMD so NO app
+    # server starts here; control-plane is gated on this via
+    # `service_completed_successfully` below.
+    entrypoint: ["/usr/local/bin/migrate-entrypoint.sh"]
+    command: []
+    environment:
+      # Privileged migration role — DIRECT to postgres (NOT via toxiproxy), on
+      # data-net only. Distinct from the aoa_app serving role used by control-plane.
+      DATABASE_URL: "postgres://aoa:aoa@postgres:5432/aoa"
+      AOA_MIGRATION_ROLE: "aoa"
+      # D1 harness ONLY: after migrations, grant aoa_app / aoa_operator LOGIN (they
+      # are created NOLOGIN) so the control-plane can open its app + operator pools.
+      # Gated flag — inert on every non-D1 deploy path. Passwords MUST match the
+      # AOA_APP_DATABASE_URL / AOA_OPERATOR_DATABASE_URL on control-plane below.
+      AOA_D1_PROVISION_SERVING_ROLES: "1"
+      # WRK-017 — D1 harness ONLY: register worker-b's execution target and authorize the
+      # single-use enrolment code its committed ticket carries, so the real worker container
+      # can ENROL during "up --wait". It runs HERE and not from a compose-exec seed
+      # because a first-boot enrol failure is proc.exit(1) in the daemon and the workers have
+      # no restart policy, so a seed that runs after the stack is up is structurally too
+      # late. Gated flag; migrate-entrypoint.sh skips the step everywhere else.
+      AOA_D1_SEED_WORKER_ENROLMENT: "1"
+      AOA_D1_SEED_WORKER_PROFILE_FILE: "/seed-worker.profile.json"
+      AOA_D1_SEED_ENROLMENT_TICKET_FILE: "/seed-enrolment-ticket"
+    volumes:
+      # The SAME two committed files worker-b mounts, read-only. One artifact read twice is
+      # what makes the target id in the database, the target id in the ticket and the target
+      # id the worker profile declares provably the same string.
+      - "./docker/d1/worker-b.profile.json:/seed-worker.profile.json:ro"
+      - "./docker/d1/worker-b.enrollment-ticket:/seed-enrolment-ticket:ro"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - data-net
+
+  # --- control plane (1 replica) ---------------------------------------------
+  control-plane:
+    image: ${AOA_D1_CONTROL_PLANE_IMAGE:-aoa-control-plane:d1-local-unbuilt}
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3100"
+      AOA_DEPLOYMENT_MODE: "authenticated"
+      # authenticated mode validates the request Host header against an allowlist
+      # (health/liveness bypass it, but /api/worker-control/* does not). The E6F harness
+      # reaches the control plane by its in-compose service name, so allow it (plus loopback
+      # for the container healthcheck).
+      # ★ WRK-017 added `toxiproxy`, and the reason is a defect this comment used to conceal.
+      # It used to say the WORKERS also reach the control plane by its in-compose service
+      # name — they do NOT. `AOA_WORKER_CONTROL_PLANE_URL` is
+      # `http://toxiproxy:13100` (that routing is itself a load-bearing invariant,
+      # `checkToxiproxyInPath`), so a worker's HTTP `Host` header is literally `toxiproxy:13100`
+      # and `privateHostnameGuard` — enabled here, because this stack is
+      # `authenticated` + the image's default `AOA_DEPLOYMENT_EXPOSURE=private` — answered 403
+      # to every `/api/worker-control/*` request. Nothing ever caught it because until WRK-017
+      # no worker container issued a request: the E6F harness dials `http://control-plane:3100`
+      # from `test-runner`, which was in the allowlist all along.
+      AOA_ALLOWED_HOSTNAMES: "control-plane,toxiproxy,localhost,127.0.0.1"
+      AOA_DISTRIBUTED_EXECUTION_ENABLED: "true"
+      # DEP-005 — enables the dormant, unauthenticated test-only reaper trigger
+      # (POST /api/worker-control/_test/reap). Decoupled from the distributed-execution
+      # flag on purpose: it is set ONLY here in the D1 harness, never in any real
+      # deployment, so flipping distributed execution on in cloud_auth does not expose it.
+      AOA_D1_TEST_REAP_ENABLED: "1"
+      # control-plane <-> postgres is routed THROUGH toxiproxy (in-path link 1).
+      # This primary connection is the app's OWNER/privileged pool: index.ts passes
+      # it as `ownerDb: db` to openDistributedExecutionDatabases, which runs the
+      # migration-identity phase (SELECT FROM drizzle.__drizzle_migrations) and the
+      # owner-exclusive advisory lock on it as the "owner" participant. It MUST be the
+      # owner role (aoa) — the bounded aoa_app role is forbidden USAGE on the drizzle
+      # schema by assertExactServingRoleAuthority, so aoa_app here fails startup.
+      DATABASE_URL: "postgres://aoa:aoa@toxiproxy:15432/aoa"
+      # Distributed execution requires the app + operator pool URLs (FND-005
+      # assertHostedExecutionStartupSafe fails closed without them; the distributed
+      # path NEVER falls back to the owner pool). Both non-owner serving roles,
+      # routed through toxiproxy like the owner pool; credentials provisioned by the
+      # migrate job (AOA_D1_PROVISION_SERVING_ROLES above).
+      AOA_APP_DATABASE_URL: "postgres://aoa_app:aoa_app@toxiproxy:15432/aoa"
+      AOA_OPERATOR_DATABASE_URL: "postgres://aoa_operator:aoa_operator@toxiproxy:15432/aoa"
+      # authenticated mode refuses to boot without an auth provider + signing secret
+      # (better-auth.ts assertAuthProviderConfigured + resolveBetterAuthSigningSecret).
+      # THROWAWAY D1-harness values: the bounded campaign reaches the control-plane only
+      # via internal exec/health, never the OAuth sign-in flow, so these are never
+      # exercised. A real authenticated deploy sets real Google creds + a strong secret.
+      GOOGLE_CLIENT_ID: "d1-harness-google-client-id"
+      GOOGLE_CLIENT_SECRET: "d1-harness-google-client-secret"
+      BETTER_AUTH_SECRET: "d1-harness-better-auth-signing-secret-not-for-production"
+      # createApp fails closed without a >=32-byte key to sign worker session tokens when
+      # distributed worker control is mounted (app.ts:439). Throwaway D1-harness value; only
+      # the control-plane signs (workers receive opaque tokens), so it is not set on workers.
+      AOA_WORKER_SESSION_SIGNING_KEY: "d1-harness-worker-session-signing-key-0123456789abcdef"
+      # declared provider API (fake provider), reachable directly.
+      AOA_PROVIDER_API_URL: "http://fake-provider:8080"
+      # DAT-002 slice-7 — object-storage config. The control-plane reads AOA_STORAGE_S3_*
+      # (config.ts:158-183); the former AOA_S3_ENDPOINT was UNREAD and is renamed here.
+      # The INTERNAL endpoint (headObject/get/put) is https://minio:9000 (direct, cert
+      # SAN includes DNS:minio). The PRESIGN endpoint is the worker-facing https host the
+      # PUT/GET actually dials — toxiproxy:19000 — so the SigV4 signed Host matches the
+      # connected host; path-style keeps the Host literally `toxiproxy:19000`. Credentials
+      # flow via the SDK env chain (provider-registry passes none), so AWS_* = the MinIO
+      # root creds. NODE_EXTRA_CA_CERTS trusts the committed self-signed CA for the direct
+      # https client.
+      AOA_STORAGE_PROVIDER: "s3"
+      AOA_STORAGE_S3_ENDPOINT: "https://minio:9000"
+      AOA_STORAGE_S3_PRESIGN_ENDPOINT: "https://toxiproxy:19000"
+      AOA_STORAGE_S3_BUCKET: "aoa-artifacts"
+      AOA_STORAGE_S3_REGION: "us-east-1"
+      AOA_STORAGE_S3_FORCE_PATH_STYLE: "true"
+      AWS_ACCESS_KEY_ID: "aoa-d1"
+      AWS_SECRET_ACCESS_KEY: "aoa-d1-secret"
+      NODE_EXTRA_CA_CERTS: "/certs/ca.crt"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3100/api/health >/dev/null || exit 1"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    volumes:
+      - "d1-control-plane-state:/aoa"
+      # Trust the committed throwaway CA for the direct https S3 client (headObject/get/put).
+      - "./docker/d1/certs/public.crt:/certs/ca.crt:ro"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
+      toxiproxy:
+        condition: service_healthy
+    networks:
+      - data-net
+      - control-net
+      - worker-net
+      - provider-ctl-net
+
+  # --- control plane replica B (DEP-009 two-replica HA) ----------------------
+  # An INTERCHANGEABLE second replica over the SAME PostgreSQL + object store. It is a
+  # byte-faithful clone of `control-plane` that differs in EXACTLY two ways:
+  #   1. its OWN state volume `d1-control-plane-b-state` (a shared rw mount is rejected
+  #      by checkNoSharedRwVolume; the container-local /aoa scratch is never shared), and
+  #   2. `AOA_ALLOWED_HOSTNAMES` adds `control-plane-b` so worker-control requests reaching
+  #      it by its own service name pass the authenticated-mode Host check (health bypasses
+  #      it, so a missing entry is a silent live-only failure).
+  # EVERYTHING ELSE is identical: same image, same env (incl. the SAME
+  # AOA_WORKER_SESSION_SIGNING_KEY — the cross-replica session-portability premise: a
+  # session minted at one replica verifies at the other), the same 4 networks, the same
+  # migrate gate (migrate is a dedicated one-shot; control-plane-b runs NO migrations), the
+  # same DB proxy (both dial control-plane-to-postgres via toxiproxy:15432), and its own
+  # healthcheck. It DELIBERATELY does NOT `depends_on control-plane` — the replicas are
+  # independent, so cutting/stopping one must never gate the other (replica-loss correctness).
+  # Its worker link is independently cuttable via the per-replica toxiproxy proxy
+  # `worker-to-control-plane-b` (listen :13101 -> control-plane-b:3100).
+  control-plane-b:
+    image: ${AOA_D1_CONTROL_PLANE_IMAGE:-aoa-control-plane:d1-local-unbuilt}
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3100"
+      AOA_DEPLOYMENT_MODE: "authenticated"
+      # Adds `control-plane-b` to the base allowlist so worker-control requests that reach
+      # THIS replica by its own service name pass the authenticated-mode Host check.
+      # WRK-017 — `toxiproxy` for the same reason as replica A (see there): a worker dials
+      # `toxiproxy:13100`/`toxiproxy:13101`, so that is the Host the guard sees.
+      AOA_ALLOWED_HOSTNAMES: "control-plane,control-plane-b,toxiproxy,localhost,127.0.0.1"
+      AOA_DISTRIBUTED_EXECUTION_ENABLED: "true"
+      AOA_D1_TEST_REAP_ENABLED: "1"
+      DATABASE_URL: "postgres://aoa:aoa@toxiproxy:15432/aoa"
+      AOA_APP_DATABASE_URL: "postgres://aoa_app:aoa_app@toxiproxy:15432/aoa"
+      AOA_OPERATOR_DATABASE_URL: "postgres://aoa_operator:aoa_operator@toxiproxy:15432/aoa"
+      GOOGLE_CLIENT_ID: "d1-harness-google-client-id"
+      GOOGLE_CLIENT_SECRET: "d1-harness-google-client-secret"
+      BETTER_AUTH_SECRET: "d1-harness-better-auth-signing-secret-not-for-production"
+      # MUST match control-plane exactly — the cross-replica session-portability premise.
+      AOA_WORKER_SESSION_SIGNING_KEY: "d1-harness-worker-session-signing-key-0123456789abcdef"
+      AOA_PROVIDER_API_URL: "http://fake-provider:8080"
+      AOA_STORAGE_PROVIDER: "s3"
+      AOA_STORAGE_S3_ENDPOINT: "https://minio:9000"
+      AOA_STORAGE_S3_PRESIGN_ENDPOINT: "https://toxiproxy:19000"
+      AOA_STORAGE_S3_BUCKET: "aoa-artifacts"
+      AOA_STORAGE_S3_REGION: "us-east-1"
+      AOA_STORAGE_S3_FORCE_PATH_STYLE: "true"
+      AWS_ACCESS_KEY_ID: "aoa-d1"
+      AWS_SECRET_ACCESS_KEY: "aoa-d1-secret"
+      NODE_EXTRA_CA_CERTS: "/certs/ca.crt"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3100/api/health >/dev/null || exit 1"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    volumes:
+      - "d1-control-plane-b-state:/aoa"
+      - "./docker/d1/certs/public.crt:/certs/ca.crt:ro"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
+      toxiproxy:
+        condition: service_healthy
+    networks:
+      - data-net
+      - control-net
+      - worker-net
+      - provider-ctl-net
+
+  # --- workers (>=2, DISTINCT registered target profiles) --------------------
+  worker-a:
+    image: ${AOA_D1_WORKER_IMAGE:-aoa-worker:d1-local-unbuilt}
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      AOA_WORKER_TARGET_PROFILE_ID: "d1-worker-a"
+      AOA_WORKER_TARGET_PROFILE_PATH: "/profile.json"
+      # worker <-> control-plane routed THROUGH toxiproxy (in-path link 2).
+      AOA_WORKER_CONTROL_PLANE_URL: "http://toxiproxy:13100"
+      # worker <-> minio (S3) routed THROUGH toxiproxy (in-path link 3).
+      AOA_WORKER_S3_ENDPOINT: "http://toxiproxy:19000"
+      # declared provider execute API (fake), reachable directly.
+      AOA_WORKER_PROVIDER_URL: "http://fake-provider:8080"
+      AOA_WORKER_HEALTH_PORT: "9464"
+      # Required by loadWorkerConfig (packages/worker-daemon/src/config/config.ts) — the
+      # parser throws (and the daemon proc.exit(1)s before the health server binds) if any
+      # is absent. The enrollment-code file is only the SOURCE at load (not read), so this
+      # unblocks boot + /healthz even before a code is minted. Scope matches this worker's
+      # profile (worker-a.profile.json scope="platform").
+      AOA_WORKER_ENROLLMENT_CODE_FILE: "/enrollment-code"
+      AOA_WORKER_KEY_STORE_MODE: "mounted_secret"
+      AOA_WORKER_TARGET_SCOPE: "platform"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9464/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    volumes:
+      - "d1-worker-a-state:/worker"
+      - "./docker/d1/worker-a.profile.json:/profile.json:ro"
+    depends_on:
+      control-plane:
+        condition: service_healthy
+      fake-provider:
+        condition: service_healthy
+      toxiproxy:
+        condition: service_healthy
+    networks:
+      - control-net
+      - worker-net
+      - provider-ctl-net
+
+  worker-b:
+    image: ${AOA_D1_WORKER_IMAGE:-aoa-worker:d1-local-unbuilt}
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      AOA_WORKER_TARGET_PROFILE_ID: "d1-worker-b"
+      AOA_WORKER_TARGET_PROFILE_PATH: "/profile.json"
+      AOA_WORKER_CONTROL_PLANE_URL: "http://toxiproxy:13100"
+      AOA_WORKER_S3_ENDPOINT: "http://toxiproxy:19000"
+      AOA_WORKER_PROVIDER_URL: "http://fake-provider:8080"
+      AOA_WORKER_HEALTH_PORT: "9464"
+      # ★ WRK-017 — worker-b is the ENROLLING worker. worker-a stays `mounted_secret` as the
+      # negative control, so one boot path persists a device identity and the other provably
+      # does not.
+      #
+      # The ticket file is now READ, not merely named: it is a committed, read-only bind of
+      # `docker/d1/worker-b.enrollment-ticket`, and the same file is mounted into `migrate`,
+      # whose seed authorizes exactly the code inside it before this container ever starts.
+      # `/enrollment-code` is a POSIX absolute path, which the daemon accepted only after
+      # WRK-015 made `assertLocalAbsolutePath` platform-aware — before that it crash-looped
+      # here.
+      AOA_WORKER_ENROLLMENT_CODE_FILE: "/enrollment-code"
+      # `file_record` + the `command:` override below are ONE change with two halves, and
+      # EITHER HALF ALONE IS A CRASH LOOP — `resolveCustody` refuses `file_record` with no
+      # stores injected (the daemon bin injects none) and refuses `mounted_secret` WITH stores
+      # (the container host injects them unconditionally), both pre-socket with exit 1. That
+      # coupling is a static invariant, not a comment: see `checkWorkerCustodyBootRoot` in
+      # `scripts/lib/d1-compose-invariants.mjs`.
+      AOA_WORKER_KEY_STORE_MODE: "file_record"
+      # The durable home for the DeviceIdentityRecord + receipt. It MUST be the named volume
+      # below: a recreated container that lost its identity re-mints a workerId the server
+      # denies as `worker_transfer_denied` forever, and a container has no `--reset-identity`.
+      AOA_WORKER_STATE_DIR: "/worker"
+      AOA_WORKER_TARGET_SCOPE: "organization"
+    # NOT an image-CMD repoint. `runContainerHost` builds its FileRecordStores unconditionally,
+    # so repointing the image default would make `resolveCustody` refuse every still-
+    # `mounted_secret` container in the fleet (worker-a here, and the staging manifest's
+    # workers) at their next boot. The container boot root is therefore opt-in PER SERVICE, and
+    # the worker entrypoint is `exec "$@"`, so this override is all it takes.
+    command: ["node", "dist/bin/container-host.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9464/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    volumes:
+      - "d1-worker-b-state:/worker"
+      - "./docker/d1/worker-b.profile.json:/profile.json:ro"
+      # WRK-017 — the enrolment ticket, read-only. `migrate` mounts the SAME committed file and
+      # authorizes the code inside it, so there is one artifact and no runtime hand-off.
+      - "./docker/d1/worker-b.enrollment-ticket:/enrollment-code:ro"
+    depends_on:
+      control-plane:
+        condition: service_healthy
+      fake-provider:
+        condition: service_healthy
+      toxiproxy:
+        condition: service_healthy
+    networks:
+      - control-net
+      - worker-net
+      - provider-ctl-net
+
+  # --- deterministic fake sandbox provider (DEP-000) -------------------------
+  fake-provider:
+    build:
+      context: .
+      dockerfile: docker/d1/fake-provider.Dockerfile
+    image: ${AOA_D1_FAKE_PROVIDER_IMAGE:-aoa-d1-fake-provider:local}
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp"]
+    environment:
+      # Declared provider/execute API (reachable by control-plane + workers).
+      AOA_FAKE_PROVIDER_API_PORT: "8080"
+      # Control endpoint (/script,/reset,/invocations) — bound on a distinct port
+      # and gated by an application-layer peer allowlist so only workers + the
+      # test-runner may script fixtures, NOT the control-plane (see README §boundary).
+      AOA_FAKE_PROVIDER_CTL_PORT: "8081"
+      AOA_FAKE_PROVIDER_CTL_ALLOW: "worker-a,worker-b,test-runner"
+      AOA_FAKE_PROVIDER_FIXTURES_DIR: "/fixtures"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: "5s"
+      timeout: "5s"
+      retries: 30
+    volumes:
+      - "./tests/fixtures/distributed-execution:/fixtures:ro"
+    networks:
+      - control-net
+      - worker-net
+      - provider-ctl-net
+
+  # --- test runner (idle in-stack utility; an allowlisted control-net peer) ---
+  # Stays UP so the host-driven live lane can `docker compose exec test-runner …`
+  # to reach internal services (it is on AOA_FAKE_PROVIDER_CTL_ALLOW, so it may
+  # script fixtures on the fake control endpoint). The live E6F node --test suite
+  # runs on the CI HOST and orchestrates `docker compose exec`, not inside here.
+  test-runner:
+    image: ${AOA_D1_TEST_RUNNER_IMAGE:-node:lts-trixie-slim}
+    working_dir: /repo
+    environment:
+      AOA_D1_LIVE: "1"
+      AOA_CONTROL_PLANE_URL: "http://control-plane:3100"
+      AOA_FAKE_PROVIDER_CTL_URL: "http://fake-provider:8081"
+      # DAT-002 slice-7 — the live artifact round-trip PUTs/GETs raw bytes DIRECTLY to
+      # the presigned https URL (host toxiproxy:19000, TLS-terminated at minio). node's
+      # fetch (undici) trusts this committed self-signed CA via NODE_EXTRA_CA_CERTS. The
+      # cert is already visible under /repo (the `.:/repo:ro` bind), so no new mount.
+      NODE_EXTRA_CA_CERTS: "/repo/docker/d1/certs/public.crt"
+    command: ["sleep", "infinity"]
+    healthcheck:
+      test: ["CMD-SHELL", "true"]
+      interval: "30s"
+      timeout: "3s"
+      retries: 3
+    volumes:
+      - ".:/repo:ro"
+    depends_on:
+      control-plane:
+        condition: service_healthy
+      # DEP-009 — the live 2-replica lane needs BOTH replicas healthy before it drives
+      # concurrent A/B traffic; gating test-runner on control-plane-b makes the wait explicit.
+      control-plane-b:
+        condition: service_healthy
+      worker-a:
+        condition: service_healthy
+      worker-b:
+        condition: service_healthy
+      fake-provider:
+        condition: service_healthy
+    networks:
+      - control-net
+
+networks:
+  data-net:
+    internal: true
+  control-net:
+    internal: true
+  worker-net:
+    internal: true
+  provider-ctl-net:
+    internal: true
+
+volumes:
+  d1-postgres-data:
+  d1-minio-data:
+  d1-control-plane-state:
+  # DEP-009 — control-plane-b's OWN container-local state scratch. A dedicated volume
+  # (never shared rw with control-plane) keeps the two replicas' /aoa isolated.
+  d1-control-plane-b-state:
+  d1-worker-a-state:
+  d1-worker-b-state:

@@ -9,7 +9,11 @@ import {
   type CreateSecretProviderConfigInput,
   type UpdateSecretInput,
 } from "@/api/secrets";
-import type { CreateRuntimeProviderKey, UpdateRuntimeProviderKey } from "@armyofagents/shared";
+import type {
+  CreateRuntimeProviderKey,
+  CreateRuntimeProviderKeyWithSecret,
+  UpdateRuntimeProviderKey,
+} from "@armyofagents/shared";
 import { Button } from "@/components/ui/button";
 import { ImportFromVaultDialog } from "@/pages/secrets/ImportFromVaultDialog";
 import { queryKeys } from "@/lib/queryKeys";
@@ -178,6 +182,21 @@ export function SecretsWorkspace({ companyId }: SecretsWorkspaceProps) {
     },
   });
 
+  const createRuntimeProviderKeyWithSecret = useMutation({
+    mutationFn: (input: CreateRuntimeProviderKeyWithSecret) =>
+      secretsApi.runtimeProviderKeys.createWithSecret(companyId, input),
+    onSuccess: () => {
+      // The combined create writes BOTH a secret and a provider key — invalidate
+      // both lists so the Inventory and Sandbox Providers tabs stay in sync.
+      queryClient.invalidateQueries({ queryKey: queryKeys.secrets.runtimeProviderKeys(companyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.secrets.list(companyId) });
+      pushToast({ title: "E2B key added", tone: "success" });
+    },
+    onError: (err) => {
+      pushToast({ title: "Add E2B key failed", body: err instanceof Error ? err.message : undefined, tone: "error" });
+    },
+  });
+
   const updateRuntimeProviderKey = useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateRuntimeProviderKey }) =>
       secretsApi.runtimeProviderKeys.update(id, input),
@@ -249,13 +268,15 @@ export function SecretsWorkspace({ companyId }: SecretsWorkspaceProps) {
   const createProviderErrorMessage =
     createProviderConfig.error instanceof Error ? createProviderConfig.error.message : null;
   const providerKeyActionErrorMessage =
-    createRuntimeProviderKey.error instanceof Error
-      ? createRuntimeProviderKey.error.message
-      : updateRuntimeProviderKey.error instanceof Error
-        ? updateRuntimeProviderKey.error.message
-        : deleteRuntimeProviderKey.error instanceof Error
-          ? deleteRuntimeProviderKey.error.message
-          : null;
+    createRuntimeProviderKeyWithSecret.error instanceof Error
+      ? createRuntimeProviderKeyWithSecret.error.message
+      : createRuntimeProviderKey.error instanceof Error
+        ? createRuntimeProviderKey.error.message
+        : updateRuntimeProviderKey.error instanceof Error
+          ? updateRuntimeProviderKey.error.message
+          : deleteRuntimeProviderKey.error instanceof Error
+            ? deleteRuntimeProviderKey.error.message
+            : null;
   const statusUpdateSecretId =
     updateSecret.isPending &&
     (updateSecret.variables?.input.status === "active" || updateSecret.variables?.input.status === "disabled")
@@ -452,6 +473,16 @@ export function SecretsWorkspace({ companyId }: SecretsWorkspaceProps) {
             errorMessage={runtimeProviderKeysQuery.error instanceof Error ? runtimeProviderKeysQuery.error.message : null}
             actionErrorMessage={providerKeyActionErrorMessage}
             onCreate={(input) => createRuntimeProviderKey.mutateAsync(input)}
+            onCreateWithSecret={(input) => {
+              createRuntimeProviderKeyWithSecret.reset();
+              return createRuntimeProviderKeyWithSecret.mutateAsync(input);
+            }}
+            onQuickAddOpenChange={(open) => {
+              // Reset the quick-add mutation when its dialog closes (Codex P2), so a
+              // failed quick-add error does not linger at the tab or leak into the
+              // existing-secret dialog that shares this action error.
+              if (!open) createRuntimeProviderKeyWithSecret.reset();
+            }}
             onUpdate={(id, input) => updateRuntimeProviderKey.mutateAsync({ id, input })}
             onRemove={(id) => deleteRuntimeProviderKey.mutateAsync(id)}
           />

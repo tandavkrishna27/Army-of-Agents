@@ -36,13 +36,15 @@
  * @see PLUGIN_SPEC.md §12.5 — Graceful Shutdown Policy
  */
 import { EventEmitter } from "node:events";
+import { eq, sql } from "drizzle-orm";
 import type { Db } from "@armyofagents/db";
+import { plugins } from "@armyofagents/db";
 import { pluginRollbackService } from "./plugin-rollback.js";
 import type {
   PluginStatus,
   PluginRecord,
   PluginStatusReasonCode,
-  AoAPluginManifestV1,
+  PaperclipPluginManifestV1,
 } from "@armyofagents/shared";
 import { pluginRegistryService } from "./plugin-registry.js";
 import { pluginLoader, type PluginLoader } from "./plugin-loader.js";
@@ -56,10 +58,16 @@ import {
   CLOUD_PLUGIN_BLOCK_MESSAGE,
   CloudPluginExecutionBlockedError,
   PLUGIN_WORKER_BLOCKED_IN_CLOUD,
+  beginCloudPluginBootReconciliation,
   isCloudPluginExecutionBlocked,
   recordCloudPluginBlock,
+  recordCloudPluginBootReconciled,
   type PluginActivationSource,
 } from "./cloud-plugin-execution.js";
+import {
+  recordCloudPluginReconcileToBlocked,
+  type RecordCloudPluginReconcileToBlocked,
+} from "./cloud-plugin-reconcile-audit.js";
 
 // ---------------------------------------------------------------------------
 // Pure helpers (exported for testing)
@@ -75,6 +83,154 @@ export function diffCapabilities(
 ): string[] {
   const oldSet = new Set(oldCaps);
   return newCaps.filter((c) => !oldSet.has(c));
+}
+
+/**
+ * Reconcile ONE plugin row to the cloud-blocked state, ATOMICALLY and
+ * idempotently, returning whether THIS caller performed the transition.
+ *
+ * The whole flip-plus-audit runs in a SINGLE transaction:
+ *   1. `SELECT … FOR UPDATE` locks the row and reads its CURRENT status. The lock
+ *      serializes concurrent `cloud_auth` replicas — if two boot at once and both
+ *      read the same stale row through `listInstalled()`, the second blocks here
+ *      until the first commits, then reads the now-blocked row. And the status
+ *      read HERE (not the `listInstalled()` snapshot, which a concurrent lifecycle
+ *      change could have staled) is the value the audit row records as
+ *      `priorStatus`, so the durable history names the status actually overwritten.
+ *      (Codex P2 on PR #446, both the double-write and the stale-prior-status.)
+ *   2. If the locked row is gone, uninstalled, or ALREADY cloud-blocked, there is
+ *      nothing to claim: return `false` WITHOUT flipping, auditing, or counting.
+ *   3. Otherwise flip the row and write the audit row on the SAME transaction. The
+ *      recorder THROWS on a failed insert, which rolls the flip back with it — so
+ *      the row is never left committed-but-unaudited, and the next boot retries the
+ *      whole flip-plus-audit. (Codex P1 on PR #446; AGENTS.md "log mutations
+ *      atomically".) The caller's per-row try/catch keeps boot alive.
+ *
+ * `row` is the `listInstalled()` snapshot. Its `.status` is DELIBERATELY NOT the
+ * source of `priorStatus` — that is re-read under the lock in step 1, because the
+ * snapshot can be staled by a concurrent lifecycle change (Codex P2 on
+ * `943d3fed5`). It is accepted so the caller can pass the listed row directly.
+ * `recorder` is injectable ONLY so the rollback test can drive a failing audit;
+ * production always uses the real `recordCloudPluginReconcileToBlocked`.
+ */
+export async function reconcileOnePluginToBlocked(
+  db: Db,
+  row: Pick<PluginRecord, "id" | "companyId" | "status">,
+  recorder: RecordCloudPluginReconcileToBlocked = recordCloudPluginReconcileToBlocked,
+): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    // Lock the row and read its CURRENT status inside the transaction. Raw `sql`
+    // FOR UPDATE, matching the codebase idiom (`dependencies.ts`); `.execute`
+    // returns an array or `{ rows }` depending on the driver, so handle both.
+    const lockedRes = await tx.execute(
+      sql`select status, status_reason_code from plugins where id = ${row.id} for update`,
+    );
+    const lockedRows = (Array.isArray(lockedRes)
+      ? lockedRes
+      : (lockedRes as { rows?: unknown[] }).rows) ?? [];
+    const locked = lockedRows[0] as
+      | { status: string; status_reason_code: string | null }
+      | undefined;
+
+    // Nothing to claim: row hard-removed, uninstalled, or already cloud-blocked
+    // (a re-boot or a replica that lost the lock race). No double-write.
+    if (!locked) return false;
+    if (locked.status === "uninstalled") return false;
+    if (
+      locked.status === "error" &&
+      locked.status_reason_code === PLUGIN_WORKER_BLOCKED_IN_CLOUD
+    ) {
+      return false;
+    }
+
+    // The status the row is ACTUALLY moved FROM, read under the lock above.
+    const priorStatus = locked.status;
+    await tx
+      .update(plugins)
+      .set({
+        status: "error",
+        lastError: CLOUD_PLUGIN_BLOCK_MESSAGE,
+        statusReasonCode: PLUGIN_WORKER_BLOCKED_IN_CLOUD,
+        updatedAt: new Date(),
+      })
+      .where(eq(plugins.id, row.id));
+
+    // Same transaction as the flip: a throw here rolls the flip back.
+    await recorder(tx as unknown as Db, {
+      pluginId: row.id,
+      companyId: row.companyId,
+      priorStatus,
+    });
+    return true;
+  });
+}
+
+/**
+ * Metadata-only cloud reconciliation (FND-006 / Decision #103 amendment).
+ *
+ * On `cloud_auth` boot the hosted control plane composes NO plugin worker
+ * runtime (see `app.ts`), so no `loadAll()` runs to mark stale rows blocked.
+ * This pass marks every non-uninstalled `plugins` row to the blocked state so a
+ * stale `ready`/`installed` row can never appear runnable during boot
+ * reconciliation. It is a pure status write: it constructs no
+ * worker/loader/lifecycle machinery, forks no process, and evaluates no
+ * manifest JavaScript. Idempotent — rows already carrying the blocked reason
+ * are skipped, so it is safe to run on every replica during a rolling upgrade.
+ * No-op off cloud (`isCloudPluginExecutionBlocked()` is false).
+ *
+ * @returns the number of rows newly reconciled to the blocked state.
+ */
+export async function reconcileCloudBlockedPlugins(db: Db): Promise<number> {
+  if (!isCloudPluginExecutionBlocked()) return 0;
+
+  const registry = pluginRegistryService(db);
+  const log = logger.child({ service: "plugin-lifecycle" });
+  beginCloudPluginBootReconciliation();
+
+  let reconciled = 0;
+  const rows = (await registry.listInstalled()) as PluginRecord[];
+  for (const row of rows) {
+    if (row.status === "uninstalled") continue;
+    if (
+      row.status === "error" &&
+      row.statusReasonCode === PLUGIN_WORKER_BLOCKED_IN_CLOUD
+    ) {
+      // Cheap read-time short-circuit for the common re-boot case; the
+      // compare-and-set claim in reconcileOnePluginToBlocked is the AUTHORITATIVE
+      // guard against a concurrent replica (this snapshot can be stale).
+      continue;
+    }
+    try {
+      const claimed = await reconcileOnePluginToBlocked(db, row);
+      // Only the replica whose compare-and-set actually flipped the row counts
+      // and gauges it — a concurrent replica that lost the CAS records nothing.
+      if (!claimed) continue;
+      recordCloudPluginBootReconciled({
+        pluginId: row.id,
+        companyId: row.companyId,
+      });
+      reconciled += 1;
+    } catch (err) {
+      // A failed audit rolled the flip back (see reconcileOnePluginToBlocked): the
+      // row stays claimable and is retried on the next boot. Log and keep going so
+      // boot never crashes on one bad row.
+      log.error(
+        {
+          pluginId: row.id,
+          err: err instanceof Error ? err.message : String(err),
+        },
+        "plugin-lifecycle: cloud reconciliation failed for a plugin row"
+      );
+    }
+  }
+
+  if (reconciled > 0) {
+    log.info(
+      { reconciled },
+      "plugin-lifecycle: reconciled stale cloud plugin rows to blocked"
+    );
+  }
+  return reconciled;
 }
 
 // ---------------------------------------------------------------------------

@@ -7,7 +7,7 @@ import { filesystemApi } from "../../api/filesystem";
 import { advanceOnboarding } from "../../api/onboarding";
 import { Button } from "@/components/ui/button";
 
-const REPO_ONLY_CWD_SENTINEL = "/__aoa_repo_only__";
+const REPO_ONLY_CWD_SENTINEL = "/__paperclip_repo_only__";
 
 type Project = { id: string; type?: string; name?: string };
 

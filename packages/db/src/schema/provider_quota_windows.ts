@@ -4,7 +4,7 @@ import { companies } from "./companies.js";
 /**
  * Provider quota window snapshots.
  *
- * AoA-specific table (AoA has no equivalent — it computes quota state live
+ * AoA-specific table (Paperclip has no equivalent — it computes quota state live
  * from adapter `getQuotaWindows()` calls). AoA persists snapshots so the `/costs`
  * UI and budget logic can read last-known usage without blocking on adapter polls.
  *

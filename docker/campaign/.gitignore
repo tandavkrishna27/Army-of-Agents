@@ -1,0 +1,12 @@
+# E7-1 keyed-run campaign secrets — NEVER commit the filled creds.
+#
+# The operator fills `.env.campaign` with a live E2B key, DB passwords, and bearer
+# secrets, and writes the ed25519 keypair + enrollment ticket under `secrets/`. A
+# `git add docker/campaign` would otherwise stage all of it. The `.example` template
+# stays tracked (it is the shape-only reference; it holds no real secret).
+.env.campaign
+secrets/
+
+# Keep the template tracked even though `.env.campaign*` would otherwise be caught
+# by a broader pattern — this negation is defensive and harmless today.
+!.env.campaign.example

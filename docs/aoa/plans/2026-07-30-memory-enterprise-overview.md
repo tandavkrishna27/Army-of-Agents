@@ -90,7 +90,7 @@ export function filterMemoryForActor<T extends AccessibleMemoryRow>(items: T[], 
 - **Drizzle only.** Schema edits in `packages/db/src/schema/`, then `pnpm db:generate` for the migration. Never hand-write SQL migration files. (CLAUDE.md Rule #1)
 - **Follow existing patterns.** New service ≈ `server/src/services/goals.ts`; new route ≈ `server/src/routes/goals.ts`; new schema ≈ `packages/db/src/schema/goals.ts`.
 - **Keyless-except-embeddings.** Run-Miner extraction is CLI-only (Decision #104). No new hosted-API call outside the `createOpenAiEmbedder` chokepoint.
-- **Never break the wire protocol** (`UPSTREAM_RUN_ID` / `X-Upstream-Run-Id`). Memory is internal; don't touch adapter wire contracts.
+- **Never break the wire protocol** (`PAPERCLIP_RUN_ID` / `X-Paperclip-Run-Id`). Memory is internal; don't touch adapter wire contracts.
 - **Tests (from repo root):** `pnpm --filter ./server exec vitest run src/__tests__/<file>` · UI: `pnpm --filter ./ui exec vitest run <path>`
 - **Typecheck:** `pnpm --filter ./server typecheck` (or root `pnpm typecheck` for all).
 - **Migration:** `pnpm db:generate` after schema edits.
@@ -187,7 +187,7 @@ Before executing each phase, run a focused eng-check on that phase's doc: re-ver
 - **Extend, not replace.** P0 adds only nullable columns; existing reads/writes keep working untouched. Each phase ships behind its own merge; nothing is big-bang.
 - **Backfill.** `tier` is computed from `layer` at read time (no data backfill). P1-T9 backfills identity memory from `companies` fields (idempotent).
 - **Feature-guarded behavior.** New autonomy/gate behavior is inert until Settings → Memory dials are set (default = today's behavior: everything `propose`/human except working=auto).
-- **Divergence guards (don't regress):** keep `HEARTBEAT_MAX_CONCURRENT_RUNS_*` (D5); don't add hosted-key extraction (Rule #11); don't rename the Upstream wire protocol; "Issues"=Tasks table stays `issues`.
+- **Divergence guards (don't regress):** keep `HEARTBEAT_MAX_CONCURRENT_RUNS_*` (D5); don't add hosted-key extraction (Rule #11); don't rename the Paperclip wire protocol; "Issues"=Tasks table stays `issues`.
 
 ## Self-review checklist (run before executing each phase)
 1. Every use case in the phase maps to a task.

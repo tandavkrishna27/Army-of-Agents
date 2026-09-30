@@ -276,7 +276,7 @@ function buildSseBody(input: {
       metadata: {
         ...toStringRecord(state.payloadTemplate.metadata),
         ...state.aoaEnv,
-        aoa_session_key: state.sessionKey,
+        paperclip_session_key: state.sessionKey,
       },
     }
     : {

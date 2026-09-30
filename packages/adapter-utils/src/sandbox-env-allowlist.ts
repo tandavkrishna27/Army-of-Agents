@@ -40,9 +40,9 @@ const PROVIDER_AUTH_KEYS: Record<string, string[]> = {
 /** Run-identity + control-plane credential env that MAY cross (§9). */
 const ALWAYS_ALLOWED = new Set(
   [
-    "AOA_API_KEY", // the run-JWT
-    "AOA_API_URL", "AOA_ORIGIN_API_URL", "AOA_CALLBACK_BRIDGE_URL",
-    "AOA_RUN_ID", "AOA_EXECUTION_TARGET_ID",
+    "AOA_API_KEY", "PAPERCLIP_API_KEY", // the run-JWT
+    "AOA_API_URL", "PAPERCLIP_API_URL", "AOA_ORIGIN_API_URL", "AOA_CALLBACK_BRIDGE_URL",
+    "AOA_RUN_ID", "PAPERCLIP_RUN_ID", "AOA_EXECUTION_TARGET_ID",
     "AOA_RUNTIME_HOOK_TOKEN",
     // in-VM managed homes. HOME itself is real-shape drift vs the plan's §9
     // list (which named CLAUDE_CONFIG_DIR/CODEX_HOME but not HOME): claude-local,

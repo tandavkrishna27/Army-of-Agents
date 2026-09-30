@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { sql } from "drizzle-orm";
 import { applyPendingMigrations, createDb, type Db } from "@armyofagents/db";
 import { blockedTaskScan } from "../services/internal-agent/proactive.js";
+import { createBlockedTaskFixture } from "./helpers/blocked-task-fixture.js";
+import { allocateEmbeddedPgPort } from "./helpers/embedded-pg-port.js";
 
 // A-M14 — blockedTaskScan must (1) only count an in-progress task as blocked
 // when at least one of its dependencies is genuinely incomplete (the dependency
@@ -30,12 +32,7 @@ type EmbeddedPostgresCtor = new (opts: {
   persistent: boolean;
 }) => EmbeddedPostgresInstance;
 
-let pg: EmbeddedPostgresInstance | null = null;
-let dataDir = "";
 let db: Db;
-let setupError: unknown = null;
-
-const PORT = 58000 + Math.floor(Math.random() * 1000);
 
 const companyId = "22222222-2222-4222-8222-222222222222";
 const userId = "33333333-3333-4333-8333-333333333333";
@@ -63,49 +60,30 @@ async function seedDependency(dependentId: string, dependencyId: string) {
   `);
 }
 
-beforeAll(async () => {
-  if (process.platform === "win32") return; // skipped suite — don't boot pg
-  try {
-    dataDir = await mkdtemp(join(tmpdir(), "aoa-blocked-scan-test-"));
-    const { default: EmbeddedPostgres } = (await import(
-      "embedded-postgres"
-    )) as { default: EmbeddedPostgresCtor };
-
-    pg = new EmbeddedPostgres({
-      databaseDir: join(dataDir, "db"),
-      user: "test",
-      password: "test",
-      port: PORT,
-      persistent: false,
-    });
-    await pg.initialise();
-    await pg.start();
-
-    const connectionString = `postgres://test:test@localhost:${PORT}/postgres`;
-    await applyPendingMigrations(connectionString);
-    db = createDb(connectionString);
-
-    await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Blocked Scan Co', 'BSC')
+const fixture = createBlockedTaskFixture<Db>({
+  createDirectory: () => mkdtemp(join(tmpdir(), "aoa-blocked-scan-test-")),
+  allocatePort: () => allocateEmbeddedPgPort(),
+  createPostgres: async (directory, port) => {
+    const { default: EmbeddedPostgres } = await import("embedded-postgres");
+    const Constructor = EmbeddedPostgres as unknown as EmbeddedPostgresCtor;
+    return new Constructor({ databaseDir: join(directory, "db"), user: "test", password: "test", port, persistent: false });
+  },
+  migrate: async url => { await applyPendingMigrations(url); },
+  connect: url => createDb(url),
+  seed: async database => {
+    await database.execute(sql`
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Blocked Scan Co', 'BSC')
     `);
-  } catch (err) {
-    setupError = err;
-  }
+  },
+  closeDb: async database => { await database.$client.end({ timeout: 5 }); },
+  removeDirectory: directory => rm(directory, { recursive: true, force: true }),
+});
+beforeAll(async () => {
+  if (process.platform === "win32") return;
+  db = await fixture.start();
 }, 180_000);
-
-afterAll(async () => {
-  try {
-    if (pg) await pg.stop();
-  } catch {
-    // ignore cleanup failures
-  }
-  try {
-    if (dataDir) await rm(dataDir, { recursive: true, force: true });
-  } catch {
-    // ignore cleanup failures
-  }
-}, 60_000);
+afterAll(async () => { await fixture.dispose(); }, 60_000);
 
 describe.skipIf(process.platform === "win32")(
   "A-M14 — blockedTaskScan honors dependency completion + dedups",
@@ -116,15 +94,11 @@ describe.skipIf(process.platform === "win32")(
     // a later case's count (the count is correct; the leak is a test-isolation
     // bug — caught by the real-DB run, invisible to the sequence-mock unit).
     beforeEach(async () => {
-      if (setupError) return;
       await db.execute(sql`DELETE FROM task_dependencies WHERE company_id = ${companyId}`);
       await db.execute(sql`DELETE FROM issues WHERE company_id = ${companyId}`);
     });
 
     it("returns 0 findings when the ONLY dependency is already done", async () => {
-      if (setupError) {
-        throw new Error(`embedded-postgres setup failed: ${String(setupError)}`);
-      }
       const { dependent, depA } = freshIds("a00000000001");
       await seedTask(depA, "Dependency (done)", "done");
       await seedTask(dependent, "In-progress dependent", "in_progress");
@@ -138,9 +112,6 @@ describe.skipIf(process.platform === "win32")(
     });
 
     it("returns 1 finding when an in-progress task has an incomplete dependency", async () => {
-      if (setupError) {
-        throw new Error(`embedded-postgres setup failed: ${String(setupError)}`);
-      }
       const { dependent, depA } = freshIds("a00000000002");
       await seedTask(depA, "Dependency (todo)", "todo");
       await seedTask(dependent, "In-progress dependent", "in_progress");
@@ -155,9 +126,6 @@ describe.skipIf(process.platform === "win32")(
     });
 
     it("counts a task with TWO incomplete dependencies exactly ONCE (DISTINCT)", async () => {
-      if (setupError) {
-        throw new Error(`embedded-postgres setup failed: ${String(setupError)}`);
-      }
       const { dependent, depA, depB } = freshIds("a00000000003");
       await seedTask(depA, "Dependency A (todo)", "todo");
       await seedTask(depB, "Dependency B (in_progress)", "in_progress");
@@ -173,9 +141,6 @@ describe.skipIf(process.platform === "win32")(
     });
 
     it("does not count an in-progress task whose deps are ALL terminal (mix of done + cancelled)", async () => {
-      if (setupError) {
-        throw new Error(`embedded-postgres setup failed: ${String(setupError)}`);
-      }
       const { dependent, depA, depB } = freshIds("a00000000004");
       await seedTask(depA, "Dependency A (done)", "done");
       await seedTask(depB, "Dependency B (cancelled)", "cancelled");

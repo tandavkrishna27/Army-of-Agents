@@ -115,7 +115,7 @@ Run this when a feature ships or when any doc file is edited:
 - **Lean:** Architecture details live in `docs/architecture/`. CLAUDE.md points to them.
 - **No orphan paths:** Every file path in CLAUDE.md must exist. Run a quick check before committing.
 - **No V-numbers:** Describe features by name, not development phase (no "V2", "V2.5", etc.).
-- **No upstream branding:** upstream origins tracked in `docs/upstream-migration.md` only.
+- **No Paperclip branding:** Paperclip origins tracked in `docs/paperclip-migration.md` only.
 
 ---
 
@@ -124,7 +124,7 @@ Run this when a feature ships or when any doc file is edited:
 ```
 docs/
 ├── STANDARDS.md            ← this file
-├── upstream-migration.md  ← Upstream-to-AoA tracking (wire protocol, deprecated tables)
+├── paperclip-migration.md  ← Paperclip→AoA tracking (wire protocol, deprecated tables)
 ├── roadmap.md              ← Planned but not yet built
 ├── docs.json               ← Docs site config (Mintlify navigation + metadata)
 ├── favicon.svg             ← Docs site favicon

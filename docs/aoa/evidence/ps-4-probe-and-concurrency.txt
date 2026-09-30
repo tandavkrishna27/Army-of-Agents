@@ -12,7 +12,7 @@ body: { "adapterConfig": { "model": "gpt-5.3-codex" } }
   HTTP 200   (15203 ms — spawns the real codex CLI; cold-start latency expected)
   status: "pass"
   checks:
-    ✓ "Working directory is valid: C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-A…"
+    ✓ "Working directory is valid: C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-A…"
     ✓ "Command is executable: codex"
     ✓ "Codex auth.json is available for local authentication."   ← ChatGPT local auth detected
     ✓ "hello"                                                     ← end-to-end smoke turn returned

@@ -79,7 +79,7 @@ beforeAll(async () => {
     db = createDb(connectionString);
 
     // Seed a company (eager Commander/config).
-    const company = await companyService(db).create({ name: "Artifact Parent Co" } as never);
+    const company = await companyService(db).create({ name: "Artifact Parent Co", organizationId: "00000000-0000-0000-0000-000000000001" } as never);
     companyId = company.id;
 
     const svc = artifactService(db);

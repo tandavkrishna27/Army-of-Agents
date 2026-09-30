@@ -62,7 +62,7 @@ describe("createEnvironmentSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts AoA-style runtime driver fields while preserving AoA envVars", () => {
+  it("accepts Paperclip-style runtime driver fields while preserving AoA envVars", () => {
     const result = createEnvironmentSchema.safeParse({
       name: "cloud sandbox",
       description: "Ephemeral provider-backed runtime",

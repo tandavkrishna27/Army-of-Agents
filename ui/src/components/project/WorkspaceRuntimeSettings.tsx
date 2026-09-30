@@ -18,7 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, FolderOpen, Github, Trash2 } from "lucide-react";
 
-const REPO_ONLY_CWD_SENTINEL = "/__aoa_repo_only__";
+const REPO_ONLY_CWD_SENTINEL = "/__paperclip_repo_only__";
 
 interface WorkspaceRuntimeSettingsProps {
   project: Project;

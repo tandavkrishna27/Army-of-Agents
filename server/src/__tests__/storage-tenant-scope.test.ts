@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createStorageService } from "../storage/service.js";
+import { createHash } from "node:crypto";
 
 function fakeProvider() {
   const store = new Map<string, Buffer>();
@@ -85,5 +86,26 @@ describe("storage tenant scope", () => {
     await expect(
       createStorageService(fakeProvider()).getObject("org-1", "c1", "org-1/c1/../etc/passwd"),
     ).rejects.toThrow(/invalid/i);
+  });
+
+  it("reserved writes accept only verified Universe intake keys", async () => {
+    const service = createStorageService(fakeProvider());
+    const body = Buffer.from("original");
+    const sha256 = createHash("sha256").update(body).digest("hex");
+    await expect(service.putReservedObject({
+      organizationId: "org-1", companyId: "c1",
+      objectKey: "org-1/c1/universe-intakes/intake/parts/0",
+      body, contentType: "application/octet-stream", sha256,
+    })).resolves.toBeUndefined();
+    await expect(service.putReservedObject({
+      organizationId: "org-1", companyId: "c1",
+      objectKey: "org-1/c1/assets/arbitrary",
+      body, contentType: "application/octet-stream", sha256,
+    })).rejects.toThrow(/reservation/i);
+    await expect(service.putReservedObject({
+      organizationId: "org-1", companyId: "c1",
+      objectKey: "org-1/c1/universe-intakes/intake/parts/0",
+      body, contentType: "application/octet-stream", sha256: "0".repeat(64),
+    })).rejects.toThrow(/hash/i);
   });
 });

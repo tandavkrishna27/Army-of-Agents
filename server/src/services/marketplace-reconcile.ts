@@ -1663,8 +1663,19 @@ export async function inspectMarketplaceReconciliation(
       row.action === "marketplace.reconciliation_completed" ||
       row.action === "marketplace.reconciliation_failed_before_mutation",
   );
+  // ★ E0-F013 Decision 2 (a2). `activity_log.company_id` is now NULLABLE inside
+  // the reserved `security.denied.` namespace, so this query's rows are typed
+  // `string | null`. This is one of the TWO company-UNSCOPED readers of the
+  // table (§2 of the decision paper), which is exactly why the null is dropped
+  // here rather than coerced: a tenantless row must never be counted as a
+  // legitimate reconciliation target. Dropping it FAILS SAFE — the surviving set
+  // is then shorter than `declaredTargetCount`, `startedTargetSetValid` goes
+  // false, and the inspection reports `outcome_unknown_after_mutation` instead of
+  // silently blessing an audit set it could not account for.
   const auditedTargetCompanyIds = [
-    ...new Set(started.map((row) => row.companyId)),
+    ...new Set(
+      started.map((row) => row.companyId).filter((id): id is string => id !== null),
+    ),
   ].sort();
   const targetCompanyIds = [...new Set(operation.targetCompanyIds)].sort();
   const declaredTargetCount = operation.targetCount;
@@ -1694,7 +1705,10 @@ export async function inspectMarketplaceReconciliation(
         startedRowsValid);
   const deploymentSha =
     operation.deploymentSha;
-  const terminalCompanyIds = new Set(terminal.map((row) => row.companyId));
+  // Same narrowing, same fail-safe reasoning as `auditedTargetCompanyIds` above.
+  const terminalCompanyIds = new Set(
+    terminal.map((row) => row.companyId).filter((id): id is string => id !== null),
+  );
   const terminalRowsValid = terminal.every(
     (row) =>
       row.details?.operationId === options.operationId &&

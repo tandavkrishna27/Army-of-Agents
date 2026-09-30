@@ -36,7 +36,7 @@ export const agentConfigurationDoc = `# opencode_local agent configuration
 Adapter: opencode_local
 
 Use when:
-- You want AoA to run OpenCode locally as the agent runtime
+- You want Paperclip to run OpenCode locally as the agent runtime
 - You want provider/model routing in OpenCode format (provider/model)
 - You want OpenCode session resume across heartbeats via --session
 
@@ -63,7 +63,7 @@ Operational fields:
 Notes:
 - OpenCode supports multiple providers and models. Use \
   \`opencode models\` to list available options in provider/model format.
-- AoA requires an explicit \`model\` value for \`opencode_local\` agents.
+- Paperclip requires an explicit \`model\` value for \`opencode_local\` agents.
 - Runs are executed with: opencode run --format json ...
 - Sessions are resumed with --session when stored session cwd matches current cwd.
 - The adapter sets OPENCODE_DISABLE_PROJECT_CONFIG=true during model discovery to prevent OpenCode from writing an opencode.json config file into the project working directory.

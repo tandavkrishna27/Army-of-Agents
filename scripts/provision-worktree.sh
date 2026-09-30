@@ -11,11 +11,11 @@ set -euo pipefail
 
 base_cwd="${AOA_WORKSPACE_BASE_CWD:?AOA_WORKSPACE_BASE_CWD is required}"
 worktree_cwd="${AOA_WORKSPACE_CWD:?AOA_WORKSPACE_CWD is required}"
-aoa_home="${AOA_HOME:-$HOME/.aoa}"
-aoa_instance_id="${AOA_INSTANCE_ID:-default}"
-aoa_dir="$worktree_cwd/.aoa"
-worktree_config_path="$aoa_dir/config.json"
-worktree_env_path="$aoa_dir/.env"
+paperclip_home="${AOA_HOME:-$HOME/.aoa}"
+paperclip_instance_id="${AOA_INSTANCE_ID:-default}"
+paperclip_dir="$worktree_cwd/.aoa"
+worktree_config_path="$paperclip_dir/config.json"
+worktree_env_path="$paperclip_dir/.env"
 worktree_name="${AOA_WORKSPACE_BRANCH:-$(basename "$worktree_cwd")}"
 
 if [[ ! -d "$base_cwd" ]]; then
@@ -33,11 +33,11 @@ if [[ -z "$source_config_path" && ( -e "$base_cwd/.aoa/config.json" || -L "$base
   source_config_path="$base_cwd/.aoa/config.json"
 fi
 if [[ -z "$source_config_path" ]]; then
-  source_config_path="$aoa_home/instances/$aoa_instance_id/config.json"
+  source_config_path="$paperclip_home/instances/$paperclip_instance_id/config.json"
 fi
 source_env_path="$(dirname "$source_config_path")/.env"
 
-mkdir -p "$aoa_dir"
+mkdir -p "$paperclip_dir"
 
 run_isolated_worktree_init() {
   if command -v pnpm >/dev/null 2>&1 && pnpm aoa --help >/dev/null 2>&1; then
@@ -57,7 +57,7 @@ write_fallback_worktree_config() {
   WORKTREE_NAME="$worktree_name" \
   BASE_CWD="$base_cwd" \
   WORKTREE_CWD="$worktree_cwd" \
-  AOA_DIR="$aoa_dir" \
+  AOA_DIR="$paperclip_dir" \
   SOURCE_CONFIG_PATH="$source_config_path" \
   SOURCE_ENV_PATH="$source_env_path" \
   AOA_WORKTREES_DIR="${AOA_WORKTREES_DIR:-}" \
@@ -162,14 +162,14 @@ function resolveRuntimeLikePath(value, configPath) {
 
 async function main() {
   const worktreeName = process.env.WORKTREE_NAME;
-  const aoaDir = process.env.AOA_DIR;
+  const paperclipDir = process.env.AOA_DIR;
   const sourceConfigPath = process.env.SOURCE_CONFIG_PATH;
   const sourceEnvPath = process.env.SOURCE_ENV_PATH;
   const worktreeHome = path.resolve(expandHomePrefix(nonEmpty(process.env.AOA_WORKTREES_DIR) ?? "~/.aoa-worktrees"));
   const instanceId = sanitizeInstanceId(worktreeName);
   const instanceRoot = path.resolve(worktreeHome, "instances", instanceId);
-  const configPath = path.resolve(aoaDir, "config.json");
-  const envPath = path.resolve(aoaDir, ".env");
+  const configPath = path.resolve(paperclipDir, "config.json");
+  const envPath = path.resolve(paperclipDir, ".env");
 
   let sourceConfig = null;
   if (sourceConfigPath && fs.existsSync(sourceConfigPath)) {
@@ -232,7 +232,7 @@ async function main() {
         baseDir: path.resolve(instanceRoot, "data", "storage"),
       },
       s3: {
-        bucket: sourceConfig?.storage?.s3?.bucket ?? "aoa",
+        bucket: sourceConfig?.storage?.s3?.bucket ?? "paperclip",
         region: sourceConfig?.storage?.s3?.region ?? "us-east-1",
         endpoint: sourceConfig?.storage?.s3?.endpoint,
         prefix: sourceConfig?.storage?.s3?.prefix ?? "",

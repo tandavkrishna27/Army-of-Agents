@@ -43,7 +43,7 @@ A code-grounded review (2026-06-15) found pitfalls that would produce FALSE resu
 ### S1. Boot the app (live, for me + the user to inspect)
 Git Bash, background:
 ```
-cd "/c/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-commander"
+cd "/c/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-commander"
 DATABASE_URL="postgres://postgres:postgres@127.0.0.1:5433/aoa" PORT=3201 HOST=127.0.0.1 \
 AOA_DEPLOYMENT_MODE=local_trusted AOA_VITE_HMR_PORT=3211 AOA_INSTANCE_ID=commander-e2e \
 AOA_MIGRATION_AUTO_APPLY=true pnpm dev

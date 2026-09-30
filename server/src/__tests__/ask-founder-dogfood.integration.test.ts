@@ -8,7 +8,6 @@ import {
   agents,
   applyPendingMigrations,
   authUsers,
-  companies,
   companyMemberships,
   createDb,
   heartbeatRuns,
@@ -18,6 +17,7 @@ import {
   workQuestions,
   type Db,
 } from "@armyofagents/db";
+import { insertTestCompany } from "./helpers/insert-test-company.js";
 import { handleAskFounder, handleAskHuman } from "../mcp/tools/ask-founder-tool.js";
 import { workQuestionService } from "../services/work-questions.js";
 import type { ProtocolActor, ToolContext } from "../mcp/tools/types.js";
@@ -79,7 +79,7 @@ async function seedScenario(label: string, runStatus = "running"): Promise<Scena
   const issueId = randomUUID();
   const userId = `ask-human-${randomUUID()}`;
   const now = new Date();
-  await db.insert(companies).values({
+  await insertTestCompany(db, {
     id: companyId,
     name: `Ask Human ${label}`,
     issuePrefix: `AH${Math.floor(Math.random() * 9000 + 1000)}`,

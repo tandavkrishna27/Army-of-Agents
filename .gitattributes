@@ -18,6 +18,19 @@ tests/e2e/fixtures/fake-codex/fake-codex.mjs text eol=lf
 packages/shared/src/generated/tools.json text eol=lf
 server/src/onboarding-assets/commander/TOOLS.md text eol=lf
 
+# The agent instruction bundles are DELIVERED INTO A LINUX SANDBOX as an agent's
+# system prompt (CLI-008 Unit B), so CRLF in them is wrong on its own terms and not
+# merely a measurement nuisance. Same reasoning as the TOOLS.md pin above, which is
+# why TOOLS.md was the only bundle file unaffected when a Windows checkout made
+# `cli-008-unit-b-byte-source` measure 26,568 bytes where Linux CI measured 26,351
+# (110 + 65 + 42 = 217 CRLF pairs across AGENTS/HEARTBEAT/SOUL). The blobs are
+# already LF, so this changes no committed bytes -- it stops the working tree from
+# diverging from what CI and the sandbox see.
+server/src/onboarding-assets/**/AGENTS.md text eol=lf
+server/src/onboarding-assets/**/HEARTBEAT.md text eol=lf
+server/src/onboarding-assets/**/SOUL.md text eol=lf
+server/src/onboarding-assets/**/TOOLS.md text eol=lf
+
 # Generated AoA-native-skills catalog (pnpm gen:skills / gen:skills:check)
 # and the eval snapshot committed alongside the commander-skill-triggering
 # suite (Plan 2, Task 6) — same CRLF-drift risk as the tools.json artifacts
@@ -31,6 +44,72 @@ server/src/eval/commander-skill-triggering/skills-snapshot.json text eol=lf
 docs/contracts/mcp-connectors/v1/*.json text eol=lf
 docs/contracts/mcp-connectors/v1/manifest.sha256 text eol=lf
 
+# Versioned worker-protocol contract bytes (PRT-006) are covered by
+# manifest.sha256 and byte-checked cross-platform in CI. Pin every file in the
+# directory (conformance.json + operations.md + README.md + the manifest) to LF
+# so a Windows checkout with core.autocrlf=true cannot invalidate the
+# deterministic hashes.
+docs/contracts/worker-protocol/v1/** text eol=lf
+
+# The frozen independent worker-protocol v1 consumer baseline (PRT-007) is a
+# hash-pinned fixture: its bundled dist, declaration tree, package metadata,
+# dependency lock, and manifest are all covered by manifest.sha256 and recomputed
+# by cross-version.test.ts + the frozen-consumer checker. Pin every file to LF so
+# a Windows checkout with core.autocrlf=true cannot invalidate the deterministic
+# hashes.
+tests/fixtures/worker-protocol-consumers/v1/** text eol=lf
+
 # This file's historical base blob contains NUL bytes. Treat the repaired
 # source as LF text so PR review and future diffs remain inspectable.
 server/src/realtime/live-events-ws.ts text eol=lf diff
+
+# A SHEBANG FOLLOWED BY CRLF BREAKS AN IMPORT, though not an execution. vite/esbuild
+# strips `#!...` up to the LF and leaves a stray CR behind, which V8 then rejects with
+# "Invalid or unexpected token". Node's own loader handles it, so `node scripts/x.mjs`
+# works fine and ONLY an import from a vitest suite fails — which is exactly why this was
+# invisible on Linux CI (checked out LF) and red on every Windows checkout (autocrlf).
+#
+# It is not hypothetical: packages/worker-protocol/src/cross-version.test.ts imports
+# scripts/check-frozen-worker-protocol-consumer.mjs, and that one CR made the frozen
+# worker-protocol suite fail locally for anyone on Windows. Isolated by bisection —
+# shebang+LF imports fine, shebang+CRLF does not, and the same file with its shebang
+# removed imports fine.
+#
+# Pinned for the whole scripts/ directory rather than the one file, because every
+# shebang-bearing executable has the same property and the next one to be imported by a
+# test would fail the same way.
+# `scripts/*.mjs` would match ONLY the top level — `*` does not cross a slash — while
+# the reason above says "the whole scripts/ directory". `**` between slashes matches
+# zero or more directories, so these cover both scripts/x.mjs and scripts/lib/x.mjs.
+scripts/**/*.mjs text eol=lf
+scripts/**/*.sh text eol=lf
+
+# The distributed-execution foundation fixtures and architecture docs are copied
+# verbatim into the mutation harness's temp --root and mutated with LF-based
+# find-strings (check-distributed-execution-foundation.test.mjs). A CRLF Windows
+# checkout makes those finds no-ops, so three mutation self-checks fail locally
+# while Linux CI (LF) passes. Pin LF so the corpus mutates identically on every
+# platform, and so the census `runs` flip is honest cross-platform. The index is
+# already LF for every file here, so this changes only Windows working-tree bytes
+# (Linux CI is unaffected). (foundation-suite-unrun)
+tests/fixtures/distributed-execution/** text eol=lf
+docs/architecture/distributed-execution-* text eol=lf
+
+# WRK-017 — the D1 worker enrolment ticket is read by a Linux container and split on `.`
+# by two independent decoders. The daemon's reader trims surrounding whitespace, so CRLF is
+# survivable today; pin LF anyway so what a Windows checkout mounts is byte-identical to what
+# CI mounts, and so the one-line-file assertion in docker/d1/__tests__ measures the same bytes
+# everywhere. The file is already LF, so this changes no committed bytes.
+docker/d1/worker-b.enrollment-ticket text eol=lf
+
+# Drizzle migration files + their journal metadata are HASHED (sha256 of file bytes) to form
+# the migration identity: loadRequiredMigrationIdentity (packages/db/src/client.ts) hashes every
+# `<tag>.sql`, and the control-plane's assertRequiredMigrationIdentity requires the DB journal's
+# hash set to equal that image-computed set. A Windows checkout / `git archive` with core.autocrlf
+# would emit CRLF, drifting every hash away from the LF journal the DB was migrated with — which
+# makes the CP try to re-apply already-applied migrations and FAIL BOOT on
+# distributed_execution_migration_identity (observed on a manual staging deploy). Pin LF so the
+# migration identity is byte-identical on every platform. The blobs are already LF, so this
+# changes no committed bytes — it stops a Windows working tree / archive from diverging.
+packages/db/src/migrations/*.sql text eol=lf
+packages/db/src/migrations/meta/*.json text eol=lf

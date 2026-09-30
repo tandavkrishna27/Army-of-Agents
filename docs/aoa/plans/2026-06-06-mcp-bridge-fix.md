@@ -74,14 +74,14 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 - [ ] **Step 1: Install + build the libs.**
 ```bash
-pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-mcp-fix" install
-pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-mcp-fix" --filter "./packages/**" build
+pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-mcp-fix" install
+pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-mcp-fix" --filter "./packages/**" build
 ```
 Expected: install completes; all packages build (`packages/db`, `shared`, adapters, plugin-sdk). (Fresh worktree has no `dist/`; the `node mcp-bridge.js` path + server boot need it.)
 
 - [ ] **Step 2: Add the pinned SDK.**
 ```bash
-pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-mcp-fix\server" add @modelcontextprotocol/sdk@^1.0.0
+pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-mcp-fix\server" add @modelcontextprotocol/sdk@^1.0.0
 ```
 Expected: `server/package.json` gains `"@modelcontextprotocol/sdk": "^1.x.x"` under dependencies. Confirm it is `@modelcontextprotocol/sdk`, NOT `@modelcontextprotocol/server`.
 
@@ -128,7 +128,7 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 
 const BRIDGE = path.resolve(__dirname, "../mcp-bridge.ts");
-const DB_URL = process.env.AOA_TEST_DATABASE_URL ?? "postgres://upstream:upstream@127.0.0.1:54440/upstream";
+const DB_URL = process.env.AOA_TEST_DATABASE_URL ?? "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip";
 
 function runBridge(input: string, opts: { closeStdinAfterMs: number }): Promise<{ stdout: string; stderr: string; code: number | null }> {
   return new Promise((resolve) => {

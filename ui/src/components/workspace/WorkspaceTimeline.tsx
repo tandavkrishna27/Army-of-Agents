@@ -439,6 +439,24 @@ export function WorkspaceTimeline({
 
   // --- Mutations ---
 
+  const settleAcceptedAttempt = useCallback((submitted: SendAttempt) => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.issues.liveRuns(issueId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.issues.runs(issueId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.issues.attachments(issueId) });
+    setComposerError(null);
+    setSendFailed(false);
+    lastAttemptRef.current = null;
+    if (composerRevisionRef.current === submitted.revision) {
+      setChatInput("");
+      setSelectedFiles([]);
+      composerDraft.clearDraft();
+      setModelOverride(null);
+      setInterruptRequested(false);
+      setReopenRequested(true);
+    }
+  }, [composerDraft, issueId, queryClient]);
+
   const sendMessage = useMutation({
     mutationFn: async ({ text, files, reopen, interrupt, clientSubmissionId }: SendAttempt) => {
       if (files.length > 0) {
@@ -448,21 +466,7 @@ export function WorkspaceTimeline({
       await issuesApi.addComment(issueId, text, reopen, interrupt, undefined, clientSubmissionId);
     },
     onSuccess: (_data, submitted) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.liveRuns(issueId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.runs(issueId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.attachments(issueId) });
-      setComposerError(null);
-      setSendFailed(false);
-      lastAttemptRef.current = null;
-      if (composerRevisionRef.current === submitted.revision) {
-        setChatInput("");
-        setSelectedFiles([]);
-        composerDraft.clearDraft();
-        setModelOverride(null); // Reset model override after send
-        setInterruptRequested(false);
-        setReopenRequested(true);
-      }
+      settleAcceptedAttempt(submitted);
     },
     onError: (_error, submitted) => {
       // The draft, attachments, and lastAttemptRef snapshot are all kept —
@@ -568,12 +572,23 @@ export function WorkspaceTimeline({
     sendMessage.mutate(attempt);
   };
 
-  /** Banner Retry: re-send the IDENTICAL stored attempt (same clientSubmissionId). */
-  const handleRetryFailedSend = () => {
+  /** Observe the canonical comment receipt before any retry. */
+  const handleRetryFailedSend = async () => {
     const attempt = lastAttemptRef.current;
     if (!attempt || sendInFlightRef.current || sendMessage.isPending || isOffline) return;
-    sendInFlightRef.current = true;
-    sendMessage.mutate(attempt);
+    try {
+      const outcome = await issuesApi.getCommentSubmissionOutcome(issueId, attempt.clientSubmissionId);
+      if (outcome.state === "completed") {
+        settleAcceptedAttempt(attempt);
+        return;
+      }
+      sendInFlightRef.current = true;
+      sendMessage.mutate(attempt);
+    } catch {
+      // Observation failure is not proof the original POST was absent. Keep the
+      // preserved draft and banner; another deliberate retry can observe again.
+      setSendFailed(true);
+    }
   };
 
   const handleDismissFailedSend = () => {

@@ -2,7 +2,7 @@ import { DEPLOYMENT_MODES, type DeploymentMode } from "@armyofagents/shared";
 import { applyPendingMigrations, inspectMigrations } from "./client.js";
 
 function readDeploymentModeForMigration(): DeploymentMode | undefined {
-  const raw = process.env.AOA_DEPLOYMENT_MODE;
+  const raw = process.env.AOA_DEPLOYMENT_MODE ?? process.env.PAPERCLIP_DEPLOYMENT_MODE;
   if (raw === undefined || raw.trim() === "") return undefined;
   if (!DEPLOYMENT_MODES.includes(raw as DeploymentMode)) {
     throw new Error(

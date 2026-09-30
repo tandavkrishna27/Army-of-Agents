@@ -1,5 +1,6 @@
 import express, { Router, type Request as ExpressRequest } from "express";
 import helmet from "helmet";
+import type { KeyObject } from "node:crypto";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -7,13 +8,17 @@ import type { Db } from "@armyofagents/db";
 import type {
   DeploymentExposure,
   DeploymentMode,
-  AoAPluginManifestV1,
+  PaperclipPluginManifestV1,
 } from "@armyofagents/shared";
 import type { StorageService } from "./storage/types.js";
 import { httpLogger, errorHandler } from "./middleware/index.js";
 import { actorMiddleware } from "./middleware/auth.js";
 import { tenantContextMiddleware } from "./middleware/tenant-context.js";
-import { setDeploymentMode } from "./config/deployment-mode.js";
+import {
+  setDeploymentMode,
+  tenantIsolationEnforced,
+} from "./config/deployment-mode.js";
+import { stripHostedPluginWorkerMarker } from "./services/cloud-plugin-execution.js";
 import { boardMutationGuard } from "./middleware/board-mutation-guard.js";
 import {
   privateHostnameGuard,
@@ -22,6 +27,12 @@ import {
 import { buildHelmetOptions } from "./services/helmet-options.js";
 import { extractInlineScriptHashes } from "./services/csp-script-hashes.js";
 import { healthRoutes } from "./routes/health.js";
+import {
+  readinessRoutes,
+  readinessGate,
+  alwaysReadyProbe,
+  type ReadinessProbe,
+} from "./routes/readiness.js";
 import { onboardingJourneyRoutes } from "./routes/onboarding-journey.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
 import { onboardingJoinRoutes } from "./routes/onboarding-join.js";
@@ -40,6 +51,7 @@ import { userProfileRoutes } from "./routes/user-profiles.js";
 import { operationsHealthRoutes } from "./routes/operations-health.js";
 import { companyRoutes } from "./routes/companies.js";
 import { organizationRoutes } from "./routes/organizations.js";
+import { jobControlRoutes } from "./routes/job-control.js";
 import { agentRoutes } from "./routes/agents.js";
 import { projectRoutes } from "./routes/projects.js";
 import { issueRoutes } from "./routes/issues.js";
@@ -64,6 +76,12 @@ import { dashboardRoutes } from "./routes/dashboard.js";
 import { sidebarBadgeRoutes } from "./routes/sidebar-badges.js";
 import { sidebarPreferencesRoutes } from "./routes/sidebar-preferences.js";
 import { homeBoardLayoutRoutes } from "./routes/home-board-layout.js";
+import { universeLayoutRoutes } from "./routes/universe-layout.js";
+import { universeDraftsRoutes } from "./routes/universe-drafts.js";
+import { universeAttentionRoutes } from "./routes/universe-attention.js";
+import { universeCatchupRoutes } from "./routes/universe-catchup.js";
+import { universeIntakeRoutes } from "./routes/universe-intake.js";
+import { universePreferenceRoutes } from "./routes/universe-preferences.js";
 import { viewerPreferencesRoutes } from "./routes/viewer-preferences.js";
 import { inboxDismissalRoutes } from "./routes/inbox-dismissals.js";
 import { userEntityPinRoutes } from "./routes/user-entity-pins.js";
@@ -118,7 +136,12 @@ import { companyWorkspaceFsRoutes } from "./routes/company-workspace-fs.js";
 import { createPreviewRouter } from "./routes/preview.js";
 import { runtimeHooksRoutes } from "./routes/runtime-hooks.js";
 import { adapterRoutes } from "./routes/adapters.js";
-import { pluginRoutes, pluginCompanySettingsRoutes } from "./routes/plugins.js";
+import {
+  pluginRoutes,
+  pluginCompanySettingsRoutes,
+  buildCloudPluginDenialLoader,
+  buildCloudPluginDenialLifecycle,
+} from "./routes/plugins.js";
 import { companyPluginRoutes } from "./routes/company-plugins.js";
 import { pluginUiStaticRoutes } from "./routes/plugin-ui-static.js";
 import { createMarketplaceRouter } from "./routes/marketplace.js";
@@ -154,7 +177,19 @@ import {
 } from "./services/spa-fallback.js";
 import { createHostClientHandlers } from "@armyofagents/plugin-sdk";
 import { resolveAoaInstanceId } from "./home-paths.js";
+import {
+  WORKER_CONTROL_BODY_LIMIT_BYTES,
+  WORKER_CONTROL_EVENTS_BODY_LIMIT_BYTES,
+  WORKER_CONTROL_EVENTS_PATH,
+  WORKER_CONTROL_INFLATE,
+  WORKER_CONTROL_PATH_PREFIX,
+} from "./worker-control-body-limits.js";
 import type { BetterAuthSessionResult } from "./auth/better-auth.js";
+// JobReadyScheduler / JobControlMetrics are used ONLY as types (inline `import(...)`
+// annotations below). Keeping them out of the static import list satisfies the
+// flag-off import-graph guard (tenant-app-db-startup.test.ts) that forbids the E3
+// job-control runtime graph from loading during flag-off bootstrap; the real load
+// is the lazy `await import(...)` inside the flag-on branch.
 
 // Host version reported to plugin workers during initialize. Read from
 // server package.json at import time; falls back to "0.0.0" if unreadable.
@@ -201,6 +236,30 @@ export async function createApp(
       req: ExpressRequest
     ) => Promise<BetterAuthSessionResult | null>;
     devLocalIdentity?: boolean;
+    distributedExecutionEnabled?: boolean;
+    tenantAppDb?: Db;
+    operatorDb?: Db;
+    jobReadyScheduler?: import("./services/job-ready-scheduler.js").JobReadyScheduler;
+    jobControlMetrics?: import("./services/job-control-metrics.js").JobControlMetrics;
+    workerSessionSigningKey?: string;
+    /** DEP-012 Slice 4+5 — the control-plane ed25519 PRIVATE key that MINTS the inert
+     * owned-labels capability in the sandbox-local resolve reply (threaded to
+     * workerControlRoutes -> the secret broker). Absent ⇒ the reply carries no capability
+     * (byte-identical to pre-DEP-011). Loaded + validated at the composition root. */
+    controlPlaneSigningKey?: KeyObject;
+    /** CLI-006 (2b) — after-commit projection of a distributed attempt's terminal
+     * onto its canary-owned heartbeat run. Composed at the root BEFORE createApp
+     * (2b-D1) because the ingest service is built here, three hops down. Absent
+     * (the default) leaves ingest behaving exactly as it did pre-CLI-006. */
+    onAttemptTerminal?: import("./services/job-events.js").JobEventIngestTerminalHook;
+    // DEP-003 (E6 deployment harness): optional readiness contract. When omitted the
+    // app is unchanged except the additive always-ready `/api/ready` + `/api/health/live`
+    // routes; the 503 readiness gate is DORMANT. When provided with `gateEnabled:true`
+    // the gate 503s tenant/app routes until the probe reports ready.
+    readiness?: {
+      probe: ReadinessProbe;
+      gateEnabled: boolean;
+    };
   }
 ) {
   // Pin the STATIC deployment-mode enforcement source once at boot, before any
@@ -297,10 +356,72 @@ export async function createApp(
   // Runtime previews are a streaming proxy, not JSON API routes. Mount before
   // the global body parser so POST/PUT/uploads reach the upstream unchanged.
   app.use("/preview", createPreviewRouter(db));
+  // BRW-003d-1 — worker-control body limits, DERIVED from the frozen
+  // OPERATION_DESCRIPTORS. See ./worker-control-body-limits.ts for why the limit
+  // must EXCEED the contract ceiling rather than equal it (a mount equal to the
+  // ceiling leaves the handler's guard dead and only moves the wrong-shaped
+  // refusal), and why `inflate` is off (a measured 1019.8:1 gzip amplification
+  // on a surface whose authorization is checked inside the handler, after parse).
+  //
+  // Mounted BEFORE the global express.json() below so it wins on these paths.
+  // The /events mount is registered before the prefix mount because express
+  // matches in registration order and only event_upload needs the wide limit.
+  //
+  // Gated on the same flag as the routes: when distributed execution is off the
+  // worker-control paths 404 at the catch-all, but middleware still runs first,
+  // so an ungated mount would buffer megabytes for a path that answers 404.
+  if (opts.distributedExecutionEnabled) {
+    app.use(
+      WORKER_CONTROL_EVENTS_PATH,
+      express.json({
+        limit: WORKER_CONTROL_EVENTS_BODY_LIMIT_BYTES,
+        inflate: WORKER_CONTROL_INFLATE,
+        verify: captureRawBody,
+      })
+    );
+    app.use(
+      WORKER_CONTROL_PATH_PREFIX,
+      express.json({
+        limit: WORKER_CONTROL_BODY_LIMIT_BYTES,
+        inflate: WORKER_CONTROL_INFLATE,
+        verify: captureRawBody,
+      })
+    );
+  }
+  // Mounted here rather than beside the company-import parser above: these
+  // widen an UNAUTHENTICATED buffer, so helmet, the private-hostname guard and
+  // the request logger all belong in front of them. Nothing between there and
+  // here reads req.body -- the global parser sitting on the next line is the
+  // proof -- and the worker-control paths do not overlap the /preview proxy, so
+  // the position is behaviour-preserving for the fix.
   app.use(express.json({ verify: captureRawBody }));
   // Protect every board-session mutation, including the direct auth and
   // onboarding routers mounted before the main API router below.
   app.use("/api", boardMutationGuard());
+  // DEP-003 (E6 deployment harness): readiness route (always answers) + the optional
+  // 503 gate, mounted on `app` at /api BEFORE the ~13 pre-api DB routers below AND the
+  // main `api` Router. Registering it here (not inside `api`, which mounts last) is
+  // what makes the gate cover EVERY /api route — including the tenant-scoped
+  // /api/companies/:id/provider-credentials and the onboarding routers — instead of
+  // only the routes inside `api`. Health/liveness/readiness bypass so they always
+  // answer (they resolve later in the `api` Router / here). Default (no `readiness`
+  // opt) = always-ready probe + dormant gate, leaving flag-off startup unchanged
+  // except the additive /api/ready route.
+  const readinessProbe = opts.readiness?.probe ?? alwaysReadyProbe;
+  app.use("/api", readinessRoutes(readinessProbe));
+  if (opts.readiness?.gateEnabled) {
+    app.use(
+      "/api",
+      readinessGate({
+        probe: readinessProbe,
+        bypass: (path) =>
+          path === "/ready" ||
+          path === "/health" ||
+          path === "/health/live" ||
+          path.startsWith("/health/"),
+      })
+    );
+  }
   // Mount profile-aware auth routes (get-session with DB-loaded user, profile GET/PATCH)
   // before the betterAuthHandler catch-all so specific routes win.
   app.use("/api", authProfileRoutes(db));
@@ -349,6 +470,7 @@ export async function createApp(
       deploymentExposure: opts.deploymentExposure,
       authReady: opts.authReady,
       companyDeletionEnabled: opts.companyDeletionEnabled,
+      distributedExecutionEnabled: opts.distributedExecutionEnabled,
     })
   );
   api.use(
@@ -361,11 +483,60 @@ export async function createApp(
       allowedHostnames: opts.allowedHostnames,
     })
   );
+  // DEP-003: the readiness route + optional 503 gate are mounted on `app` at /api
+  // ABOVE the pre-api DB routers (before the authProfileRoutes block) so they cover
+  // EVERY /api route, not just the ones inside this `api` Router. The liveness/health
+  // routes above (mounted inside `api`) still answer because the gate bypasses
+  // /health, /health/live, /health/*, and /ready.
   api.use(
     "/companies",
     companyRoutes(db, { deploymentMode: opts.deploymentMode })
   );
   api.use("/organizations", organizationRoutes(db));
+  if (opts.distributedExecutionEnabled) {
+    if (!opts.tenantAppDb || !opts.operatorDb) {
+      throw new Error(
+        "Distributed worker control requires verified aoa_app and aoa_operator database pools; owner fallback is forbidden",
+      );
+    }
+    if (!opts.workerSessionSigningKey || Buffer.byteLength(opts.workerSessionSigningKey) < 32) {
+      throw new Error("Distributed worker control requires AOA_WORKER_SESSION_SIGNING_KEY with at least 32 bytes");
+    }
+    api.use(jobControlRoutes({ db, appDb: opts.tenantAppDb, operatorDb: opts.operatorDb }));
+    // Imported here (not at module top) so a flag-off startup never loads the worker-control /
+    // job-leasing / job-control-metrics graph. The same instance flows through from the composition
+    // root, so telemetry is one shared surface across scheduler, outbox, and leasing.
+    const { workerControlRoutes } = await import("./routes/worker-control.js");
+    api.use(workerControlRoutes({
+      db,
+      appDb: opts.tenantAppDb,
+      operatorDb: opts.operatorDb,
+      jobReadyScheduler: opts.jobReadyScheduler,
+      jobControlMetrics: opts.jobControlMetrics,
+      sessionSigningKey: opts.workerSessionSigningKey,
+      onAttemptTerminal: opts.onAttemptTerminal,
+      // DEP-012 Slice 4+5 — a pre-resolved LOCAL (opts), never an inline process.env read
+      // here (the rollout-rollback-liveness source-shape test negative-matches an env read
+      // within 400 chars of this mount). Absent ⇒ the mint is omitted (inert).
+      controlPlaneSigningKey: opts.controlPlaneSigningKey,
+    }));
+    // DSK-001 Lane D (D17) — the owner-scoped device listing. Mounted HERE, inside the
+    // flag block, so DSK-00 clause (a) holds by construction: flag-off the router does
+    // not exist and every path under it 404s. Contrast F27, where executionTargetRoutes
+    // sits outside this block and needed an explicit desktop refusal instead.
+    // Dynamically imported for the same reason as worker-control above: a flag-off
+    // startup never loads the module graph.
+    const { desktopDeviceRoutes } = await import("./routes/desktop-devices.js");
+    api.use(desktopDeviceRoutes({ db }));
+    // DEP-011 reaper Slice B (B1) — the control-plane READ-ONLY lease-truth endpoint the
+    // adapter-manager PULLs to classify orphan sandboxes. Mounted HERE, inside the
+    // distributed block, is HALF the B1-F1 double-gate; the route's own pre-handler 404s
+    // unless AOA_ADAPTER_MANAGER_TRUTH_ROUTE_ENABLED="1" is the other half. Ships INERT:
+    // with either flag off it 404s, and its only caller is the AM client (B2). Dynamically
+    // imported like worker-control above so a flag-off startup never loads the module.
+    const { adapterManagerControlRoutes } = await import("./routes/adapter-manager-control.js");
+    api.use(adapterManagerControlRoutes({ appDb: opts.tenantAppDb }));
+  }
   // Settings -> Providers. Path-mounted (mergeParams) so the provider endpoints
   // share one /companies/:companyId/providers prefix.
   api.use("/companies/:companyId/providers", providerRoutes(db));
@@ -439,7 +610,16 @@ export async function createApp(
   api.use(cliAuthRoutes(db));
   api.use(environmentRoutes({ db }));
   api.use(orgSpendRoutes({ db }));
-  api.use(executionTargetRoutes({ db }));
+  api.use(executionTargetRoutes({
+    db,
+    workerSession: opts.distributedExecutionEnabled && opts.tenantAppDb && opts.operatorDb && opts.workerSessionSigningKey
+      ? {
+          appDb: opts.tenantAppDb,
+          operatorDb: opts.operatorDb,
+          sessionSigningKey: opts.workerSessionSigningKey,
+        }
+      : undefined,
+  }));
   api.use(executionWorkspaceRoutes(db));
   api.use(workspaceGitRoutes(db));
   api.use(filesystemRoutes());
@@ -457,6 +637,12 @@ export async function createApp(
   api.use(cockpitRoutes(db));
   api.use(sidebarPreferencesRoutes(db));
   api.use(homeBoardLayoutRoutes(db));
+  api.use(universeLayoutRoutes(db));
+  api.use(universeDraftsRoutes(db));
+  api.use(universeAttentionRoutes(db));
+  api.use(universeCatchupRoutes(db));
+  api.use(universeIntakeRoutes(db, opts.storageService));
+  api.use(universePreferenceRoutes(db));
   api.use(viewerPreferencesRoutes(db));
   api.use(inboxDismissalRoutes(db));
   api.use(userEntityPinRoutes(db));
@@ -470,119 +656,197 @@ export async function createApp(
     })
   );
 
-  // Plugin subsystem initialization
-  const hostServiceDisposers = new Map<string, () => void>();
-  let hostServiceCleanup:
-    | ReturnType<typeof createPluginHostServiceCleanup>
-    | undefined;
-  const workerMgr = createPluginWorkerManager({
-    onWorkerEvent: (event) => hostServiceCleanup?.handleWorkerEvent(event),
-  });
-  const eventBus = createPluginEventBus();
-  const streamBus = createPluginStreamBus();
-  const jobStoreInst = pluginJobStore(db);
-  const toolDispatcherInst = createPluginToolDispatcher({
-    workerManager: workerMgr,
-    db,
-  });
-  const jobSchedulerInst = createPluginJobScheduler({
-    db,
-    jobStore: jobStoreInst,
-    workerManager: workerMgr,
-  });
-  const lifecycleMgr = pluginLifecycleManager(db, {
-    workerManager: workerMgr,
-  });
-  hostServiceCleanup = createPluginHostServiceCleanup(
-    lifecycleMgr,
-    hostServiceDisposers
-  );
-  const jobCoordinatorInst = createPluginJobCoordinator({
-    db,
-    lifecycle: lifecycleMgr,
-    scheduler: jobSchedulerInst,
-    jobStore: jobStoreInst,
-  });
-  // Compose PluginRuntimeServices from existing subsystems + host services
-  // factory. Without this, pluginLoader.loadAll() throws at startup and no
-  // plugins activate. The loader.loadAll() call happens in index.ts after
-  // the server is listening.
-  const pluginRuntimeServices = {
-    workerManager: workerMgr,
-    eventBus,
-    jobScheduler: jobSchedulerInst,
-    jobStore: jobStoreInst,
-    toolDispatcher: toolDispatcherInst,
-    streamBus,
-    lifecycleManager: lifecycleMgr,
-    buildHostHandlers: (
-      pluginId: string,
-      manifest: AoAPluginManifestV1
-    ) => {
-      // A manual reload may create a fresh service bundle for the same row.
-      // Dispose the previous generation before replacing its disposer.
-      const services = buildHostServices(
-        db,
-        pluginId,
-        manifest.id,
-        eventBus,
-        (method, params) =>
-          workerMgr.getWorker(pluginId)?.notify(method, params)
-      );
-      hostServiceCleanup?.replace(pluginId, () => services.dispose());
-      return guardPluginHostHandlers(
-        db,
-        pluginId,
-        createHostClientHandlers({
-          pluginId,
-          capabilities: manifest.capabilities ?? [],
-          services,
-        })
-      );
-    },
-    disposeHostServices: (pluginId: string) =>
-      hostServiceCleanup?.disposePlugin(pluginId),
-    disposeAllHostServices: () => hostServiceCleanup?.disposeAll(),
-    instanceInfo: {
-      instanceId: resolveAoaInstanceId(),
-      hostVersion: SERVER_VERSION,
-    },
-  };
-  const loaderInst = pluginLoader(db, {}, pluginRuntimeServices);
-  // The plugin loader and lifecycle manager depend on each other. Bind the
-  // runtime-aware loader once composition is complete so every route and
-  // marketplace path activates/deactivates the same workers, jobs, events,
-  // and tools instead of using the lifecycle's construction-time fallback.
-  lifecycleMgr.bindLoader(loaderInst);
+  // Plugin subsystem — PROCESS COMPOSITION boundary (FND-006 / Decision #103
+  // cloud-enforcement amendment). On `cloud_auth` (`tenantIsolationEnforced()`)
+  // the hosted control plane must NOT construct, start, or dispatch any plugin
+  // worker process, so the effectful worker/lifecycle/loader machinery below —
+  // and the effectful plugin routes + marketplace-install router that depend on
+  // it — are composed ONLY off cloud. Cloud boot instead performs a
+  // metadata-only reconciliation of stale rows (see `index.ts` →
+  // `reconcileCloudBlockedPlugins`). Self-hosted composition is unchanged.
+  const hostedPluginProcessDisabled = tenantIsolationEnforced();
+  // Harden the hosted parent BEFORE any plugin composition: strip a spoofed
+  // worker-child marker so it can never be mistaken for an isolated child
+  // (no-op off cloud, where the self-hosted worker manager sets it per-child).
+  stripHostedPluginWorkerMarker();
 
-  api.use(
-    pluginRoutes(
+  // Loader + lifecycle are consumed below by the marketplace-install router;
+  // they exist ONLY off cloud. Kept in outer scope so the guarded install-router
+  // block can see them.
+  let loaderInst: ReturnType<typeof pluginLoader> | undefined;
+  let lifecycleMgr: ReturnType<typeof pluginLifecycleManager> | undefined;
+
+  if (!hostedPluginProcessDisabled) {
+    const hostServiceDisposers = new Map<string, () => void>();
+    let hostServiceCleanup:
+      | ReturnType<typeof createPluginHostServiceCleanup>
+      | undefined;
+    const workerMgr = createPluginWorkerManager({
+      onWorkerEvent: (event) => hostServiceCleanup?.handleWorkerEvent(event),
+    });
+    const eventBus = createPluginEventBus();
+    const streamBus = createPluginStreamBus();
+    const jobStoreInst = pluginJobStore(db);
+    const toolDispatcherInst = createPluginToolDispatcher({
+      workerManager: workerMgr,
       db,
-      loaderInst,
-      {
-        scheduler: jobSchedulerInst,
-        jobStore: jobStoreInst,
+    });
+    const jobSchedulerInst = createPluginJobScheduler({
+      db,
+      jobStore: jobStoreInst,
+      workerManager: workerMgr,
+    });
+    lifecycleMgr = pluginLifecycleManager(db, {
+      workerManager: workerMgr,
+    });
+    const lifecycleMgrLocal = lifecycleMgr;
+    hostServiceCleanup = createPluginHostServiceCleanup(
+      lifecycleMgrLocal,
+      hostServiceDisposers
+    );
+    const jobCoordinatorInst = createPluginJobCoordinator({
+      db,
+      lifecycle: lifecycleMgrLocal,
+      scheduler: jobSchedulerInst,
+      jobStore: jobStoreInst,
+    });
+    // Compose PluginRuntimeServices from existing subsystems + host services
+    // factory. Without this, pluginLoader.loadAll() throws at startup and no
+    // plugins activate. The loader.loadAll() call happens in index.ts after
+    // the server is listening.
+    const pluginRuntimeServices = {
+      workerManager: workerMgr,
+      eventBus,
+      jobScheduler: jobSchedulerInst,
+      jobStore: jobStoreInst,
+      toolDispatcher: toolDispatcherInst,
+      streamBus,
+      lifecycleManager: lifecycleMgrLocal,
+      buildHostHandlers: (
+        pluginId: string,
+        manifest: PaperclipPluginManifestV1
+      ) => {
+        // A manual reload may create a fresh service bundle for the same row.
+        // Dispose the previous generation before replacing its disposer.
+        const services = buildHostServices(
+          db,
+          pluginId,
+          manifest.id,
+          eventBus,
+          (method, params) =>
+            workerMgr.getWorker(pluginId)?.notify(method, params)
+        );
+        hostServiceCleanup?.replace(pluginId, () => services.dispose());
+        return guardPluginHostHandlers(
+          db,
+          pluginId,
+          createHostClientHandlers({
+            pluginId,
+            capabilities: manifest.capabilities ?? [],
+            services,
+          })
+        );
       },
-      {
-        workerManager: workerMgr,
+      disposeHostServices: (pluginId: string) =>
+        hostServiceCleanup?.disposePlugin(pluginId),
+      disposeAllHostServices: () => hostServiceCleanup?.disposeAll(),
+      instanceInfo: {
+        instanceId: resolveAoaInstanceId(),
+        hostVersion: SERVER_VERSION,
       },
-      {
-        toolDispatcher: toolDispatcherInst,
-      },
-      {
-        workerManager: workerMgr,
-        streamBus,
-      },
-      lifecycleMgr
-    )
-  );
-  api.use(pluginCompanySettingsRoutes(db, lifecycleMgr));
+    };
+    loaderInst = pluginLoader(db, {}, pluginRuntimeServices);
+    const loaderInstLocal = loaderInst;
+    // The plugin loader and lifecycle manager depend on each other. Bind the
+    // runtime-aware loader once composition is complete so every route and
+    // marketplace path activates/deactivates the same workers, jobs, events,
+    // and tools instead of using the lifecycle's construction-time fallback.
+    lifecycleMgrLocal.bindLoader(loaderInstLocal);
 
-  // Company-scoped plugin management (M.4)
-  api.use(
-    "/companies/:companyId/plugins",
-    companyPluginRoutes(db, lifecycleMgr, loaderInst)
-  );
+    api.use(
+      pluginRoutes(
+        db,
+        loaderInstLocal,
+        {
+          scheduler: jobSchedulerInst,
+          jobStore: jobStoreInst,
+        },
+        {
+          workerManager: workerMgr,
+        },
+        {
+          toolDispatcher: toolDispatcherInst,
+        },
+        {
+          workerManager: workerMgr,
+          streamBus,
+        },
+        lifecycleMgrLocal
+      )
+    );
+    api.use(pluginCompanySettingsRoutes(db, lifecycleMgrLocal));
+
+    // Company-scoped plugin management (M.4)
+    api.use(
+      "/companies/:companyId/plugins",
+      companyPluginRoutes(db, lifecycleMgrLocal, loaderInstLocal)
+    );
+
+    // Expose tool dispatcher globally so heartbeat can inject plugin tools into
+    // agent context (undefined on cloud → consumers inject no plugin tools).
+    (globalThis as any).__paperclipPluginToolDispatcher = toolDispatcherInst;
+
+    // Expose plugin subsystem for startup/shutdown in index.ts. Absent on cloud
+    // so index.ts starts no job scheduler/coordinator and calls no loadAll().
+    (app as any).__pluginSubsystem = {
+      workerManager: workerMgr,
+      eventBus,
+      streamBus,
+      jobStore: jobStoreInst,
+      toolDispatcher: toolDispatcherInst,
+      jobScheduler: jobSchedulerInst,
+      jobCoordinator: jobCoordinatorInst,
+      lifecycle: lifecycleMgrLocal,
+      loader: loaderInstLocal,
+      hostServiceCleanup,
+    };
+  } else {
+    // FND-008 (Decision #103 CP-003/CP-004): in `cloud_auth` the effectful
+    // plugin worker/lifecycle/loader machinery is NOT composed above (FND-006).
+    // But the plugin HTTP surfaces must still be REGISTERED so a client receives
+    // the stable documented 503 denial envelope (Decision #103) — NOT a 404.
+    // Mount the SAME routers with the effectful runtime deps ABSENT and inert
+    // cloud-denial loader/lifecycle facades: every effectful route short-circuits
+    // to 503 at its `rejectBlockedCloudExecution` / `blockActivationInCloud` gate
+    // BEFORE touching any loader/lifecycle/worker effect, while metadata-only
+    // reads use the real `db`/registry (persisted validated data, never
+    // evaluating manifest JavaScript). No worker manager, event/stream bus, job
+    // store/scheduler/coordinator, or tool dispatcher is constructed, and
+    // `__pluginSubsystem` / `__paperclipPluginToolDispatcher` stay unset so
+    // index.ts starts no plugin background work and heartbeat injects no plugin
+    // tools. The marketplace INSTALL router stays unmounted here (its async
+    // orchestrator already records the `errorCode`/`errorDocs` cloud contract
+    // and is unreachable without the loader) — browse-only catalog routes below
+    // remain available. Self-hosted composition (the `if` branch) is unchanged.
+    const cloudDenialLoader = buildCloudPluginDenialLoader();
+    const cloudDenialLifecycle = buildCloudPluginDenialLifecycle();
+    api.use(
+      pluginRoutes(
+        db,
+        cloudDenialLoader,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        cloudDenialLifecycle
+      )
+    );
+    api.use(pluginCompanySettingsRoutes(db, cloudDenialLifecycle));
+    api.use(
+      "/companies/:companyId/plugins",
+      companyPluginRoutes(db, cloudDenialLifecycle, cloudDenialLoader)
+    );
+  }
 
   // Marketplace catalog service + routes
   const marketplaceCatalogService = new MarketplaceCatalogService({
@@ -643,63 +907,71 @@ export async function createApp(
   //
   // The PluginLoaderLike adapter narrows the real loader/registry/lifecycle
   // surface to just what marketplace needs (PluginInstaller's contract), which
-  // also handles the manifest type widening (AoAPluginManifestV1 ->
+  // also handles the manifest type widening (PaperclipPluginManifestV1 ->
   // { id; [key: string]: unknown }) and the lifecycle.load return-value shrink
   // (PluginRecord -> void).
-  const marketplacePluginRegistry = pluginRegistryService(db);
-  api.use(
-    "/companies/:companyId/marketplace",
-    createMarketplaceInstallRouter({
-      db,
-      catalogService: marketplaceCatalogService,
-      pluginLoader: {
-        installPlugin: async (opts) => {
-          const discovered = await loaderInst.installPlugin(opts);
-          return {
-            packagePath: discovered.packagePath,
-            packageName: discovered.packageName,
-            version: discovered.version,
-            source: discovered.source,
-            manifest: discovered.manifest as {
-              id: string;
-              [key: string]: unknown;
-            } | null,
-          };
-        },
-        registry: {
-          getByKeyScoped: async (pluginKey, companyId) => {
-            const row = await marketplacePluginRegistry.getByKeyScoped(
-              pluginKey,
-              companyId
-            );
-            return row ? { id: row.id, pluginKey: row.pluginKey } : null;
+  // Marketplace INSTALL routes require the live loader/lifecycle, which are
+  // composed only off cloud (FND-006). On cloud the hosted control plane runs no
+  // plugin install/activation, so these routers are not mounted; browse-only
+  // catalog routes (above) remain available.
+  if (!hostedPluginProcessDisabled && loaderInst && lifecycleMgr) {
+    const installLoader = loaderInst;
+    const installLifecycle = lifecycleMgr;
+    const marketplacePluginRegistry = pluginRegistryService(db);
+    api.use(
+      "/companies/:companyId/marketplace",
+      createMarketplaceInstallRouter({
+        db,
+        catalogService: marketplaceCatalogService,
+        pluginLoader: {
+          installPlugin: async (opts) => {
+            const discovered = await installLoader.installPlugin(opts);
+            return {
+              packagePath: discovered.packagePath,
+              packageName: discovered.packageName,
+              version: discovered.version,
+              source: discovered.source,
+              manifest: discovered.manifest as {
+                id: string;
+                [key: string]: unknown;
+              } | null,
+            };
+          },
+          registry: {
+            getByKeyScoped: async (pluginKey, companyId) => {
+              const row = await marketplacePluginRegistry.getByKeyScoped(
+                pluginKey,
+                companyId
+              );
+              return row ? { id: row.id, pluginKey: row.pluginKey } : null;
+            },
+          },
+          lifecycle: {
+            load: async (pluginId) => {
+              await installLifecycle.load(pluginId);
+            },
+            blockActivationInCloud: async (pluginId, source) => {
+              await installLifecycle.blockActivationInCloud(pluginId, source);
+            },
           },
         },
-        lifecycle: {
-          load: async (pluginId) => {
-            await lifecycleMgr.load(pluginId);
-          },
-          blockActivationInCloud: async (pluginId, source) => {
-            await lifecycleMgr.blockActivationInCloud(pluginId, source);
+      })
+    );
+    api.use(
+      "/companies/:companyId/marketplace",
+      createMarketplaceCompanyRouter({
+        db,
+        catalogService: marketplaceCatalogService,
+        pluginLifecycle: installLifecycle,
+        pluginLoader: {
+          installPlugin: async (opts) => {
+            await installLoader.installPlugin(opts);
           },
         },
-      },
-    })
-  );
-  api.use(
-    "/companies/:companyId/marketplace",
-    createMarketplaceCompanyRouter({
-      db,
-      catalogService: marketplaceCatalogService,
-      pluginLifecycle: lifecycleMgr,
-      pluginLoader: {
-        installPlugin: async (opts) => {
-          await loaderInst.installPlugin(opts);
-        },
-      },
-      pluginRollback: pluginRollbackService(db),
-    })
-  );
+        pluginRollback: pluginRollbackService(db),
+      })
+    );
+  }
 
   // Catch-all 404 for unmatched /api/* routes. Without this, requests like
   // GET /api/foo fall through to express.static / Vite middleware, which
@@ -729,22 +1001,10 @@ export async function createApp(
   );
   app.use("/_plugins", pluginUiStaticRoutes(db, { localPluginDir: pluginDir }));
 
-  // Expose tool dispatcher globally so heartbeat can inject plugin tools into agent context
-  (globalThis as any).__aoaPluginToolDispatcher = toolDispatcherInst;
-
-  // Expose plugin subsystem for startup/shutdown in index.ts
-  (app as any).__pluginSubsystem = {
-    workerManager: workerMgr,
-    eventBus,
-    streamBus,
-    jobStore: jobStoreInst,
-    toolDispatcher: toolDispatcherInst,
-    jobScheduler: jobSchedulerInst,
-    jobCoordinator: jobCoordinatorInst,
-    lifecycle: lifecycleMgr,
-    loader: loaderInst,
-    hostServiceCleanup,
-  };
+  // NOTE: `__paperclipPluginToolDispatcher` and `__pluginSubsystem` are set
+  // inside the off-cloud plugin composition block above (FND-006). On cloud
+  // they remain unset, so heartbeat/context injects no plugin tools and index.ts
+  // starts no plugin background workers.
 
   if (opts.uiMode === "static") {
     if (uiDistDir) {

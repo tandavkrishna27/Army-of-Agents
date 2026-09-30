@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { makeTableProxy, drizzleOperatorStubs } from "./helpers/drizzle-mock.js";
-vi.mock("@armyofagents/db", async () => ({ executionTargets: makeTableProxy("execution_targets") }));
-vi.mock("drizzle-orm", () => drizzleOperatorStubs());
+vi.mock("@armyofagents/db", async () => ({
+  executionTargets: makeTableProxy("execution_targets"),
+  workers: makeTableProxy("workers"),
+}));
+vi.mock("drizzle-orm", () => ({ ...drizzleOperatorStubs(), notExists: () => "notExists" }));
 import {
   listExecutionTargets,
   registerWorkerHeartbeat,
@@ -71,17 +74,21 @@ describe("execution-target worker-token lifecycle", () => {
     const returning = vi.fn().mockResolvedValue(returningRows);
     const where = vi.fn().mockReturnValue({ returning });
     const set = vi.fn().mockReturnValue({ where });
+    const workerWhere = vi.fn().mockReturnValue("worker-authority-subquery");
+    const from = vi.fn().mockReturnValue({ where: workerWhere });
+    const select = vi.fn().mockReturnValue({ from });
     return {
-      db: { update: vi.fn().mockReturnValue({ set }) } as unknown as Parameters<
+      db: { update: vi.fn().mockReturnValue({ set }), select } as unknown as Parameters<
         typeof rotateExecutionTargetWorkerToken
       >[0],
       set,
       where,
+      select,
     };
   }
 
   it("atomically rotates the same-org target token and returns plaintext only once", async () => {
-    const { db, set, where } = updateDb([
+    const { db, set, where, select } = updateDb([
       { id: "target-1", organizationId: "org-1", status: "active", workerTokenHash: "new-hash" },
     ]);
     const rotated = await rotateExecutionTargetWorkerToken(db, {
@@ -90,6 +97,7 @@ describe("execution-target worker-token lifecycle", () => {
     });
 
     expect(where).toHaveBeenCalledWith("and");
+    expect(select).toHaveBeenCalled();
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({ workerTokenHash: expect.stringMatching(/^[0-9a-f]{64}$/) }),
     );

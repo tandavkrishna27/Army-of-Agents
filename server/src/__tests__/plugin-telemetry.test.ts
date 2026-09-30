@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AoAPluginManifestV1 } from "@armyofagents/shared";
+import type { PaperclipPluginManifestV1 } from "@armyofagents/shared";
 
 const debugSpy = vi.hoisted(() => vi.fn());
 const transmitPluginTelemetrySpy = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
@@ -40,8 +40,8 @@ function createEventBusStub() {
 }
 
 function buildTelemetryTestManifest(
-  overrides: Partial<AoAPluginManifestV1> = {},
-): AoAPluginManifestV1 {
+  overrides: Partial<PaperclipPluginManifestV1> = {},
+): PaperclipPluginManifestV1 {
   return {
     id: "telemetry-test",
     apiVersion: 1,

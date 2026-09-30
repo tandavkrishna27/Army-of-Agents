@@ -5,7 +5,7 @@
 **Parent plan:** `docs/archive/sessions/2026-05-11-v1-upgrade-master.md`
 **Branch:** `feat/v1-routine-revisions` (off `v1-upgrade`)
 **Migration slot:** `0089_*` — runs AFTER `0088_*` (planning-mode)
-**Source commit being ported:** `d6d7a7ce` (Upstream routine revision history)
+**Source commit being ported:** `d6d7a7ce` (Paperclip routine revision history)
 
 ---
 
@@ -31,7 +31,7 @@ Routines are live automation definitions. When a founder or agent edits a routin
 
 - **Drizzle ORM only** — never hand-edit SQL migration files; run `pnpm db:generate`
 - **Migration 0089** — must be generated AFTER migration 0088 is on `v1-upgrade` HEAD (it already is)
-- **Brand-check** — no `[upstream]` log prefix, no `upstream-*` CSS classes, no `pcp_*` tokens, use `aoa.*` localStorage keys
+- **Brand-check** — no `[paperclip]` log prefix, no `paperclip-*` CSS classes, no `pcp_*` tokens, use `aoa.*` localStorage keys
 - **AoA naming** — log prefix `[aoa-revision]`, localStorage key `aoa.routine-revisions.*`
 - **Test policy** — new schema → ≥1 embedded-postgres integration test; new service → ≥1 unit test + ≥1 integration test; new route → ≥1 supertest route test; new UI component → ≥1 vitest test; new lib function → unit tests
 - **Verification triple** after each task: `pnpm -r typecheck && pnpm test:run && pnpm build`
@@ -341,7 +341,7 @@ pnpm test:run --reporter=verbose 2>&1 | grep -E "(PASS|FAIL|routines-routes-revi
 
 ## Task 5 — `ui/src/lib/line-diff.ts`
 
-**What:** Port the LCS-based line differ from Upstream (`d6d7a7ce`). This is a pure function utility (~91 lines, zero external deps) that computes a unified-style diff between two text strings at the line level. It is reusable for future memory/artifact diff views.
+**What:** Port the LCS-based line differ from Paperclip (`d6d7a7ce`). This is a pure function utility (~91 lines, zero external deps) that computes a unified-style diff between two text strings at the line level. It is reusable for future memory/artifact diff views.
 
 **File to create:** `ui/src/lib/line-diff.ts`
 
@@ -503,12 +503,12 @@ pnpm -r typecheck && pnpm test:run && pnpm build
 
 ```bash
 cd AoA-2.5
-# No upstream log prefixes:
-grep -rn "\[upstream\]" --include="*.ts" --include="*.tsx" server/src/services/routines.ts ui/src/components/routines/ ui/src/lib/line-diff.ts
+# No paperclip log prefixes:
+grep -rn "\[paperclip\]" --include="*.ts" --include="*.tsx" server/src/services/routines.ts ui/src/components/routines/ ui/src/lib/line-diff.ts
 # No pcp_ tokens:
 grep -rn "pcp_" --include="*.ts" --include="*.tsx" packages/shared/src/validators/routine.ts
-# No upstream-* CSS classes:
-grep -rn "upstream-" --include="*.tsx" ui/src/components/routines/ ui/src/pages/RoutineDetail.tsx
+# No paperclip-* CSS classes:
+grep -rn "paperclip-" --include="*.tsx" ui/src/components/routines/ ui/src/pages/RoutineDetail.tsx
 ```
 
 Expected: 0 hits on all.

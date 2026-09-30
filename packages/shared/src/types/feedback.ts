@@ -2,13 +2,13 @@ export const FEEDBACK_DATA_SHARING_PREFERENCES = ["allowed", "not_allowed", "pro
 export type FeedbackDataSharingPreference = (typeof FEEDBACK_DATA_SHARING_PREFERENCES)[number];
 
 // AoA privacy-first default: "not_allowed".
-// AoA defaults to "prompt" (asks user on first feedback action). AoA opts users out
+// Paperclip defaults to "prompt" (asks user on first feedback action). AoA opts users out
 // until they explicitly opt in. The feedback/telemetry subsystem itself lands in Phase F;
 // this constant only controls the instance-settings default at Phase A.7.
 export const DEFAULT_FEEDBACK_DATA_SHARING_PREFERENCE: FeedbackDataSharingPreference = "not_allowed";
 
 // F.2 MVP ports only "issue_comment" — covers agent output comments on tasks, the primary
-// feedback surface on TaskSlideOver. AoA also defines "issue_document_revision"
+// feedback surface on TaskSlideOver. Paperclip also defines "issue_document_revision"
 // for document revisions; deferred to Phase I polish along with artifact-version votes.
 export const FEEDBACK_TARGET_TYPES = ["issue_comment"] as const;
 export type FeedbackTargetType = (typeof FEEDBACK_TARGET_TYPES)[number];
@@ -57,7 +57,7 @@ export type FeedbackRedactionSummary = {
 };
 
 // Persisted into feedback_exports.target_summary (jsonb, NOT NULL). Matches
-// AoA's FeedbackTraceTargetSummary shape so future transmission endpoints
+// Paperclip's FeedbackTraceTargetSummary shape so future transmission endpoints
 // can consume AoA bundles without per-source schema adapters.
 export interface FeedbackTraceTargetSummary {
   label: string;

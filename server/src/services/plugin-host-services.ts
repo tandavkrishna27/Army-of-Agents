@@ -60,7 +60,7 @@ const PLUGIN_RESPONSE_BODY_BYTES = 200 * 1024 * 1024; // 200 MB
 
 /**
  * Validation for plugin telemetry event names (F.D4 infra port, Task F.5).
- * Matches AoA parity: lowercase slug of letters, numbers, `_` or `-`,
+ * Matches Paperclip parity: lowercase slug of letters, numbers, `_` or `-`,
  * leading char must be alphanumeric.
  */
 const TELEMETRY_EVENT_NAME_REGEX = /^[a-z0-9][a-z0-9_-]*$/;
@@ -246,7 +246,7 @@ if (_logFlushInterval.unref) _logFlushInterval.unref();
  * buildHostServices — creates a concrete implementation of the `HostServices`
  * interface for a specific plugin.
  *
- * This implementation delegates to the core AoA domain services,
+ * This implementation delegates to the core Paperclip domain services,
  * providing the bridge between the plugin worker's SDK and the host platform.
  *
  * @param db - Database connection instance.

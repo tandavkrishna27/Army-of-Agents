@@ -12,7 +12,7 @@ describe("adapter model listing", () => {
     delete process.env.OPENAI_API_KEY;
     delete process.env.AOA_OPENCODE_COMMAND;
     delete process.env.AOA_PI_COMMAND;
-    delete process.env.AOA_PI_COMMAND;
+    delete process.env.PAPERCLIP_PI_COMMAND;
     resetCodexModelsCacheForTests();
     resetCursorModelsCacheForTests();
     setCursorModelsRunnerForTests(null);
@@ -100,7 +100,7 @@ describe("adapter model listing", () => {
   });
 
   it("returns opencode fallback models when opencode command is unavailable", async () => {
-    process.env.AOA_OPENCODE_COMMAND = "__aoa_missing_opencode_command__";
+    process.env.AOA_OPENCODE_COMMAND = "__paperclip_missing_opencode_command__";
 
     const models = await listAdapterModels("opencode_local");
     expect(models.map((model) => model.id)).toContain("openai/gpt-5.2-codex");
@@ -108,7 +108,7 @@ describe("adapter model listing", () => {
 
   it("returns an empty list for pi_local when CLI discovery is unavailable", async () => {
     process.env.AOA_PI_COMMAND = "__missing_pi_command__";
-    process.env.AOA_PI_COMMAND = "__missing_pi_command__";
+    process.env.PAPERCLIP_PI_COMMAND = "__missing_pi_command__";
 
     const models = await listAdapterModels("pi_local");
     expect(models).toEqual([]);

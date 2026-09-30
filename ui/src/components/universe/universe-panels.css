@@ -1,0 +1,223 @@
+.universe-workspace {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--text, #29292c);
+  background: var(--bg, #f4f4f5);
+  font: 13px system-ui, sans-serif;
+}
+.universe-minimize-proxy {
+  position: absolute; z-index: 500; pointer-events: none; overflow: hidden;
+  border: 1px solid var(--universe-accent, #c33f47); border-radius: 8px;
+  background: color-mix(in srgb, var(--card, #17191f) 82%, transparent);
+  transform-origin: top center; animation: universe-minimize-proxy 220ms ease-in forwards;
+}
+.universe-minimize-proxy span { display: block; padding: 10px 14px; white-space: nowrap; }
+@keyframes universe-minimize-proxy { to { opacity: 0; transform: translate(calc(50vw - 50%), -80px) scale(.08); } }
+.universe-recovery {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  flex-wrap: wrap;
+}
+.universe-recovery button {
+  background: var(--card-2, #e8e8ea);
+  color: inherit;
+  border: 0;
+  border-radius: 5px;
+  padding: 6px 10px;
+}
+.universe-recovery > span {
+  padding: 6px 0;
+}
+.universe-canvas {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.universe-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--card, white);
+  border-radius: 8px;
+  position: relative;
+}
+.universe-drag-handle {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 6px 0 14px;
+  gap: 8px;
+  background: var(--hd, #ededee);
+  color: var(--dim, #65656c);
+  border-radius: 8px 8px 0 0;
+  cursor: grab;
+}
+.universe-panel[data-selected="true"] .universe-drag-handle {
+  background: color-mix(in srgb, var(--brand, #c43d46) 20%, var(--hd, #ededee));
+  color: var(--text, #18181b);
+}
+.universe-panel[data-selected="true"] .universe-panel-title {
+  font-weight: 600;
+}
+.universe-panel:not([data-selected="true"]) .universe-panel-title {
+  color: var(--dim, #65656c);
+}
+.universe-panel[data-reference-highlight="true"]::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  z-index: -1;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--universe-accent, #c43d46), 0 0 28px color-mix(in srgb, var(--universe-accent, #c43d46) 58%, transparent);
+  animation: universe-reference-glow 1.8s ease-out both;
+}
+.universe-panel-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.universe-panel-actions {
+  display: flex;
+}
+.universe-panel-actions button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color var(--motion-fast, 140ms) ease,
+    color var(--motion-fast, 140ms) ease;
+}
+.universe-panel-actions button:hover {
+  background: var(--card, #ffffff);
+  color: var(--text, #18181b);
+}
+.universe-workspace :focus-visible {
+  outline: 2px solid var(--brand-focus-ring, #d95059);
+  outline-offset: 2px;
+}
+.universe-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  user-select: text;
+}
+.universe-iframe-shield {
+  position: absolute;
+  inset: 40px 0 0;
+  z-index: 100;
+}
+.react-flow__resize-control.universe-resize-corner {
+  z-index: 102;
+  width: var(--universe-hit-size);
+  height: var(--universe-hit-size);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.react-flow__resize-control.universe-resize-edge {
+  z-index: 101;
+  border: 0;
+  background: transparent;
+}
+.react-flow__resize-control.universe-resize-edge.top,
+.react-flow__resize-control.universe-resize-edge.bottom {
+  height: var(--universe-hit-size);
+}
+.react-flow__resize-control.universe-resize-edge.left,
+.react-flow__resize-control.universe-resize-edge.right {
+  width: var(--universe-hit-size);
+}
+/* Resize affordance is cursor-only: no colored edge/corner highlight on hover. */
+.react-flow__resize-control.universe-resize-edge.top,
+.react-flow__resize-control.universe-resize-edge.bottom {
+  cursor: ns-resize;
+}
+.react-flow__resize-control.universe-resize-edge.left,
+.react-flow__resize-control.universe-resize-edge.right {
+  cursor: ew-resize;
+}
+.react-flow__resize-control.universe-resize-corner.top.left,
+.react-flow__resize-control.universe-resize-corner.bottom.right {
+  cursor: nwse-resize;
+}
+.react-flow__resize-control.universe-resize-corner.top.right,
+.react-flow__resize-control.universe-resize-corner.bottom.left {
+  cursor: nesw-resize;
+}
+@media (pointer: coarse) {
+  .react-flow__resize-control.universe-resize-corner {
+    z-index: 102;
+    width: var(--universe-touch-hit-size);
+    height: var(--universe-touch-hit-size);
+  }
+  .react-flow__resize-control.universe-resize-edge.top,
+  .react-flow__resize-control.universe-resize-edge.bottom {
+    height: var(--universe-touch-hit-size);
+  }
+  .react-flow__resize-control.universe-resize-edge.left,
+  .react-flow__resize-control.universe-resize-edge.right {
+    width: var(--universe-touch-hit-size);
+  }
+}
+
+/* Light motion, opt-in via the .universe-motion root class (the product enables
+   it; tests leave it off so geometry reads are deterministic). Geometry changes
+   (tile reflow, maximize/restore, arrange) glide and panels fade in on open. It is
+   suppressed during a live gesture so drag/resize never lag, and for users who
+   prefer reduced motion. The full lifecycle motion system (minimize/restore
+   connectors, close exit) is E1.6. The fade is opacity-only so it never shifts a
+   panel's measured box. */
+@media (prefers-reduced-motion: no-preference) {
+  .universe-motion .react-flow__node {
+    transition: transform 200ms ease, width 200ms ease, height 200ms ease;
+  }
+  .universe-motion.universe-gesturing .react-flow__node {
+    transition: none;
+  }
+  .universe-motion .universe-panel {
+    animation: universe-panel-in 180ms ease both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .universe-panel[data-reference-highlight="true"]::after { animation: none; }
+}
+.universe-canvas[data-motion="reduced"] .react-flow__node { transition: none !important; }
+.universe-canvas[data-motion="reduced"] .universe-panel { animation: none !important; }
+.universe-canvas[data-motion="reduced"] .universe-panel[data-reference-highlight="true"]::after { animation: none; }
+@keyframes universe-reference-glow {
+  0% { opacity: 0; transform: scale(.985); }
+  18%, 58% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.01); }
+}
+@keyframes universe-panel-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.universe-persistence { height: 100%; min-height: 0; display: flex; flex-direction: column; color: var(--text, #29292c); background: var(--bg, #f4f4f5); }
+.universe-persistence > .universe-workspace { flex: 1; height: auto; }
+.universe-persistence > [role="status"], .universe-persistence > [role="alert"] { padding: 4px 12px; margin: 0; font-size: 12px; }
+.universe-layout-recovery { flex: 0 1 auto; overflow: auto; max-height: 40%; padding: 8px 12px; background: var(--card-2, #e8e8ea); }
+.universe-layout-recovery button { margin: 4px 8px 4px 0; padding: 6px 10px; color: inherit; background: var(--bg, #f4f4f5); border: 1px solid currentColor; border-radius: 5px; }
+.universe-layout-recovery button:disabled { opacity: .5; }
+.universe-layout-recovery :focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.universe-layout-recovery label { display: block; }

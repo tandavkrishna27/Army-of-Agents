@@ -1,0 +1,407 @@
+/* E1.4 icon tray + menus — dark / luminous skin per ui-review-decisions U02/U03
+ * (JARVIS/Atlas: restrained chrome, spatial depth, a luminous Commander
+ * presence). One stationary AoA mark at top center; balanced wings retract
+ * toward it. Tokens are tray-local so the dock reads dark on any app theme. */
+
+.universe-tray {
+  --utray-bg: rgba(18, 19, 24, 0.82);
+  --utray-raise: rgba(255, 255, 255, 0.06);
+  --utray-raise-2: rgba(255, 255, 255, 0.11);
+  --utray-border: rgba(255, 255, 255, 0.1);
+  --utray-text: #edeef2;
+  --utray-dim: rgba(237, 238, 242, 0.56);
+  --utray-red: #d13a26;
+  --utray-red-soft: rgba(209, 58, 38, 0.22);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font: 13px system-ui, sans-serif;
+  color: var(--utray-text);
+}
+
+.universe-tray-conversation {
+  color: var(--utray-dim);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  max-width: 60vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.universe-tray-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--utray-bg);
+  border: 1px solid var(--utray-border);
+  border-radius: 999px;
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 16px 44px rgba(0, 0, 0, 0.5);
+}
+
+.universe-tray-wing {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.universe-tray-wing-left {
+  justify-content: flex-end;
+}
+.universe-tray-wing-right {
+  justify-content: flex-start;
+}
+
+/* Stationary AoA mark ----------------------------------------------------- */
+.universe-tray-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.universe-tray-logo:hover {
+  background: var(--utray-raise);
+}
+.universe-tray-logo svg {
+  display: block;
+}
+
+/* Icon buttons ------------------------------------------------------------ */
+.universe-tray-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--utray-dim);
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+.universe-tray-icon:hover {
+  background: var(--utray-raise);
+  color: var(--utray-text);
+}
+.universe-tray-icon[data-active="true"] {
+  background: var(--utray-red-soft);
+  border-color: rgba(209, 58, 38, 0.5);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(209, 58, 38, 0.35);
+}
+
+.universe-tray-icon:focus-visible,
+.universe-tray-logo:focus-visible,
+.universe-tray-list-item:focus-visible,
+.universe-tray-search:focus-visible,
+.universe-overview-tile:focus-visible {
+  outline: 2px solid var(--utray-red);
+  outline-offset: 2px;
+}
+
+/* Hover/focus label (visible, not just aria) */
+.universe-tray-tip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(10, 11, 15, 0.94);
+  border: 1px solid var(--utray-border);
+  color: var(--utray-text);
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+  z-index: 30;
+}
+.universe-tray-icon:hover .universe-tray-tip,
+.universe-tray-icon:focus-visible .universe-tray-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Commander blob identity ------------------------------------------------- */
+.universe-tray-commander {
+  width: 32px;
+}
+.universe-tray-blob {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 34% 30%,
+    #ffd7c2 0%,
+    #f2795a 34%,
+    var(--utray-red) 62%,
+    #7d1e12 100%
+  );
+  box-shadow:
+    0 0 10px rgba(209, 58, 38, 0.6),
+    inset 0 0 6px rgba(255, 255, 255, 0.35);
+}
+.universe-tray-commander:hover .universe-tray-blob,
+.universe-tray-commander:focus-visible .universe-tray-blob {
+  box-shadow:
+    0 0 16px rgba(209, 58, 38, 0.8),
+    inset 0 0 6px rgba(255, 255, 255, 0.45);
+}
+.universe-tray-commander-options {
+  width: 18px;
+  height: 28px;
+}
+
+.universe-tray-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--utray-red);
+  color: #fff;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 8px rgba(209, 58, 38, 0.5);
+}
+
+/* Popup ------------------------------------------------------------------- */
+.universe-tray-popup {
+  position: absolute;
+  top: calc(100% + 10px);
+  z-index: 20;
+  width: min(440px, 92vw);
+  max-height: min(70vh, 560px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: rgba(16, 17, 22, 0.94);
+  border: 1px solid var(--utray-border);
+  border-radius: 16px;
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 24px 60px rgba(0, 0, 0, 0.6);
+}
+.universe-tray-popup-head {
+  display: flex;
+  align-items: center;
+}
+.universe-tray-popup-title {
+  font-weight: 600;
+  color: var(--utray-text);
+}
+
+.universe-tray-search {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1px solid var(--utray-border);
+  border-radius: 9px;
+  background: var(--utray-raise);
+  color: var(--utray-text);
+  font: inherit;
+}
+.universe-tray-search::placeholder {
+  color: var(--utray-dim);
+}
+
+.universe-tray-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.universe-tray-list-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--utray-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.universe-tray-list-item:hover {
+  background: var(--utray-raise);
+}
+.universe-tray-list-hint {
+  color: var(--utray-dim);
+  font-size: 12px;
+}
+.universe-tray-empty {
+  margin: 4px 0;
+  color: var(--utray-dim);
+}
+
+.universe-tray-commander-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.universe-tray-toggles {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--utray-border);
+  border-radius: 9px;
+}
+.universe-tray-toggles legend {
+  padding: 0 4px;
+  color: var(--utray-dim);
+  font-size: 12px;
+}
+.universe-tray-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.universe-tray-toggle input {
+  accent-color: var(--utray-red);
+}
+
+/* Open-panels overview — Android-recents thumbnail tiles ------------------- */
+.universe-overview {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.universe-overview-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--utray-border);
+  border-radius: 12px;
+  background: var(--utray-raise);
+  color: var(--utray-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+.universe-overview-tile:hover {
+  background: var(--utray-raise-2);
+  border-color: rgba(209, 58, 38, 0.45);
+}
+.universe-overview-tile[data-minimized="true"] {
+  opacity: 0.6;
+}
+
+/* Faux window preview (real content capture is the deferred E1.4/2 preview) */
+.universe-overview-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.universe-overview-thumb-bar {
+  display: block;
+  height: 22%;
+  background: rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.universe-overview-thumb[data-kind="Artifact"] .universe-overview-thumb-bar,
+.universe-overview-thumb[data-kind="artifact"] .universe-overview-thumb-bar {
+  background: rgba(209, 58, 38, 0.34);
+}
+.universe-overview-thumb[data-kind="Browser"] .universe-overview-thumb-bar,
+.universe-overview-thumb[data-kind="browser"] .universe-overview-thumb-bar {
+  background: rgba(90, 150, 240, 0.34);
+}
+.universe-overview-thumb-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px 10px;
+}
+.universe-overview-thumb-lines i {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.universe-overview-thumb-lines i:nth-child(2) {
+  width: 80%;
+}
+.universe-overview-thumb-lines i:nth-child(3) {
+  width: 55%;
+}
+.universe-overview-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 2px 2px;
+}
+.universe-overview-title {
+  font-weight: 600;
+}
+.universe-overview-kind {
+  color: var(--utray-dim);
+  font-size: 12px;
+}
+.universe-overview-empty {
+  margin: 4px 0;
+  color: var(--utray-dim);
+}
+.universe-overview-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+  color: var(--utray-dim);
+  font-size: 12px;
+}
+.universe-overview-pages button {
+  padding: 5px 9px;
+  border: 1px solid var(--utray-border);
+  border-radius: 7px;
+  background: var(--utray-raise);
+  color: var(--utray-text);
+}
+.universe-overview-pages button:disabled { opacity: 0.42; }

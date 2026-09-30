@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { handleLiveEvent, threadEventToInvalidations } from "../LiveUpdatesProvider";
+import { handleLiveEvent, liveEventReferenceKey, threadEventToInvalidations } from "../LiveUpdatesProvider";
 import { queryKeys } from "../../lib/queryKeys";
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -159,5 +159,12 @@ describe("handleLiveEvent hub invalidations", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
       queryKey: queryKeys.notifications.digest("co1"),
     });
+  });
+});
+
+describe("Universe live hint projection", () => {
+  it("uses stable canonical identifiers and never forwards payload content", () => {
+    expect(liveEventReferenceKey({ type: "issue.updated", payload: { issueId: "task-a", body: "secret" } } as never)).toBe("issueId:task-a");
+    expect(liveEventReferenceKey({ type: "activity.logged", payload: {} } as never)).toBe("event:activity.logged");
   });
 });

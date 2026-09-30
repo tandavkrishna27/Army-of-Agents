@@ -73,7 +73,7 @@ function rowsOf(result: unknown): Array<Record<string, unknown>> {
 async function seedCompanyWithBrokerAgent(
   label: string,
 ): Promise<{ companyId: string; agentId: string }> {
-  const company = await companyService(db).create({ name: `U2b ${label} Co` } as never);
+  const company = await companyService(db).create({ name: `U2b ${label} Co`, organizationId: "00000000-0000-0000-0000-000000000001" } as never);
   const companyId = company.id;
 
   const [agentRow] = rowsOf(
@@ -109,7 +109,7 @@ async function seedCompanyWithBrokerAgent(
 async function seedCompanyWithOrgAgent(
   label: string,
 ): Promise<{ companyId: string; agentId: string }> {
-  const company = await companyService(db).create({ name: `U2b Org ${label} Co` } as never);
+  const company = await companyService(db).create({ name: `U2b Org ${label} Co`, organizationId: "00000000-0000-0000-0000-000000000001" } as never);
   const companyId = company.id;
 
   const [agentRow] = rowsOf(
@@ -286,7 +286,7 @@ describe.skipIf(
   it("unsupported agent kind ('platform'): throws a 403-shaped error instead of resolving a ToolContext", async () => {
     assertSetupOk();
 
-    const company = await companyService(db).create({ name: "U2b Platform Co" } as never);
+    const company = await companyService(db).create({ name: "U2b Platform Co", organizationId: "00000000-0000-0000-0000-000000000001" } as never);
     const companyId = company.id;
     const [agentRow] = rowsOf(
       await db.execute(sql`

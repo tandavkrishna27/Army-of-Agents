@@ -23,7 +23,7 @@ import {
  * allowed") was satisfied by accident, by the wrong repo.
  *
  * WHAT THIS SHARES. Heartbeat resolves the same thing (policy inputs → mode →
- * resolver call → context shape → `aoaWorkspaces` hints). The POLICY-INPUT
+ * resolver call → context shape → `paperclipWorkspaces` hints). The POLICY-INPUT
  * block — the instance-flag / issue-settings / project-policy reads feeding the
  * mode — is now the shared `resolveExecutionWorkspacePolicyInputs`
  * (`services/workspace-resolution.ts`), alongside the `resolveWorkspaceForRun`

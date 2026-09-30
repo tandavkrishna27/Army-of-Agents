@@ -93,7 +93,7 @@ Derived from the adapter registry (`server/src/adapters/registry.ts`, 14 adapter
 | Grok (`grok_local`) | ✅ | env passthrough only | CLI has `grok login` — **not wired**. |
 | Pi (`pi_local`) | ✅ | provider keys (incl. `XAI_API_KEY`) | none. |
 | ACPX (`acpx_local`) | shown as "inherits" | inherits Claude/Codex | inherits. |
-| Hermes (`hermes_local`) | ❌ | `UPSTREAM_API_KEY` wire-protocol, JWT-injected | n/a — not a user credential. |
+| Hermes (`hermes_local`) | ❌ | `PAPERCLIP_API_KEY` wire-protocol, JWT-injected | n/a — not a user credential. |
 | OpenClaw / Gateway | ❌ | endpoint token in agent config | n/a — per-agent, not shared. |
 | `process` / `http` | ❌ | none | n/a. |
 

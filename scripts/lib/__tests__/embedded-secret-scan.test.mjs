@@ -1,0 +1,162 @@
+/**
+ * DSK-003 Lane D / I10 + I11 — the embedded-secret scan, and its non-vacuity.
+ *
+ * Clause (1) is "no credential is embedded". The trap in testing that is obvious once
+ * stated: **a scanner that finds nothing is indistinguishable from a scanner that looks
+ * for nothing.** So the gate has two halves, and this file proves both:
+ *
+ *   I10  planted CI test identities ARE found — every pattern class, individually; and
+ *   I11  a clean file set produces no findings.
+ *
+ * Neither half is worth anything alone. The ticket's own test list says "embedded-secret
+ * scans using CI test identities" for exactly this reason.
+ *
+ * SCANS BYTES, NOT SOURCE. Source proves nothing about what packaging swept in — a `.env`
+ * beside the entry point, a fixture, a keystore file from a developer's machine.
+ */
+
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+
+import {
+  SECRET_PATTERNS,
+  scanFileSetForSecrets,
+  scanTextForSecrets,
+} from "../embedded-secret-scan.mjs";
+
+/** One planted sample per pattern class — the CI test identities. */
+const PLANTED = {
+  aoa_enrollment_code: "aoa_enr_abcdefghijklmnop.abcdefghijklmnopqrstuvwxyz012345",
+  private_key_pem: "-----BEGIN RSA PRIVATE KEY-----\nMIIabc\n-----END RSA PRIVATE KEY-----",
+  anthropic_api_key: `sk-ant-api03-${"A".repeat(90)}`,
+  openai_api_key: `sk-${"B".repeat(48)}`,
+  github_token: `ghp_${"C".repeat(36)}`,
+  aws_access_key_id: "AKIAIOSFODNN7EXAMPLE",
+  forbidden_key_assignment: 'const config = { "apiKey": "hunter2-not-a-real-value" };',
+};
+
+describe("DSK-003/I10 — every pattern class finds its planted identity", () => {
+  it("declares a pattern for every planted class, and vice versa", () => {
+    // Keeps the two in step: a new pattern with no planted sample would be untested,
+    // and a planted sample with no pattern would silently never be looked for.
+    const declared = SECRET_PATTERNS.map((p) => p.id).sort();
+    assert.deepEqual(declared, Object.keys(PLANTED).sort());
+  });
+
+  for (const [id, sample] of Object.entries(PLANTED)) {
+    it(`finds a planted ${id}`, () => {
+      const findings = scanTextForSecrets(sample, "planted.txt");
+      assert.ok(findings.length > 0, `${id} was NOT detected — the scan is vacuous here`);
+      assert.ok(findings.some((f) => f.patternId === id),
+        `${id} matched some other pattern (${findings.map((f) => f.patternId)}), not its own`);
+    });
+  }
+});
+
+describe("DSK-003/I11 — a clean file set produces no findings", () => {
+  it("finds nothing in ordinary code", () => {
+    const clean = [
+      'export function add(a, b) { return a + b; }',
+      '// a comment mentioning apiKey and password without a value',
+      'const url = "https://example.com/path?query=1";',
+      'const shortish = "sk-not-long-enough";',
+    ].join("\n");
+    assert.deepEqual(scanTextForSecrets(clean, "clean.js"), []);
+  });
+
+  it("does not fire on a forbidden KEY with no value", () => {
+    // `apiKey: process.env.API_KEY` is correct code, not an embedded credential. A
+    // scanner that flagged it would be turned off within a week.
+    for (const line of [
+      "apiKey: process.env.API_KEY,",
+      "const { password } = options;",
+      'token: "",',
+      "credentials: null,",
+      // The LENGTH threshold specifically. Every case above is excluded by having no
+      // quoted literal at all, so none of them exercises the `{8,}` bound — a mutant
+      // relaxing it to `{1,}` would survive them. A short placeholder is what tests it.
+      'token: "abc",',
+      'password: "x",',
+      'apiKey: "todo",',
+    ]) {
+      assert.deepEqual(scanTextForSecrets(line, "ok.js"), [], line);
+    }
+  });
+
+  it("reports the file and pattern for each finding, without echoing the secret", () => {
+    // The scan output goes to CI logs. Printing the credential it found would publish
+    // the very thing it is guarding.
+    const findings = scanTextForSecrets(PLANTED.aoa_enrollment_code, "bundle/app.js");
+    assert.equal(findings.length, 1);
+    assert.equal(findings[0].file, "bundle/app.js");
+    assert.equal(findings[0].patternId, "aoa_enrollment_code");
+    const rendered = JSON.stringify(findings);
+    assert.ok(!rendered.includes(PLANTED.aoa_enrollment_code),
+      "the finding echoed the secret it found");
+  });
+});
+
+describe("DSK-003 Lane D — scanning a file set", () => {
+  it("scans every file and aggregates findings", () => {
+    const files = [
+      { path: "dist/index.js", text: "export const x = 1;" },
+      { path: "dist/.env", text: `ANTHROPIC_KEY=${PLANTED.anthropic_api_key}` },
+      { path: "dist/id_rsa", text: PLANTED.private_key_pem },
+    ];
+    const findings = scanFileSetForSecrets(files);
+    assert.equal(findings.length, 2);
+    assert.deepEqual(findings.map((f) => f.file).sort(), ["dist/.env", "dist/id_rsa"]);
+  });
+
+  it("returns nothing for a clean set — non-vacuity for the aggregate", () => {
+    const findings = scanFileSetForSecrets([
+      { path: "dist/index.js", text: "export const x = 1;" },
+      { path: "dist/README.md", text: "# hello" },
+    ]);
+    assert.deepEqual(findings, []);
+  });
+
+  it("is deterministic and ordered by file, so CI output is stable", () => {
+    const files = [
+      { path: "b.txt", text: PLANTED.github_token },
+      { path: "a.txt", text: PLANTED.github_token },
+    ];
+    assert.deepEqual(scanFileSetForSecrets(files).map((f) => f.file), ["a.txt", "b.txt"]);
+  });
+
+  it("never throws on binary-ish or empty content", () => {
+    // A packaged artifact contains images, fonts and archives. The gate must report on
+    // what it can read rather than crashing the build on the first non-text file.
+    const files = [
+      { path: "dist/logo.png", text: "\x00\x01\x02\uFFFD" },
+      { path: "dist/empty", text: "" },
+    ];
+    assert.deepEqual(scanFileSetForSecrets(files), []);
+  });
+});
+
+describe("DSK-003 Lane D — the zero-width guard, proven rather than assumed", () => {
+  it("terminates on a pattern that can match zero-width", () => {
+    // No SHIPPED pattern can match zero-width, so this guard was unreachable and a
+    // mutant deleting it survived. Rather than leave an unprovable guard against an
+    // infinite loop — which in CI is a hung build, not a failed one — the pattern list
+    // is injectable and the guard is exercised directly.
+    const zeroWidth = [{ id: "zero_width", re: /x*/g }];
+    const findings = scanTextForSecrets("abc", "z.txt", zeroWidth);
+    // Terminating at all is the property. Bounded output proves it did not spin.
+    assert.ok(findings.length <= 8, `unexpected finding count ${findings.length}`);
+    assert.ok(findings.every((f) => f.patternId === "zero_width"));
+  });
+
+  it("passes injected patterns through the file-set scan too", () => {
+    const custom = [{ id: "custom", re: /NEEDLE/g }];
+    const findings = scanFileSetForSecrets([{ path: "a.txt", text: "a NEEDLE here" }], custom);
+    assert.deepEqual(findings, [{ file: "a.txt", patternId: "custom", line: 1 }]);
+  });
+
+  it("still defaults to the shipped patterns when none are injected", () => {
+    // Non-vacuity for the seam: adding a parameter must not have made the real gate
+    // depend on a caller remembering to pass the list.
+    assert.equal(scanTextForSecrets(PLANTED.github_token, "a.txt").length, 1);
+  });
+});

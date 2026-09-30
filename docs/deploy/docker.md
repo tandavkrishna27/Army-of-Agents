@@ -49,11 +49,11 @@ Defaults:
 - Host port: `3100` (`AOA_PORT=3200` changes it)
 - App data volume: `aoa-data` mounted at `/aoa`
 - Database volume: `aoa-postgres`
-- Database URL: `postgres://aoa:aoa@db:5432/aoa`
+- Database URL: `postgres://paperclip:paperclip@db:5432/paperclip`
 - Image tag: `aoa:local`
 
-Existing Docker Compose installs with older named volumes are not migrated
-automatically by this stack.
+Existing Docker Compose installs that used the older `pgdata` and
+`paperclip-data` named volumes are not migrated automatically by this stack.
 The database image now uses Postgres 18 with pgvector and mounts storage at
 `/var/lib/postgresql`. Do not point the new `aoa-postgres` volume directly at
 an old Postgres 17 data directory; take a `pg_dump`/backup from the old stack
@@ -122,9 +122,9 @@ Compose-specific variables:
 | `AOA_PORT` | `3100` | Host port mapped to container port `3100`. |
 | `AOA_INSTANCE_ID` | `default` | Instance directory under `/aoa/instances/`. |
 | `AOA_POSTGRES_IMAGE` | `pgvector/pgvector:pg18` | Database image used by the default Compose stack and `psql` tool profile. |
-| `AOA_POSTGRES_USER` | `aoa` | Database user. |
-| `AOA_POSTGRES_PASSWORD` | `aoa` | Database password. Set this for shared or long-lived deployments. URL-reserved characters (`/ # ? % @ :`) are safe — the entrypoint percent-encodes the value into `DATABASE_URL` automatically, so no manual escaping is needed. |
-| `AOA_POSTGRES_DB` | `aoa` | Database name. Must be a plain SQL identifier (`^[A-Za-z_][A-Za-z0-9_]*$`); the entrypoint rejects anything else at startup. |
+| `AOA_POSTGRES_USER` | `paperclip` | Database user. |
+| `AOA_POSTGRES_PASSWORD` | `paperclip` | Database password. Set this for shared or long-lived deployments. URL-reserved characters (`/ # ? % @ :`) are safe — the entrypoint percent-encodes the value into `DATABASE_URL` automatically, so no manual escaping is needed. |
+| `AOA_POSTGRES_DB` | `paperclip` | Database name. Must be a plain SQL identifier (`^[A-Za-z_][A-Za-z0-9_]*$`); the entrypoint rejects anything else at startup. |
 | `AOA_MIGRATION_AUTO_APPLY` | `true` | Applies pending migrations during container startup. |
 | `AOA_DEPLOYMENT_MODE` | `authenticated` | Both the default stack and quickstart default to `authenticated`, which requires Google OAuth. `local_trusted` (keyless loopback) is loopback-only and not usable for a port-published container. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | empty | Google OAuth client credentials. **Required** in `authenticated` mode; the server refuses to boot without them. |
@@ -166,7 +166,8 @@ docker compose -f docker-compose.quickstart.yml up --build
 Data is persisted in a host bind mount at
 `${AOA_DATA_DIR:-./data/docker-aoa}` and mounted at `/aoa` in the container.
 The default host directory is `./data/docker-aoa`; set `AOA_DATA_DIR` to
-override it. The image uses `/aoa` as its persistent data directory.
+override it. The image keeps `/paperclip` only as a compatibility symlink to
+`/aoa`; do not mount a second volume there.
 
 Like the main stack, quickstart runs in `authenticated` mode and needs Google
 OAuth credentials (the first Google sign-in becomes the instance admin):
@@ -216,7 +217,7 @@ docker run --name aoa \
   -p 3100:3100 \
   -e HOST=0.0.0.0 \
   -e AOA_HOME=/aoa \
-  -e DATABASE_URL=postgres://aoa:aoa@db:5432/aoa \
+  -e DATABASE_URL=postgres://paperclip:paperclip@db:5432/paperclip \
   -e GOOGLE_CLIENT_ID=... \
   -e GOOGLE_CLIENT_SECRET=... \
   -v aoa-data:/aoa \

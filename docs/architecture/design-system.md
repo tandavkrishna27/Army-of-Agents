@@ -983,7 +983,7 @@ Detail pages (`MarketplaceDetail`, `MarketplacePackageDetail`) and the Settings 
 **Toggle behavior:**
 
 - Toggle in user settings + keyboard shortcut.
-- Stored in `localStorage["aoa.theme"]` .
+- Stored in `localStorage["aoa.theme"]` (legacy `paperclip.theme` migrated on boot per existing storage migration).
 - Inline FOUC-prevention script in `index.html` reads the storage key before React mounts.
 
 **Token mapping:**

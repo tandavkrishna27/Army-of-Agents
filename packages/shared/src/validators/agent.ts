@@ -171,7 +171,7 @@ export const updateAgentSchema = _createAgentBase
     // mismatch). When absent, the write is last-write-wins (full back-compat).
     // Token = the agent row's `updatedAt` as a millisecond-precision ISO string.
     // The server compares it at ms precision (date_trunc) because the stored
-    // column is microsecond-precision — see Decision #104.
+    // column is microsecond-precision — see Decision #125.
     expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
   })
   .superRefine(refineAdapterModel);

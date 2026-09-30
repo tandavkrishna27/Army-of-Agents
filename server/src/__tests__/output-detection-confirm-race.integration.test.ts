@@ -165,8 +165,8 @@ beforeAll(async () => {
 
     companyId = firstId(
       await db.execute<{ id: string }>(sql`
-        INSERT INTO companies (id, name, issue_prefix)
-        VALUES (gen_random_uuid(), 'Output Race Co', 'ORC')
+        INSERT INTO companies (organization_id, id, name, issue_prefix)
+        VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Output Race Co', 'ORC')
         RETURNING id
       `),
     );

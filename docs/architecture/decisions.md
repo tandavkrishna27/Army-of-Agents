@@ -40,7 +40,7 @@ Decisions made during product design and development. Do not relitigate unless e
 | 17 | Tasks don't care who does them | Same task model for humans and agents. Experience adapts. |
 | 18 | Agents can only self-transition: todo → in_progress → in_review | Only humans mark done/cancelled. Deliberate control point. |
 | 18A | Decision #18 is superseded by Decision #109 (2026-07-11) | Review-required remains the safe default; explicitly governed tasks may allow agent completion under policy, autonomy, and structured acceptance criteria. |
-| 19 | Drizzle only, no raw SQL | Matches the upstream project patterns. `pnpm db:generate` for all schema DDL. Narrow C14 exception: idempotency guards + data-only backfills may be hand-appended post-generation (e.g. 0189/0195), always idempotent; schema DDL is never hand-authored. |
+| 19 | Drizzle only, no raw SQL | Matches Paperclip patterns. `pnpm db:generate` for all schema DDL. Narrow C14 exception: idempotency guards + data-only backfills may be hand-appended post-generation (e.g. 0189/0195), always idempotent. **Extended by Decision #122** (and its 2026-09-01 amendment) to idempotent cluster/security DDL — roles, GRANT/REVOKE, RLS, policies, and `SECURITY DEFINER` functions plus their ACLs — in delta-free `--custom` migrations. Tables, columns, indexes and foreign keys are never hand-authored. |
 | 20 | ~~Sub-goals limited to one level deep~~ **(SUPERSEDED 2026-05-25)** | Superseded by the multi-parent goals model — goals form a freely-nested, multi-parent DAG; integrity (cycles + child⊆parent scope) enforced on write. See `docs/superpowers/plans/2026-05-25-threads-goals-followup.md` B0. |
 | 21 | Task dependencies use a separate `task_dependencies` table, not parentId | parentId = subtasks (hierarchy). Dependencies = blocking relationships (different concept). Separate table, separate logic. |
 | 22 | Cancelled dependency notifies but does NOT auto-cancel dependents | Too aggressive. Founder decides what to do with orphaned tasks. |
@@ -501,15 +501,15 @@ New table: `internal_agent_runs` with triggerType (conversation / proactive / ev
 
 ## Decision (annotation, 2026-04-21): MCP `upsert-task-document` ≡ artifact operations
 
-the upstream project's `aoaUpsertIssueDocument` tool wraps a markdown body (identified by a `key`) attached to an issue, with an append-only revision history. AoA's equivalent substrate is the existing `artifacts` + `artifact_versions` subsystem, with a 1:1 link from task to artifact via `issues.artifactId`. Phase C (Task C.4) maps the upstream project's document tool surface onto AoA's artifact subsystem:
+Paperclip's `paperclipUpsertIssueDocument` tool wraps a markdown body (identified by a `key`) attached to an issue, with an append-only revision history. AoA's equivalent substrate is the existing `artifacts` + `artifact_versions` subsystem, with a 1:1 link from task to artifact via `issues.artifactId`. Phase C (Task C.4) maps Paperclip's document tool surface onto AoA's artifact subsystem:
 
 - `upsert-task-document` → if the task's artifact exists and is of type `document`, add a new immutable version; else create a new artifact of type `document` and link it via `issues.artifactId`
-- `list-task-documents` → return the task's document artifact (0 or 1 item — AoA has a single artifact per task, unlike the upstream project's per-key multiplicity)
+- `list-task-documents` → return the task's document artifact (0 or 1 item — AoA has a single artifact per task, unlike Paperclip's per-key multiplicity)
 - `get-task-document` → return the artifact + its latest version (content + metadata)
 - `list-task-document-revisions` → return all artifact versions ordered ascending by `versionNumber` (immutable history)
 - `restore-task-document-revision` → create a **new** artifact version whose content is copied from the specified older version; the old version is **never mutated** (preserves Decisions #43 / #45 — artifact versions are immutable)
 
-**Surface divergence from the upstream project:** AoA does not accept the upstream project's `key` parameter because its data model is 1:1 task↔artifact. If the upstream project-style per-key multiplicity is ever needed, it would require a schema change (e.g., a `task_documents` junction table), not a tool-surface change.
+**Surface divergence from Paperclip:** AoA does not accept Paperclip's `key` parameter because its data model is 1:1 task↔artifact. If Paperclip-style per-key multiplicity is ever needed, it would require a schema change (e.g., a `task_documents` junction table), not a tool-surface change.
 
 **RBAC:** All five tools enforce company isolation (cross-company access returns 404) and — for scoped users — project-scope membership via the task's `projectId`. Writes additionally require `permissionsSvc.canAccessEntity("artifact", "update", { departmentId: task.projectId })`.
 
@@ -521,38 +521,58 @@ AoA keeps `issues.artifactId` as the primary artifact pointer for artifact-as-in
 
 ---
 
-## Decision #92 — Hermes wire-field deferral (superseded 2026-09-30)
+## Decision #92 — Defer Phase 6 Hermes wire-field rename to upstream coordination
 
-**Original status:** Locked 2026-04-26. The earlier decision deferred changing two Hermes/OpenClaw execution fields until an external adapter could accept new names. That protected deployments using the external adapter at the time.
+**Status:** Deferred (locked 2026-04-26)
 
-**Superseding decision:** The AoA clean break replaces that external dependency with an AoA-owned Hermes adapter and adopts AoA-only wire fields (`aoa_session_key`, `aoa_stream_transport`) and environment variables (`AOA_RUN_ID`, `AOA_API_KEY`). There are no existing product installations to migrate. The old compatibility window and its CI exceptions are retired. Hermes execution, session resume, and model discovery remain supported. See `docs/adapters/hermes-local.md` and `docs/architecture/wire-compat.md` for the current contract.
+**Context:** The Paperclip → AoA rename plan (`docs/archive/sessions/2026-04-25-paperclip-to-aoa-rename.md`) defined Phase 6 as renaming `paperclip_session_key` / `paperclip_stream_transport` JSON field names in the OpenClaw / Hermes wire payload (sent during agent execution from `packages/adapters/openclaw/src/server/execute-webhook.ts` and `packages/adapters/openclaw/src/server/execute-sse.ts`). Hermes is owned by an external project; renaming our send-side without coordinating their receive-side breaks the integration for any operator running an older Hermes build.
+
+**Decision:** Phase 6 stays deferred until either (a) the Hermes maintainer confirms readiness for a coordinated rename, or (b) a Hermes adapter version ships that accepts both old and new names (one-release migration window), the minimum-required Hermes version in `package.json` is bumped to that release, and the old field names are removed from the execute files.
+
+**Consequences:**
+- Existing Hermes wire fields keep `paperclip_session_key` / `paperclip_stream_transport` names. Documented as wire-compat surface #8 in `docs/architecture/wire-compat.md`.
+- Brand-check CI (currently 9 guards in `.github/workflows/pr.yml`) must continue to allow `paperclip` matches inside `packages/adapters/openclaw/**`.
+- Re-open this decision when an upstream coordination window opens. Owner: whoever picks up the Hermes adapter or OpenClaw integration work next.
+
+**Reference:** Original Phase 6 spec lives in the rename plan; do not re-litigate without reading it first. Wire-compat surface #8 in `wire-compat.md` cross-references this decision.
 
 ---
 
-## Decision #93 — Skip standalone upstream MCP server package port
-
-**Status:** Locked 2026-04-26.
-
-The upstream project provided a standalone stdio MCP wrapper around its REST API. AoA uses its in-server MCP implementation with its own RBAC and tool registry, so the standalone wrapper was not ported. This historical decision does not require retaining an upstream package name or binary alias in AoA. If a standalone wrapper is needed later, it should ship under the AoA package scope and current AoA wire contracts.
-
----
-
-## Decision #94 — Skip the upstream project `pi-local` skill bin/ PATH support port
+## Decision #93 — Skip standalone `@paperclipai/mcp-server` package port
 
 **Status:** Locked (2026-04-26)
 
-**Context:** the upstream project commit `854fa817` adds skill `bin/` directories to the child process PATH for the `pi-local` adapter so AGENTS.md-invoked skill helpers (`aoa-get-issue`, `aoa-add-comment`, etc.) resolve without absolute paths during agent CLI runs.
+**Context:** Paperclip released `packages/mcp-server` — a stdio-based MCP server that wraps the Paperclip REST API for external MCP clients (e.g., Claude Desktop, Cursor) to call Paperclip from outside a running instance. It's a separate npm package (~1,148 LOC) that ships with its own bin entry and serves as a bridge: external MCP client → stdio → REST → Paperclip backend.
 
-**Decision:** Do NOT port. AoA's adapter set is `claude_local | opencode_local | openclaw | http | process | cursor | codex_local | hermes_local | gemini_local`. None of these are the upstream project's `pi-local`. Skill helpers via the PATH-prepending mechanism are not part of AoA's heartbeat protocol today — agents communicate with the AoA backend via the in-server MCP, not via shelling out to skill-bundled CLI binaries.
+**Decision:** Do NOT port. At the time this decision was locked, AoA's existing in-server MCP at `server/src/mcp/server.ts` exposed 31 RBAC-scoped, rate-limited tools directly to clients connected to the running AoA backend (read tools, write tools, document tools, approval tools — all per-user-keyed via `mcp_api_keys`). The current generated registry may contain more tools; the standalone-wrapper decision does not depend on that historical count. The wrapper would only matter when the MCP client cannot reach AoA's HTTP endpoint — a use case AoA's local-first deployment model does not currently have.
 
 **Reasoning:**
-- The upstream project change targets a specific adapter (`pi-local`) that AoA does not have and has no plan to add (Sprint 2A / Decision #91 removed API-mode adapters; the adapter list is curated).
+- AoA's deployment model assumes the client and server run on the same host or LAN. The in-server MCP serves that case directly without a stdio bridge.
+- Maintaining the standalone package would mean tracking Paperclip's tool surface separately from AoA's. The surfaces had already diverged when this decision was locked, with different RBAC scoping and AoA-specific tools such as `debrief-push` mapped to discussions.
+- The performance + simplicity argument for stdio-MCP doesn't hold when AoA's MCP is already a single in-process call away.
+
+**Revisit when:** AoA grows a multi-tenant cloud deployment where external Claude Desktop / Cursor / etc. clients on a different machine need to talk to a hosted instance. At that point, port the standalone package and rebrand: `@paperclipai/mcp-server` → `@armyofagents/mcp-server`, bin `paperclip-mcp-server` → `aoa-mcp-server`, env vars stay as wire-protocol contracts (`PAPERCLIP_API_KEY` etc.) per Decision #92's rationale.
+
+**Reference:** Plan `docs/archive/sessions/2026-04-26-upstream-paperclip-resync.md` (Tier 5 / D1 skipped).
+
+---
+
+## Decision #94 — Skip Paperclip `pi-local` skill bin/ PATH support port
+
+**Status:** Locked (2026-04-26)
+
+**Context:** Paperclip commit `854fa817` adds skill `bin/` directories to the child process PATH for the `pi-local` adapter so AGENTS.md-invoked skill helpers (`paperclip-get-issue`, `paperclip-add-comment`, etc.) resolve without absolute paths during agent CLI runs.
+
+**Decision:** Do NOT port. AoA's adapter set is `claude_local | opencode_local | openclaw | http | process | cursor | codex_local | hermes_local | gemini_local`. None of these are Paperclip's `pi-local`. Skill helpers via the PATH-prepending mechanism are not part of AoA's heartbeat protocol today — agents communicate with the AoA backend via the in-server MCP, not via shelling out to skill-bundled CLI binaries.
+
+**Reasoning:**
+- The Paperclip change targets a specific adapter (`pi-local`) that AoA does not have and has no plan to add (Sprint 2A / Decision #91 removed API-mode adapters; the adapter list is curated).
 - AoA's equivalent agent-tool surface is the in-server MCP exposed via per-user keys — agents call MCP tools, not bundled CLI binaries.
 - Adding generic skill-bin PATH support to AoA's other adapters (claude_local, codex_local, etc.) would be feature-creep without a concrete agent workflow that needs it.
 
 **Revisit when:** AoA introduces a similar skill-helper protocol (e.g., bundled CLI binaries that run alongside the agent) or adopts a `pi-local`-family adapter. At that point the PATH-prepending logic in the existing adapter `execute.ts` files is the porting site.
 
-**Reference:** Plan `docs/archive/sessions/2026-04-26-upstream-resync.md` (Tier 5 / D5 skipped).
+**Reference:** Plan `docs/archive/sessions/2026-04-26-upstream-paperclip-resync.md` (Tier 5 / D5 skipped).
 
 ---
 
@@ -831,7 +851,33 @@ cannot execute during boot reconciliation. The stable persisted/HTTP reason is
 does not cover plugin workers. See
 `docs/guides/cloud-plugin-execution.md`.
 
-## Decision #104 — Optimistic concurrency for agent updates: optional `updatedAt` token → 409 (2026-06-25)
+## Decision #125 — Optimistic concurrency for agent updates: optional `updatedAt` token → 409 (2026-06-25)
+
+> ★ **RENUMBERED 2026-09-03: this was filed as `#104`, and so was
+> [Decision #104 — Keyless-except-embeddings](#decision-104--keyless-except-embeddings-selectable-extraction-engine--embedding-resilience-2026-06-26)
+> one day later.** Two different locked decisions, one number, for over two months. The
+> ownership/uniqueness guards key by id, and `DEP-012-design.md:1449` had already resorted to
+> disambiguating by LINE NUMBER ("Decision #104 (`decisions.md:913`, the Keyless-except-embeddings
+> one)") because the id alone was not enough.
+>
+> **Why THIS one moved, even though it is the OLDER of the two** — which puts the earlier decision
+> (2026-06-25) at the higher number, out of chronological order. That is deliberate, and it is the
+> only direction that avoids editing frozen evidence:
+>
+> - **Every citation of the OTHER #104 that lives in a frozen record** — `artifact-policy.md` makes
+>   `tickets/*-result.md` immutable once `complete`, and QA/handoff records write-once from first
+>   commit — means Keyless-except-embeddings. `e7-1-evidence-verifier-result.md` alone cites it three
+>   times (leak class, provider-key security), and CLI-006-campaign-result, CLI-007-result,
+>   CLI-006-D2-step1-result, REL-003-result and the `docs/replatform/qa/*` records do the same.
+>   Renumbering that one would require rewriting evidence policy forbids touching.
+> - **All four `CLAUDE.md` citations mean the other one too** — rule 11 and the Discussion Pipeline
+>   (extraction is CLI-only), the Adapters section (provider SDK), and the memory-write→RAG line.
+>   None is about optimistic concurrency, so none of them moves.
+> - **This decision's own citations are ALL live source, tests, and one historical plan doc** — none
+>   frozen, all updated in the same commit as this rename.
+>
+> So: chronological order was traded for not falsifying immutable records. If you are here because
+> the numbering looks wrong, that is why — please do not "fix" it back.
 
 Agent updates (`PATCH /api/agents/:id` → `agentService.update`) were pure
 last-write-wins (guarded by `id` only). Two concurrent human editors of the same
@@ -892,7 +938,36 @@ Refs: `packages/shared/src/validators/agent.ts`, `server/src/services/agents.ts`
 
 ## Decision #104 — Keyless-except-embeddings: selectable extraction engine + embedding resilience (2026-06-26)
 
-**Status:** Locked 2026-06-26. **Amended 2026-06-27 (extraction is CLI-only; hosted-API fallback removed).**
+> ★ **This is the sole `#104` as of 2026-09-03.** A second, unrelated locked decision (*Optimistic
+> concurrency for agent updates*, 2026-06-25) carried the same number for over two months and is now
+> [Decision #125](#decision-125--optimistic-concurrency-for-agent-updates-optional-updatedat-token--409-2026-06-25),
+> which records why that one moved rather than this one. **Every citation of "#104" anywhere in this
+> repository — all four in `CLAUDE.md`, and every frozen ticket-result and QA record — means THIS
+> decision, and none of them needed to change.**
+
+**Status:** Locked 2026-06-26. **Amended 2026-06-27 (extraction is CLI-only; hosted-API fallback removed) and 2026-08-08 (PR #320 `cloud_auth` sandbox credential alignment).**
+
+**Amendment (2026-08-08):** The 2026-06-27 amendment's CLI-only rule remains
+controlling, but its keyless wording is narrowed by the shipped multi-tenant
+isolation boundary. In self-hosted modes, extraction still uses the installed
+CLI login and reads no hosted model-provider key. In `cloud_auth`, extraction
+is still a CLI invocation rather than an `api` engine: the control plane
+resolves the Company's configured model-provider credential and adapter
+configuration, acquires an isolated E2B environment, and materializes that
+credential only for the sandbox-local CLI execution through
+`one-shot-sandbox-cli.ts`. It does not execute model output on the shared host,
+use the shared host's CLI login, or restore `callLLM` / `callAnthropic` /
+`callOpenAI` as an extraction fallback. The credential must not appear in the
+prompt, argv, protocol, events, logs, artifacts, or evidence, and missing
+Company/provider/environment context fails closed.
+
+The earlier statements that embeddings are the only hosted runtime key and
+that no extraction path ever reads a provider key are therefore superseded for
+`cloud_auth` only. Failure guidance is mode/cause specific: a missing local CLI
+or login points to CLI installation/authentication, while a cloud
+`sandbox_unavailable` failure may point to the Company's provider-key and
+execution-environment settings. There is still no selectable/direct-API
+extraction engine or silent host fallback.
 
 **Amendment (2026-06-27):** The founder overrode the original "selectable engine"
 ruling below. Discussion extraction (and every other extraction entry point —
@@ -912,7 +987,7 @@ at the local CLI, never at a key. See `docs/aoa/plans/2026-06-27-decouple-extrac
 and the matching PLAN. The original (now-superseded) selectable-engine ruling is
 preserved below for history.
 
-**Principle:** The only hosted API key AoA needs at runtime is for **embeddings** (`text-embedding-3-small` via OpenAI). Every other runtime operation — agent execution, Commander, and **discussion extraction** — runs keyless through the user's locally-installed CLI (Claude Code / Codex / Gemini CLI), authenticating against the subscription the user already has.
+**Original principle (superseded for `cloud_auth` by the 2026-08-08 amendment):** The only hosted API key AoA needs at runtime is for **embeddings** (`text-embedding-3-small` via OpenAI). Every other runtime operation — agent execution, Commander, and **discussion extraction** — runs keyless through the user's locally-installed CLI (Claude Code / Codex / Gemini CLI), authenticating against the subscription the user already has.
 
 ### Extraction: selectable engine ~~(SUPERSEDED 2026-06-27 — extraction is CLI-only, see amendment above)~~
 
@@ -1125,7 +1200,7 @@ Design reviewed: W5c plan (staff-eng + Codex review) plus the Task 1 live `app-s
 
 3. **Crew-autonomy dial gates agent-INITIATED work only; explicit founder authorization always dispatches.** Approving a `crew_dispatch` (or manually assigning/reassigning a task to a crew agent) exempts the resulting task wakeup from the company crew-autonomy gate (keyed on `payload.issueId` + `source ∈ {assignment, automation}`, covering both the assignee-wakeup chokepoint and the PATCH-reassign path). `crewPaused` stays the true global kill-switch. This fixes the `skipped_autonomy` behavior where approving a dispatch visibly did nothing at Manual/Assist autonomy.
 
-4. **Dead-type package — build 2, prune 2, defer 2, hide 1.** BUILD now (docs already promised them): `extraction_failed` (emit on CLI-extraction failure; auto-archive on successful reprocess) and `routine_outcome` (failure-only; success never notifies). PRUNE (type-only, superseded): `human_input_needed` and `scope_proposal` — the "agent needs the human" channels are `agent_runtime_decision`/`work_question` + `mention`, and scope proposals surface as thread cards + the `crew_dispatch` approval. DEFER to 1.1 (need schedulers): `reminder` (Commander reminders) and `proactive` (the periodic scan loop — CLAUDE.md corrected to reflect it is unwired today). KEEP internal-only, hidden from settings: `legacy_other` (the catch-all sink stays functional for the upstream project-era company-bundle imports).
+4. **Dead-type package — build 2, prune 2, defer 2, hide 1.** BUILD now (docs already promised them): `extraction_failed` (emit on CLI-extraction failure; auto-archive on successful reprocess) and `routine_outcome` (failure-only; success never notifies). PRUNE (type-only, superseded): `human_input_needed` and `scope_proposal` — the "agent needs the human" channels are `agent_runtime_decision`/`work_question` + `mention`, and scope proposals surface as thread cards + the `crew_dispatch` approval. DEFER to 1.1 (need schedulers): `reminder` (Commander reminders) and `proactive` (the periodic scan loop — CLAUDE.md corrected to reflect it is unwired today). KEEP internal-only, hidden from settings: `legacy_other` (the catch-all sink stays functional for Paperclip-era company-bundle imports).
 
 **Deferred (not decided here, tracked separately) — BOTH NOW RESOLVED 2026-07-04 (see the note below this decision):** the `work_question` **adapter caller** (agents can't yet ask the founder a product question in-run — the service/panel/answer path exist but no bridge raises one; W5b scoped it out) → shipped as the `ask_founder` MCP tool; BUG-6 (`codex_local` supervised turn completes empty) → root-caused (no model on the app-server turn → `gpt-5.3-codex` 400) + fixed. Safety fix shipped for `work_question`: answering one whose run is dead returns an honest 409 + cancels the decision instead of stalling forever.
 
@@ -1243,7 +1318,7 @@ The two items deferred by Decision #107 shipped together on `feat/inbox-hub-tabb
 
 6. **Open sub-claim — do not treat as settled.** Whether `CLAUDE_CONFIG_DIR` also redirects the *user-level* `~/.claude/CLAUDE.md`, or whether that file is reached by a second route, is **not established**. Tier one is proven for `settings.json`/`plugins/`/`skills/` (the per-run directory demonstrably contains only the credential); the user-level `CLAUDE.md` specifically is inferred, not observed. **What would settle it:** during live crew verification, run with a distinctive marker string in the operator's `~/.claude/CLAUDE.md` and assert it is absent from the run transcript. Note that testing this by invoking `claude` from inside an agent session is unreliable — that has produced false findings in this project before.
 
-7. **Tier two was satisfied by accident, and wrongly — CLOSED 2026-07-23.** Crew runs were not workspace-backed: the crew runner never set a workspace, so `cwd` fell through to `process.cwd()` (`claude-local/src/server/execute.ts:188`) — the **AoA server's own repository**. Every crew run therefore loaded *AoA's* `CLAUDE.md` rather than the customer workspace's. This is the most likely mechanism behind the observed live hijack. **Fixed by crew workspace resolution (T5):** the crew runner now populates `context.aoaWorkspace` by reusing heartbeat's own resolver (`server/src/services/workspace-resolution.ts`, extracted from `heartbeat.ts`), with the per-agent home `<AOA_HOME>/instances/<id>/workspaces/<agentId>` as an always-present floor — so `process.cwd()` is unreachable from the crew path. Crew does **not** realize per-task git worktrees; an `isolated_workspace` / `operator_branch` project policy degrades to the project's shared primary workspace until W3b.
+7. **Tier two was satisfied by accident, and wrongly — CLOSED 2026-07-23.** Crew runs were not workspace-backed: the crew runner never set a workspace, so `cwd` fell through to `process.cwd()` (`claude-local/src/server/execute.ts:188`) — the **AoA server's own repository**. Every crew run therefore loaded *AoA's* `CLAUDE.md` rather than the customer workspace's. This is the most likely mechanism behind the observed live hijack. **Fixed by crew workspace resolution (T5):** the crew runner now populates `context.paperclipWorkspace` by reusing heartbeat's own resolver (`server/src/services/workspace-resolution.ts`, extracted from `heartbeat.ts`), with the per-agent home `<AOA_HOME>/instances/<id>/workspaces/<agentId>` as an always-present floor — so `process.cwd()` is unreachable from the crew path. Crew does **not** realize per-task git worktrees; an `isolated_workspace` / `operator_branch` project policy degrades to the project's shared primary workspace until W3b.
 
 **Key files:** `packages/adapters/claude-local/src/server/ambient-config.ts`, `execute.ts`; `packages/adapter-utils/src/server-utils.ts` (`mergeChildEnv`, `foldEnvKey`); `server/src/services/internal-agent/aoa-agents/runner.ts`. Plan: `docs/aoa/plans/2026-07-19-crew-execution-phase1-foundation.md`.
 
@@ -1872,3 +1947,243 @@ server-reserved `runtimeConfig` auto-start envelope.
 - **Self-hosted / local_trusted Commander is byte-identical** (host-direct spawn; D1 guard is a no-op; in-process approval gate). Commander does NOT use `ask_founder`/`ask_human` — the agent-only gate excludes the commander actor by construction; the non-blocking ⚡CONFIRM runtime-approval marker over the broker is Commander's sole human-in-the-loop path.
 
 **Key files/tests:** `mcp/broker-tool-context.ts`, `agent-auth-jwt.ts`, `services/internal-agent/commander-sandbox.ts`, `services/internal-agent/cli-mode.ts`, `services/unsandboxed-multitenant-guard.ts`, `services/cloud-environment-policy.ts`, `services/environment-run-orchestrator.ts`; `commander-broker-fail-closed.test.ts`, `commander-guard-extensibility.test.ts`, `org-crew-streaming-regression.test.ts`, `broker-stdio-parity.test.ts`, `commander-sandbox-env-allowlist.test.ts`, `commander-broker-parity.test.ts`. Deployment matrix + credential taxonomy: `docs/deploy/deployment-modes.md`; env var: `docs/deploy/environment-variables.md` (`AOA_COMMANDER_JWT_TTL_SECONDS`).
+
+## Decision #121 — Cloud control plane uses a fenced outbound worker protocol with distinct batch, browser-session, and service lifecycles (2026-08-08)
+
+**Status:** Locked for the re-platform program. Implementation is phased and default-off.
+
+AoA retains its product/domain model but moves hosted execution behind a separately deployable worker protocol. PostgreSQL remains authoritative for policy and execution state. Workers lease work outbound and may mutate the control plane only through an active attempt/lease fence. `batch`, `browser_session`, and `service` are distinct workload classes; a service is desired state plus reconciled instances, not an infinitely renewed batch job.
+
+The canonical lifecycle status sets, allowed transitions, cancellation behavior, and lease-loss rules are in [`distributed-execution-lifecycles.md`](distributed-execution-lifecycles.md) and its machine-readable peer `distributed-execution-lifecycles.json`.
+
+Authority, synchronization, single-writer cutover, and late-result quarantine are locked in [`distributed-execution-authority.md`](distributed-execution-authority.md). No desktop or worker database is a peer replica of the hosted control plane.
+
+The trust boundaries, the **required** controls, verification gates, and residual release exclusions are locked in [`distributed-execution-threat-model.md`](distributed-execution-threat-model.md). ★ That record locks a **charter, not a report**: locking a control does not establish that it exists. Every crossing has now been audited for delivery, and as of 2026-09-08 the tally is **1 `delivered`, 25 `partial`, 4 `not-delivered`, 0 `unaudited`** — read that record's head before treating any control named here as in force.
+
+The custodian roles, one-ticket/branch/worktree rule, testing cadence, phased rollout/rollback order, isolation invariants, executable hard-negative controls, and reproducible authoritative build are locked in [`distributed-execution-delivery-policy.md`](distributed-execution-delivery-policy.md), which links the threat model and [`../replatform/test-gates.md`](../replatform/test-gates.md).
+
+The six frozen execution-source kinds (`task_run`, `commander_turn`, `crew_run`, `one_shot`, `browser_request`, `service_reconcile`), their opaque requester/executor principals, and their legacy parity matrix — checkout/assignment, capacity claim/release/wakeup, product/runtime approval, budget, audit, cost, output/run-summary, completion/cancel/retry — are frozen in [`distributed-execution-legacy-parity.json`](distributed-execution-legacy-parity.json). Only `task_run` carries `runId`/`issueId`; no execution source may be admitted against a sentinel Organization. The current-main migration inventory that owns the bridge, cutover, drain, rollback, and hard-negative evidence for every existing execution sink — including the post-PR #320 migration-0188 snapshot/marker seam — is [`../replatform/current-main-crosswalk.md`](../replatform/current-main-crosswalk.md); it is an observed inventory, not a new authority.
+
+This decision extends Decision #117 by treating its target registry, route-by-credential policy, and provider seams as migration inputs to one authoritative placement and fenced worker protocol. Once FND-005 lands, it supersedes Decision #117 only where that decision permits `AOA_ALLOW_UNSANDBOXED_MULTITENANT` in `cloud_auth`: hosted startup must reject that escape hatch, and it is never a distributed fallback. It does not make the deferred gVisor pool implemented.
+
+Decision #120 remains authoritative for current Commander warm-E2B behavior until MIG-005 completes its shadow, drain, cutover, and rollback contract; this decision neither silently disables nor dual-runs that path. Decision #103 remains authoritative for plugins: `cloud_auth` executes no host-resident plugin worker unless a later locked decision supplies a separately isolated plugin-worker architecture and its release evidence.
+
+## Decision #122 — C14 hand-append also covers idempotent RLS/role/GRANT/FORCE security DDL that drizzle-kit cannot emit (2026-08-09)
+
+**Status:** Locked 2026-08-09 (re-platform Epic E2 / TEN-002; operator = Migration + Security Gate Owner); **amended 2026-09-01** (BLOCKER E-1 / Unit 1.6 — see the amendment at the end of this decision). Amends Decision #19 (Drizzle-only) and the C14 narrow exception in `CLAUDE.md` Rule #1 / `AGENTS.md` §6. Promoted from re-platform epic decision **E2-D01** (`docs/replatform/epics/E2-tenant-kernel/decisions.md`).
+
+**Context.** E2 enforces DB-level tenant isolation on the new distributed job/worker/service/lease tables via a non-owner role + forced RLS. The required DDL — `CREATE ROLE … NOLOGIN NOSUPERUSER NOBYPASSRLS`, `GRANT`, `ENABLE` + `FORCE ROW LEVEL SECURITY`, and `CREATE POLICY … USING/WITH CHECK (… = current_setting('aoa.organization_id', true)::uuid)` — is **provably not emittable** by the pinned `drizzle-kit@0.31.10` under this repo's config (no `entities.roles`, no `pgPolicy` in schema; `FORCE`/`GRANT`/`LOGIN`-role are absent from the generator entirely). The C14 exception as previously written blessed hand-appended SQL only for idempotency guards and data backfills (exemplars `0189`, `0195`).
+
+**Decision.** The C14 exception is extended to also permit **hand-authored idempotent RLS/role/GRANT/FORCE-RLS/CREATE-POLICY security DDL** that `drizzle-kit generate` cannot emit, subject to all of:
+1. Tenant **tables, columns, indexes, and foreign keys** are still authored in `packages/db/src/schema/*.ts` and emitted by `pnpm db:generate` — schema DDL is never hand-authored (Rule #1 unchanged).
+2. The security DDL lives in a drizzle **`--custom`** (delta-free) migration created by `drizzle-kit generate --custom`, applied through the standard `applyPendingMigrations` path (uniform in tests/dev/runtime), never a runtime `sql.unsafe` bootstrap for the primary path.
+3. Every statement is **idempotent** using the established idioms (`IF NOT EXISTS`, `DROP … IF EXISTS`, `DO $$ … EXCEPTION WHEN duplicate_object/duplicate_table THEN NULL … END $$;`) and carries an inline comment stating what it does, that it is hand-authored because drizzle-kit cannot emit it, and why it is idempotent.
+4. Role names are validated (`assertSafeRoleName`), and no role credential (`LOGIN PASSWORD`) is committed — the role is created `NOLOGIN` and its login credential is provisioned separately from an env/secret at deploy/boot time.
+
+**Consequences.** RLS enforcement is versioned/ordered/auditable in the migration ledger like all other DDL, with one apply path. `db:push` remains absent. This does not authorize hand-authoring any DDL drizzle-kit *can* emit. `CLAUDE.md` Rule #1 and `AGENTS.md` §6 prose carry this cross-reference when TEN-002 lands.
+
+### Amendment (2026-09-01) — the class also covers `CREATE FUNCTION` and its ACL
+
+**Status:** Locked 2026-09-01 (BLOCKER E-1 / Unit 1.6, PR #333). Extends the enumerated DDL class
+above. Conditions 1-4 are unchanged and still apply in full.
+
+**Context.** The CLI-006 canary preflight runs on the non-owner `aoa_app` pool and holds ZERO
+privileges on `environment_leases`, `environments`, `runtime_provider_keys` and
+`company_secret_versions`. Every read raised 42501 and the gate answered `preflight_error` — an
+unreadability refusal indistinguishable from a policy decision. A table grant is not available:
+`company_secret_versions.material` is AES-256-GCM secret material and `environment_leases.metadata`
+is secret-bearing at rest, and a bare `GRANT` is ACL drift, which `assertExactServingRoleAuthority`
+treats as a fatal boot error. The remedy is an owner-owned `SECURITY DEFINER` function that narrows
+both the projection and the predicate — which requires `CREATE FUNCTION`, an object kind the
+enumeration above does not name (and the first in 266 migrations).
+
+`CREATE FUNCTION` is **provably not emittable** by the pinned generator, on the same footing as the
+DDL already covered: `drizzle-orm`'s `pg-core` exposes no function/routine/procedure primitive at
+any level (zero exports matching `/[Ff]unction|[Rr]outine|[Pp]roc/`), so there is nothing for
+`drizzle-kit generate` to diff or emit.
+
+**Decision.** The C14 class is extended to permit hand-authored, idempotent
+`CREATE OR REPLACE FUNCTION` plus its `REVOKE`/`GRANT`, subject to conditions 1-4 above **and**,
+for any function declared `SECURITY DEFINER`, all of:
+
+5. The function is listed in `server/src/db/security-definer-manifest.ts`, with a written rationale,
+   the exact roles that may `EXECUTE` it, and the relations whose authority it borrows. A definer
+   function runs with the OWNER's authority regardless of caller, so it is the entire
+   privilege-escalation surface the table/column/sequence scans cannot see — before this amendment
+   there was not one `prosecdef` reference in the repository.
+6. The certificate runs at boot and **drift is fatal**, in two arms with deliberately different
+   reach:
+   - **`assertManifestedSecurityDefinerFunctions` — EVERY boot, flag on or off**
+     (`server/src/index.ts`). Every manifested function must exist with exactly its pinned owner,
+     `EXECUTE` grantees, execution config and body, and must not be `LEAKPROOF`; a serving-role
+     owner, an owner that is not the owner of its declared authority relations, or a NULL `proacl`
+     (PostgreSQL's default grants `EXECUTE` to `PUBLIC`) each abort startup. This arm is
+     unconditional because the function is created by a migration that runs on every deployment and a
+     serving role keeps `EXECUTE` on it regardless of the flag — and a box that was once flag-on keeps
+     that role's LOGIN credential, since `maybeProvisionDistributedExecutionRoles` is a strict no-op
+     when the flag is off and never restores `NOLOGIN`.
+
+     **Amended 2026-09-01 (Unit 1.7, migration 0267).** That grantee is now `aoa_operator`, not
+     `aoa_app`. 0266 granted `EXECUTE` to `aoa_app`, which made an owner-authority read reachable from
+     the pool that serves tenant HTTP requests, the outbox worker, the admission bridge and the
+     live-event log. 0267 revokes it there and grants `aoa_operator` only. The justification above is
+     unchanged in shape — a serving role still holds `EXECUTE` on every deployment and keeps its LOGIN
+     — only the role differs. Note this is a **widening for `aoa_operator`**, which previously held no
+     grant on `companies` or `organizations` at all; the capability moved rather than shrank.
+   - **`assertNoUnmanifestedSecurityDefinerFunctions` — the flag-on serving-role path only.** It
+     asserts a property of the WHOLE database, which holds on a controlled distributed-execution
+     fleet (where `assertExactServingRoleAuthority` already fails boot on any unexpected schema) but
+     not on `external-postgres` against an operator-owned database, where a vendor or extension
+     definer function in another schema is legitimate and unknowable to us. Making it unconditional
+     would convert those deployments into hard boot failures. **This is a stated residual:** on a
+     flag-off deployment a NEW unmanifested definer function is not detected at boot.
+
+   Discovery is keyed on `pg_proc.prosecdef`, never on effective `EXECUTE` — `CREATE EXTENSION
+   vector` has no `SCHEMA` clause and installs ~100 `public` functions carrying the default
+   `PUBLIC EXECUTE`, so an EXECUTE-keyed certificate would fail boot on every pgvector fleet.
+7. The body pins `SET search_path = ''` and schema-qualifies every relation, so a caller's
+   `search_path` cannot redirect it; and it is scoped to the caller-supplied tenant on every branch.
+
+   **★ Corrected 2026-09-01 (Unit 1.7): that tenant scoping is DEFENCE IN DEPTH, not the boundary,
+   and the earlier wording here — "so an owner-authority function cannot become a cross-tenant
+   existence oracle" — was wrong.** The tenant parameter is supplied by the caller and compared only
+   to itself, so passing a victim's id satisfies it trivially; `companies` carries no row-level
+   security, so a caller need not even guess the id. This was reproduced against real PostgreSQL, not
+   argued. **The boundary is the `EXECUTE` grantee** — the one thing a caller cannot forge is the role
+   it connects as. Any future definer function must be justified on its grantee first, and may cite a
+   tenant predicate only as a second layer. **This is enforced,
+   not merely required:** the certificate pins `pg_proc.proconfig` and a SHA-256 fingerprint of the
+   body, and rejects `LEAKPROOF`. `CREATE OR REPLACE FUNCTION` preserves the owner and the ACL, so
+   without those pins a replacement that drops the `search_path` clause or a tenant predicate would
+   satisfy every identity/owner/ACL assertion — a stated guarantee with no mechanism behind it. The
+   fingerprint is taken over the body with carriage returns stripped, because
+   `packages/db/src/migrations/` carries no `eol=lf` pin and a raw hash would pin one platform and
+   fail boot on the other. Changing the body of a definer function is therefore a deliberate,
+   reviewed manifest edit.
+
+**Consequences.** Migration `0267_canary_preflight_evidence_org_scope.sql` is the compliant
+exemplar under this amendment: delta-free `--custom`, every statement carrying its own inline
+comment, three manifested functions certified at boot, and `EXECUTE` granted to `aoa_operator`
+only.
+
+**★ `0266_canary_preflight_evidence_fn.sql` is NOT an exemplar, and an earlier revision of this
+amendment wrongly said it was.** It fails two of the conditions above: its two `CREATE FUNCTION`
+statements carry no per-statement comment (condition 3), and neither of its function identities is
+in the manifest, because `0267` drops both (condition 5). It also granted `EXECUTE` to `aoa_app` —
+the arrangement the ★ correction above retracts. It remains in the ledger unchanged because a
+shipped migration is history, not a template; cite `0267`.
+
+foreign keys are never hand-authored.** This does not authorize hand-authoring any DDL drizzle-kit
+*can* emit, and it does not authorize a definer function that is not manifested and certified —
+conditions 5-7 are what make the extension narrower than "functions are now allowed".
+
+## Decision #123 — Distributed execution uses bounded tenant-serving and platform-operator database roles (2026-08-10)
+
+**Status:** Locked 2026-08-10 (operator-approved option B; corrective successor to E2-D03). Implementation revision `920e55de5a6557577bed9d228e9a00c4d49beadc` awaits the distinct prerequisite reviewer.
+
+**Decision.** `aoa_app` is the non-owner tenant-serving role for every E3 `runInTenant` transaction. Under the distributed-execution flag it has the eight E2 new-path grants plus only the legacy table privileges proven necessary by the traced JOB-010–014 engine calls. Legacy Company isolation remains enforced by existing application checks under CAV-005; this decision adds no legacy Company-table RLS retrofit.
+
+A distinct NOSUPERUSER/NOBYPASSRLS `aoa_operator` role and fail-closed database connection own the null-Organization platform target/worker metadata seam. On current tables it may access only the exact null-Org metadata needed to establish that seam; it receives no access to jobs, attempts, leases, events, artifacts, secrets, or tenant worker/target rows. Future E3 enrollment-route/proof/revocation grants remain owned by JOB-002.
+
+Privileged owner database access remains migration/bootstrap-only for this path. No owner fallback is allowed when the distributed flag is on. When `AOA_DISTRIBUTED_EXECUTION_ENABLED=false`, no new serving/operator pool is required and the current legacy execution path remains authoritative. When true, both explicit non-owner URLs are required and missing/invalid credentials, an unexpected authenticated role, privileged role attributes, or a failed connection aborts startup before E3 routes/work can start.
+
+`runInTenant(appDb, organizationId, fn(repos))` remains the mandatory tenant transaction boundary; no unscoped tenant repository is added. Migration `0213_e2_serving_role_correction.sql` is a delta-free drizzle `--custom` migration under Decision #122/C14, with idempotent role/grant/FORCE-RLS/policy statements and no committed credential. The exact traced legacy operation allowlist is versioned in `server/src/db/job-control-legacy-grants.ts`.
+
+**Implementation clarification (fix round 1, 2026-08-10).** Distinct review of the
+initial candidate found that its synthetic trace omitted real transitive checkout and
+prompt dependencies and that its operator table-wide CRUD exceeded this decision.
+Successor custom migration `0214_e2_serving_role_hardening.sql` preserves option B
+while converging both roles to exact authority: the app allowlist includes operations
+proved by representative real service calls; the current pre-JOB-002 operator seam is
+read-only `SELECT` on named safe worker/target metadata columns; both roles are
+`NOINHERIT`/`NOREPLICATION`, have no memberships or application-object ownership,
+and retain no stale schema/table/column/sequence authority. `execution_targets`
+remains RLS-enabled but is not forced so the flag-off non-superuser-owner legacy path
+remains authoritative, with no `PUBLIC` policy and no owner fallback. Startup audits
+the exact effective posture, and both bounded pools are resources of the single
+awaited shutdown sequence. Candidate code revision `d5abd1a53` awaits distinct
+re-review; this is not a prerequisite pass and grants no JOB-002 authority.
+
+**Implementation clarification (fix round 2, 2026-08-10).** Startup now binds
+both the authenticated `session_user` and active `current_user` to the exact expected
+bounded role, so an owner/superuser URL cannot mask itself with PostgreSQL startup
+`role` options and later recover broader authority with `SET ROLE NONE`. The exact
+effective-authority audit covers ordinary and partitioned tables, views,
+materialized views, and foreign tables, including column privileges; an adversarial
+view over a secret object therefore aborts startup. Successor custom migration
+`0215_e2_serving_role_audit_completion.sql` grants `aoa_app` `SELECT` only on the
+seven `execution_targets` columns read by the current heartbeat pinned-target
+resolver: `id`, `slug`, `kind`, `trust_class`, `status`, `organization_id`, and
+`config`. It excludes `worker_token_hash`, `owner_user_id`, `capabilities`,
+`last_seen_at`, and all operator writes. Candidate code revision `21335854f` awaits distinct re-review;
+this is not a prerequisite pass and grants no JOB-002 authority.
+
+## Decision #124 — Tenant work on platform targets uses Organization-scoped logical worker sessions (2026-08-10)
+
+**Status:** Locked 2026-08-10 (operator-approved E3-F018 amendment; Epic E3 / JOB-003).
+
+**Context.** A platform physical worker session is deliberately null-Organization, while the
+strict frozen Lease ACK v1 body and lease-only HTTP path carry no tenant shard. No durable
+lease-to-Organization locator exists, and Decision #123 forbids `aoa_operator` from reading
+jobs, attempts, leases, outbox rows, or operation receipts. Memory routing is not restart-safe;
+tenant scans create latency and isolation oracles; widening operator job authority violates
+H-01. E1 and JOB-002 already support one device having multiple Organization-scoped logical
+profiles on a shared platform target.
+
+**Decision.** Tenant job poll, offer, ACK, renew, event upload, control ACK, artifact/secret
+access, and completion always authenticate with the selected Organization-scoped logical
+worker session, including when its registered physical target has `scope='platform'`. The
+session binds Organization, logical worker ID, target ID/generation, device thumbprint, and
+profile hash. Its authenticated Organization is the sole tenant-shard selector for
+`runInTenant`; request JSON, headers, extensions, operator lookup, and scanning cannot select
+or widen that shard. The logical worker ID remains the lease and receipt FK identity.
+
+The platform-scoped physical session remains null-Organization and physical-control-only:
+enrollment, device/target health, generation, drain/revoke, and other platform registry
+lifecycle operations that expose no tenant or job identity. Tenant worker-operation routes
+reject it uniformly before tenant lookup. No lease locator is added and frozen E1 v1 remains
+byte-for-byte unchanged.
+
+For a platform target, each governed tenant mutation uses a revocation-linearized advisory
+handoff with the app transaction outermost. Inside the already-open `runInTenant` transaction,
+a bounded operator transaction locks the exact physical target and then physical worker
+`FOR SHARE` in fixed order and validates active generation/device/profile without receiving
+tenant, job, lease, fence, or payload facts. While those row locks remain held, the app
+transaction acquires a domain-separated transaction-scoped shared advisory lock for the
+target and performs a plain SELECT authority recheck; it never requests a row UPDATE lock or
+wider RLS policy. Operator validation must commit successfully, after which the app retains
+the advisory lock through its tenant mutation and commit. Operator failure forces app
+rollback; app/process failure automatically releases the transaction-scoped advisory lock.
+All nested pool acquisition is app→operator.
+
+Every platform status, generation, device-binding, or registered-profile authority writer
+locks target then its bound worker when present `FOR UPDATE`, obtains the matching transaction-scoped exclusive
+advisory lock, and only then mutates. Last-seen-only physical heartbeat is split from authority
+changes. Guard-first tenant work commits before the exclusive cutoff can complete; cutoff-
+first work blocks the shared-row handoff and then fails the changed authority check. Locks are
+bounded and fail closed. This requires no grant/RLS widening or distributed two-phase commit.
+A static writer inventory prevents an authority-changing path from bypassing the protocol.
+
+Platform logical-profile liveness is not circular. A fresh session-bound device proof plus
+the guarded current physical worker/target heartbeat supplies operation liveness; a newly
+enrolled logical profile may have `workers.last_seen_at IS NULL`. After authority succeeds,
+the tenant transaction writes the exact logical profile's database-time `last_seen_at` for
+observability. A stale physical worker/target still denies. Organization/owner targets retain
+their ordinary logical worker and target heartbeat requirements.
+
+The flag-on outbox runtime may list admitted Organization IDs through the bounded non-owner
+app pool and enumerate those shards internally only to
+claim tenant outbox rows through separate `runInTenant` calls and create identifier-only,
+non-authoritative ready hints. It excludes sentinel/inactive/unmapped entries and visits a
+stable lexical rotating window rather than a permanent first-N prefix. Each Organization-
+scoped poll consumes only its own hints and retains a bounded tenant-local pull fallback, so
+hint rejection/loss/restart or membership churn affects latency rather than correctness. A
+platform-scoped session never consumes tenant-ready hints.
+
+**Consequences.** This preserves H-01/H-02 and frozen wire compatibility without exposing job
+metadata through the operator role. One physical device may hold many logical sessions; the
+worker-side WRK-003 implementation owns process-local cross-profile polling and local capacity,
+while JOB-003 enforces per-logical-profile lease authority and registered clamps, and JOB-007
+later enforces Organization/workload quota authority after E6-D1-FOUNDATION. Any future move
+to one cross-tenant platform session requires a new locked decision and threat-model review;
+it is not an additive JOB-003 implementation choice.

@@ -24,7 +24,7 @@ OPENCLAW_METHOD="${OPENCLAW_METHOD:-POST}"
 OPENCLAW_AUTH_HEADER="${OPENCLAW_AUTH_HEADER:-}"
 OPENCLAW_TIMEOUT_SEC="${OPENCLAW_TIMEOUT_SEC:-180}"
 OPENCLAW_MODEL="${OPENCLAW_MODEL:-openclaw}"
-OPENCLAW_USER="${OPENCLAW_USER:-aoa-smoke}"
+OPENCLAW_USER="${OPENCLAW_USER:-paperclip-smoke}"
 
 AOA_RUN_ID="${AOA_RUN_ID:-smoke-run-$(date +%s)}"
 AOA_AGENT_ID="${AOA_AGENT_ID:-openclaw-smoke-agent}"
@@ -54,7 +54,7 @@ AOA_APPROVAL_ID=${AOA_APPROVAL_ID}
 AOA_APPROVAL_STATUS=${AOA_APPROVAL_STATUS}
 AOA_LINKED_ISSUE_IDS=${AOA_LINKED_ISSUE_IDS}
 
-Run your AoA heartbeat procedure now.
+Run your Paperclip heartbeat procedure now.
 EOF
 
 PAYLOAD="$(jq -nc \
@@ -87,7 +87,7 @@ PAYLOAD="$(jq -nc \
       AOA_APPROVAL_ID: $approvalId,
       AOA_APPROVAL_STATUS: $approvalStatus,
       AOA_LINKED_ISSUE_IDS: $linkedIssueIds,
-      aoa_session_key: ("aoa:run:" + $runId)
+      paperclip_session_key: ("paperclip:run:" + $runId)
     }
   }')"
 
@@ -105,7 +105,7 @@ args=(
   -X "$OPENCLAW_METHOD"
   -H "content-type: application/json"
   -H "accept: text/event-stream"
-  -H "x-openclaw-session-key: aoa:run:${AOA_RUN_ID}"
+  -H "x-openclaw-session-key: paperclip:run:${AOA_RUN_ID}"
   -D "$headers_file"
   -o "$body_file"
   --data "$PAYLOAD"

@@ -1,4 +1,6 @@
+import { eq } from "drizzle-orm";
 import type { Db } from "@armyofagents/db";
+import { companies } from "@armyofagents/db";
 import type {
   Environment,
   EnvironmentLease,
@@ -8,6 +10,11 @@ import type {
 } from "@armyofagents/shared";
 import { environmentService, type EnvironmentService } from "./environments.js";
 import {
+  assertWithinPlatformExecutionLimit,
+  PlatformExecutionLimitExceededError,
+  type PlatformExecutionLimitCheck,
+} from "./platform-execution-limit.js";
+import {
   sandboxProviderRuntime,
   type SandboxProviderExecuteResult,
   type SandboxProviderRuntime,
@@ -15,6 +22,7 @@ import {
 } from "./sandbox-provider-runtime.js";
 import { runtimeProviderKeyService } from "./runtime-provider-keys.js";
 import { WARM_SANDBOX_MAX_PER_COMPANY_DEFAULT } from "./warm-sandbox-constants.js";
+import { deriveE2bKeyGeneration } from "./e2b-credential-authority-wiring.js";
 import { logger } from "../middleware/logger.js";
 
 type PersistedExecutionWorkspaceRef = {
@@ -449,6 +457,10 @@ function createSandboxDockerEnvironmentDriver(
   environmentsSvc: EnvironmentService,
   providerRuntime: SandboxProviderRuntime,
   runtimeProviderKeys: RuntimeProviderKeyResolver | null,
+  // M1 — the platform per-tenant execution-limit SEAM (no-op today, M4 enforces).
+  // Injected (defaults to the real seam) so a test can assert it is reached at the
+  // managed dispatch entry.
+  platformExecutionLimit: PlatformExecutionLimitCheck,
 ): EnvironmentRuntimeDriver {
   return {
     driver: "sandbox",
@@ -460,6 +472,29 @@ function createSandboxDockerEnvironmentDriver(
       const rawConfig = readObject(input.environment.config);
       const provider = readString(rawConfig.provider) ?? "sandbox-docker";
       if (!isDockerSandboxProvider(provider)) {
+        // ── M1 (per-tenant managed execution) — the managed dispatch entry ──
+        // A provider-sandbox (E2B / managed_cloud) acquire is where per-tenant
+        // execution is gated and keyed. TWO per-tenant concerns sit here, at two
+        // grains the code already distinguishes (design §4.2):
+        //  (a) the platform per-tenant execution-limit SEAM (R2) — a no-op today,
+        //      the one place M4 subscription enforcement plugs in. It is ORG-grained
+        //      (the subscription/billing tenant is the organization), so the org is
+        //      resolved from the run's company (`companies.organizationId`) and passed
+        //      alongside the company. Best-effort org resolution never fails the
+        //      acquire (mirrors `deriveKeyGenerationSafely`); M4 decides fail-closed.
+        //  (b) the per-company E2B key (R1) — BYO key first, platform `E2B_API_KEY`
+        //      fallback — resolved immediately below by `resolveRuntimeProviderConfig`
+        //      (UNCHANGED; already wired). Every managed E2B run reaches this branch.
+        const organizationId = await resolveCompanyOrganizationIdSafely(db, input.companyId);
+        // M1 seam is a no-op (always allows), so this throw never fires today. It is wired
+        // NOW so M4 changes ONLY the checker to deny — this call site already enforces it
+        // (Codex P2, PR #431: the decision must not be discarded, or M4 would have to edit
+        // here too and the single-hook property is lost).
+        const platformLimit = platformExecutionLimit({ companyId: input.companyId, organizationId });
+        if (!platformLimit.allowed) {
+          throw new PlatformExecutionLimitExceededError(input.companyId, organizationId);
+        }
+
         const providerConfig = await resolveRuntimeProviderConfig({
           companyId: input.companyId,
           provider,
@@ -595,6 +630,19 @@ function createSandboxDockerEnvironmentDriver(
               executionWorkspaceMode: leaseContext.executionWorkspaceMode,
               provider,
               providerMetadata: sanitizeProviderMetadata(providerLease.metadata),
+              // REL-004 Lane D (§5) — record the E2B key GENERATION this sandbox was created
+              // under. Inherited deferral #5 ("old-key kill-switch enforcement") was not
+              // implementable without it: `deriveE2bKeyGeneration` returns a company's CURRENT
+              // version, and nothing recorded what a given sandbox was made with, so
+              // "superseded" was not computable for an existing sandbox.
+              //
+              // e2b only, and never allowed to fail an acquire: a generation we could not derive
+              // is recorded as null, which the reaper reads as "no generation to compare" rather
+              // than as "superseded". Absence must never be evidence of supersession, or the
+              // first deploy would reap every pre-existing warm snapshot.
+              ...(provider === "e2b"
+                ? { keyGeneration: await deriveKeyGenerationSafely(db, input.companyId) }
+                : {}),
             },
           }));
         } catch (err) {
@@ -700,6 +748,46 @@ function createSandboxDockerEnvironmentDriver(
   };
 }
 
+/**
+ * REL-004 Lane D (§5) — the acquire-time key-generation stamp, best-effort by construction.
+ *
+ * Never throws into the acquire path: creating a sandbox must not fail because a bookkeeping
+ * lookup did. A null generation is "unknown", and the reaper treats unknown as NOT superseded.
+ */
+async function deriveKeyGenerationSafely(db: Db, companyId: string): Promise<string | null> {
+  try {
+    return await deriveE2bKeyGeneration(db, companyId);
+  } catch (err) {
+    logger.warn({ err, companyId }, "environment runtime: could not derive the e2b key generation");
+    return null;
+  }
+}
+
+/**
+ * M1 — resolve the run's ORGANIZATION from its company for the org-grained platform
+ * execution-limit seam (`companies.organizationId`, the subscription/billing tenant;
+ * design §4.2). Best-effort by construction: acquiring a managed sandbox must never
+ * fail because this bookkeeping lookup did (mirrors `deriveKeyGenerationSafely`). A
+ * null return means "org unresolved" — the M1 seam is a no-op so it is harmless today;
+ * M4 enforcement decides how to treat an unresolved org (likely fail-closed).
+ */
+export async function resolveCompanyOrganizationIdSafely(db: Db, companyId: string): Promise<string | null> {
+  try {
+    const [row] = await db
+      .select({ organizationId: companies.organizationId })
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+    return row?.organizationId ?? null;
+  } catch (err) {
+    logger.warn(
+      { err, companyId },
+      "environment runtime: could not resolve the organization for the platform execution-limit seam",
+    );
+    return null;
+  }
+}
+
 export function environmentRuntimeService(
   db: Db,
   options: {
@@ -715,17 +803,25 @@ export function environmentRuntimeService(
       >>;
     sandboxProviders?: SandboxRuntimeProvider[];
     runtimeProviderKeys?: RuntimeProviderKeyResolver;
+    /**
+     * M1 — the platform per-tenant execution-limit seam (no-op today, M4 enforces).
+     * Defaults to the real seam; injectable so a test can assert it is reached at the
+     * managed dispatch entry.
+     */
+    platformExecutionLimit?: PlatformExecutionLimitCheck;
   } = {},
 ): EnvironmentRuntimeService {
   const environmentsSvc = (options.environments ?? environmentService(db)) as EnvironmentService;
   const providerRuntime = sandboxProviderRuntime({ providers: options.sandboxProviders });
   const runtimeProviderKeys = options.runtimeProviderKeys ?? runtimeProviderKeyService(db);
+  const platformExecutionLimit = options.platformExecutionLimit ?? assertWithinPlatformExecutionLimit;
   const localDriver = createLocalEnvironmentDriver(environmentsSvc);
   const sandboxDriver = createSandboxDockerEnvironmentDriver(
     db,
     environmentsSvc,
     providerRuntime,
     runtimeProviderKeys,
+    platformExecutionLimit,
   );
 
   function getDriver(environment: Pick<Environment, "driver">): EnvironmentRuntimeDriver {

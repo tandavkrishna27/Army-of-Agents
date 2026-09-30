@@ -68,7 +68,7 @@ expect(capture.env.AOA_API_KEY).toBeUndefined();
 The existing positive case (no connectors → token present) is the byte-identity foil.
 - [ ] **Step 2:** Run → PASS. **Step 3 — ablation** as above. **Step 4:** Commit.
 
-> Do NOT assert `UPSTREAM_API_KEY` for these three adapters (only hermes sets it → vacuous). codex exec-path parity is optional (app-server path already proven).
+> Do NOT assert `PAPERCLIP_API_KEY` for these three adapters (only hermes sets it → vacuous). codex exec-path parity is optional (app-server path already proven).
 
 ---
 

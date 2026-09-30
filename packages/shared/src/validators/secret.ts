@@ -200,3 +200,20 @@ export const updateRuntimeProviderKeySchema = z.object({
 });
 
 export type UpdateRuntimeProviderKey = z.infer<typeof updateRuntimeProviderKeySchema>;
+
+/**
+ * One-step "Add E2B key": create the company secret (from the pasted raw key)
+ * AND its default runtime provider key together, atomically. `value` is the raw
+ * API key — it is stored encrypted as a company secret and is NEVER echoed back
+ * or logged. `secretName` is optional; the service falls back to `displayName`.
+ * Company-only, provider fixed to the runtime-provider-key set ('e2b' today).
+ */
+export const createRuntimeProviderKeyWithSecretSchema = z.object({
+  provider: z.enum(RUNTIME_PROVIDER_KEY_PROVIDERS).default("e2b"),
+  displayName: z.string().min(1).max(120),
+  value: z.string().min(1),
+  isDefault: z.boolean().optional().default(true),
+  secretName: z.string().min(1).optional(),
+});
+
+export type CreateRuntimeProviderKeyWithSecret = z.infer<typeof createRuntimeProviderKeyWithSecretSchema>;

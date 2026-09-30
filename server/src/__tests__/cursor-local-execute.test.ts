@@ -12,7 +12,7 @@ const capturePath = process.env.AOA_TEST_CAPTURE_PATH;
 const payload = {
   argv: process.argv.slice(2),
   prompt: fs.readFileSync(0, "utf8"),
-  aoaEnvKeys: Object.keys(process.env)
+  paperclipEnvKeys: Object.keys(process.env)
     .filter((key) => key.startsWith("AOA_"))
     .sort(),
 };
@@ -55,12 +55,12 @@ console.log(JSON.stringify({
 type CapturePayload = {
   argv: string[];
   prompt: string;
-  aoaEnvKeys: string[];
+  paperclipEnvKeys: string[];
 };
 
 describe("cursor execute", () => {
-  it("injects aoa env vars and prompt note by default", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-cursor-execute-"));
+  it("injects paperclip env vars and prompt note by default", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-cursor-execute-"));
     const workspace = path.join(root, "workspace");
     const commandBase = path.join(root, "agent");
     const capturePath = path.join(root, "capture.json");
@@ -94,7 +94,7 @@ describe("cursor execute", () => {
           env: {
             AOA_TEST_CAPTURE_PATH: capturePath,
           },
-          promptTemplate: "Follow the aoa heartbeat.",
+          promptTemplate: "Follow the paperclip heartbeat.",
         },
         context: {},
         authToken: "run-jwt-token",
@@ -108,10 +108,10 @@ describe("cursor execute", () => {
       expect(result.errorMessage).toBeNull();
 
       const capture = JSON.parse(await fs.readFile(capturePath, "utf8")) as CapturePayload;
-      expect(capture.argv).not.toContain("Follow the aoa heartbeat.");
+      expect(capture.argv).not.toContain("Follow the paperclip heartbeat.");
       expect(capture.argv).not.toContain("--mode");
       expect(capture.argv).not.toContain("ask");
-      expect(capture.aoaEnvKeys).toEqual(
+      expect(capture.paperclipEnvKeys).toEqual(
         expect.arrayContaining([
           "AOA_AGENT_ID",
           "AOA_API_KEY",
@@ -135,7 +135,7 @@ describe("cursor execute", () => {
   });
 
   it("passes --mode when explicitly configured", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-cursor-execute-mode-"));
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-cursor-execute-mode-"));
     const workspace = path.join(root, "workspace");
     const commandBase = path.join(root, "agent");
     const capturePath = path.join(root, "capture.json");
@@ -169,7 +169,7 @@ describe("cursor execute", () => {
           env: {
             AOA_TEST_CAPTURE_PATH: capturePath,
           },
-          promptTemplate: "Follow the aoa heartbeat.",
+          promptTemplate: "Follow the paperclip heartbeat.",
         },
         context: {},
         authToken: "run-jwt-token",

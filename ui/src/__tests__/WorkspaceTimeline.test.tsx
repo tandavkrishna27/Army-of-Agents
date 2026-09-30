@@ -85,6 +85,7 @@ const issuesApiMock = {
     comment: { id: "new-comment", body: "see attached" },
     attachments: [{ id: "att-1", originalFilename: "proof.png" }],
   }),
+  getCommentSubmissionOutcome: vi.fn().mockResolvedValue({ state: "not_found" }),
   listAttachments: vi.fn().mockResolvedValue([]),
   listContextBundles: vi.fn().mockResolvedValue([]),
 };
@@ -989,6 +990,22 @@ describe("WorkspaceTimeline — B-states (mock §5)", () => {
       expect(screen.queryByTestId("composer-send-failed-banner")).not.toBeInTheDocument(),
     );
     // Retry success clears the composer like a normal send.
+    expect(textarea).toHaveValue("");
+  });
+
+  it("observes a completed task receipt and does not post the ambiguous comment again", async () => {
+    issuesApiMock.addComment.mockRejectedValueOnce(new Error("network error"));
+    renderTimeline();
+    const textarea = await screen.findByPlaceholderText("Message Alpha Agent...");
+    fireEvent.change(textarea, { target: { value: "post once" } });
+    fireEvent.click(screen.getByText("Send & wake"));
+    const banner = await screen.findByTestId("composer-send-failed-banner");
+    issuesApiMock.getCommentSubmissionOutcome.mockResolvedValueOnce({state: "completed", commentId: "comment-recorded"});
+
+    fireEvent.click(within(banner).getByRole("button", {name: "Retry"}));
+
+    await waitFor(() => expect(screen.queryByTestId("composer-send-failed-banner")).not.toBeInTheDocument());
+    expect(issuesApiMock.addComment).toHaveBeenCalledTimes(1);
     expect(textarea).toHaveValue("");
   });
 

@@ -37,6 +37,7 @@ const getAssistantReplyForUserMessage = vi.fn(async () => null as any);
 // PR #291 round-6/7: the durable turn claim CAS + lease + release. claimTurn
 // returns an owner token (or null when lost); finishTurn/heartbeatTurn take it.
 const claimTurn = vi.fn(async () => "tok-1" as string | null);
+const bindRunToClaim = vi.fn(async () => true);
 const finishTurn = vi.fn(async () => undefined);
 const heartbeatTurn = vi.fn(async () => undefined);
 vi.mock("../services/internal-agent/conversation.js", () => ({
@@ -47,6 +48,7 @@ vi.mock("../services/internal-agent/conversation.js", () => ({
     getMessageByClientSubmissionId,
     getAssistantReplyForUserMessage,
     claimTurn,
+    bindRunToClaim,
     finishTurn,
     heartbeatTurn,
   })),
@@ -98,6 +100,7 @@ vi.mock("../services/assets.js", () => ({
 
 import { Readable } from "node:stream";
 import { agentLoopService } from "../services/internal-agent/agent-loop.js";
+import { hashCommanderSubmission } from "../services/internal-agent/submission-identity.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -123,6 +126,10 @@ const BASE_PARAMS = {
   enabledCapabilities: [] as string[],
   content: "what is up",
 };
+const MATCHING_SUBMISSION_HASH = hashCommanderSubmission({
+  conversationId: "conv-1",
+  message: BASE_PARAMS.content,
+});
 
 async function drain(svc: ReturnType<typeof agentLoopService>) {
   const out: any[] = [];
@@ -138,6 +145,7 @@ beforeEach(() => {
   getMessageByClientSubmissionId.mockResolvedValue(null);
   getAssistantReplyForUserMessage.mockResolvedValue(null);
   claimTurn.mockResolvedValue("tok-1");
+  bindRunToClaim.mockResolvedValue(true);
   finishTurn.mockResolvedValue(undefined);
   heartbeatTurn.mockResolvedValue(undefined);
 });
@@ -207,9 +215,35 @@ describe("agentLoopService.chat — idempotent retry (clientSubmissionId)", () =
     return out;
   }
 
+  it("rejects reuse of a submission key with changed frozen intent", async () => {
+    getMessageByClientSubmissionId.mockResolvedValue({
+      id: "user-original",
+      submissionPayloadHash: "different-payload-hash",
+    });
+    const svc = agentLoopService(dbWithConfig({ cliTool: "claude_cli", executionMode: "cli" }));
+    const out = await drainWithKey(svc, "sub-conflict");
+    expect(cliChat).not.toHaveBeenCalled();
+    expect(claimTurn).not.toHaveBeenCalled();
+    expect(out).toEqual([
+      {type: "run_skipped"},
+      {type: "error", message: "Submission identity conflict. Review the preserved draft before sending again."},
+    ]);
+  });
+
+  it("binds the admitted run through the current claim token before execution", async () => {
+    getMessageByClientSubmissionId.mockResolvedValue(null);
+    appendMessage.mockResolvedValueOnce({id: "user-bound"});
+    scriptStream([{type: "done", summary: {runId: "run-1", toolsCalled: [], durationMs: 0, costCents: 0, tokenUsage: {inputTokens: 0, outputTokens: 0}}}]);
+    const svc = agentLoopService(dbWithConfig({ cliTool: "claude_cli", executionMode: "cli" }));
+    const out: unknown[] = [];
+    for await (const chunk of svc.chat({...BASE_PARAMS, conversationId: "conv-1", clientSubmissionId: "sub-bound", runId: "run-1"} as any)) out.push(chunk);
+    expect(bindRunToClaim).toHaveBeenCalledWith("user-bound", "tok-1", "run-1");
+    expect(cliChat).toHaveBeenCalledTimes(1);
+  });
+
   it("replays the original assistant reply and does NOT persist a new message or run the CLI", async () => {
     // The key was already recorded → this is a retry.
-    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-orig", createdAt: new Date(0) });
+    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-orig", createdAt: new Date(0), submissionPayloadHash: MATCHING_SUBMISSION_HASH });
     getAssistantReplyForUserMessage.mockResolvedValue({ id: "asst-orig", content: "Original answer" });
 
     const svc = agentLoopService(dbWithConfig({ cliTool: "claude_cli", executionMode: "cli" }));
@@ -230,7 +264,7 @@ describe("agentLoopService.chat — idempotent retry (clientSubmissionId)", () =
     // lookup returns null for A (B's reply is linked to user-B), so A re-runs.
     // The old timestamp heuristic ("first assistant after A") would wrongly
     // surface B's reply and permanently suppress A.
-    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-A", createdAt: new Date(0) });
+    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-A", createdAt: new Date(0), submissionPayloadHash: MATCHING_SUBMISSION_HASH });
     getAssistantReplyForUserMessage.mockImplementation(async (_conv: string, userId: string) =>
       userId === "user-B" ? { id: "asst-B", content: "B's answer" } : null,
     );
@@ -257,7 +291,7 @@ describe("agentLoopService.chat — idempotent retry (clientSubmissionId)", () =
     // CLI; instead it replays the winner's reply if present.
     getMessageByClientSubmissionId
       .mockResolvedValueOnce(null) // initial lookup: no row yet
-      .mockResolvedValue({ id: "user-winner", createdAt: new Date(0) }); // after lost race: winner exists
+      .mockResolvedValue({ id: "user-winner", createdAt: new Date(0), submissionPayloadHash: MATCHING_SUBMISSION_HASH }); // after lost race: winner exists
     appendMessage.mockResolvedValueOnce(undefined as any); // lost the insert race
     getAssistantReplyForUserMessage.mockResolvedValue({ id: "asst-winner", content: "Winner answer" });
 
@@ -271,7 +305,7 @@ describe("agentLoopService.chat — idempotent retry (clientSubmissionId)", () =
   it("claims the submission key: lost race with no winner reply yet reports in-progress, no CLI — C3", async () => {
     getMessageByClientSubmissionId
       .mockResolvedValueOnce(null)
-      .mockResolvedValue({ id: "user-winner", createdAt: new Date(0) });
+      .mockResolvedValue({ id: "user-winner", createdAt: new Date(0), submissionPayloadHash: MATCHING_SUBMISSION_HASH });
     appendMessage.mockResolvedValueOnce(undefined as any); // lost the insert race
     getAssistantReplyForUserMessage.mockResolvedValue(null); // winner still running
 
@@ -287,7 +321,7 @@ describe("agentLoopService.chat — idempotent retry (clientSubmissionId)", () =
     // array. Gating replay on non-empty content would misclassify it as
     // unfinished and re-run the CLI, double-executing its tools. The linked
     // assistant row alone must count as a completed reply → replay its events.
-    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-tool", createdAt: new Date(0) });
+    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-tool", createdAt: new Date(0), submissionPayloadHash: MATCHING_SUBMISSION_HASH });
     getAssistantReplyForUserMessage.mockResolvedValue({
       id: "asst-tool",
       content: null,
@@ -317,7 +351,7 @@ describe("agentLoopService.chat — idempotent retry (clientSubmissionId)", () =
     // The prior user row exists with no linked reply, and the durable claim CAS
     // returns false because ANOTHER process/worker owns the running turn. The
     // request must defer (in-progress here, no reply yet) and never run the CLI.
-    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-live", createdAt: new Date() });
+    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-live", createdAt: new Date(), submissionPayloadHash: MATCHING_SUBMISSION_HASH });
     getAssistantReplyForUserMessage.mockResolvedValue(null);
     claimTurn.mockResolvedValue(null); // another instance holds the durable claim
 
@@ -351,7 +385,7 @@ describe("agentLoopService.chat — idempotent retry (clientSubmissionId)", () =
     // The key was recorded, but the original send failed before any assistant
     // message was persisted (config error / CLI crash). The durable CAS reclaims
     // the row ('failed'/stale → running), so retry re-runs — NOT an empty success.
-    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-orig", createdAt: new Date(0) });
+    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-orig", createdAt: new Date(0), submissionPayloadHash: MATCHING_SUBMISSION_HASH });
     getAssistantReplyForUserMessage.mockResolvedValue(null);
     claimTurn.mockResolvedValue("tok-orig"); // reclaimed the dead turn (owner token)
     scriptStream([
@@ -405,7 +439,7 @@ describe("agentLoopService.chat — idempotent retry (clientSubmissionId)", () =
     // The key was recorded, but the original send failed before any assistant
     // message was persisted (config error / CLI crash). Retry must fall through
     // to a fresh run — NOT return an empty success that suppresses the turn.
-    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-orig", createdAt: new Date(0) });
+    getMessageByClientSubmissionId.mockResolvedValue({ id: "user-orig", createdAt: new Date(0), submissionPayloadHash: MATCHING_SUBMISSION_HASH });
     getAssistantReplyForUserMessage.mockResolvedValue(null);
     scriptStream([
       { type: "text", delta: "Recovered answer" },

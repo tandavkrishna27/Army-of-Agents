@@ -50,7 +50,7 @@ Version `0.1.0` (Changesets; no VERSION file). CI = 7 workflows; `pr.yml` is the
 
 ## 4. Preconditions
 
-1. **Review reads from the `AoA-prb` worktree** (`C:/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-prb`), which is already checked out on `feat/v1-combined`. We do **not** disturb the dirty `feat/v1-upgrade` worktree.
+1. **Review reads from the `AoA-prb` worktree** (`C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-prb`), which is already checked out on `feat/v1-combined`. We do **not** disturb the dirty `feat/v1-upgrade` worktree.
 2. **Phase 0 baseline is a hard gate.** If combined does not build / typecheck, or the test suite is red, we triage that before any code review — reviewing non-building code wastes the fleet.
 3. Each phase's findings are reviewed and approved by the founder before the next phase launches.
 
@@ -81,7 +81,7 @@ Ground truth before opinions:
 
 ### Phase 4 — Synthesis & gate (Workflow D)
 - Dedup + cross-reference all confirmed findings.
-- **Conformance check** against `docs/architecture/decisions.md` (90+ locked decisions) and the **Upstream Divergence Points** (D5 concurrency clamp, D6 hire-approval default, D8 planning-mode dispatch gate) — flag any regression that silently reverts a locked decision.
+- **Conformance check** against `docs/architecture/decisions.md` (90+ locked decisions) and the **Paperclip Divergence Points** (D5 concurrency clamp, D6 hire-approval default, D8 planning-mode dispatch gate) — flag any regression that silently reverts a locked decision.
 - Cross-check against known open items (#204, #205, #201).
 - Output: **the single v1 go/no-go report** — blocker checklist with owners, plus a prioritized non-blocker backlog.
 
@@ -103,7 +103,7 @@ Ground truth before opinions:
 | 10 | Marketplace + plugins | catalog cache, `derivePackages`, plugin RBAC, `plugin_jobs`, webhooks | C **S** T |
 | 11 | Finance / budget / cost | `cost_events`, `budget_policies`, quota windows | **C** T |
 | 12 | Company portability | export/import bundles (schemaVersion 2) | C **S** T |
-| 13 | Adapters / wire protocol | registry, CLI adapters, Hermes `UPSTREAM_*` contract | **C** S T |
+| 13 | Adapters / wire protocol | registry, CLI adapters, Hermes `PAPERCLIP_*` contract | **C** S T |
 | 14 | Suggestions / trust / feedback | suggestion engine, trust score formula, feedback votes + redaction | **C** T |
 | 15 | DB schema integrity | `packages/db/src/schema/**` (118 files): FK, indexes, migrations, Drizzle-only | **C** S **T** |
 | 16 | Shared types / validators | `packages/shared/**` | C **T** |

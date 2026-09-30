@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "description": "FND-005 pinned bundled-snapshot inputs. `pnpm build` verifies checked-in snapshots against these digests network-free; `pnpm refresh:bundled-snapshots` re-fetches and rewrites this manifest. The snapshot JSON files themselves remain generated (gitignored); this manifest is the checked-in provenance/digest pin verified by scripts/check-bundled-snapshot-inputs.mjs.",
+  "snapshots": [
+    {
+      "file": "ui/src/aoa-marketplace-snapshot.json",
+      "sourceUrl": "https://meteoritelabs.github.io/aoa-marketplace-cdn/catalog.json",
+      "version": "2026-08-08T03:34:21.886Z",
+      "sha256": "b7881cb866a840ec5f3eada05d76c9208bc2648595d5f2d81664167bd41c9716",
+      "order": 1
+    },
+    {
+      "file": "ui/src/aoa-connectors-snapshot.json",
+      "sourceUrl": "https://meteoritelabs.github.io/aoa-marketplace-cdn/connectors.json",
+      "version": "2026-07-30T14:50:02.497Z",
+      "sha256": "bf7bad6561612999b2b6beb3230fe07f1381b8708ddf4e28f19f9aa4b46a380f",
+      "order": 2
+    }
+  ]
+}

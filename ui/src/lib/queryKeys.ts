@@ -168,6 +168,25 @@ export const queryKeys = {
   },
   sidebarPreferences: (companyId: string) => ["sidebar-preferences", companyId] as const,
   homeBoardLayout: (companyId: string) => ["home-board-layout", companyId] as const,
+  universeLayout: (companyId: string, conversationId: string, ownerSession: string) =>
+    ["universe-layout", ownerSession, companyId, conversationId] as const,
+  universeSnapshot: (companyId: string, conversationId: string, ownerSession: string) =>
+    ["universe-snapshot", ownerSession, companyId, conversationId] as const,
+  universeDraft: (
+    companyId: string,
+    conversationId: string,
+    destinationKind: string,
+    destinationId: string,
+    ownerSession: string,
+  ) =>
+    [
+      "universe-draft",
+      ownerSession,
+      companyId,
+      conversationId,
+      destinationKind,
+      destinationId,
+    ] as const,
   viewerPreferences: (companyId: string) => ["viewer-preferences", companyId] as const,
   inboxDismissals: (companyId: string) => ["inbox-dismissals", companyId] as const,
   activity: (companyId: string) => ["activity", companyId] as const,
@@ -317,8 +336,19 @@ export const queryKeys = {
   executionTargets: {
     list: (organizationId: string) => ["executionTargets", organizationId] as const,
   },
+  desktopDevices: {
+    list: (organizationId: string) => ["desktopDevices", organizationId] as const,
+  },
+  jobControl: {
+    jobs: (organizationId: string, companyId: string) =>
+      ["job-control", organizationId, companyId, "jobs"] as const,
+    job: (organizationId: string, companyId: string, jobId: string) =>
+      ["job-control", organizationId, companyId, "jobs", jobId] as const,
+    workers: (organizationId: string) => ["job-control", organizationId, "workers"] as const,
+  },
   cockpit: (companyId: string) => ["cockpit", companyId] as const,
   cockpitCounts: (companyId: string) => ["cockpit", companyId, "counts"] as const,
+  universePreferences: (companyId: string) => ["universe-preferences", companyId] as const,
   plugins: {
     all: ["plugins"] as const,
     list: ["plugins", "list"] as const,

@@ -111,16 +111,16 @@ describe.skipIf(process.platform === "win32")(
       }
 
       const companyAResult = await db.execute<{ id: string }>(sql`
-        INSERT INTO companies (id, name, issue_prefix)
-        VALUES (gen_random_uuid(), 'Env Test Co A', 'ENA')
+        INSERT INTO companies (organization_id, id, name, issue_prefix)
+        VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Env Test Co A', 'ENA')
         RETURNING id
       `);
       companyAId = firstId(companyAResult);
       expect(companyAId).toBeTruthy();
 
       const companyBResult = await db.execute<{ id: string }>(sql`
-        INSERT INTO companies (id, name, issue_prefix)
-        VALUES (gen_random_uuid(), 'Env Test Co B', 'ENB')
+        INSERT INTO companies (organization_id, id, name, issue_prefix)
+        VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Env Test Co B', 'ENB')
         RETURNING id
       `);
       companyBId = firstId(companyBResult);
@@ -265,11 +265,11 @@ describe.skipIf(process.platform === "win32")(
           (${companyB}, ${orgB}, 'Pin Company B', ${`PB${suffix.slice(0, 4)}`})
       `);
       await db.execute(sql`
-        INSERT INTO execution_targets (id, organization_id, slug, kind, trust_class)
+        INSERT INTO execution_targets (id, organization_id, slug, kind, trust_class, scope, target_authority_key)
         VALUES
-          (${targetA}, ${orgA}, ${`pin-target-a-${suffix}`}, 'dedicated_worker', 'dedicated_tenant'),
-          (${targetB}, ${orgB}, ${`pin-target-b-${suffix}`}, 'dedicated_worker', 'dedicated_tenant'),
-          (${systemTarget}, NULL, ${`pin-system-${suffix}`}, 'pooled_gvisor', 'shared_multitenant')
+          (${targetA}, ${orgA}, ${`pin-target-a-${suffix}`}, 'dedicated_worker', 'dedicated_tenant', 'organization', ${`organization:${orgA}`}),
+          (${targetB}, ${orgB}, ${`pin-target-b-${suffix}`}, 'dedicated_worker', 'dedicated_tenant', 'organization', ${`organization:${orgB}`}),
+          (${systemTarget}, NULL, ${`pin-system-${suffix}`}, 'pooled_gvisor', 'shared_multitenant', 'platform', 'platform')
       `);
 
       const mutate = <T>(operation: (txSvc: ReturnType<typeof environmentService>) => Promise<T>) =>

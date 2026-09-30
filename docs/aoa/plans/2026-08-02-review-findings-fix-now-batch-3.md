@@ -280,7 +280,7 @@ Update "Schema changes use Drizzle ORM only — never raw SQL." to carry the sam
 
 - [ ] **Step 3: Decision #19 (`decisions.md:43`)**
 
-The row is `| 19 | Drizzle only, no raw SQL | Matches Upstream patterns. \`pnpm db:generate\` for all migrations. |`. Extend the rationale cell to note the narrow exception: "…`pnpm db:generate` for all schema DDL. Narrow exception (C14): idempotency guards + data-only backfills may be hand-appended post-generation (e.g. 0189/0195), always idempotent; schema DDL is never hand-authored." Keep it a single table row.
+The row is `| 19 | Drizzle only, no raw SQL | Matches Paperclip patterns. \`pnpm db:generate\` for all migrations. |`. Extend the rationale cell to note the narrow exception: "…`pnpm db:generate` for all schema DDL. Narrow exception (C14): idempotency guards + data-only backfills may be hand-appended post-generation (e.g. 0189/0195), always idempotent; schema DDL is never hand-authored." Keep it a single table row.
 
 - [ ] **Step 4: Describe the actual 0195 workflow**
 

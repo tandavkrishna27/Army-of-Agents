@@ -10,7 +10,7 @@
 
 **Locked decisions:**
 1. **Integration test goes in a NEW file** (`heartbeat-process-tree-kill.integration.test.ts`), not the existing `heartbeat-process-tracking.test.ts`. The unit test file uses fully-mocked `process.kill`; the integration test spawns real processes. Mixing these two flavors in one file confuses readers.
-2. **POSIX-only for the strict tree-kill assertion.** On Windows, `signalRunningProcess` falls back to `child.kill` (no process-group concept). The Windows assertion is weaker (parent dies, child may or may not — known limitation, also true in Upstream).
+2. **POSIX-only for the strict tree-kill assertion.** On Windows, `signalRunningProcess` falls back to `child.kill` (no process-group concept). The Windows assertion is weaker (parent dies, child may or may not — known limitation, also true in Paperclip).
 3. **Visual smoke script lives at `scripts/smoke/heartbeat-tree-kill-demo.ts`.** Standalone — no AoA infra required. User runs by hand and shares stdout.
 4. **Document the Windows limitation** as a code comment in `server-utils.ts` (deferred follow-up, not a blocker).
 5. **PR #102's verification scope grows.** This plan amends PR #102 in-place — same branch (`fix/issue-96-killprocesstree-orphans`), additional commits. Don't open a separate PR.
@@ -248,7 +248,7 @@ actually delivers SIGTERM to the whole group on POSIX.
 
 Skipped on Windows (no process-group concept; signalRunningProcess
 falls back to child.kill which leaves grandchildren as orphans —
-a known limitation matching Upstream's behavior, deferred to a
+a known limitation matching Paperclip's behavior, deferred to a
 separate follow-up if Windows tree-kill is needed).
 
 Test uses /bin/bash + tempdir + isAlive(pid) helper that polls via
@@ -526,7 +526,7 @@ EOF
 
 ## Task 3: Document the Windows tree-kill limitation in code
 
-**Context:** `signalRunningProcess` works perfectly on POSIX but only kills the parent on Windows. Upstream has the same limitation. Document it in the code so future readers understand the gap and can decide whether to add `taskkill /T /F` handling.
+**Context:** `signalRunningProcess` works perfectly on POSIX but only kills the parent on Windows. Paperclip has the same limitation. Document it in the code so future readers understand the gap and can decide whether to add `taskkill /T /F` handling.
 
 **Files:**
 - Modify: `packages/adapter-utils/src/server-utils.ts`
@@ -547,7 +547,7 @@ Find the existing comment:
  *
  * Caller is responsible for the SIGTERM → SIGKILL escalation timer.
  *
- * Reference impl: upstream-master/packages/adapter-utils/src/server-utils.ts:57-72
+ * Reference impl: paperclip-master/packages/adapter-utils/src/server-utils.ts:57-72
  */
 ```
 
@@ -567,14 +567,14 @@ Replace with:
  * Windows:
  *   uses Node's child.kill(signal). This signals ONLY the spawned
  *   child — any subprocesses the child spawned become orphans. This
- *   is a known limitation (Upstream has the same behavior). To
+ *   is a known limitation (Paperclip has the same behavior). To
  *   propagate kills to the whole tree on Windows, AoA would need to
  *   shell out to `taskkill /PID <pid> /T /F`. Tracked as a follow-up
  *   if Windows-deployment process-tree leaks become a real concern.
  *
  * Caller is responsible for the SIGTERM → SIGKILL escalation timer.
  *
- * Reference impl: upstream-master/packages/adapter-utils/src/server-utils.ts:57-72
+ * Reference impl: paperclip-master/packages/adapter-utils/src/server-utils.ts:57-72
  */
 ```
 
@@ -597,7 +597,7 @@ docs(server-utils): expand signalRunningProcess Windows limitation note
 Make the known Windows behavior explicit in the code comment:
 child.kill signals only the spawned child, not its tree. Future
 readers can decide whether to add taskkill /T /F handling. Same
-limitation exists in Upstream's reference impl.
+limitation exists in Paperclip's reference impl.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -656,7 +656,7 @@ Expected: 4 commits (the original fix `ec44840` + the 3 new commits from Tasks 1
 - [ ] **Step 2: Dispatch the `superpowers:code-reviewer` agent**
 
 The reviewer should evaluate:
-1. **Correctness** of `signalRunningProcess` and `resolveProcessGroupId` against Upstream's reference (already linked in code comments)
+1. **Correctness** of `signalRunningProcess` and `resolveProcessGroupId` against Paperclip's reference (already linked in code comments)
 2. **Test coverage** — does the integration test actually prove what it claims? Are there edge cases (parent dies before signal, signal delivery race, fixture script crash) that aren't covered?
 3. **Race conditions** in the integration test — `waitForPidFile` polls every 100ms; is that long enough? Is there a tighter signal we could use?
 4. **Smoke script portability** — the Windows path uses PowerShell; will it work on a default Windows install (Windows 10+)? Does it leak processes if interrupted with Ctrl-C?
@@ -666,7 +666,7 @@ Give the reviewer this context:
 - Goal of the work (close Issue #96)
 - The 4 commits' summary
 - A note that the unit-test approach is `process.kill`-stubbed; integration is real-process; smoke is for visual confirmation
-- A note that Upstream ships the same Windows limitation and we're matching that
+- A note that Paperclip ships the same Windows limitation and we're matching that
 
 - [ ] **Step 3: Address review findings if any**
 
@@ -684,7 +684,7 @@ If the reviewer flags issues, fix them in additional commits and re-review. If t
 gh pr edit 102 --body "$(cat <<'EOF'
 ## Summary
 
-Closes [#96](https://github.com/MeteoriteLabs/AoA/issues/96). Replaces the half-built `safeGetPgid`/`killProcessTree` infrastructure with Upstream's working pattern, plus end-to-end verification that the fix actually reaps process trees on POSIX.
+Closes [#96](https://github.com/MeteoriteLabs/AoA/issues/96). Replaces the half-built `safeGetPgid`/`killProcessTree` infrastructure with Paperclip's working pattern, plus end-to-end verification that the fix actually reaps process trees on POSIX.
 
 ## What was broken
 
@@ -695,13 +695,13 @@ Closes [#96](https://github.com/MeteoriteLabs/AoA/issues/96). Replaces the half-
 
 ## Fix (commit ec44840)
 
-Port Upstream's pattern from [`packages/adapter-utils/src/server-utils.ts:50-72`](https://github.com/anthropic/upstream/blob/master/packages/adapter-utils/src/server-utils.ts):
+Port Paperclip's pattern from [`packages/adapter-utils/src/server-utils.ts:50-72`](https://github.com/anthropic/paperclip/blob/master/packages/adapter-utils/src/server-utils.ts):
 
 - Spawn with `detached: true` on POSIX → `child.pid` becomes the new process group's pgid
 - `resolveProcessGroupId(child)` replaces `safeGetPgid(pid)` (POSIX: `child.pid`; Windows: null)
 - `signalRunningProcess(running, signal)` replaces `killProcessTree`: `process.kill(-pgid, signal)` addresses the whole group; falls back to `child.kill` on group-kill failure or Windows
 - All 4 cancellation paths in `heartbeat.ts` and the `runChildProcess` timeout handler now call `signalRunningProcess`
-- `RunningProcess.pgid` field renamed to `processGroupId` (matches Upstream + the DB column)
+- `RunningProcess.pgid` field renamed to `processGroupId` (matches Paperclip + the DB column)
 
 ## Verification
 
@@ -725,7 +725,7 @@ Reviewed by `superpowers:code-reviewer` across the cumulative 4-commit diff (fix
 
 ## Known limitation
 
-On Windows, `signalRunningProcess` only signals the spawned child (no process-group concept). Subprocesses spawned BY the child become orphans. **This matches Upstream's behavior** — both have the same gap. Documented in the `signalRunningProcess` doc comment with a follow-up note about `taskkill /T /F` if Windows tree-kill becomes a real concern.
+On Windows, `signalRunningProcess` only signals the spawned child (no process-group concept). Subprocesses spawned BY the child become orphans. **This matches Paperclip's behavior** — both have the same gap. Documented in the `signalRunningProcess` doc comment with a follow-up note about `taskkill /T /F` if Windows tree-kill becomes a real concern.
 
 ## Risk profile
 
@@ -809,9 +809,9 @@ Closed by PR #102 (squash-merge: <merge-sha>).
 - **OS-level (1 integration test, real bash parent + sleep child):** ✅ both PIDs reaped within 2s on POSIX (skipped on Windows runner)
 - **Visual smoke (standalone Node script, hand-run):** ✅ POSIX shows full tree-kill; Windows shows documented limitation
 - **Code review (superpowers:code-reviewer agent):** ✅ approved
-- **Reference alignment:** mirrors Upstream's working impl in `packages/adapter-utils/src/server-utils.ts:50-72`
+- **Reference alignment:** mirrors Paperclip's working impl in `packages/adapter-utils/src/server-utils.ts:50-72`
 
-The orphan-process leak in heartbeat cancellation paths is now closed on POSIX (Linux CI runners + production server deployments). On Windows, only the parent CLI is signaled — same as Upstream; tracked as a separate concern if Windows tree-kill becomes a real ask.
+The orphan-process leak in heartbeat cancellation paths is now closed on POSIX (Linux CI runners + production server deployments). On Windows, only the parent CLI is signaled — same as Paperclip; tracked as a separate concern if Windows tree-kill becomes a real ask.
 EOF
 )"
 ```

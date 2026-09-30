@@ -1,14 +1,14 @@
 # AoA Agent Evals
 
-Eval framework for testing AoA agent behaviors across models and prompt versions. Forked from the upstream project's Phase 0 promptfoo harness and extended for AoA's two agent types.
+Eval framework for testing AoA agent behaviors across models and prompt versions. Forked from Paperclip's Phase 0 promptfoo harness and extended for AoA's two agent types.
 
-See [the the upstream project evals framework plan](../../aoa-master/aoa-master/doc/plans/2026-03-13-agent-evals-framework.md) for the original design rationale.
+See [the Paperclip evals framework plan](../../paperclip-master/paperclip-master/doc/plans/2026-03-13-agent-evals-framework.md) for the original design rationale.
 
 ## Agent types under test
 
 AoA has two distinct agent surfaces with different behavioral contracts:
 
-- **Task agents** — adapter-executed (claude_local, openai_api, etc.), run inside a short heartbeat window, same pick-task → checkout → execute → report loop the upstream project uses. Tests live in `promptfoo/tests/task-agent-*.yaml`.
+- **Task agents** — adapter-executed (claude_local, openai_api, etc.), run inside a short heartbeat window, same pick-task → checkout → execute → report loop Paperclip uses. Tests live in `promptfoo/tests/task-agent-*.yaml`.
 - **Internal Agent** — always-on conversation-driven coordinator with 30 tools across 8 categories (discussion, query, action, memory, workflow, file, coordination, analysis). Extracts user intent, routes through tools, never writes memory directly (Decision #15). Tests live in `promptfoo/tests/internal-agent-*.yaml`.
 
 ## Quick Start
@@ -54,7 +54,7 @@ Without API keys, promptfoo will fail per-provider with auth errors — the harn
 
 Phase 0 covers narrow behavioral evals for both agent surfaces.
 
-**Task agents** (ported from the upstream project):
+**Task agents** (ported from Paperclip):
 
 | Case | Category | What it checks |
 |------|----------|---------------|

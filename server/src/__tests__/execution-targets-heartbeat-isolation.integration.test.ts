@@ -7,6 +7,7 @@ import {
   applyPendingMigrations,
   createDb,
   executionTargets,
+  organizations,
   type Db,
 } from "@armyofagents/db";
 import { registerWorkerHeartbeat } from "../services/execution-targets.js";
@@ -88,16 +89,28 @@ describe.skipIf(process.platform === "win32")(
       if (setupError) {
         throw new Error(`embedded-postgres setup failed: ${String(setupError)}`);
       }
+      // registerWorkerHeartbeat is the TENANT-worker path: it updates the target by
+      // id but security-scopes to a real organization — null-Org system/shared rows
+      // are deliberately excluded (execution-targets.ts) so a tenant can never flip a
+      // platform pool. The M6 id-isolation property therefore belongs to ORG-scoped
+      // dedicated targets, which is what this test exercises.
+      const ORG = "00000000-0000-0000-0000-00000000e6a1";
+      await db.insert(organizations).values({ id: ORG, name: "M6 heartbeat isolation", slug: "m6-heartbeat-isolation" });
+      const orgScope = {
+        organizationId: ORG,
+        scope: "organization" as const,
+        targetAuthorityKey: `organization:${ORG}`,
+      };
       const [a] = await db
         .insert(executionTargets)
-        .values({ organizationId: null, slug: "pool-1", kind: "pooled_gvisor", trustClass: "shared_multitenant", status: "offline" })
+        .values({ ...orgScope, slug: "hb-1", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "offline" })
         .returning();
       const [b] = await db
         .insert(executionTargets)
-        .values({ organizationId: null, slug: "pool-1-b", kind: "pooled_gvisor", trustClass: "shared_multitenant", status: "offline" })
+        .values({ ...orgScope, slug: "hb-2", kind: "dedicated_worker", trustClass: "dedicated_tenant", status: "offline" })
         .returning();
 
-      await registerWorkerHeartbeat(db, { targetId: a!.id, status: "active" });
+      await registerWorkerHeartbeat(db, { targetId: a!.id, organizationId: ORG, status: "active" });
 
       const rowA = await db.select().from(executionTargets).where(eq(executionTargets.id, a!.id)).then((r) => r[0]!);
       const rowB = await db.select().from(executionTargets).where(eq(executionTargets.id, b!.id)).then((r) => r[0]!);

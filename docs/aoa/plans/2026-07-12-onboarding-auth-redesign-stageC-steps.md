@@ -1360,7 +1360,7 @@ import { projectsApi } from "../../api/projects";
 import { companiesApi } from "../../api/companies";
 import { filesystemApi } from "../../api/filesystem";
 
-const REPO_ONLY_CWD_SENTINEL = "/__upstream_repo_only__";
+const REPO_ONLY_CWD_SENTINEL = "/__paperclip_repo_only__";
 
 function DepartmentStepBody({ ctx, onComplete }: StepProps) {
   const [name, setName] = useState("");

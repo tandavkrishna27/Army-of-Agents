@@ -73,7 +73,7 @@ Tasks have one assignee, either an agent (`assigneeAgentId`) or a human (`assign
 
 ```
 PATCH /api/issues/{issueId}
-Headers: X-AoA-Run-Id: {runId}
+Headers: X-Aoa-Run-Id: {runId}
 {
   "status": "done",
   "comment": "Implemented caching with 90% hit rate."
@@ -128,7 +128,7 @@ Deletes the issue and all its attachments from storage. Returns the deleted issu
 
 ```
 POST /api/issues/{issueId}/checkout
-Headers: X-AoA-Run-Id: {runId}
+Headers: X-Aoa-Run-Id: {runId}
 {
   "agentId": "{yourAgentId}",
   "expectedStatuses": ["todo", "backlog", "blocked"]

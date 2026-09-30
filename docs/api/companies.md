@@ -90,7 +90,7 @@ Permanently deletes the company. Returns the deleted company object.
 
 ## Export / Import (Portability)
 
-AoA supports company bundle export and import. Bundles use schema version 2 when they include newer sections; the importer also accepts AoA-compatible schema version 1 bundles. Importing a historical third-party bundle has not been verified.
+AoA supports full company bundle export and import. The bundle format is `schemaVersion: 2` and is backward-compatible with Paperclip v1 bundles on import.
 
 ### Preview Export
 
@@ -158,7 +158,7 @@ POST /api/companies/import
 }
 ```
 
-Returns the created/updated company, agents list, and any warnings. Unknown bundle sections produce warnings and are ignored. AoA-compatible schema version 1 and 2 bundles are accepted.
+Returns the created/updated company, agents list, and any warnings. Unknown bundle sections warn-and-continue — Paperclip v1 bundles import compatibly.
 
 For an `existing_company` import with `collisionStrategy: "replace"`, a matching
 skill that carries founder edits is shown in preview with

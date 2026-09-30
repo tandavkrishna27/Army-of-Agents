@@ -41,15 +41,32 @@ import net from "node:net";
 import path from "node:path";
 
 const BRIDGE = path.resolve(__dirname, "../mcp-bridge.ts");
-const DB_URL = process.env.AOA_TEST_DATABASE_URL ?? "postgres://aoa:aoa@127.0.0.1:54440/aoa";
+const DB_URL = process.env.AOA_TEST_DATABASE_URL ?? "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip";
 const COMPANY = process.env.AOA_TEST_COMPANY_ID ?? "8d7569f2-43e9-4b57-8709-2a4687364e44";
 const THREAD = process.env.AOA_TEST_THREAD_ID ?? "376592a2-91e6-4327-81fb-8fb7e498b6c4";
 
 const OPENAI_WARN = "OPENAI_API_KEY is not set";
 
 /**
- * F5 robustness: quick TCP probe of the DB host:port parsed from DB_URL. If the
- * DB is unreachable the bridge can't answer the tools/call, so we skip LOUDLY.
+ * F5 robustness: probe the DB host:port parsed from DB_URL. If the DB is unreachable
+ * the bridge can't answer the tools/call, so we skip LOUDLY.
+ *
+ * ★★★ THE PROBE MUST PROVE IT FOUND POSTGRES, NOT JUST THAT SOMETHING ACCEPTED.
+ * This gate used to resolve `true` on the bare `connect` event, and that admitted on
+ * nothing: on 2026-09-09 the required `verify (3)` shard went red here on a run whose
+ * SIBLING suites (mcp-bridge-lifecycle) printed "[skip] no DB reachable" for this very
+ * URL six minutes earlier, and whose tree touches neither the bridge nor
+ * `internal_agent_config`. The port is 54440, inside Linux's default ephemeral range
+ * (32768-60999), so a loopback `connect()` there can be accepted by something that is
+ * not a database at all -- a TCP self-connect (source port lands on the destination
+ * port) or an unrelated worker socket. The bridge then started, connected, and died on
+ * `select ... from internal_agent_config`, failing the assertion with an empty stdout.
+ *
+ * So: after the connect, send a PostgreSQL SSLRequest (the 8-byte startup packet every
+ * server answers before authentication) and require a single-byte 'S' or 'N' reply. A
+ * self-connect echoes the request bytes back and a foreign listener says something else
+ * or nothing -- both now SKIP, which is the honest outcome, instead of failing a real
+ * regression test on an environment accident.
  */
 function probeDb(url: string, timeoutMs = 3_000): Promise<boolean> {
   return new Promise((resolve) => {
@@ -63,6 +80,8 @@ function probeDb(url: string, timeoutMs = 3_000): Promise<boolean> {
       resolve(false);
       return;
     }
+    // int32 length = 8, int32 code = 80877103 (1234 << 16 | 5679) — the SSLRequest.
+    const sslRequest = Buffer.from([0x00, 0x00, 0x00, 0x08, 0x04, 0xd2, 0x16, 0x2f]);
     const sock = net.connect({ host, port });
     const done = (ok: boolean) => {
       sock.removeAllListeners();
@@ -70,9 +89,14 @@ function probeDb(url: string, timeoutMs = 3_000): Promise<boolean> {
       resolve(ok);
     };
     sock.setTimeout(timeoutMs);
-    sock.once("connect", () => done(true));
+    sock.once("connect", () => sock.write(sslRequest));
+    sock.once("data", (chunk: Buffer) => {
+      // A real server replies with exactly one byte: 'S' (0x53) or 'N' (0x4e).
+      done(chunk.length > 0 && (chunk[0] === 0x53 || chunk[0] === 0x4e));
+    });
     sock.once("timeout", () => done(false));
     sock.once("error", () => done(false));
+    sock.once("close", () => done(false));
   });
 }
 

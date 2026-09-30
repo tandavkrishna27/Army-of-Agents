@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { FilePlus2, X } from "lucide-react";
+import { Paperclip, X } from "lucide-react";
 import { memoryAssetsApi } from "../../api/memoryAssets";
 
 export interface UploadedAsset {
@@ -125,7 +125,7 @@ export function BraindumpDropZone({
           dragging ? "border-accent text-text" : "border-border-strong text-dim"
         } ${disabled ? "pointer-events-none opacity-50" : ""}`}
       >
-        <FilePlus2 className="h-3 w-3" aria-hidden />
+        <Paperclip className="h-3 w-3" aria-hidden />
         {uploading > 0 ? `Uploading ${uploading} file${uploading > 1 ? "s" : ""}…` : "Drop files or click to attach"}
       </div>
 

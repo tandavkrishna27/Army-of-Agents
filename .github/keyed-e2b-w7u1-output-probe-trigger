@@ -1,0 +1,1 @@
+W7U1 probe run #1 (2026-09-07): first measurement of whether a real claude/codex under the EXACT production argv, with no permission posture, can write a file inside the sandbox at all. Four arms: A0 harness control, A1 production argv, A2 same-plus-flag differential, A3 negative control. Gates CLI-008 Unit F and four dormant clauses.

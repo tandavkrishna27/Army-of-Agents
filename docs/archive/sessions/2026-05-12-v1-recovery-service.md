@@ -16,10 +16,10 @@
 
 ## Source Notes
 
-- `memory/project_v1_to_v2_roadmap.md` was requested but is absent in this worktree. D1/D7 scope is recovered from `docs/archive/sessions/2026-05-11-v1-upgrade-master.md`, current AoA code, and the Upstream commits below.
+- `memory/project_v1_to_v2_roadmap.md` was requested but is absent in this worktree. D1/D7 scope is recovered from `docs/archive/sessions/2026-05-11-v1-upgrade-master.md`, current AoA code, and the Paperclip commits below.
 - Pre-flight result: `packages/db/src/schema/heartbeat_runs.ts` already contains `livenessState`, `livenessReason`, `continuationAttempt`, and `nextAction`. No liveness PRE-step migration renumbering is required.
 - Current AoA migration state includes `0092_*` and `0093_*`; recovery's logical migration slots are `0094_*` and `0095_*` when generated from this base. If `v1-upgrade` gains another migration before execution, accept the next Drizzle-generated numbers and update this plan's filenames in the execution branch.
-- Upstream commits skimmed:
+- Paperclip commits skimmed:
   - `15eac43b` ports max-turn exhausted retry handling, stop metadata, bounded retry scheduling, scheduled retry promotion/cancellation, and adapter parser tests.
   - `454edfe8` adds successful-run handoff system notices, structured issue comment presentation/metadata, and `server/src/services/recovery/successful-run-handoff.ts`.
   - `42a299fb` bounds productivity-review recovery loops with creation caps, refresh caps, snooze windows, and continuation holds.
@@ -31,7 +31,7 @@
 
 ## Non-Goals
 
-- Do not port the Upstream `requireBoardApprovalForNewAgents = false` schema/default change from `ad5432fe` or `7a9b3a60`. AoA keeps D6: `local_trusted` false at company create time, `authenticated` true.
+- Do not port the Paperclip `requireBoardApprovalForNewAgents = false` schema/default change from `ad5432fe` or `7a9b3a60`. AoA keeps D6: `local_trusted` false at company create time, `authenticated` true.
 - Do not rename DB tables or API routes from `issues` to `tasks`.
 - Do not create raw SQL migrations by hand. Edit Drizzle schema, then run `pnpm db:generate`.
 - Do not add broad UI redesign. Only add monitor/handoff/comment rendering needed to make the substrate visible and testable.
@@ -43,7 +43,7 @@
 | Action | Path | Responsibility |
 |---|---|---|
 | Create | `packages/db/src/schema/issue_monitors.ts` | Company-scoped monitor schedule/history records |
-| Modify | `packages/db/src/schema/heartbeat_runs.ts` | Add Upstream retry durability columns missing in AoA: `retryOfRunId`, `scheduledRetryAt`, `scheduledRetryAttempt`, `scheduledRetryReason`, and issue-comment retry columns |
+| Modify | `packages/db/src/schema/heartbeat_runs.ts` | Add Paperclip retry durability columns missing in AoA: `retryOfRunId`, `scheduledRetryAt`, `scheduledRetryAttempt`, `scheduledRetryReason`, and issue-comment retry columns |
 | Modify | `packages/db/src/schema/agent_wakeup_requests.ts` | Add partial unique idempotency index for durable recovery/retry wakes |
 | Modify | `packages/db/src/schema/issue_comments.ts` | Add `authorType`, `presentation`, and `metadata` |
 | Modify | `packages/db/src/schema/index.ts` | Export `issueMonitors` |
@@ -189,7 +189,7 @@ In `packages/db/src/schema/heartbeat_runs.ts`, import `type AnyPgColumn` and add
     issueCommentRetryQueuedAt: timestamp("issue_comment_retry_queued_at", { withTimezone: true }),
 ```
 
-Place them after output/process tracking and before liveness fields, matching Upstream's data model.
+Place them after output/process tracking and before liveness fields, matching Paperclip's data model.
 
 - [ ] **Step 3: Add indexes**
 
@@ -308,7 +308,7 @@ continuationAttempt: number;
 nextAction: string | null;
 ```
 
-Use AoA package names, not `@upstreamai/*`.
+Use AoA package names, not `@paperclipai/*`.
 
 - [ ] **Step 3: Add validators**
 
@@ -469,7 +469,7 @@ expect(inferHeartbeatRunStopReason({ outcome: "failed", errorCode: "adapter_fail
 
 - [ ] **Step 2: Implement service**
 
-Port `HeartbeatRunStopReason`, `inferHeartbeatRunStopReason`, `buildHeartbeatRunStopMetadata`, and `mergeHeartbeatRunStopMetadata` from Upstream. In `defaultTimeoutSecForAdapter`, keep AoA's current adapter behavior by returning `0` for every adapter unless an existing AoA adapter already has a timeout default in `server/src/services/heartbeat.ts`.
+Port `HeartbeatRunStopReason`, `inferHeartbeatRunStopReason`, `buildHeartbeatRunStopMetadata`, and `mergeHeartbeatRunStopMetadata` from Paperclip. In `defaultTimeoutSecForAdapter`, keep AoA's current adapter behavior by returning `0` for every adapter unless an existing AoA adapter already has a timeout default in `server/src/services/heartbeat.ts`.
 
 - [ ] **Step 3: Wire heartbeat result persistence**
 
@@ -1426,10 +1426,10 @@ If implementation touched these files, add a regression test. Otherwise no commi
 Run:
 
 ```bash
-grep -RIn "Upstream\|upstream\|@upstreamai" server/src packages/shared/src packages/db/src ui/src | grep -v "upstream-migration" || true
+grep -RIn "Paperclip\|paperclip\|@paperclipai" server/src packages/shared/src packages/db/src ui/src | grep -v "paperclip-migration" || true
 ```
 
-Expected: no new shipping-code hits from this branch. Recovery system notice text must say AoA or Task, not Upstream or Issue where user-facing.
+Expected: no new shipping-code hits from this branch. Recovery system notice text must say AoA or Task, not Paperclip or Issue where user-facing.
 
 - [ ] **Step 2: Migration numbering check**
 
@@ -1518,7 +1518,7 @@ Expected: all pass before claiming ready for PR.
 - [x] Productivity-review bounds from `42a299fb` are represented by Task 17.
 - [x] Issue monitor liveness controls from `57229d0f` are represented by Tasks 2, 19-23, and 25.
 - [x] Assigned-backlog liveness from `e400315c` is represented by Task 10.
-- [x] `requireBoardApprovalForNewAgents` Upstream flip is explicitly skipped in Non-Goals and Task 27.
+- [x] `requireBoardApprovalForNewAgents` Paperclip flip is explicitly skipped in Non-Goals and Task 27.
 - [x] Cost protection is explicit: recovery/productivity/monitor LLM wakes use `withRecoveryModelProfileHint`, relying on D4 cheap fallback.
 - [x] Tests include per-sub-service unit tests and embedded-postgres integration tests.
 - [x] Session split is explicit: Session 12 core recovery + max-turn retry; Session 13 productivity reviews + monitors + handoff substrate.

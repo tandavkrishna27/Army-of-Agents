@@ -116,7 +116,7 @@ beforeAll(async () => {
     db = createDb(connectionString);
 
     // Seed a company (eager Commander/config) + a thread.
-    const company = await companyService(db).create({ name: "Idempotency Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Idempotency Co" } as never);
     companyId = company.id;
     const [thread] = rowsOf(
       await db.execute(sql`
@@ -1718,7 +1718,7 @@ describe.skipIf(process.platform === "win32")("thread-commit idempotency (real D
               ${JSON.stringify({ rawContent: "x" })}::jsonb, ${key}, '{}'::jsonb)`);
 
     // a DIFFERENT company with a COMPLETED run that holds the same key.
-    const otherCo = await companyService(db).create({ name: "Other Co" } as never);
+    const otherCo = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Other Co" } as never);
     await db.execute(sql`
       INSERT INTO internal_agent_runs (id, company_id, trigger_type, trigger_source, status, proposed_action_keys)
       VALUES (gen_random_uuid(), ${otherCo.id}, 'event', 'integration-test', 'completed', ${JSON.stringify([key])}::jsonb)`);

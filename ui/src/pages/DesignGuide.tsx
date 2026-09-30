@@ -248,6 +248,7 @@ export function DesignGuide() {
       name: "OpenAI API key",
       key: "OPENAI_API_KEY",
       status: "active",
+      resolutionScope: "general",
       managedMode: "aoa_managed",
       provider: "local_encrypted",
       providerConfigId: null,
@@ -269,6 +270,7 @@ export function DesignGuide() {
       name: "Very long production database password used by routine workers",
       key: "PRODUCTION_DATABASE_PASSWORD_WITH_LONG_NAME",
       status: "active",
+      resolutionScope: "general",
       managedMode: "external_reference",
       provider: "aws_secrets_manager",
       providerConfigId: "33333333-3333-3333-3333-333333333333",
@@ -1449,7 +1451,7 @@ export function DesignGuide() {
         <p className="text-sm text-muted-foreground max-w-2xl">
           Per-user thumbs up/down on agent output. Mounts under agent-authored
           task comments on TaskSlideOver. Reason textarea opens on thumbs-down
-          only (matches AoA's normalizeReason — upvote reasons are
+          only (matches Paperclip's normalizeReason — upvote reasons are
           discarded). Click an already-selected thumb to dismiss.
         </p>
         <div className="grid gap-6 md:grid-cols-2 max-w-3xl">

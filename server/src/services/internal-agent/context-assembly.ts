@@ -2,6 +2,8 @@ import { eq, and } from "drizzle-orm";
 import type { Db } from "@armyofagents/db";
 import { companies, memoryItems, projects } from "@armyofagents/db";
 import { memoryItemsSelection } from "../memory-projection.js";
+import type { ResolvedUniverseContext } from "@armyofagents/shared";
+import { formatResolvedUniverseContext } from "./universe-context-format.js";
 
 const SYSTEM_INSTRUCTIONS = `You are the internal AI assistant for this company. Your role is to help the founder manage their team of AI agents and human collaborators.
 
@@ -106,6 +108,7 @@ export function contextAssemblyService(db: Db) {
           taskId?: string | null;
           conversationId?: string | null;
         }>;
+        resolvedUniverseContext?: ResolvedUniverseContext;
       } = {},
     ): Promise<{ systemPrompt: string; estimatedTokens: number }> {
       const budget = options.contextTokenBudget ?? 8000;
@@ -256,6 +259,10 @@ export function contextAssemblyService(db: Db) {
       // 5. Page context
       if (options.pageContext) {
         addSection("Current Context", options.pageContext);
+      }
+
+      if (options.resolvedUniverseContext) {
+        addSection("Universe Context", formatResolvedUniverseContext(options.resolvedUniverseContext));
       }
 
       const separator = "\n\n";

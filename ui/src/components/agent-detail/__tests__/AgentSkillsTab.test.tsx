@@ -181,7 +181,7 @@ describe("AgentSkillsTab — concurrency guard", () => {
     await waitFor(() => expect(agentsApi.update).toHaveBeenCalledWith("a1", { skillKeys: ["skill-a"] }));
   });
 
-  // Follow-up #3: optimistic-concurrency token (Decision #104).
+  // Follow-up #3: optimistic-concurrency token (Decision #125).
   it("includes expectedUpdatedAt in the payload when the prop is provided", async () => {
     vi.mocked(agentsApi.update).mockResolvedValue({} as never);
     renderWithProviders(

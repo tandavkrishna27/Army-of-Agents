@@ -34,7 +34,7 @@ import {
 } from "@armyofagents/db";
 import type {
   PluginStatus,
-  AoAPluginManifestV1,
+  PaperclipPluginManifestV1,
   PluginBridgeErrorCode,
   PluginLauncherRenderContextSnapshot,
 } from "@armyofagents/shared";
@@ -83,19 +83,57 @@ import {
   projectCloudPluginPolicyState,
   recordCloudPluginBlock,
 } from "../services/cloud-plugin-execution.js";
+import { recordCloudPluginDenial } from "../services/cloud-plugin-denial-audit.js";
 function respondIfCloudPluginBlocked(error: unknown, res: Response): boolean {
   if (!(error instanceof CloudPluginExecutionBlockedError)) return false;
   res.status(503).json(cloudPluginExecutionBlockedEnvelope());
   return true;
 }
 
+/**
+ * FND-008 (Decision #103 CP-003/CP-004): inert cloud-denial facades for the
+ * plugin loader + lifecycle. `app.ts` uses these ONLY to MOUNT the plugin HTTP
+ * routers as registered 503 denial stubs in `cloud_auth` (so a client gets the
+ * stable Decision #103 envelope, never a 404) WITHOUT constructing any effectful
+ * worker/lifecycle/loader machinery — FND-006 keeps that composed off-cloud
+ * only. Every method access throws `CloudPluginExecutionBlockedError`; in
+ * practice each effectful route short-circuits at its `rejectBlockedCloudExecution`
+ * / `blockActivationInCloud` gate BEFORE these are reached, so they are a
+ * defense-in-depth backstop. Metadata-only read routes use the real `db`/registry
+ * (never these), so persisted validated data still serves list/detail/health
+ * reads and no manifest JavaScript is ever evaluated.
+ */
+function cloudPluginDenialProxy<T extends object>(): T {
+  return new Proxy(
+    {},
+    {
+      get() {
+        // The real loader/lifecycle methods this backstops are async
+        // (Promise-returning), so reject asynchronously rather than throwing
+        // synchronously: this matches every awaited/`.catch()` call site and
+        // cannot leak a synchronous throw past a non-awaited caller. (E0-F009 —
+        // the FND-008 integration facade test correctly asserts async rejection.)
+        return () => Promise.reject(new CloudPluginExecutionBlockedError());
+      },
+    }
+  ) as unknown as T;
+}
+
+export function buildCloudPluginDenialLoader(): ReturnType<typeof pluginLoader> {
+  return cloudPluginDenialProxy<ReturnType<typeof pluginLoader>>();
+}
+
+export function buildCloudPluginDenialLifecycle(): PluginLifecycleManager {
+  return cloudPluginDenialProxy<PluginLifecycleManager>();
+}
+
 /** UI slot declaration extracted from plugin manifest */
 type PluginUiSlotDeclaration = NonNullable<
-  NonNullable<AoAPluginManifestV1["ui"]>["slots"]
+  NonNullable<PaperclipPluginManifestV1["ui"]>["slots"]
 >[number];
 /** Launcher declaration extracted from plugin manifest */
 type PluginLauncherDeclaration = NonNullable<
-  AoAPluginManifestV1["launchers"]
+  PaperclipPluginManifestV1["launchers"]
 >[number];
 
 /**
@@ -120,7 +158,7 @@ type PluginUiContribution = {
 
 /** Request body for POST /api/plugins/install */
 interface PluginInstallRequest {
-  /** npm package name (e.g., @aoa/plugin-linear) or local path */
+  /** npm package name (e.g., @paperclip/plugin-linear) or local path */
   packageName: string;
   /** Target version for npm packages (optional, defaults to latest) */
   version?: string;
@@ -327,18 +365,43 @@ export function pluginRoutes(
       companyId?: string;
       source?: "direct" | "marketplace";
       sink?: "worker-manager" | "loader";
-    }
+    },
+    // ★ DE-16 / E0-F013 Decision 3.2 (slice 2): passed ONLY at the caller-supplied-
+    // company call sites so their block records to the operator-only sink. The
+    // no-company residue sites (Decision 2's remainder) omit it and are not
+    // recorded here.
+    req?: Request
   ): boolean {
-    // RW5a: forward the caller's sink so the decision is sink-aware — every
-    // sink this helper is called with today ("worker-manager" default or
-    // explicit "loader") stays allowed on cloud.
+    // FND-006/FND-008 (Decision #103 amendment): `isCloudPluginExecutionBlocked`
+    // fails closed for EVERY sink on `cloud_auth`, so this helper short-circuits
+    // every effectful plugin route to the canonical 503 denial envelope before
+    // any loader/lifecycle/worker effect. The `sink` is forwarded for call-site
+    // clarity + metrics only; the decision does not depend on it.
     if (!isCloudPluginExecutionBlocked(context.sink ?? "worker-manager"))
       return false;
-    recordCloudPluginBlock({
-      ...context,
-      source: context.source ?? "direct",
-      sink: context.sink ?? "worker-manager",
-    });
+    const source = context.source ?? "direct";
+    const sink = context.sink ?? "worker-manager";
+    recordCloudPluginBlock({ ...context, source, sink });
+    // ★ DE-16 / E0-F013 Decision 3.2: when the caller NAMED a company (the abuse
+    // surface), record a durable operator-only denial row — `company_id NULL`, the
+    // caller-supplied id in `entity_id` (untrusted; `assertCompanyAccess` runs
+    // AFTER this on several of these routes). Bounded per (surface, remote-IP) so a
+    // board caller cannot flood the operator's evidence table; best-effort and
+    // never blocks or fails the 503 (the recorder never throws).
+    if (req && typeof context.companyId === "string" && context.companyId.length > 0) {
+      void recordCloudPluginDenial(db, {
+        requestedCompanyId: context.companyId,
+        pluginId: context.pluginId,
+        sink,
+        source,
+        actorId: req.actor?.userId ?? "board",
+        sourceKey: req.ip ?? req.socket?.remoteAddress ?? null,
+        control: "server/src/routes/plugins.ts:rejectBlockedCloudExecution",
+      }).catch(() => {
+        // recordCloudPluginDenial never throws; this is belt-and-suspenders so a
+        // rejected promise cannot become an unhandled rejection.
+      });
+    }
     res.status(503).json(cloudPluginExecutionBlockedEnvelope());
     return true;
   }
@@ -367,9 +430,17 @@ export function pluginRoutes(
             : undefined;
         if (maybeCode !== "22P02") throw error;
       }
+      const legacyAlias = pluginId.startsWith("aoa.")
+        ? `paperclip.${pluginId.slice(4)}`
+        : pluginId.startsWith("aoa-")
+        ? `paperclip-${pluginId.slice(4)}`
+        : null;
       const matches = (
         await registry.listInstalledForCompanies(undefined)
-      ).filter((plugin) => plugin.pluginKey === pluginId);
+      ).filter(
+        (plugin) =>
+          plugin.pluginKey === pluginId || plugin.pluginKey === legacyAlias
+      );
       if (matches.length > 1) {
         throw conflict(
           "Ambiguous plugin key â€” it is installed in more than one company. Use the plugin UUID or a company-scoped route."
@@ -603,7 +674,7 @@ export function pluginRoutes(
    * [
    *   {
    *     "pluginId": "plg_123",
-   *     "pluginKey": "aoa.claude-usage",
+   *     "pluginKey": "paperclip.claude-usage",
    *     "displayName": "Claude Usage",
    *     "version": "1.0.0",
    *     "uiEntryFile": "index.js",
@@ -634,10 +705,14 @@ export function pluginRoutes(
       return;
     }
     if (
-      rejectBlockedCloudExecution(res, {
-        pluginId: "plugin-ui-contributions",
-        companyId,
-      })
+      rejectBlockedCloudExecution(
+        res,
+        {
+          pluginId: "plugin-ui-contributions",
+          companyId,
+        },
+        req
+      )
     ) {
       return;
     }
@@ -749,13 +824,17 @@ export function pluginRoutes(
     assertBoard(req);
 
     if (
-      rejectBlockedCloudExecution(res, {
-        pluginId: "plugin-tool-dispatch",
-        companyId:
-          typeof req.body?.runContext?.companyId === "string"
-            ? req.body.runContext.companyId
-            : undefined,
-      })
+      rejectBlockedCloudExecution(
+        res,
+        {
+          pluginId: "plugin-tool-dispatch",
+          companyId:
+            typeof req.body?.runContext?.companyId === "string"
+              ? req.body.runContext.companyId
+              : undefined,
+        },
+        req
+      )
     ) {
       return;
     }
@@ -1110,13 +1189,17 @@ export function pluginRoutes(
     assertBoard(req);
 
     if (
-      rejectBlockedCloudExecution(res, {
-        pluginId: req.params.pluginId,
-        companyId:
-          typeof req.body?.companyId === "string"
-            ? req.body.companyId
-            : undefined,
-      })
+      rejectBlockedCloudExecution(
+        res,
+        {
+          pluginId: req.params.pluginId,
+          companyId:
+            typeof req.body?.companyId === "string"
+              ? req.body.companyId
+              : undefined,
+        },
+        req
+      )
     ) {
       return;
     }
@@ -1202,13 +1285,17 @@ export function pluginRoutes(
     assertBoard(req);
 
     if (
-      rejectBlockedCloudExecution(res, {
-        pluginId: req.params.pluginId,
-        companyId:
-          typeof req.body?.companyId === "string"
-            ? req.body.companyId
-            : undefined,
-      })
+      rejectBlockedCloudExecution(
+        res,
+        {
+          pluginId: req.params.pluginId,
+          companyId:
+            typeof req.body?.companyId === "string"
+              ? req.body.companyId
+              : undefined,
+        },
+        req
+      )
     ) {
       return;
     }
@@ -1299,13 +1386,17 @@ export function pluginRoutes(
     assertBoard(req);
 
     if (
-      rejectBlockedCloudExecution(res, {
-        pluginId: req.params.pluginId,
-        companyId:
-          typeof req.body?.companyId === "string"
-            ? req.body.companyId
-            : undefined,
-      })
+      rejectBlockedCloudExecution(
+        res,
+        {
+          pluginId: req.params.pluginId,
+          companyId:
+            typeof req.body?.companyId === "string"
+              ? req.body.companyId
+              : undefined,
+        },
+        req
+      )
     ) {
       return;
     }
@@ -1389,13 +1480,17 @@ export function pluginRoutes(
     assertBoard(req);
 
     if (
-      rejectBlockedCloudExecution(res, {
-        pluginId: req.params.pluginId,
-        companyId:
-          typeof req.body?.companyId === "string"
-            ? req.body.companyId
-            : undefined,
-      })
+      rejectBlockedCloudExecution(
+        res,
+        {
+          pluginId: req.params.pluginId,
+          companyId:
+            typeof req.body?.companyId === "string"
+              ? req.body.companyId
+              : undefined,
+        },
+        req
+      )
     ) {
       return;
     }
@@ -1485,13 +1580,17 @@ export function pluginRoutes(
     assertBoard(req);
 
     if (
-      rejectBlockedCloudExecution(res, {
-        pluginId: req.params.pluginId,
-        companyId:
-          typeof req.query.companyId === "string"
-            ? req.query.companyId
-            : undefined,
-      })
+      rejectBlockedCloudExecution(
+        res,
+        {
+          pluginId: req.params.pluginId,
+          companyId:
+            typeof req.query.companyId === "string"
+              ? req.query.companyId
+              : undefined,
+        },
+        req
+      )
     ) {
       return;
     }
@@ -1610,6 +1709,19 @@ export function pluginRoutes(
     const { pluginId } = req.params;
     const purge = req.query.purge === "true";
 
+    // FND-008 (Decision #103 CP-004): uninstall drives lifecycle teardown +
+    // tenant package removal. Deny in cloud with the canonical 503 before the
+    // lifecycle/loader is touched.
+    if (
+      rejectBlockedCloudExecution(res, {
+        pluginId,
+        source: "direct",
+        sink: "loader",
+      })
+    ) {
+      return;
+    }
+
     const plugin = await resolvePluginForActor(req, pluginId);
     if (!plugin) {
       res.status(404).json({ error: "Plugin not found" });
@@ -1707,6 +1819,13 @@ export function pluginRoutes(
     assertBoard(req);
     assertCanManageInstanceSettings(req);
     const { pluginId } = req.params;
+
+    // FND-008 (Decision #103 CP-003): disabling tears down the host worker.
+    // Deny in cloud with the canonical 503 before any lifecycle effect.
+    if (rejectBlockedCloudExecution(res, { pluginId })) {
+      return;
+    }
+
     const body = req.body as { reason?: string } | undefined;
     const reason = body?.reason;
 

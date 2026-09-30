@@ -17,7 +17,7 @@ export interface HeartbeatWatchdogSweepResult {
  *
  * Idempotent: if a recent decision exists with snoozed_until > now, the run is skipped.
  *
- * Future extension (per upstream AoA 0070): the recorded decision can drive
+ * Future extension (per upstream Paperclip 0070): the recorded decision can drive
  * automatic recovery actions (e.g., kill the process, mark the run failed). This
  * implementation only records observations.
  */

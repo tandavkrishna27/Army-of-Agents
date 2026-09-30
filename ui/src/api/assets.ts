@@ -45,7 +45,7 @@ export const assetsApi = {
 
   /**
    * Unified composer attachment upload (up to 10 MB per file) for
-   * attachment to a discussion entry. Used by the thread composer's aoa
+   * attachment to a discussion entry. Used by the thread composer's paperclip
    * button. Returns the new asset record.
    */
   uploadFile: async (companyId: string, file: File, namespace?: string) => {

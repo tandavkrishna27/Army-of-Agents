@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createRuntimeProviderKeySchema,
+  createRuntimeProviderKeyWithSecretSchema,
   createSecretBindingSchema,
   createSecretProviderConfigSchema,
   readEnvBindingValue,
@@ -107,6 +108,29 @@ describe("secret validators", () => {
         displayName: "Unknown",
         secretId: "00000000-0000-4000-8000-000000000001",
       }),
+    ).toThrow();
+  });
+
+  it("applies one-step E2B key defaults (provider e2b, isDefault true)", () => {
+    const parsed = createRuntimeProviderKeyWithSecretSchema.parse({
+      displayName: "Default E2B",
+      value: "e2b_live_secret",
+    });
+
+    expect(parsed).toEqual({
+      provider: "e2b",
+      displayName: "Default E2B",
+      value: "e2b_live_secret",
+      isDefault: true,
+    });
+  });
+
+  it("requires a raw value for the one-step E2B key", () => {
+    expect(() =>
+      createRuntimeProviderKeyWithSecretSchema.parse({ displayName: "Default E2B" }),
+    ).toThrow();
+    expect(() =>
+      createRuntimeProviderKeyWithSecretSchema.parse({ displayName: "Default E2B", value: "" }),
     ).toThrow();
   });
 

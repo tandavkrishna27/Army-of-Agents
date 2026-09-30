@@ -330,10 +330,10 @@ Every VM run's environment must be built from a **positive allowlist** — only 
 
      it("keeps run-identity + connector tokens (AOA_MCP_*_TOKEN prefix)", () => {
        const out = buildSandboxEnvAllowlist(
-         { AOA_API_URL: "https://cp", AOA_RUN_ID: "r1", AOA_EXECUTION_TARGET_ID: "t1", AOA_RUNTIME_HOOK_TOKEN: "hk", AOA_MCP_NOTION_TOKEN: "ntn", AOA_API_KEY: "jwt2" },
+         { AOA_API_URL: "https://cp", AOA_RUN_ID: "r1", AOA_EXECUTION_TARGET_ID: "t1", AOA_RUNTIME_HOOK_TOKEN: "hk", AOA_MCP_NOTION_TOKEN: "ntn", PAPERCLIP_API_KEY: "jwt2" },
          { provider: "anthropic" },
        );
-       expect(out).toMatchObject({ AOA_API_URL: "https://cp", AOA_RUN_ID: "r1", AOA_EXECUTION_TARGET_ID: "t1", AOA_RUNTIME_HOOK_TOKEN: "hk", AOA_MCP_NOTION_TOKEN: "ntn", AOA_API_KEY: "jwt2" });
+       expect(out).toMatchObject({ AOA_API_URL: "https://cp", AOA_RUN_ID: "r1", AOA_EXECUTION_TARGET_ID: "t1", AOA_RUNTIME_HOOK_TOKEN: "hk", AOA_MCP_NOTION_TOKEN: "ntn", PAPERCLIP_API_KEY: "jwt2" });
      });
 
      it("OPENAI_API_KEY disambiguation: claude agent → absent; codex agent → present", () => {
@@ -374,9 +374,9 @@ Every VM run's environment must be built from a **positive allowlist** — only 
    /** Run-identity + control-plane credential env that MAY cross (§9). */
    const ALWAYS_ALLOWED = new Set(
      [
-       "AOA_API_KEY",         // the run-JWT
-       "AOA_API_URL", "AOA_ORIGIN_API_URL", "AOA_CALLBACK_BRIDGE_URL",
-       "AOA_RUN_ID", "AOA_EXECUTION_TARGET_ID",
+       "AOA_API_KEY", "PAPERCLIP_API_KEY",         // the run-JWT
+       "AOA_API_URL", "PAPERCLIP_API_URL", "AOA_ORIGIN_API_URL", "AOA_CALLBACK_BRIDGE_URL",
+       "AOA_RUN_ID", "PAPERCLIP_RUN_ID", "AOA_EXECUTION_TARGET_ID",
        "AOA_RUNTIME_HOOK_TOKEN",
        "MAX_THINKING_TOKENS", "LANG", "LC_ALL", "CLAUDE_CONFIG_DIR", "CODEX_HOME", // in-VM managed homes
      ].map(foldEnvKey),
@@ -607,7 +607,7 @@ On cloud, a crew/org/Commander run must resolve the **company's own** provider k
 **Wave 2 exit criteria:**
 - `acquireExecutionContext` is the single sandbox-lease entry point; it passes `environmentId ?? null` straight into `acquireForRun` (S1 — no default-id resolver, no `cloud-environment-policy` import). Org/heartbeat delegates to it inside its existing `environmentRuntime.environmentId` gate with `heartbeat-execution-target.test.ts` still green, and crew + Commander both resolve a `provider-sandbox` `executionTarget` on `cloud_auth` from a **null** env via the real orchestrator + U1 platform default (integration test green: `acquired.sandbox.environment.driver === "sandbox"`, S5), while `local`/desktop resolves `{type:"local"}` unchanged (the orchestrator throws `environment_not_found`, the helper returns `sandbox:null`). The returned `lease` is the real `EnvironmentLease` (`provider`/`providerLeaseId`/`metadata`, S6).
 - **`brokered` is SET, not merely declared (S7):** every sandbox dispatch — crew (claude + codex, `runner.ts:435`/`:443`), org heartbeat (`heartbeat-mcp.ts:131`/`:103`), and Commander (`cli-mode.ts:514`/`:610`) — sets `brokered = acquired.sandbox?.environment.driver === "sandbox"` + `apiBaseUrl` + `companyId` on its `McpConfigParams` **before** the MCP config is built. The `brokered-mcp-no-db-url.integration.test.ts` proves a non-test-forced sandbox dispatch stages an `aoa` server as a `type:"http"` control-plane entry with **no `DATABASE_URL`** (and no `postgres://` string) in either the claude `--mcp-config` JSON or the codex `config.toml` — covering the standalone `buildMcpBridgeSpec` path so the leak is closed for non-claude adapters too. On desktop (no sandbox → `brokered:false`) the stdio delivery with `DATABASE_URL` is byte-identical to pre-U4b.
-- `buildSandboxEnvAllowlist(overlay, { provider })` (canonical S2 signature) proves — in unit and adapter-level tests — that `DATABASE_URL`, `DIRECT_DATABASE_URL`, `AOA_SECRETS_MASTER_KEY(_FILE)`, `GITHUB_PAT`, `BETTER_AUTH_SECRET`, `AOA_AGENT_JWT_SECRET`, `REDIS_URL`, `CLAUDE_CODE_OAUTH_TOKEN`, the OAuth refresh token, and the signed bundle are **absent** from VM env, while the run-JWT `AOA_API_KEY`, the company provider key, run-identity, and `AOA_MCP_*_TOKEN` bearers are present. The builder only filters the caller-built overlay; it injects no credential.
+- `buildSandboxEnvAllowlist(overlay, { provider })` (canonical S2 signature) proves — in unit and adapter-level tests — that `DATABASE_URL`, `DIRECT_DATABASE_URL`, `AOA_SECRETS_MASTER_KEY(_FILE)`, `GITHUB_PAT`, `BETTER_AUTH_SECRET`, `AOA_AGENT_JWT_SECRET`, `REDIS_URL`, `CLAUDE_CODE_OAUTH_TOKEN`, the OAuth refresh token, and the signed bundle are **absent** from VM env, while the run-JWT (`AOA_API_KEY`/`PAPERCLIP_API_KEY`), the company provider key, run-identity, and `AOA_MCP_*_TOKEN` bearers are present. The builder only filters the caller-built overlay; it injects no credential.
 - The `OPENAI_API_KEY` disambiguation is locked by the interlock test: claude run → absent; codex run → only the agent's own key, never the embeddings key.
 - On cloud with no company provider key, `resolveProviderCredential` throws `ProviderUnavailableError`; the crew top-level catch maps it to `CloudProviderKeyMissingError` guidance and threads that single message into **both** the `internalAgentRuns` failure row (`:1358`, no longer re-materialized from the raw `err`) and the `postCrewRunFailure` card in the thread; Commander yields a guidance `error` before spawning; and neither spends a sandbox — while on desktop the resolver returns `host_login_fallback` and the mapper is a no-op.
 - Operator `~/.claude` provisioning is proven unreachable for a sandbox target (invariant assertion + `provisionClaudeConfigHome` never-called test).

@@ -381,7 +381,7 @@ async function runPgDumpBackup(opts: {
   backupFile: string;
   connectTimeout: number;
 }): Promise<void> {
-  const pgDumpBin = process.env.AOA_PG_DUMP_PATH || "pg_dump";
+  const pgDumpBin = process.env.AOA_PG_DUMP_PATH || process.env.PAPERCLIP_PG_DUMP_PATH || "pg_dump";
   const child = spawn(
     pgDumpBin,
     [
@@ -412,7 +412,7 @@ async function runPgDumpBackup(opts: {
 }
 
 async function restoreWithPsql(opts: RunDatabaseRestoreOptions, connectTimeout: number): Promise<void> {
-  const psqlBin = process.env.AOA_PSQL_PATH || "psql";
+  const psqlBin = process.env.AOA_PSQL_PATH || process.env.PAPERCLIP_PSQL_PATH || "psql";
   const child = spawn(
     psqlBin,
     [

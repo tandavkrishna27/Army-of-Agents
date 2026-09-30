@@ -1,0 +1,48 @@
+{
+  "name": "@armyofagents/sandbox-e2b-provider",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./e2b-provider.js": {
+      "types": "./dist/e2b-provider.d.ts",
+      "import": "./dist/e2b-provider.js"
+    },
+    "./mock-transport.js": {
+      "types": "./dist/mock-transport.d.ts",
+      "import": "./dist/mock-transport.js"
+    },
+    "./errors.js": {
+      "types": "./dist/errors.d.ts",
+      "import": "./dist/errors.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "pnpm --filter @armyofagents/worker-protocol build && pnpm --filter @armyofagents/worker-daemon build && pnpm --filter @armyofagents/sandbox-provider-contract build && tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "@armyofagents/sandbox-provider-contract": "workspace:*",
+    "@armyofagents/worker-daemon": "workspace:*",
+    "@armyofagents/worker-protocol": "workspace:*",
+    "e2b": "^2.30.5",
+    "zod": "3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.6"
+  }
+}

@@ -38,9 +38,9 @@ import path from "node:path";
 import { createInterface, type Interface as ReadlineInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 
-import type { AoAPluginManifestV1 } from "@armyofagents/shared";
+import type { PaperclipPluginManifestV1 } from "@armyofagents/shared";
 
-import type { AoAPlugin } from "./define-plugin.js";
+import type { PaperclipPlugin } from "./define-plugin.js";
 import type {
   PluginHealthDiagnostics,
   PluginConfigValidationResult,
@@ -105,7 +105,7 @@ export interface WorkerRpcHostOptions {
    *
    * The worker entrypoint should import its plugin and pass it here.
    */
-  plugin: AoAPlugin;
+  plugin: PaperclipPlugin;
 
   /**
    * Input stream to read JSON-RPC messages from.
@@ -193,7 +193,7 @@ export interface RunWorkerOptions {
  * ```
  */
 export function runWorker(
-  plugin: AoAPlugin,
+  plugin: PaperclipPlugin,
   moduleUrl: string,
   options?: RunWorkerOptions,
 ): WorkerRpcHost | void {
@@ -248,7 +248,7 @@ export function startWorkerRpcHost(options: WorkerRpcHostOptions): WorkerRpcHost
 
   let running = true;
   let initialized = false;
-  let manifest: AoAPluginManifestV1 | null = null;
+  let manifest: PaperclipPluginManifestV1 | null = null;
   let currentConfig: Record<string, unknown> = {};
 
   // Plugin handler registrations (populated during setup())

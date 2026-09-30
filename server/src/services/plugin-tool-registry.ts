@@ -20,7 +20,7 @@
  */
 
 import type {
-  AoAPluginManifestV1,
+  PaperclipPluginManifestV1,
   PluginToolDeclaration,
 } from "@armyofagents/shared";
 import type {
@@ -122,7 +122,7 @@ export interface PluginToolRegistry {
    */
   registerPlugin(
     pluginId: string,
-    manifest: AoAPluginManifestV1,
+    manifest: PaperclipPluginManifestV1,
     pluginDbId?: string,
     companyId?: string
   ): void;
@@ -332,7 +332,7 @@ export function createPluginToolRegistry(
   return {
     registerPlugin(
       pluginId: string,
-      manifest: AoAPluginManifestV1,
+      manifest: PaperclipPluginManifestV1,
       pluginDbId?: string,
       companyId?: string
     ): void {

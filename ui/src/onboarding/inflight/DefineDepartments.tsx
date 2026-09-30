@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Reveal } from "../motion";
 import { FIELD, GradientText, LABEL, StepCard, StepHeading, StepShell } from "../steps/shared";
 
-const REPO_ONLY_CWD_SENTINEL = "/__aoa_repo_only__";
+const REPO_ONLY_CWD_SENTINEL = "/__paperclip_repo_only__";
 
 /** Minimal shape used for the idempotency lookup — deliberately loose (not the
  * full `@armyofagents/shared` `Project`) so mocked test fixtures don't need

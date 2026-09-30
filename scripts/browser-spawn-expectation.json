@@ -1,0 +1,23 @@
+{
+  "$comment": [
+    "BRW-hostspawn-gate — host-side browser-spawn sites and their owned deferral.",
+    "A site is a non-test file under a SCAN_ROOT (server/src, or any package under packages/ except",
+    "the governed browser-runtime) whose text carries a host-browser-spawn signature (@playwright/mcp",
+    "or PLAYWRIGHT_MCP_PACKAGE). A site the scan",
+    "finds that is not declared here FAILS (default-deny, the important direction). Each declared",
+    "site is an OWNED DEFERRAL: the host spawn is retired only once the governed browser-runtime",
+    "path is proven (scope-addendum 'Decision on the host-side path'), owned by BRW-008.",
+    "signatureOccurrences is an EXACT pin (both directions): the total signature-substring matches",
+    "expected in the file today. A SECOND spawn injected into a declared file raises the count and",
+    "REDS; removing the spawn lowers it (or empties the file, tripping the stale arm) and REDS.",
+    "A declared site that no longer carries a signature is STALE and MUST be removed in the same",
+    "commit that removes the spawn (self-cleaning). This guard does NOT close the spawn."
+  ],
+  "deferredHostSpawns": {
+    "server/src/services/internal-agent/cli-mode.ts": {
+      "owner": "BRW-008",
+      "signatureOccurrences": 3,
+      "reason": "buildMcpConfig injects the reserved `playwright` stdio MCP server (npx @playwright/mcp --headless) on the control-plane host when browser_use is enabled; reachable from the org-heartbeat, crew, and Commander boot roots. The 3 occurrences are PLAYWRIGHT_MCP_PACKAGE at the const definition + the @playwright/mcp literal in that same definition + PLAYWRIGHT_MCP_PACKAGE at the injection use — ONE spawn. Retire once BRW-007's governed tool surface + a proven sandboxed session let BRW-008 route Commander onto the governed browser-runtime path — not before (scope-addendum 'Decision on the host-side path'). Declared so the guard is GREEN at rest while the spawn legitimately still exists and is behaviour-locked by build-mcp-config.test.ts."
+    }
+  }
+}

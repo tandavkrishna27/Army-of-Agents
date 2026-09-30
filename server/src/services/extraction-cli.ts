@@ -481,7 +481,7 @@ async function extractViaClaude(
   ];
 
   // cwd = tmpdir(): keep claude from reading project CLAUDE.md / AGENTS.md
-  // (internal "AoA" details must not surface) — same as the chat spawns.
+  // (internal "Paperclip" details must not surface) — same as the chat spawns.
   // env: scrubbed of the server's own secrets (embeddings OPENAI_API_KEY,
   // GITHUB_PAT, AOA_*, …) — defense-in-depth so even a tool-bypass can't read
   // them from the environment. KEEP claude's OWN auth env vars so the scrub does

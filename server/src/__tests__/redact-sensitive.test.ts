@@ -164,6 +164,45 @@ describe("redactSensitiveBodyFields", () => {
     expect(result[100]).toBe("[redacted: 50 more array items truncated]");
   });
 
+  it("truncates strings longer than the 8192-char cap with a marker", () => {
+    // Regression: a 4 MB `p` payload field logged verbatim became a multi-MB log
+    // line that stalled the vitest fork IPC past the birpc timeout and hung a whole
+    // CI shard (run 33019158926). Oversized string values must be truncated.
+    const longString = "x".repeat(10_000);
+    const result = redactSensitiveBodyFields({ p: longString }) as { p: string };
+
+    expect(result.p).toBe(`${"x".repeat(8192)}[redacted: 1808 more chars truncated]`);
+    expect(result.p.length).toBeLessThan(longString.length);
+  });
+
+  it("leaves strings at or below the 8192-char cap unchanged", () => {
+    const atCap = "y".repeat(8192);
+    const result = redactSensitiveBodyFields({ note: atCap, short: "hi" }) as Record<string, string>;
+    expect(result.note).toBe(atCap);
+    expect(result.short).toBe("hi");
+  });
+
+  it("truncates a long string nested inside an object and array", () => {
+    const big = "z".repeat(9000);
+    const result = redactSensitiveBodyFields({ items: [{ blob: big }] }) as {
+      items: { blob: string }[];
+    };
+    expect(result.items[0].blob).toBe(`${"z".repeat(8192)}[redacted: 808 more chars truncated]`);
+  });
+
+  it("truncates an oversized string even at/below the object-depth cutoff (MAX_DEPTH=8)", () => {
+    // Regression (Codex review): the string cap must run BEFORE the `depth >= MAX_DEPTH`
+    // branch, or a deeply-nested multi-MB string hits its `return value` and is logged
+    // verbatim — reproducing the fork-IPC stall the cap exists to prevent. `big` sits at
+    // depth 8 (a->b->c->d->e->f->g->h), exactly the boundary the old ordering mishandled.
+    const big = "q".repeat(10_000);
+    const deep = { a: { b: { c: { d: { e: { f: { g: { h: big } } } } } } } };
+    const result = redactSensitiveBodyFields(deep) as {
+      a: { b: { c: { d: { e: { f: { g: { h: string } } } } } } };
+    };
+    expect(result.a.b.c.d.e.f.g.h).toBe(`${"q".repeat(8192)}[redacted: 1808 more chars truncated]`);
+  });
+
   it("does not mutate the input object", () => {
     const input = { password: "x", profile: { token: "y" } };
     const snapshot = JSON.parse(JSON.stringify(input));

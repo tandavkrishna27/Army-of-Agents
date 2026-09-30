@@ -1,0 +1,21 @@
+diff --git a/src/connection.js b/src/connection.js
+index 1b1cccde43b4570d5d071d6ffaab2669b3c2065a..1a6717a8bd557555bc5a0a56aca8c07c82ef3fda 100644
+--- a/src/connection.js
++++ b/src/connection.js
+@@ -252,6 +252,16 @@ function Connection(options, queues = {}, { onopen = noop, onend = noop, onclose
+   }
+ 
+   function nextWrite(fn) {
++    // AoA patch: a write queued via setImmediate can fire AFTER the connection was
++    // torn down and `socket` nulled (rapid teardown under heavy test churn), throwing
++    // "Cannot read properties of null (reading 'write')" as an uncaught exception on a
++    // later tick. Guard the deferred flush: if the socket is gone there is nothing to
++    // write to — clear pending state and no-op. Live connections are unaffected.
++    if (!socket) {
++      nextWriteTimer !== null && clearImmediate(nextWriteTimer)
++      chunk = nextWriteTimer = null
++      return false
++    }
+     const x = socket.write(chunk, fn)
+     nextWriteTimer !== null && clearImmediate(nextWriteTimer)
+     chunk = nextWriteTimer = null

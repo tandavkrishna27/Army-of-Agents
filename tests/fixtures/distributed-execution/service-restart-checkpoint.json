@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "id": "service-restart-checkpoint",
+  "workloadType": "service",
+  "purpose": "A failed service instance is replaced from an approved checkpoint.",
+  "source": {
+    "kind": "service_reconcile"
+  },
+  "organization": {
+    "id": "org_9GJHSN07360N1VKGNRFF5W77GK",
+    "name": "Initech Platform"
+  },
+  "company": {
+    "id": "company_QC3KHY85JXJ9XJEWKZ3SJ9GZ7T",
+    "name": "Initech Platform HQ",
+    "organizationId": "org_9GJHSN07360N1VKGNRFF5W77GK"
+  },
+  "requester": {
+    "type": "system",
+    "id": "service-reconciler",
+    "displayName": "Service Reconciler"
+  },
+  "executor": {
+    "type": "service_instance",
+    "id": "svc-worker-pool-1"
+  },
+  "placement": {
+    "targetPolicy": "latest_generation",
+    "provider": "e2b",
+    "region": "us-east-1",
+    "generation": 1
+  },
+  "inputBase": {
+    "workspaceBaseId": "wsbase-3rb0eyttm9vy5h3pnqeyy2agxr",
+    "gitRemote": "https://git.example.com/initech/svc.git",
+    "gitRef": "refs/tags/v1.4.0",
+    "baseDigest": "43786b802e1e3aba14497b7ee531a3b655d76ebebe22ea90fd18c0948001333a",
+    "immutable": true
+  },
+  "identity": {
+    "jobId": "job_N7M9VJ87EVQ5JKFEH58YR1A748",
+    "attempts": [
+      {
+        "attempt": 1,
+        "workerId": "worker_9EX2P6DJ0EK7XF25KFC0AMAX86",
+        "leaseId": "lease_3VAF97MX38407ATRYZ738RY0KZ",
+        "fenceToken": 100
+      },
+      {
+        "attempt": 2,
+        "workerId": "worker_3B8B0RGRK7HG5S0T1Y8CHZCJN7",
+        "leaseId": "lease_PTSVR8E3AC8D3Z10SN2TFVJN75",
+        "fenceToken": 200
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "set_desired_running"
+    },
+    {
+      "action": "reconcile_and_lease",
+      "emits": [
+        "service_instance_started"
+      ]
+    },
+    {
+      "action": "report_healthy",
+      "emits": [
+        "service_health"
+      ]
+    },
+    {
+      "action": "commit_checkpoint",
+      "emits": [
+        "service_checkpoint_prepared"
+      ]
+    },
+    {
+      "action": "crash",
+      "at": "healthy"
+    },
+    {
+      "action": "expire_lease"
+    },
+    {
+      "action": "reconcile_replacement"
+    },
+    {
+      "action": "restore_checkpoint",
+      "emits": [
+        "service_checkpoint_restored",
+        "service_health"
+      ]
+    }
+  ],
+  "failureInjection": {
+    "point": "healthy",
+    "effect": "worker_process_crash"
+  },
+  "expectedEvents": [
+    {
+      "protocolVersion": 1,
+      "eventId": "FN7P91JCNV13C07NYNPT5DQXPR",
+      "eventType": "service_instance_started",
+      "organizationId": "org_9GJHSN07360N1VKGNRFF5W77GK",
+      "companyId": "company_QC3KHY85JXJ9XJEWKZ3SJ9GZ7T",
+      "workerId": "worker_9EX2P6DJ0EK7XF25KFC0AMAX86",
+      "jobId": "job_N7M9VJ87EVQ5JKFEH58YR1A748",
+      "attempt": 1,
+      "leaseId": "lease_3VAF97MX38407ATRYZ738RY0KZ",
+      "fenceToken": 100,
+      "seq": 1,
+      "occurredAt": "2026-08-08T12:00:00.000Z",
+      "payload": {
+        "generation": 1
+      },
+      "eventDigest": "1af87ebe3b01fe0e3c3959fcc7bdf09817b568de83f89cda7d81418bdcfe0016"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "MAV8WSEZE78113P54X2YZKAY82",
+      "eventType": "service_health",
+      "organizationId": "org_9GJHSN07360N1VKGNRFF5W77GK",
+      "companyId": "company_QC3KHY85JXJ9XJEWKZ3SJ9GZ7T",
+      "workerId": "worker_9EX2P6DJ0EK7XF25KFC0AMAX86",
+      "jobId": "job_N7M9VJ87EVQ5JKFEH58YR1A748",
+      "attempt": 1,
+      "leaseId": "lease_3VAF97MX38407ATRYZ738RY0KZ",
+      "fenceToken": 100,
+      "seq": 2,
+      "occurredAt": "2026-08-08T12:00:05.000Z",
+      "payload": {
+        "code": "healthy"
+      },
+      "eventDigest": "8fcd1334d18fb321e5b8e1ba4fd7ca5c523e3befd3caff6043888ca1762a091c"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "FXZB61HJDAR20DV96KGWZKS0VK",
+      "eventType": "service_checkpoint_prepared",
+      "organizationId": "org_9GJHSN07360N1VKGNRFF5W77GK",
+      "companyId": "company_QC3KHY85JXJ9XJEWKZ3SJ9GZ7T",
+      "workerId": "worker_9EX2P6DJ0EK7XF25KFC0AMAX86",
+      "jobId": "job_N7M9VJ87EVQ5JKFEH58YR1A748",
+      "attempt": 1,
+      "leaseId": "lease_3VAF97MX38407ATRYZ738RY0KZ",
+      "fenceToken": 100,
+      "seq": 3,
+      "occurredAt": "2026-08-08T12:00:20.000Z",
+      "payload": {
+        "checkpointId": "chk-kd4snmtfdjpk8sbn384m65ereq",
+        "hash": "d38dc4f9b5347acf8db2961328198b9583e86474e685ae38eef764d8af9805f7",
+        "sizeBytes": 40960
+      },
+      "eventDigest": "8cd287654e177be8a17c2325a2cbb0d303e2c5347584d8de437ac8a13fae9555"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "6XZEXEFBKZDS8BVRA7BBGYANVK",
+      "eventType": "service_instance_lost",
+      "organizationId": "org_9GJHSN07360N1VKGNRFF5W77GK",
+      "companyId": "company_QC3KHY85JXJ9XJEWKZ3SJ9GZ7T",
+      "workerId": "worker_9EX2P6DJ0EK7XF25KFC0AMAX86",
+      "jobId": "job_N7M9VJ87EVQ5JKFEH58YR1A748",
+      "attempt": 1,
+      "leaseId": "lease_3VAF97MX38407ATRYZ738RY0KZ",
+      "fenceToken": 100,
+      "seq": 4,
+      "occurredAt": "2026-08-08T12:00:40.000Z",
+      "payload": {
+        "reason": "worker_process_crash"
+      },
+      "eventDigest": "71c92e5ae53e994b18b3c15bda853ab256064ba24183d50b8f44e0645a6af041"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "FAMCW261GGXQ68QFGVW3PVZC49",
+      "eventType": "service_checkpoint_restored",
+      "organizationId": "org_9GJHSN07360N1VKGNRFF5W77GK",
+      "companyId": "company_QC3KHY85JXJ9XJEWKZ3SJ9GZ7T",
+      "workerId": "worker_3B8B0RGRK7HG5S0T1Y8CHZCJN7",
+      "jobId": "job_N7M9VJ87EVQ5JKFEH58YR1A748",
+      "attempt": 2,
+      "leaseId": "lease_PTSVR8E3AC8D3Z10SN2TFVJN75",
+      "fenceToken": 200,
+      "seq": 5,
+      "occurredAt": "2026-08-08T12:00:55.000Z",
+      "payload": {
+        "checkpointId": "chk-kd4snmtfdjpk8sbn384m65ereq",
+        "hash": "d38dc4f9b5347acf8db2961328198b9583e86474e685ae38eef764d8af9805f7"
+      },
+      "eventDigest": "613ff2cdf5659529361119187158aa8a16291c559f7103a4a4b4cce11d07a400"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "1GY5WBEDMSDWPY97R7E85PMT7P",
+      "eventType": "service_instance_started",
+      "organizationId": "org_9GJHSN07360N1VKGNRFF5W77GK",
+      "companyId": "company_QC3KHY85JXJ9XJEWKZ3SJ9GZ7T",
+      "workerId": "worker_3B8B0RGRK7HG5S0T1Y8CHZCJN7",
+      "jobId": "job_N7M9VJ87EVQ5JKFEH58YR1A748",
+      "attempt": 2,
+      "leaseId": "lease_PTSVR8E3AC8D3Z10SN2TFVJN75",
+      "fenceToken": 200,
+      "seq": 6,
+      "occurredAt": "2026-08-08T12:00:56.000Z",
+      "payload": {
+        "generation": 1
+      },
+      "eventDigest": "c33fcc51ba3f4d7afd391fbbdf9eacc5d2080aba414e5ce18b0149f81519ed24"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "A51EY6FKBVF8E1HC5T5T3MP4AF",
+      "eventType": "service_health",
+      "organizationId": "org_9GJHSN07360N1VKGNRFF5W77GK",
+      "companyId": "company_QC3KHY85JXJ9XJEWKZ3SJ9GZ7T",
+      "workerId": "worker_3B8B0RGRK7HG5S0T1Y8CHZCJN7",
+      "jobId": "job_N7M9VJ87EVQ5JKFEH58YR1A748",
+      "attempt": 2,
+      "leaseId": "lease_PTSVR8E3AC8D3Z10SN2TFVJN75",
+      "fenceToken": 200,
+      "seq": 7,
+      "occurredAt": "2026-08-08T12:01:00.000Z",
+      "payload": {
+        "code": "healthy"
+      },
+      "eventDigest": "4749eb8b0b125349b43ca95f4034a445f0fa99faa7dbcd4a4bdb8446f954fa3e"
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "maxTotalCents": 10000,
+    "observedTotalCents": 2200,
+    "tokenBudget": 0,
+    "observedTokens": 0
+  },
+  "timing": {
+    "queuedAt": "2026-08-08T11:59:55.000Z",
+    "startedAt": "2026-08-08T12:00:00.000Z",
+    "finishedAt": "2026-08-08T12:01:00.000Z",
+    "maxWallClockMs": 86400000,
+    "observedWallClockMs": 60000
+  },
+  "cleanup": {
+    "authority": "resource_bound_cleanup",
+    "scope": "service_instance:worker_9EX2P6DJ0EK7XF25KFC0AMAX86",
+    "idempotent": true,
+    "deadlineMs": 60000,
+    "restoresEffectAuthority": false
+  },
+  "control": {
+    "cancellation": "none",
+    "productApproval": "none",
+    "runtimeDecision": "checkpoint_restore"
+  },
+  "expected": {
+    "terminalState": "healthy",
+    "artifacts": [
+      "service_checkpoint"
+    ],
+    "auditActions": [
+      "service.instance_lost",
+      "service.instance_replaced",
+      "service.checkpoint_restored"
+    ],
+    "forbiddenEffects": [
+      "two_active_fences",
+      "unapproved_checkpoint_restore"
+    ]
+  }
+}

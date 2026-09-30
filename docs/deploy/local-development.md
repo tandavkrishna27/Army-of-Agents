@@ -81,6 +81,7 @@ rm -rf ~/.aoa/instances/default/db
 pnpm dev
 ```
 
+> Note: existing installs that still have `~/.paperclip/` are read via the legacy fallback in `cli/src/config/home.ts` (used when `~/.aoa/` does not yet exist). On a fresh install, AoA writes only to `~/.aoa/`.
 
 ## Data Locations
 

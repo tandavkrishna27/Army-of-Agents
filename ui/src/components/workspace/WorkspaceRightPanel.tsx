@@ -10,7 +10,7 @@ import {
   MoreVertical,
   PanelRight,
   PanelRightClose,
-  FilePlus2,
+  Paperclip,
   Server,
   Settings,
   Workflow,
@@ -113,7 +113,7 @@ const WORKSPACE_COCKPIT_SECTIONS: CockpitSectionDef[] = [
   { id: "outputs", title: "Outputs", icon: FileBox },
   { id: "artifacts", title: "Artifacts", icon: FileBox },
   { id: "memory", title: "Memory", icon: Brain },
-  { id: "context", title: "Context", icon: FilePlus2 },
+  { id: "context", title: "Context", icon: Paperclip },
   { id: "access", title: "Access", icon: KeyRound },
 ];
 

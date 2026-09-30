@@ -202,7 +202,9 @@ function preferencesDb({
 describe("notificationPreferencesService", () => {
   it("merges partial rule patches without dropping other semantic type defaults", async () => {
     const approvalRule = {
-      semanticType: "approval_request" as const,
+      ...DEFAULT_NOTIFICATION_PREFERENCES.rules.find(
+        (rule) => rule.semanticType === "approval_request",
+      )!,
       deliveryMode: "digest" as const,
       toastEnabled: false,
     };

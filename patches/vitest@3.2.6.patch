@@ -1,0 +1,11 @@
+diff --git a/dist/chunks/index.B521nVV-.js b/dist/chunks/index.B521nVV-.js
+index e0ecf1295073ab166a317456fc336a334daf5a06..6d9cc4b633c9bfffb7c2d098d241ba1695c51453 100644
+--- a/dist/chunks/index.B521nVV-.js
++++ b/dist/chunks/index.B521nVV-.js
+@@ -1,5 +1,5 @@
+ const TYPE_REQUEST = "q";
+ const TYPE_RESPONSE = "s";
+-const DEFAULT_TIMEOUT = 6e4;
++const DEFAULT_TIMEOUT = 6e5;
+ function defaultSerialize(i) {
+   return i;

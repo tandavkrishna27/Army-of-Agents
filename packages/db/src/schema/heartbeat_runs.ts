@@ -61,6 +61,25 @@ export const heartbeatRuns = pgTable(
     // to the agent CLI. Populated best-effort — never fails the run.
     // Capped at ~16 000 chars; secrets stripped via redactAndCapPrompt().
     promptSnapshot: text("prompt_snapshot"),
+    // CLI-006 — the durable execution-ownership marker. `null` (the only value any
+    // legacy run ever carries) means this process's adapter is the executor;
+    // 'distributed' means a worker attempt is, and the heartbeat side has
+    // SUPPRESSED its own `adapter.execute`.
+    //
+    // This has to be durable rather than in-process state: `reapOrphanedRuns`
+    // exempts a run only when it appears in the in-process `runningProcesses` map,
+    // which a distributed attempt never populates, and the startup reap runs with
+    // `staleThresholdMs = 0` — so a control-plane restart would otherwise fail
+    // every handed-off run. Every consumer that would terminalize, cancel, or
+    // reap a run reads this to learn that the ATTEMPT, not this process, is the
+    // terminal authority.
+    //
+    // The job/attempt ids bind the run to its distributed evidence. They cannot be
+    // recovered by looking the job up by idempotency key, because CLI-005's active
+    // convert uses the same `run.id` key for runs the legacy adapter still executes.
+    executionOwner: text("execution_owner"),
+    distributedJobId: uuid("distributed_job_id"),
+    distributedAttemptId: uuid("distributed_attempt_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

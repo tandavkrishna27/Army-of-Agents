@@ -15,35 +15,19 @@ import {
 } from "node:http";
 import { request as httpsRequest } from "node:https";
 
+// W13 — the ONE IP-literal parser (./ip-literal.ts). The local `parseIpv6Words`
+// that used to live here forbade an embedded dotted quad in its per-token regex,
+// so `::169.254.169.254` never became words, never reached the IPv6 range checks
+// below, and this predicate returned FALSE for it (E8-F009 §4). The shared parser
+// accepts that spelling; W13 changed NO range. (W17 later added two -- 5f00::/16 and
+// 100:0:0:1::/64 -- for a different reason; see the IANA audit note below.)
+import { parseIpv6Words } from "./ip-literal.js";
+
 /** Only these protocols are allowed for outbound HTTP requests. */
 export const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
 
 /** Maximum time (ms) to wait for a DNS lookup before aborting. */
 export const DNS_LOOKUP_TIMEOUT_MS = 5_000;
-
-function parseIpv6Words(ip: string): number[] | null {
-  const normalized = ip.toLowerCase().replace(/^\[|\]$/g, "").split("%", 1)[0]!;
-  if (!normalized.includes(":")) return null;
-  const halves = normalized.split("::");
-  if (halves.length > 2) return null;
-
-  const parseHalf = (value: string): number[] | null => {
-    if (!value) return [];
-    const words: number[] = [];
-    for (const token of value.split(":")) {
-      if (!/^[0-9a-f]{1,4}$/.test(token)) return null;
-      words.push(Number.parseInt(token, 16));
-    }
-    return words;
-  };
-  const left = parseHalf(halves[0] ?? "");
-  const right = parseHalf(halves[1] ?? "");
-  if (!left || !right) return null;
-  if (halves.length === 1) return left.length === 8 ? left : null;
-  const omitted = 8 - left.length - right.length;
-  if (omitted < 1) return null;
-  return [...left, ...Array<number>(omitted).fill(0), ...right];
-}
 
 function mappedIpv4(words: readonly number[]): string | null {
   if (
@@ -60,6 +44,74 @@ function mappedIpv4(words: readonly number[]): string | null {
     words[7]! & 0xff,
   ].join(".");
 }
+
+// -- W17: THE IANA COVERAGE AUDIT, RECORDED BESIDE THE PREDICATE IT IS ABOUT --
+//
+// WHY IT IS HERE AND NOT IN A DOC. This audit existed only in a conversation. On
+// 2026-09-08, `grep -rn IANA` over `server/src`, `scripts` and `docs/replatform`
+// returned exactly ONE hit, and it was a timezone row in a QA template — so the
+// registry this predicate is a rendering of was nowhere near the predicate. A
+// reader deciding whether a range is missing looks HERE, at the `if` list below.
+// The machine-checkable half of the audit is
+// `server/src/__tests__/w17-ipv6-range-closeout.test.ts`, which carries the
+// registry rows as data and FAILS if any Globally-Reachable-FALSE block stops
+// being covered. This comment is the index; that file is the check.
+//
+// REGISTRIES, retrieved 2026-09-08 (sha256 of the CSV as served):
+//   IPv4 Special-Purpose  https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry-1.csv
+//     e3e39e76d00b1677335db8e9a805c7b9480ea2f4dc9e33f0b93cd3a905128d73
+//   IPv6 Special-Purpose  https://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry-1.csv
+//     775feea0621dec8735a44fbf30f762e721e8f0a1b3ab7eb341961a88cfce2139
+//
+// RESULT 1 — IPv4 COVERAGE IS COMPLETE, ZERO GAPS. Every IPv4 special-purpose
+// block whose registry `Globally Reachable` column is FALSE is inside this
+// predicate's rejection set. Verified two ways: `w10c-internal-range-deny-set.test.ts`
+// re-derives the EXACT MINIMAL CIDR COVER of the IPv4 arm by a full sweep of all
+// 2^24 /24 blocks (plus a separate test that the verdict is constant across the
+// fourth octet, which makes the pair exhaustive over all 2^32 addresses), and the
+// W17 test intersects that cover with the pinned registry rows. The IPv4 arm was
+// NOT touched by W17 and the blast-radius test proves it byte-for-byte in verdict
+// terms: zero of the 2^32 addresses changed class.
+//
+// RESULT 2 — TWO IPv6 RANGES WERE MISSING, AND ARE ADDED BELOW.
+//   5f00::/16       Segment Routing (SRv6) SIDs, RFC 9602, allocated 2024-04,
+//                   registry Globally Reachable = FALSE. Nothing in this predicate
+//                   matched `first === 0x5f00`; the whole /16 returned false.
+//   100:0:0:1::/64  Dummy IPv6 Prefix, RFC 9780, allocated 2025-04, registry
+//                   Globally Reachable = FALSE. The discard-only clause required
+//                   `fourth === 0`, so this fell through to `return false` while
+//                   the ADJACENT 100::/64 was blocked.
+// Neither has a legitimate AoA destination: an SRv6 SID is a router-internal
+// forwarding label inside the operator's own SR domain, and the Dummy Prefix is
+// defined as a source/destination that must never be routed. See the PR body for
+// the full allowed -> denied enumeration.
+//
+// RESULT 3 — ONE RANGE DELIBERATELY NOT ADDED: the unallocated remainder of
+// 2001::/23 (IETF Protocol Assignments). The /23 superblock reads Globally
+// Reachable = FALSE, but every ASSIGNED sub-block in the part this predicate does
+// NOT cover reads TRUE: 2001:1::1/128 (PCP anycast, RFC 7723), 2001:1::2/128
+// (TURN anycast, RFC 8155), 2001:1::3/128 (DNS-SD SRP anycast, RFC 9665),
+// 2001:3::/32 (AMT, RFC 7450), 2001:4:112::/48 (AS112-v6, RFC 7535),
+// 2001:30::/28 (DRIP DETs, RFC 9374). Covering the /23 would deny real, routed,
+// globally reachable destinations to close nothing. Two independent audits
+// examined it and both recommended against. Do not "complete" this range.
+//
+// ★ RESULT 4 — THE STRUCTURAL LIMIT A FUTURE READER MOST NEEDS. AN RFC 6052
+// OPERATOR-CHOSEN NAT64 NETWORK-SPECIFIC PREFIX CANNOT BE CLOSED BY ANY PREFIX
+// LIST, EVER. The clause below covers 64:ff9b::/96 (RFC 6052 well-known) and
+// 64:ff9b:1::/48 (RFC 8215 local-use), because those are fixed. But RFC 6052 also
+// lets an operator translate through a Network-Specific Prefix taken from their
+// OWN global unicast allocation, at /32, /40, /48, /56, /64 or /96. That prefix is
+// indistinguishable from any other address in their allocation: it is not in any
+// registry, it is not reserved, and its embedded IPv4 destination is not
+// syntactically marked. So an address inside such a prefix that translates to
+// 169.254.169.254 is, to this predicate, an ordinary public IPv6 address — and no
+// list of ranges added here can change that. This is a STRUCTURAL LIMIT OF THE
+// PREFIX-LIST APPROACH, not a gap to be fixed: closing it needs a different
+// mechanism (an egress allowlist, or refusing destinations the deployment has not
+// named), which is the DAT-005 `classifyEgressDestination` allowlist gate, not
+// this blocklist. Do not file it as a missing range; do not add a speculative
+// range to "cover" it.
 
 /**
  * Check if an IP address is in a private/reserved range (RFC 1918, loopback,
@@ -125,9 +177,14 @@ export function isPrivateIP(ip: string): boolean {
       first === 0x0100 &&
       second === 0 &&
       third === 0 &&
-      fourth === 0
+      (fourth === 0 || fourth === 1)
     ) {
-      return true; // 100::/64 discard-only
+      // 100::/64        RFC 6666 discard-only sink route.
+      // 100:0:0:1::/64  RFC 9780 Dummy Prefix (allocated 2025-04, registry
+      //                 Globally Reachable = FALSE). W17: `fourth === 0` alone
+      //                 let this ADJACENT /64 fall through to `return false`
+      //                 while its neighbour was blocked.
+      return true;
     }
     if (
       first === 0x2001 &&
@@ -140,6 +197,9 @@ export function isPrivateIP(ip: string): boolean {
     }
     if (first === 0x2002) return true; // 2002::/16 6to4
     if (first! >= 0x3ff0 && first! <= 0x3fff) return true; // 3fff::/20 docs
+    // 5f00::/16 SRv6 SIDs (RFC 9602, allocated 2024-04, registry Globally
+    // Reachable = FALSE). W17: nothing in this predicate matched 0x5f00.
+    if (first === 0x5f00) return true;
   }
 
   return false;

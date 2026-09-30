@@ -13,7 +13,7 @@ function e2eDatabaseUrl() {
     process.env.AOA_E2E_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim();
   if (explicit) return explicit;
   const port = process.env.AOA_E2E_DB_PORT?.trim() || "54329";
-  return `postgres://aoa:aoa@127.0.0.1:${port}/aoa`;
+  return `postgres://paperclip:paperclip@127.0.0.1:${port}/paperclip`;
 }
 
 async function seedTrustedHeartbeatRun(companyId: string) {

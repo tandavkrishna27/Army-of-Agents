@@ -1,0 +1,282 @@
+name: Keyed E2B — W10B DE-08 egress-enforcement probe
+
+# W10B's LIVE lane. ONE keyed run decides whether the ONLY candidate enforcement layer
+# OUTSIDE the guest is real, so that DE-08 ("Sandbox <-> network egress", severity Critical,
+# enforcement measured absent at every layer, finding E8-F003) can be settled by a
+# measurement instead of by a premise.
+#
+#   (a) HONOURED?    Does the operator's E2B tier honour a `denyOut` policy declared at
+#                    `Sandbox.create` — is a target inside the deny set actually unreachable?
+#   (b) VERIFIABLE?  Does `getInfo()` MATERIALIZE the policy back, so a run can VERIFY what
+#                    was applied? Without this the approach is unshippable however (a) goes.
+#   (c) ★ ABANDON?   Is the guest's DNS RESOLVER inside the deny set? If it is, denying that
+#                    range breaks all name resolution and THERE IS NO REPAIR IN THIS API:
+#                    `denyOut` has no exclude, and adding any `allowOut` entry flips the whole
+#                    policy to default-deny. A `yes` here ABANDONS the option — a complete and
+#                    valuable result, and the lane stays GREEN for it.
+#   (d) RE-ASSERT?   Does `updateNetwork` work on a WARM RESUME, so a reused lease can be
+#                    re-policed rather than trusted?
+#   (e) WHERE?       Packet path or L7 proxy? A raw TCP connect to an internal address on a
+#                    NON-HTTP port, and hand-written HTTP bytes on a raw socket, are both left
+#                    open by an HTTP-only filter and both closed by a packet filter.
+#
+# It MEASURES ONLY. It applies no deny policy to any production code path, mutates no gate,
+# counter or register, spends NO model tokens, and touches no database. Its only writes are
+# two small helper files inside sandboxes it creates and destroys.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# THE PREMISE THIS LANE RETIRES
+# ─────────────────────────────────────────────────────────────────────────────
+# Three records book the provider layer as unavailable on one sentence — "managed-E2B egress
+# is not fully lockable" (REFUTED as a capability claim — finding E8-F007 owns that
+# premise): the `acquireLease` comment in
+# `server/src/services/sandbox-provider-runtime.ts` (corrected by W10A, and kept corrected
+# per occurrence by `scripts/check-w10a-sdk-capability-premise.mjs`), the
+# 2026-08-05 cloud-execution-isolation spec §12, and finding E8-F003's own "option (b) is
+# unavailable". Against the installed, lockfile-pinned `e2b@2.30.5` that sentence is FALSE AS
+# A STATEMENT ABOUT THE SEAM: `SandboxOpts.network` with `allowOut`/`denyOut` exists,
+# `buildNetworkBody` puts it in the `POST /sandboxes` body, `Sandbox.updateNetwork` exists,
+# and `getInfo()` maps the server's answer back. What was UNMEASURED is whether the operator's
+# tier ENFORCES it — which is exactly what this run answers, in both directions.
+#
+# ★★★ IT HAS NOW ANSWERED, ONCE: run 34085130892 (2026-09-07, ab23eabdc, template aoa-base) —
+# a=no b=yes c=no d=no e=no regression=no, DECISION abandon (denyout-is-inert-at-this-tier).
+# The tier accepts, validates, stores and echoes the deny set and enforces none of it. Finding
+# E8-F008; operator record in the runbook §12.
+#
+# ★★★ AND A FIFTH ARM WAS ADDED 2026-09-09 (W10B-B). (a)–(e) declare a `denyOut` CIDR list
+# with NO `allowOut`; E2B documents the fine-grained control as default-deny PLUS an
+# `allowOut` allowlist, and that
+# shape is UNMEASURED. The ALLOWLIST ARM measures it, with a POSITIVE CONTROL (an allowlisted
+# destination that must be REACHED — otherwise a total failure to connect would read as
+# enforcement), a LIVENESS row that separates `blocked` from `dead`, and its own vocabulary:
+# ENFORCES / INERT / BROKEN, plus two explicit no-verdict states. It takes NO part in
+# DISPOSITION, so a BROKEN arm cannot red a lane that answered every question. Operator
+# instructions, cost and what each outcome would mean: runbook §13. Firing this lane still
+# spends an authorisation the founder gives individually, and UNMEASURED is not "probably
+# works" — DE-08 stays not-delivered and nothing in the product passes a network body.
+#
+# ★★★ THAT ARM HAS BEEN DISPATCHED TWICE AND MEASURED NOTHING, SO RE-FIRING THE IDENTICAL BODY
+# IS AGAIN EXPECTED TO ADD NOTHING. Runs 34328502574 and 34328780645 (2026-09-09, three
+# minutes apart, replatform/w10b-allowlist-arm @ 899aceeec, template aoa-base) BOTH returned
+# `UNRUN — arm-was-never-created`: `Sandbox.create` answered `500: Failed to place sandbox:
+# sandbox creation failed on 3 node(s), please retry; if the problem persists, contact us`,
+# while in the SAME runs, SECONDS apart, the policy and anti-vacuity arms placed successfully.
+# So the documented shape REPRODUCIBLY FAILS TO PLACE at this tier — cause unknown and E2B's
+# to explain; NOT a refusal (a 500 with a retry hint is not a validation rejection — the same
+# run's IPv6 arm shows one: `400: invalid denied CIDR ::ffff:0:0/96`) and NOT transient (it
+# reproduced, with successful siblings). ★ UNRUN IS NOT INERT: the sandbox never existed, so
+# enforcement for this shape is STILL UNMEASURED and nothing here may be read as it having
+# been tested and found not to enforce. Both lanes concluded `success` — correct, because the
+# arm carries an `outcome` and never a `state`. Before spending a third authorisation, read
+# runbook §13.7: ask E2B first, and change ONE thing if a narrower body is tried.
+#
+# ★★★ AND A READ-BACK IS MANDATORY. The SDK validates nothing client-side
+# (`buildNetworkEgress` is a pure passthrough; the only error path is the HTTP status) and the
+# API target is per-company configurable (`config.domain ?? env.E2B_DOMAIN`, with a self-hosted
+# branch). A tolerant or self-hosted server that ignores an unknown field returns 200 and
+# yields an UNPOLICED sandbox with identical code and identical logs. That is why (b) is a
+# first-class question.
+#
+# ★ AND THE ANSWER MADE (b) MORE IMPORTANT, NOT LESS — in the opposite direction to the one
+# this paragraph expected. (b) came back YES on a sandbox that reached its own denied range:
+# the measured tier is NOT the tolerant server described above, it is one that stores a policy
+# faithfully and does not apply it. So the read-back is real and is NOT a safeguard. Nobody may
+# cite (b) as the check that makes adoption safe. E8-F008 §3.
+#
+# ★ THIS LANE DOES NOT FIRE ON A SOURCE CHANGE. The founder authorises keyed E2B runs
+# individually. The ONLY path in the `push` filter is the trigger file, and this PR
+# deliberately does NOT create it — so merging the pack fires nothing, and editing the pack's
+# own source later fires nothing either.
+#
+# ★★ HOW TO FIRE IT — two routes, because a brand-new workflow cannot always bootstrap
+# itself. `workflow_dispatch` by name works only for a workflow GitHub has already INDEXED; a
+# lane that has never run may answer `HTTP 404: workflow ... not found on the default branch`
+# (measured on `keyed-e2b-egress-constraint-probe.yml`, 2026-09-04). The push route always
+# works:
+#
+#     gh workflow run keyed-e2b-w10b-egress-enforcement-probe.yml --ref docs/replatform-program
+#     # if that 404s:
+#     echo "W10B probe run #1 (<date>): <why>" >> .github/keyed-e2b-w10b-egress-enforcement-trigger
+#     # `-am` cannot stage a file git has never seen, and this one does not exist yet:
+#     git add .github/keyed-e2b-w10b-egress-enforcement-trigger
+#     git commit -m "chore(w10b): fire the egress-enforcement probe" && git push
+#
+# Full operator instructions — the cost, the STOP CONDITION, and how to read each three-state
+# result:
+#   docs/replatform/epics/E8-browser-automation/tickets/W10B-egress-enforcement-runbook.md
+#
+# ★★★ SECRETS. `E2B_API_KEY` is the ONLY secret this lane needs, and it already exists as a
+# repo secret. No model-provider key is used and no model tokens are spent. The key is never
+# written into the repository, never printed, and never embedded in a fixture; every string
+# the pack emits passes through its own redactor first.
+
+on:
+  workflow_dispatch:
+    inputs:
+      e2b_template:
+        # ★★★ EMPTY DOES **NOT** MEAN BARE "base" ON THIS LANE. E7-F022 measured that every
+        # keyed lane pipes this input straight into `E2B_TEMPLATE`, so an omitted input
+        # silently selects the bare `base` image ("coreutils only"). This pack needs `curl`
+        # AND a raw-socket tool for question (e); `aoa-base` is built `FROM node:22` with
+        # both `curl` and `python3` installed, AND it is the image AoA production runs — so a
+        # reachability result about it is a result about the product. `resolveTemplate`
+        # corrects OMISSION and only omission; an explicit alias is honoured verbatim.
+        description: 'E2B sandbox template alias. Empty = "aoa-base" (the product image), NOT bare "base".'
+        required: false
+        default: ""
+        type: string
+      aoa_api_url:
+        # The AoA control plane the guest must still reach under the deny set. It is a
+        # PRODUCT-REGRESSION row, and when it is left empty the row is reported as
+        # `not-supplied` and the regression verdict says it was PARTIAL — never a silent pass.
+        description: "AoA control-plane URL for the product-regression row. Empty = that row is NOT exercised."
+        required: false
+        default: "https://testing.armyofagents.org/"
+        type: string
+  push:
+    branches:
+      - docs/replatform-program
+    paths:
+      # The trigger file, and NOTHING else — see the note above.
+      - ".github/keyed-e2b-w10b-egress-enforcement-trigger"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keyed-e2b-w10b-egress-enforcement-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      # The one place the record's path is written down. The pack writes it; the fallback
+      # step guarantees it exists; the upload step retrieves it.
+      W10B_RECORD_PATH: ${{ github.workspace }}/w10b-record/w10b-egress-enforcement-record.json
+      # ★ THE SHELL FALLBACK'S COPY OF THE DEFAULT. The pack resolves the template in JS
+      # (`resolveTemplate`); this duplicate exists only so the fallback record can still name
+      # the image when the pack never reached its reporting stage. The two are PINNED together
+      # by `evaluateDurableRecord`'s `default-template-mismatch` clause, exercised in the
+      # required `policy` job — they cannot drift into naming different images.
+      W10B_DEFAULT_TEMPLATE: aoa-base
+    # Four short-TTL sandboxes, each running a bounded target set (`--max-time 12` per HTTP
+    # target, 8 s per raw socket). The in-test budget is 40 minutes; this cap sits outside it
+    # so a job-level kill names the job, not an innocent step.
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build dist-only leaves
+        # Mirrors the proven block in the sibling keyed lanes. The pack's own imports are
+        # `e2b` and one zero-import pure leaf under `scripts/lib`, but the provider package
+        # DECLARES these workspace deps and the selective build is cheap next to a
+        # wrong-reason red.
+        run: |
+          pnpm --filter @armyofagents/worker-protocol build
+          pnpm --filter @armyofagents/worker-daemon build
+          pnpm --filter @armyofagents/sandbox-fake-provider build
+          pnpm --filter @armyofagents/sandbox-provider-contract build
+
+      - name: Run the W10B egress-enforcement probe against REAL E2B
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          E2B_TEMPLATE: ${{ inputs.e2b_template }}
+          W10B_AOA_API_URL: ${{ inputs.aoa_api_url }}
+          W10B_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: pnpm --filter @armyofagents/sandbox-e2b-provider exec vitest run src/__tests__/keyed-w10b-egress-enforcement-probe.test.ts
+
+      - name: Durable record — guarantee one exists, and put it on the run page
+        # ★★★ `always()` IS LOAD-BEARING, NOT HYGIENE. The run that most needs a durable
+        # record is the INCONCLUSIVE one — "run me again, and here is why" — and that is
+        # exactly the run a success-gated step throws away. `evaluateDurableRecord`
+        # (scripts/lib/w10b-egress-enforcement-probe.mjs, asserted against THIS file in the
+        # required `policy` job) reds if this guard or the upload's guard is removed.
+        #
+        # The pack writes the real record itself. This step only guarantees that SOMETHING
+        # durable exists when the pack died before its own reporting stage — because "the lane
+        # ran and left nothing" is the failure E7-F025 recorded.
+        if: always()
+        env:
+          E2B_TEMPLATE_INPUT: ${{ inputs.e2b_template }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -u
+          mkdir -p "$(dirname "$W10B_RECORD_PATH")"
+          if [ ! -s "$W10B_RECORD_PATH" ]; then
+            RESOLVED_TEMPLATE="${E2B_TEMPLATE_INPUT:-}"
+            RESOLVED_SOURCE="explicit"
+            if [ -z "$RESOLVED_TEMPLATE" ]; then
+              RESOLVED_TEMPLATE="$W10B_DEFAULT_TEMPLATE"
+              RESOLVED_SOURCE="default-product-image"
+            fi
+            cat > "$W10B_RECORD_PATH" <<EOF
+          {
+            "schema": "aoa.w10b.egress-enforcement-record/1",
+            "generatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commitSha": "${GITHUB_SHA}",
+            "workflowRunUrl": "${RUN_URL}",
+            "runNonce": "unknown",
+            "template": { "resolved": "${RESOLVED_TEMPLATE}", "source": "${RESOLVED_SOURCE}", "note": "resolved by the workflow fallback; the pack itself never reported" },
+            "denySet": [],
+            "disposition": { "disposition": "inconclusive", "exitCode": 1, "detail": "the pack produced NO record: it did not reach its own reporting stage. Read the job log for the step that failed." },
+            "decision": { "decision": "undecided", "because": "the-pack-never-reported", "detail": "This run is NOT a measurement of anything." },
+            "probes": [],
+            "observations": {}
+          }
+          EOF
+            {
+              echo "### W10B egress-enforcement probe — NO RESULT"
+              echo
+              echo "The pack did not reach its reporting stage, so no probe verdict exists."
+              echo "Resolved template: \`${RESOLVED_TEMPLATE}\` (${RESOLVED_SOURCE}). Commit: \`${GITHUB_SHA}\`."
+              echo
+              echo "This lane is NOT a measurement of anything. Re-dispatch after fixing the failing step."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "Durable record at $W10B_RECORD_PATH:"
+          cat "$W10B_RECORD_PATH"
+
+      - name: Upload the durable W10B probe record
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        # ★ `always()` FOR THE SAME REASON as the step above, and named so
+        # `evaluateDurableRecord` can find it: a guarded upload of some OTHER artefact must not
+        # satisfy the rule.
+        with:
+          name: w10b-egress-enforcement-record
+          path: ${{ env.W10B_RECORD_PATH }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Fail if the pack SKIPPED (a skip is not a measurement)
+        # ★ THE POSITIVE CONTROL ON THE LANE ITSELF. `describe.skip` without a key is a GREEN
+        # vitest run, so a lane that lost its secret would report success while proving
+        # nothing — this programme's single most repeated defect class. Assert the key was
+        # present. `evaluateDurableRecord`'s `skip-positive-control-missing` clause reds CI if
+        # this step's `exit 1` is ever softened.
+        if: always()
+        run: |
+          if [ -z "${E2B_API_KEY}" ]; then
+            echo "::error::E2B_API_KEY was empty — the W10B probe SKIPPED and measured NOTHING."
+            exit 1
+          fi
+          echo "E2B_API_KEY was present; the pack ran for real. Read the job summary for the three-state verdicts."
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}

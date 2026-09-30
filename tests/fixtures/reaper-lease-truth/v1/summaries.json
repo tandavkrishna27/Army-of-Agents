@@ -1,0 +1,77 @@
+[
+  {
+    "sandboxId": "sb-terminal-0000000000000001",
+    "resourceLabels": {
+      "organizationId": "b0000000-0000-4000-8000-000000000001",
+      "targetId": "b2000000-0000-4000-8000-000000000001",
+      "workerId": "b3000000-0000-4000-8000-000000000001",
+      "jobId": "b4000000-0000-4000-8000-000000000001",
+      "attempt": 1,
+      "leaseId": "b1000000-0000-4000-8000-000000000001",
+      "deviceGeneration": 1
+    },
+    "generation": 1,
+    "state": "running",
+    "hasLiveLease": false
+  },
+  {
+    "sandboxId": "sb-live-0000000000000002",
+    "resourceLabels": {
+      "organizationId": "b0000000-0000-4000-8000-000000000001",
+      "targetId": "b2000000-0000-4000-8000-000000000001",
+      "workerId": "b3000000-0000-4000-8000-000000000001",
+      "jobId": "b4000000-0000-4000-8000-000000000002",
+      "attempt": 1,
+      "leaseId": "b1000000-0000-4000-8000-000000000002",
+      "deviceGeneration": 1
+    },
+    "generation": 1,
+    "state": "running",
+    "hasLiveLease": true
+  },
+  {
+    "sandboxId": "sb-superseded-a-000000000003",
+    "resourceLabels": {
+      "organizationId": "b0000000-0000-4000-8000-000000000001",
+      "targetId": "b2000000-0000-4000-8000-000000000001",
+      "workerId": "b3000000-0000-4000-8000-000000000001",
+      "jobId": "b4000000-0000-4000-8000-000000000003",
+      "attempt": 1,
+      "leaseId": "b1000000-0000-4000-8000-000000000003",
+      "deviceGeneration": 1
+    },
+    "generation": 1,
+    "state": "running",
+    "hasLiveLease": false
+  },
+  {
+    "sandboxId": "sb-superseded-b-000000000003",
+    "resourceLabels": {
+      "organizationId": "b0000000-0000-4000-8000-000000000001",
+      "targetId": "b2000000-0000-4000-8000-000000000001",
+      "workerId": "b3000000-0000-4000-8000-000000000001",
+      "jobId": "b4000000-0000-4000-8000-000000000003",
+      "attempt": 2,
+      "leaseId": "b1000000-0000-4000-8000-000000000003",
+      "deviceGeneration": 1
+    },
+    "generation": 1,
+    "state": "running",
+    "hasLiveLease": false
+  },
+  {
+    "sandboxId": "sb-absent-0000000000000004",
+    "resourceLabels": {
+      "organizationId": "b0000000-0000-4000-8000-000000000001",
+      "targetId": "b2000000-0000-4000-8000-000000000001",
+      "workerId": "b3000000-0000-4000-8000-000000000001",
+      "jobId": "b4000000-0000-4000-8000-000000000004",
+      "attempt": 1,
+      "leaseId": "b1000000-0000-4000-8000-000000000004",
+      "deviceGeneration": 1
+    },
+    "generation": 1,
+    "state": "running",
+    "hasLiveLease": false
+  }
+]

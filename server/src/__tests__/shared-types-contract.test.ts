@@ -355,6 +355,17 @@ describe("chatMessageSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts a frozen Universe context only on the Universe surface", () => {
+    const conversationId = "550e8400-e29b-41d4-a716-446655440001";
+    const universeContext = { schemaVersion: 1, conversationId, selected: { kind: "task", id: "550e8400-e29b-41d4-a716-446655440002" }, visible: [], viewport: { width: 1200, height: 800, x: 0, y: 0, zoom: 1 } };
+    expect(chatMessageSchema.safeParse({ message: "Use this task", conversationId, contextScope: { surface: "universe" }, universeContext }).success).toBe(true);
+    expect(chatMessageSchema.safeParse({ message: "Use this task", conversationId, contextScope: { surface: "task" }, universeContext }).success).toBe(false);
+  });
+
+  it("requires Universe context to match the submitted conversation", () => {
+    expect(chatMessageSchema.safeParse({ message: "Use this task", conversationId: "550e8400-e29b-41d4-a716-446655440001", contextScope: { surface: "universe" }, universeContext: { schemaVersion: 1, conversationId: "550e8400-e29b-41d4-a716-446655440009", selected: null, visible: [], viewport: { width: 1200, height: 800, x: 0, y: 0, zoom: 1 } } }).success).toBe(false);
+  });
+
   it("rejects unknown Commander context surfaces", () => {
     const result = chatMessageSchema.safeParse({
       message: "hello",

@@ -16,7 +16,7 @@ You run in **heartbeats** — short execution windows triggered by AoA. Each hea
 
 Env vars auto-injected: `AOA_AGENT_ID`, `AOA_COMPANY_ID`, `AOA_API_URL`, `AOA_RUN_ID`. Optional wake-context vars may also be present: `AOA_TASK_ID` (issue/task that triggered this wake), `AOA_WAKE_REASON` (why this run was triggered), `AOA_WAKE_COMMENT_ID` (specific comment that triggered this wake), `AOA_APPROVAL_ID`, `AOA_APPROVAL_STATUS`, and `AOA_LINKED_ISSUE_IDS` (comma-separated). For local adapters, `AOA_API_KEY` is auto-injected as a short-lived run JWT. For non-local adapters, your operator should set `AOA_API_KEY` in adapter config. All requests use `Authorization: Bearer $AOA_API_KEY`. All endpoints under `/api`, all JSON. Never hard-code the API URL.
 
-**Run audit trail:** You MUST include `-H 'X-AoA-Run-Id: $AOA_RUN_ID'` on ALL API requests that modify issues (checkout, update, comment, create subtask, release). This links your actions to the current heartbeat run for traceability.
+**Run audit trail:** You MUST include `-H 'X-Aoa-Run-Id: $AOA_RUN_ID'` on ALL API requests that modify issues (checkout, update, comment, create subtask, release). This links your actions to the current heartbeat run for traceability.
 
 ## The Heartbeat Procedure
 
@@ -48,7 +48,7 @@ If nothing is assigned and there is no valid mention-based ownership handoff, ex
 
 ```
 POST /api/issues/{issueId}/checkout
-Headers: Authorization: Bearer $AOA_API_KEY, X-AoA-Run-Id: $AOA_RUN_ID
+Headers: Authorization: Bearer $AOA_API_KEY, X-Aoa-Run-Id: $AOA_RUN_ID
 { "agentId": "{your-agent-id}", "expectedStatuses": ["todo", "backlog", "blocked"] }
 ```
 
@@ -64,11 +64,11 @@ If you are blocked at any point, you MUST update the issue to `blocked` before e
 
 ```json
 PATCH /api/issues/{issueId}
-Headers: X-AoA-Run-Id: $AOA_RUN_ID
+Headers: X-Aoa-Run-Id: $AOA_RUN_ID
 { "status": "done", "comment": "What was done and why." }
 
 PATCH /api/issues/{issueId}
-Headers: X-AoA-Run-Id: $AOA_RUN_ID
+Headers: X-Aoa-Run-Id: $AOA_RUN_ID
 { "status": "blocked", "comment": "What is blocked, why, and who needs to unblock it." }
 ```
 

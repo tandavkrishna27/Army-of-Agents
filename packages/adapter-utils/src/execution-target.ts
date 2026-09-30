@@ -984,13 +984,13 @@ export function adapterExecutionTargetUsesManagedHome(
   return target?.type === "sandbox-docker" || target?.type === "provider-sandbox";
 }
 
-export function adapterExecutionTargetUsesAoABridge(
+export function adapterExecutionTargetUsesPaperclipBridge(
   _target: AdapterExecutionTarget | null | undefined,
 ): boolean {
   return false;
 }
 
-export async function startAdapterExecutionTargetAoABridge(): Promise<null> {
+export async function startAdapterExecutionTargetPaperclipBridge(): Promise<null> {
   return null;
 }
 

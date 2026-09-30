@@ -591,10 +591,10 @@ Overview, and `docs/docs.json`. It contains:
 - an authoritative storage table: host/Compose path `/aoa`, instance path,
   legacy root, persistent root, write selector, and rollback behavior
 
-Reconcile the current `/upstream` prose in `docs/deploy/docker.md` and
+Reconcile the current `/paperclip` prose in `docs/deploy/docker.md` and
 `docs/deploy/upgrade-guide.md` with the actual `/aoa` Compose mount and the
 intentional compatibility symlink. No deployment guide may describe
-`/upstream` as the authoritative persistent mount.
+`/paperclip` as the authoritative persistent mount.
 
 ### A1 Test Matrix
 
@@ -1215,7 +1215,7 @@ they do not require company IDs, board-token environment variables, or an
 Origin header.
 
 The authoritative storage table and deploy scripts remove the current
-`/upstream` versus `/aoa` contradiction. The restricted live evidence envelope
+`/paperclip` versus `/aoa` contradiction. The restricted live evidence envelope
 is never a CI dependency; the committed non-secret fixture is the offline
 contract.
 

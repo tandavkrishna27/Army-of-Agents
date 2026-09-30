@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { Db } from "@armyofagents/db";
 import { internalAgentConfig, agents } from "@armyofagents/db";
-import type { CommanderContextScope, ShowRef } from "@armyofagents/shared";
+import type { CommanderContextScope, ShowRef, UniverseContext } from "@armyofagents/shared";
 import type { ToolResult } from "./types.js";
 import { conversationService, COMMANDER_TURN_HEARTBEAT_MS } from "./conversation.js";
 import { cliModeService } from "./cli-mode.js";
@@ -31,6 +31,8 @@ import {
   createRuntimeAttachmentDeps,
 } from "./runtime-attachments.js";
 import type { Readable } from "node:stream";
+import { resolveUniverseContext } from "./universe-context.js";
+import { hashCommanderSubmission } from "./submission-identity.js";
 
 /** Minimal storage surface needed to read attachment bytes for runtime delivery. */
 export interface RuntimeAttachmentStorage {
@@ -93,6 +95,7 @@ export interface ChatInput {
   departmentContext?: string;
   conversationId?: string;
   contextScope?: CommanderContextScope | NormalizedCommanderContextScope | null;
+  universeContext?: UniverseContext;
   /**
    * The internal_agent_runs row id for this turn (created by the chat route).
    * Threaded to the MCP bridge as AOA_RUN_ID so emitted output refs carry
@@ -286,12 +289,27 @@ export function agentLoopService(db: Db, storage?: RuntimeAttachmentStorage) {
         // both the fresh-insert and reuse-existing paths so the assistant row we
         // persist below carries an explicit back-link (PR #291 review, C2).
         let userMessageId: string | null = null;
+        const submissionPayloadHash = params.clientSubmissionId
+          ? hashCommanderSubmission({
+              conversationId: conversation.id,
+              message: params.content,
+              attachmentAssetIds: params.attachmentAssetIds,
+              departmentContext: params.departmentContext,
+              contextScope: params.contextScope ?? null,
+              universeContext: params.universeContext,
+            })
+          : null;
         if (params.clientSubmissionId) {
           const priorUser = await convService.getMessageByClientSubmissionId(
             conversation.id,
             params.clientSubmissionId,
           );
           if (priorUser) {
+            if (!priorUser.submissionPayloadHash || priorUser.submissionPayloadHash !== submissionPayloadHash) {
+              yield { type: "run_skipped" };
+              yield { type: "error", message: "Submission identity conflict. Review the preserved draft before sending again." };
+              return;
+            }
             // C2: replay ONLY the reply explicitly linked to this user turn, not
             // the first assistant row after its timestamp — which could belong to
             // a later, unrelated turn if this send died before it replied.
@@ -324,12 +342,21 @@ export function agentLoopService(db: Db, storage?: RuntimeAttachmentStorage) {
             pageContext: params.pageContext ?? null,
             departmentContext: params.departmentContext ?? null,
             clientSubmissionId: params.clientSubmissionId ?? null,
+            submissionPayloadHash,
           });
           // C3 (PR #291 review): a same-key request that lost the unique-index
           // insert race gets back an undefined insert — the winner owns the turn.
           // Defer to it (replay its reply if persisted, else in-progress); never
           // start a second run.
           if (!insertedUser) {
+            const winner = params.clientSubmissionId
+              ? await convService.getMessageByClientSubmissionId(conversation.id, params.clientSubmissionId)
+              : null;
+            if (!winner?.submissionPayloadHash || winner.submissionPayloadHash !== submissionPayloadHash) {
+              yield { type: "run_skipped" };
+              yield { type: "error", message: "Submission identity conflict. Review the preserved draft before sending again." };
+              return;
+            }
             yield* replayWinnerOrSignalInProgress(
               convService,
               conversation.id,
@@ -360,6 +387,11 @@ export function agentLoopService(db: Db, storage?: RuntimeAttachmentStorage) {
           }
           claimedUserMessageId = userMessageId;
           claimToken = token;
+          if (params.runId && !(await convService.bindRunToClaim(userMessageId, token, params.runId))) {
+            yield { type: "run_skipped" };
+            yield { type: "error", message: "The Commander turn changed owner before execution started." };
+            return;
+          }
         }
 
         // 2b. Runtime attachment delivery (v1 — text only). Resolve company-owned
@@ -481,6 +513,7 @@ export function agentLoopService(db: Db, storage?: RuntimeAttachmentStorage) {
               content: item.content,
               layer: item.layer,
             })),
+            ...(params.universeContext ? { resolvedUniverseContext: await resolveUniverseContext(db, { companyId: params.companyId, userId: params.userId, conversationId: conversation.id, context: params.universeContext }) } : {}),
           });
 
           // Split assembled context from the user message (C-systemsplit).

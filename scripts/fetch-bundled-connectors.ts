@@ -12,6 +12,12 @@ import { dirname, join } from "node:path";
  * catalog's `{ ..., items: [...] }`. They are separate CDN artifacts on purpose
  * (the FU-14 fleet-safety separation: one unknown item type must never freeze the
  * other catalog).
+ *
+ * FND-005: this network fetch is NO LONGER part of `pnpm build`/`prebuild` (the
+ * authoritative build is network-free and consumes pinned checked-in snapshot
+ * inputs verified by scripts/check-bundled-snapshot-inputs.mjs). It runs only via
+ * the explicit `pnpm refresh:bundled-snapshots` operator command, which re-pins
+ * the manifest digests afterward. Never call it from build or test.
  */
 const CDN_URL = process.env.AOA_CONNECTORS_CDN_URL
   ?? "https://meteoritelabs.github.io/aoa-marketplace-cdn/connectors.json";

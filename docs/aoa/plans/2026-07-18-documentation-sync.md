@@ -128,7 +128,7 @@ reference docs or operator guides.
   broken execution-workspaces plan link and deleted company portability source
   paths.
 - Review `README.md`, `docs/api/mcp.md`,
-  `docs/start/upstream-vs-aoa.md`, and adapter/nav entry points for stale
+  `docs/start/paperclip-vs-aoa.md`, and adapter/nav entry points for stale
   onboarding or tool-surface claims.
 
 ### 5. Discoverability and lifecycle boundary

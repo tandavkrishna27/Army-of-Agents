@@ -129,7 +129,7 @@ describe("process adapter execution target bridge context", () => {
         env: {},
       },
       context: {
-        aoaWorkspace: {
+        paperclipWorkspace: {
           cwd: "C:/aoa/worktrees/task-123",
           source: "project_primary",
         },

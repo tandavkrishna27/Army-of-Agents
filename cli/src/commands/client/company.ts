@@ -98,7 +98,7 @@ async function resolveInlineSourceFromPath(inputPath: string): Promise<{
   const resolved = path.resolve(inputPath);
   const resolvedStat = await stat(resolved);
   const manifestPath = resolvedStat.isDirectory()
-    ? path.join(resolved, "aoa.manifest.json")
+    ? path.join(resolved, "paperclip.manifest.json")
     : resolved;
   const manifestBaseDir = path.dirname(manifestPath);
   const manifestRaw = await readFile(manifestPath, "utf8");
@@ -120,7 +120,7 @@ async function resolveInlineSourceFromPath(inputPath: string): Promise<{
 async function writeExportToFolder(outDir: string, exported: CompanyPortabilityExportResult): Promise<void> {
   const root = path.resolve(outDir);
   await mkdir(root, { recursive: true });
-  const manifestPath = path.join(root, "aoa.manifest.json");
+  const manifestPath = path.join(root, "paperclip.manifest.json");
   await writeFile(manifestPath, JSON.stringify(exported.manifest, null, 2), "utf8");
   for (const [relativePath, content] of Object.entries(exported.files)) {
     const normalized = relativePath.replace(/\\/g, "/");

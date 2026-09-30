@@ -1,0 +1,119 @@
+{
+  "schema": "aoa-device-proof-vectors/v1",
+  "version": "1",
+  "prefix": "AOA-DEVICE-PROOF-V1",
+  "description": "Neutral shared canonicalization vectors for the AOA-DEVICE-PROOF-V1 HTTP device proof (JOB-002 / E4-F001). The canonical string is the newline join of the seven fields below. This file is the SINGLE source of truth consumed independently by (1) the server verify-side canonicalizer test, (2) the worker daemon sign-side canonicalizer test (WRK-002), and (3) the reference checker scripts/check-device-proof-vectors.mjs. Any consumer that diverges from these vectors fails its own test; the checker fails if the vectors themselves drift from the reference algorithm. Owning/minting this file is a JOB-002 (E3) deliverable — a worker-local copy proves only self-consistency, not server compatibility.",
+  "canonicalFields": [
+    "prefix (AOA-DEVICE-PROOF-V1)",
+    "method (upper-cased)",
+    "path (URL-normalized against https://aoa.invalid; query and fragment stripped; . and .. segments resolved)",
+    "bodyDigest (lowercase sha256 hex, 64 chars)",
+    "correlationId (non-empty, no newline)",
+    "issuedAt (ISO-8601 UTC, no newline)",
+    "proofId ([A-Za-z0-9_-]{8,128})"
+  ],
+  "canonicalVectors": [
+    {
+      "name": "simple_session_post",
+      "note": "Already-uppercase method and a plain path pass through unchanged.",
+      "input": {
+        "method": "POST",
+        "path": "/api/worker-control/session",
+        "bodyDigest": "0000000000000000000000000000000000000000000000000000000000000001",
+        "correlationId": "11111111-1111-4111-8111-111111111111",
+        "issuedAt": "2026-08-10T00:00:00.000Z",
+        "proofId": "proof-session-00000001"
+      },
+      "canonical": "AOA-DEVICE-PROOF-V1\nPOST\n/api/worker-control/session\n0000000000000000000000000000000000000000000000000000000000000001\n11111111-1111-4111-8111-111111111111\n2026-08-10T00:00:00.000Z\nproof-session-00000001"
+    },
+    {
+      "name": "path_normalization_and_query_strip",
+      "note": "Lower-cased method upper-cases; . and .. segments resolve; ?query is dropped.",
+      "input": {
+        "method": "post",
+        "path": "/api/worker-control/../worker-control/./enroll?ignored=yes",
+        "bodyDigest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "correlationId": "00000000-0000-4000-8000-000000000101",
+        "issuedAt": "2026-08-10T00:00:00.000Z",
+        "proofId": "proof-0000000000000001"
+      },
+      "canonical": "AOA-DEVICE-PROOF-V1\nPOST\n/api/worker-control/enroll\n0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n00000000-0000-4000-8000-000000000101\n2026-08-10T00:00:00.000Z\nproof-0000000000000001"
+    },
+    {
+      "name": "method_lowercase_get_lease",
+      "note": "get -> GET; plain path.",
+      "input": {
+        "method": "get",
+        "path": "/api/worker-control/lease",
+        "bodyDigest": "00000000000000000000000000000000000000000000000000000000000000aa",
+        "correlationId": "22222222-2222-4222-8222-222222222222",
+        "issuedAt": "2026-08-11T12:34:56.000Z",
+        "proofId": "proof-lease-000000000002"
+      },
+      "canonical": "AOA-DEVICE-PROOF-V1\nGET\n/api/worker-control/lease\n00000000000000000000000000000000000000000000000000000000000000aa\n22222222-2222-4222-8222-222222222222\n2026-08-11T12:34:56.000Z\nproof-lease-000000000002"
+    },
+    {
+      "name": "double_dot_segment_resolution_patch",
+      "note": "Mixed-case method upper-cases; /api/a/b/../../worker-control/poll resolves to /api/worker-control/poll.",
+      "input": {
+        "method": "Patch",
+        "path": "/api/a/b/../../worker-control/poll",
+        "bodyDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "correlationId": "33333333-3333-4333-8333-333333333333",
+        "issuedAt": "2026-08-12T23:59:59.999Z",
+        "proofId": "proof-poll-0000000000003"
+      },
+      "canonical": "AOA-DEVICE-PROOF-V1\nPATCH\n/api/worker-control/poll\nffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\n33333333-3333-4333-8333-333333333333\n2026-08-12T23:59:59.999Z\nproof-poll-0000000000003"
+    }
+  ],
+  "rejectInputs": [
+    {
+      "name": "newline_in_correlation_id",
+      "reason": "correlationId contains a newline (canonical-field injection).",
+      "input": {
+        "method": "POST",
+        "path": "/api/worker-control/enroll",
+        "bodyDigest": "0000000000000000000000000000000000000000000000000000000000000001",
+        "correlationId": "11111111-1111-4111-8111-111111111111\nPOST",
+        "issuedAt": "2026-08-10T00:00:00.000Z",
+        "proofId": "proof-session-00000001"
+      }
+    },
+    {
+      "name": "body_digest_not_sha256_hex",
+      "reason": "bodyDigest is not 64 lowercase hex chars.",
+      "input": {
+        "method": "POST",
+        "path": "/api/worker-control/enroll",
+        "bodyDigest": "not-a-valid-sha256-digest",
+        "correlationId": "11111111-1111-4111-8111-111111111111",
+        "issuedAt": "2026-08-10T00:00:00.000Z",
+        "proofId": "proof-session-00000001"
+      }
+    },
+    {
+      "name": "protocol_relative_path_changes_origin",
+      "reason": "A //host path resolves to a foreign origin and must be rejected.",
+      "input": {
+        "method": "POST",
+        "path": "//evil.example/api/worker-control/enroll",
+        "bodyDigest": "0000000000000000000000000000000000000000000000000000000000000001",
+        "correlationId": "11111111-1111-4111-8111-111111111111",
+        "issuedAt": "2026-08-10T00:00:00.000Z",
+        "proofId": "proof-session-00000001"
+      }
+    },
+    {
+      "name": "proof_id_too_short",
+      "reason": "proofId shorter than 8 chars fails the PROOF_ID pattern.",
+      "input": {
+        "method": "POST",
+        "path": "/api/worker-control/enroll",
+        "bodyDigest": "0000000000000000000000000000000000000000000000000000000000000001",
+        "correlationId": "11111111-1111-4111-8111-111111111111",
+        "issuedAt": "2026-08-10T00:00:00.000Z",
+        "proofId": "short"
+      }
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import {
   CONNECTOR_STRIPPED_RUN_BEARER_KEYS,
 } from "../server-utils.js";
 
-// WS1 — the run-scoped bearers (AOA_API_KEY,
+// WS1 — the run-scoped bearers (AOA_API_KEY, its PAPERCLIP_ wire alias,
 // AOA_RUNTIME_HOOK_TOKEN) must never reach a stdio connector child, which
 // inherits the vendor CLI's full env. The helper deletes them from the overlay
 // by KEY and by VALUE, but only when connectors are present.
@@ -18,6 +18,7 @@ describe("stripConnectorRunBearers", () => {
   it("strips every run bearer by key when connectors are present", () => {
     const env: Record<string, string> = {
       AOA_API_KEY: "run-token",
+      PAPERCLIP_API_KEY: "wire-alias",
       AOA_RUNTIME_HOOK_TOKEN: "hook-token",
       AOA_RUN_ID: "r1",
       MAX_THINKING_TOKENS: "3000",
@@ -71,6 +72,7 @@ describe("stripConnectorRunBearers", () => {
   it("exposes the canonical bearer key list", () => {
     expect(CONNECTOR_STRIPPED_RUN_BEARER_KEYS).toEqual([
       "AOA_API_KEY",
+      "PAPERCLIP_API_KEY",
       "AOA_RUNTIME_HOOK_TOKEN",
     ]);
   });

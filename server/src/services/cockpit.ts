@@ -72,6 +72,7 @@ import { memoryService } from "./memory.js";
 import { liveRunsForCompany } from "../routes/agents-live-runs.js";
 import { resolveCockpitScope } from "./cockpit-scope.js";
 import type { ActorLike, CockpitScope } from "./cockpit-scope.js";
+import { notDenialNamespace } from "./activity-namespace.js";
 import { cockpitWorkService } from "./cockpit-work.js";
 
 function settledValue<T>(result: PromiseSettledResult<T>, fallback: T): T {
@@ -474,7 +475,10 @@ async function cockpitProactiveFindings(
 // (holistic review: `plugin` would have slipped past a denylist of agent/system/commander).
 const HUMAN_ACTORS = ["user", "board"];
 
-async function cockpitTeammatesActivity(
+// Exported for the E0-F013 Decision 3 (Q3) provocation test — a security reader
+// that must be exercised directly, not only through the 14-resolver cockpit
+// aggregate. It is otherwise called only by `cockpitService.get` below.
+export async function cockpitTeammatesActivity(
   db: Db,
   companyId: string,
   scope: CockpitScope,
@@ -486,6 +490,11 @@ async function cockpitTeammatesActivity(
     eq(activityLog.companyId, companyId),
     inArray(activityLog.actorType, HUMAN_ACTORS),
     ne(activityLog.actorId, scope.userId),
+    // E0-F013 Decision 3 (Q3), founder-ruled 2026-09-11: never disclose a
+    // `security.denied.*` row to a tenant. The HUMAN_ACTORS allowlist already
+    // drops agent/system denials, but a HUMAN actor refused a cross-tenant
+    // action is a `user`/`board` denial row that would otherwise pass it.
+    notDenialNamespace(),
   ];
 
   if (!scope.isFounder) {

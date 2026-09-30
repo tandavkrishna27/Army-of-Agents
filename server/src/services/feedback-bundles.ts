@@ -23,12 +23,15 @@ import {
   sha256Digest,
 } from "./feedback-redaction.js";
 
-// AoA feedback wire versions. Bump only with a coordinated schema change.
-export const FEEDBACK_SCHEMA_VERSION = "aoa-feedback-envelope-v2";
-export const FEEDBACK_BUNDLE_VERSION = "aoa-feedback-bundle-v2";
-export const FEEDBACK_PAYLOAD_VERSION = "aoa-feedback-v1";
+// Version constants — Paperclip parity. Keep in lockstep with Paperclip's
+// server/src/services/feedback.ts so bundles produced by AoA and Paperclip are
+// wire-compatible at the same schemaVersion / bundleVersion / payloadVersion.
+export const FEEDBACK_SCHEMA_VERSION = "paperclip-feedback-envelope-v2";
+export const FEEDBACK_BUNDLE_VERSION = "paperclip-feedback-bundle-v2";
+export const FEEDBACK_PAYLOAD_VERSION = "paperclip-feedback-v1";
 
-// Capture limits keep feedback bundles within transmission endpoint body limits.
+// Capture limits — Paperclip parity (feedback.ts:54-63). Tuned to stay under
+// typical transmission endpoint body limits once F.D1 decision lands.
 const FEEDBACK_CONTEXT_WINDOW = 3;
 const MAX_EXCERPT_CHARS = 200;
 const MAX_PRIMARY_CONTENT_CHARS = 8_000;
@@ -127,9 +130,26 @@ interface ResolvedTarget {
 // ── buildBundle ───────────────────────────────────────────────────────────────
 
 // buildBundle assembles a feedback bundle from a saved vote, applies redaction,
-// and upserts a feedback_exports row. The caller supplies an already-saved
-// voteId. Agent context currently contains the agent record because comments
-// do not link to a run; runtime and cost data cannot be reconstructed here.
+// and upserts a feedback_exports row with status='local_only'. Matches
+// Paperclip's buildPayloadArtifacts (feedback.ts:1303) in shape and digest
+// semantics. Key divergences from Paperclip (documented for auditors):
+//
+//   1. Paperclip builds the bundle *inside* the saveIssueVote transaction
+//      (feedback.ts:2003). AoA F.2 ships vote capture separately (4a21c9b); F.3
+//      adds buildBundle as a callable that takes an already-saved voteId. F.4
+//      will wire this to recordVote post-commit when preference='allowed'.
+//   2. Paperclip writes status='pending' when sharedWithLabs=true, else
+//      'local_only' (feedback.ts:2034). F.3 always writes 'local_only' because
+//      transmission destination is deferred (F.D1). F.4 updates status when
+//      preference gating lands.
+//   3. issue_comments in AoA has no createdByRunId column, so agentContext
+//      cannot walk back to heartbeatRuns / costEvents. Paperclip's
+//      buildAgentContext runtime block is therefore omitted. Comment this gap
+//      upstream when CLI capture lands (follow-up noted in plan F.3).
+//   4. AoA's agentInstructionsService does not exist — agentContext ships only
+//      the agent record shape (id, name, role, title, status, adapterType).
+//      Paperclip's skills + instructions blocks are skipped. Future parity:
+//      port agent-instructions + cost summary when F.5 telemetry routing lands.
 
 export async function buildBundle(
   db: Pick<Db, "select" | "insert">,
@@ -299,7 +319,7 @@ async function resolveTarget(
   const issuePath = buildIssuePath(issue.identifier);
 
   // AoA F.2 MVP ports "issue_comment" only (shared/types/feedback.ts:13).
-  // AoA also supports "issue_document_revision" (feedback.ts:844) — add
+  // Paperclip also supports "issue_document_revision" (feedback.ts:844) — add
   // here once F.2 UI + schema extend the target union.
   if (vote.targetType === "issue_comment") {
     const rows = await db
@@ -331,7 +351,8 @@ async function resolveTarget(
       throw notFound("Feedback target not found");
     }
     if (!comment.authorAgentId) {
-      // Only agent-authored comments can receive feedback votes.
+      // Matches Paperclip's guard (feedback.ts:811) — thumbs only appear on
+      // agent-authored comments; human-authored comments can't receive votes.
       throw unprocessable("Feedback voting is only available on agent-authored issue comments");
     }
 
@@ -550,7 +571,9 @@ async function buildAgentContext(
     return null;
   }
 
-  // Runtime, skills, and instructions are unavailable without a run link.
+  // AoA-only-scope: no runtime/skills/instructions block. Paperclip's
+  // buildAgentContext (feedback.ts:1053) enriches with heartbeatRun + skills +
+  // instructions; AoA ships the agent card only until F.5 wires telemetry.
   return sanitizeFeedbackValue(
     {
       agent: {
@@ -561,7 +584,7 @@ async function buildAgentContext(
         status: agent.status,
         adapterType: agent.adapterType,
       },
-      aoa: {
+      paperclip: {
         schemaVersion: FEEDBACK_SCHEMA_VERSION,
         bundleVersion: FEEDBACK_BUNDLE_VERSION,
       },

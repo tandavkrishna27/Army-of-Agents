@@ -21,7 +21,7 @@
 import { fork, type ChildProcess } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { createInterface, type Interface as ReadlineInterface } from "node:readline";
-import type { AoAPluginManifestV1 } from "@armyofagents/shared";
+import type { PaperclipPluginManifestV1 } from "@armyofagents/shared";
 import {
   JSONRPC_VERSION,
   JSONRPC_ERROR_CODES,
@@ -161,7 +161,7 @@ export interface WorkerStartOptions {
   /** Absolute path to the plugin worker entrypoint (CJS bundle). */
   entrypointPath: string;
   /** Plugin manifest. */
-  manifest: AoAPluginManifestV1;
+  manifest: PaperclipPluginManifestV1;
   /** Resolved plugin configuration. */
   config: Record<string, unknown>;
   /** Host instance information for the initialize call. */
@@ -618,6 +618,8 @@ export function createPluginWorkerHandle(
   function spawnProcess(): ChildProcess {
     // Final process-creation backstop. This protects direct handle users and
     // crash auto-restarts even if an upstream lifecycle check regresses.
+    // FND-006: on `cloud_auth` this ALWAYS throws (the `worker-fork` sink fails
+    // closed), so the hosted parent can never reach `fork()` below.
     assertCloudPluginExecutionAllowed({
       pluginId,
       companyId: options.companyId,
@@ -633,10 +635,11 @@ export function createPluginWorkerHandle(
       PATH: process.env.PATH ?? "",
       NODE_PATH: process.env.NODE_PATH ?? "",
       AOA_PLUGIN_ID: pluginId,
-      // RW5a: marks the CHILD's own env so `cloud-plugin-execution.ts` can
-      // tell "running inside the isolated worker child" apart from "running
-      // in the control plane" — this process never inherits the parent's
-      // env (see the security note above), so the marker cannot leak back.
+      // Child-identity marker for diagnostics only. Since FND-006 the cloud
+      // gate NEVER consults this marker, so it can never grant the hosted
+      // parent authority; it is only ever set here, inside a genuine self-hosted
+      // worker child built from a scratch env (the parent never inherits it),
+      // and on cloud this line is unreachable (the fork sink denies above).
       [PLUGIN_WORKER_PROCESS_ENV_VAR]: "1",
       NODE_ENV: process.env.NODE_ENV ?? "production",
       TZ: process.env.TZ ?? "UTC",

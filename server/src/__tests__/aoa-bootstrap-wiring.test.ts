@@ -230,7 +230,7 @@ describe("A9.1 — Commander-Team seeds wired into createCompanyWithUniquePrefix
     const db = makeDb();
     const svc = companyService(db);
 
-    const company = await svc.create({ name: "Acme" } as any);
+    const company = await svc.create({ name: "Acme", organizationId: "00000000-0000-0000-0000-000000000001" } as any);
     expect(company.id).toBe(NEW_COMPANY_ID);
 
     expect(ensureConfigMock).toHaveBeenCalledWith(db, NEW_COMPANY_ID);
@@ -239,7 +239,7 @@ describe("A9.1 — Commander-Team seeds wired into createCompanyWithUniquePrefix
 
   it("seeds in order: root-folder → config → commander", async () => {
     const db = makeDb();
-    await companyService(db).create({ name: "Acme" } as any);
+    await companyService(db).create({ name: "Acme", organizationId: "00000000-0000-0000-0000-000000000001" } as any);
 
     // ensureCommander's internal_agent_config UPDATE no-ops unless the config
     // row exists first, so config MUST precede commander. (Phase 1 / Phase D
@@ -251,7 +251,7 @@ describe("A9.1 — Commander-Team seeds wired into createCompanyWithUniquePrefix
   // ── P8d — the marketplace gate covers the CREW half only ────────────────
   it("marketplace-managed company: config + Commander still seed, legacy crew does NOT", async () => {
     const db = makeDb({ managed: true });
-    await companyService(db).create({ name: "Acme" } as any);
+    await companyService(db).create({ name: "Acme", organizationId: "00000000-0000-0000-0000-000000000001" } as any);
 
     // The casualty this task fixes: internal_agent_config used to live inside
     // the gated block, so a marketplace-managed company got NO config row —
@@ -268,7 +268,7 @@ describe("A9.1 — Commander-Team seeds wired into createCompanyWithUniquePrefix
 
   it("NOT marketplace-managed: the full legacy roster still seeds (regression)", async () => {
     const db = makeDb();
-    await companyService(db).create({ name: "Acme" } as any);
+    await companyService(db).create({ name: "Acme", organizationId: "00000000-0000-0000-0000-000000000001" } as any);
 
     expect(seedCalls.slice().sort()).toEqual(
       ["adjutant", "chronicler", "commander", "config", "engineer", "librarian", "scout", "staff", "steward"],
@@ -282,7 +282,7 @@ describe("A9.1 — Commander-Team seeds wired into createCompanyWithUniquePrefix
   // the entire crew — silently, on every newly created company.
   it("a seeder that stamps a non-@legacy origin cannot make a company skip its own crew", async () => {
     const db = makeDb({ stampsOriginOnSeed: true });
-    await companyService(db).create({ name: "Acme" } as any);
+    await companyService(db).create({ name: "Acme", organizationId: "00000000-0000-0000-0000-000000000001" } as any);
 
     expect(seedCalls).toContain("commander");
     // The whole point: the crew still seeds despite the self-inflicted match.

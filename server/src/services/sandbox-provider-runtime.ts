@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { logger } from "../middleware/logger.js";
 import { createGvisorSandboxRuntimeProvider } from "./gvisor-sandbox-provider.js";
+import type { JobControlMetrics } from "./job-control-metrics.js";
 
 export interface SandboxProviderAcquireInput {
   companyId: string;
@@ -779,10 +780,79 @@ export function createE2bSandboxRuntimeProvider(
           aoaProvider: "e2b",
           companyId: input.companyId,
           environmentId: input.environmentId,
-          // S4 — best-effort managed recording only (§11/§12: managed E2B
-          // egress is not fully lockable). Omitted entirely when no
-          // allowlist was supplied, so the pre-existing exact `create(...)`
-          // call assertions in sandbox-provider-runtime.test.ts stay green.
+          // S4 — best-effort managed recording only. This is a `metadata`
+          // string; nothing reads it back and nothing enforces it (E8-F003
+          // measured that, against real E2B, with both controls holding).
+          //
+          // ★ The old wording here said the spec's "§11/§12: managed E2B
+          // egress is not fully lockable" (E8-F007). Do not restate that as
+          // the reason. The installed, lockfile-pinned e2b@2.30.5 DOES expose
+          // an egress surface — `SandboxOpts.network` (allowOut/denyOut/rules)
+          // reaching the create body via `buildNetworkBody`, `updateNetwork`
+          // for a running sandbox, and a `getInfo()` read-back of what the
+          // server applied.
+          //
+          // ★★★ MEASURED 2026-09-07 (E8-F008, workflow run 34085130892): the
+          // tier does NOT honour a DENY-SPECIFIC network body -- a denyOut list
+          // of CIDRs with NO allowOut. It ACCEPTS the deny set,
+          // VALIDATES it server-side, STORES it, returns it VERBATIM from
+          // getInfo() -- and routes the denied traffic anyway. A sandbox
+          // declaring denyOut 169.254.0.0/16 reached 169.254.169.254 (401)
+          // exactly as an anti-vacuity sandbox that denied a different range.
+          // updateNetwork behaves the same way.
+          //
+          // ★ THE SCOPE OF THAT RESULT, NARROWED 2026-09-09 (W10B-B) BECAUSE
+          // THIS COMMENT OVERSTATED IT. It said "does NOT honour a network
+          // body" -- a claim about ALL network bodies, generalised from the one
+          // shape that was tested. E2B documents a DIFFERENT construction as
+          // the fine-grained control: default-deny (denyOut: ({allTraffic}) =>
+          // [allTraffic]) PLUS an allowOut allowlist, which is also the only
+          // form that supports domains. That shape is UNMEASURED. The arm for
+          // it is built (keyed-w10b-egress-enforcement-probe.test.ts, arm
+          // "A/allowlist").
+          //
+          // ★★★ THAT ARM WAS DISPATCHED TWICE (2026-09-09, runs 34328502574 and
+          // 34328780645) AND THE SHAPE IS STILL UNMEASURED. Both returned
+          // UNRUN -- arm-was-never-created: Sandbox.create failed to place the
+          // body with a 500 ("Failed to place sandbox ... please retry") while
+          // the sibling arms placed seconds apart on the same template. So the
+          // documented shape REPRODUCIBLY FAILS TO PLACE at this tier, cause
+          // unknown. That is NOT a refusal (a 500 with a retry hint is not a
+          // validation rejection) and NOT transient (it reproduced, with
+          // successful siblings) -- and, the direction that matters here,
+          // ★ UNRUN IS NOT INERT: the sandbox never existed, so nothing below
+          // may be read as the allowlist shape having been tested and found not
+          // to enforce. E8-F008 section 8.
+          //
+          // ★★ UNMEASURED IS NOT "PROBABLY WORKS". DE-08 stays not-delivered,
+          // this call STILL passes no network body, and nothing changes here on
+          // the strength of a shape nobody has managed to run.
+          //
+          // So this call still passes `metadata` and NOT `network` -- and the
+          // reason has changed from "unmeasured" to "measured inert FOR THE
+          // DENY-ONLY SHAPE, and unmeasured for the documented allowlist
+          // shape". Either way nothing is adopted here. DO NOT
+          // adopt `network` here on the strength of a getInfo() read-back: the
+          // read-back PASSES on that unpoliced sandbox, so it verifies what was
+          // DECLARED and not what is ENFORCED. Adopting it would ship a control
+          // that looks correct in the code, in the logs and in its own
+          // verification, and enforces nothing. E8-F008 sections 1 and 3.
+          //
+          // Unit W10B built the keyed probe that answered the tier question, and the
+          // stop condition that would have ended the option a different way (a guest
+          // DNS resolver inside the deny set: `denyOut` has no exclude, and any
+          // `allowOut` entry flips the whole policy to default-deny). THAT STOP
+          // CONDITION DID NOT FIRE -- the resolver was outside every declared range and
+          // resolution worked under the policy -- so the result is genuine inertness and
+          // not a broken experiment. The run and its record are in
+          // `docs/replatform/epics/E8-browser-automation/tickets/W10B-egress-enforcement-runbook.md`
+          // (section 12) and `W10B-egress-enforcement-result.md` beside it.
+          // Nothing here applies a network policy: W10B measured, it did not enforce,
+          // and no enforcement exists at any layer (E8-F003 section 8 census).
+          //
+          // Omitted entirely when no allowlist was supplied, so the
+          // pre-existing exact `create(...)` call assertions in
+          // sandbox-provider-runtime.test.ts stay green.
           ...(input.egressAllowlist && input.egressAllowlist.length > 0
             ? { egressAllowlist: input.egressAllowlist.join(",") }
             : {}),
@@ -1028,8 +1098,18 @@ export function createE2bSandboxRuntimeProvider(
 export function sandboxProviderRuntime(
   options: {
     providers?: SandboxRuntimeProvider[];
+    /** DEP-007 — count-only, id-free provider-lifecycle telemetry (acquire | release |
+     * resume × succeeded | failed). Defaults to no-op; the composition root threads the
+     * shared pino instance when distributed execution is enabled. Emitted AFTER the
+     * provider call resolves so it never alters the lifecycle path; best-effort. */
+    metrics?: JobControlMetrics;
   } = {},
 ) {
+  // Optional-chained at every call site (never a NOOP VALUE import) so this module —
+  // which loads on the flag-OFF legacy path — carries no runtime dependency on
+  // job-control-metrics (the distributed-execution dormancy gate, verified by
+  // distributed-execution-db-startup.integration.test.ts).
+  const metrics = options.metrics;
   const providers = new Map<string, SandboxRuntimeProvider>();
   for (const provider of options.providers ?? [
     createFakeSandboxRuntimeProvider(),
@@ -1054,12 +1134,34 @@ export function sandboxProviderRuntime(
   return {
     getProvider,
 
+    // DEP-007 — count-only provider-lifecycle telemetry is emitted in a `.then()` AFTER
+    // the provider call resolves (never `async`), so the synchronous `requireProvider`
+    // (and resume-support) guards keep throwing SYNCHRONOUSLY, exactly as before. The
+    // emit is best-effort and can never alter the lifecycle path.
     acquireLease(providerKey: string, input: SandboxProviderAcquireInput) {
-      return requireProvider(providerKey).acquireLease(input);
+      return requireProvider(providerKey).acquireLease(input).then((lease) => {
+        try {
+          metrics?.providerLifecycle({ operation: "acquire", outcome: "succeeded", count: 1 });
+        } catch {
+          /* best-effort telemetry */
+        }
+        return lease;
+      });
     },
 
     releaseLease(providerKey: string, input: SandboxProviderReleaseInput) {
-      return requireProvider(providerKey).releaseLease(input);
+      return requireProvider(providerKey).releaseLease(input).then((result) => {
+        try {
+          metrics?.providerLifecycle({
+            operation: "release",
+            outcome: result.cleanupStatus === "success" ? "succeeded" : "failed",
+            count: 1,
+          });
+        } catch {
+          /* best-effort telemetry */
+        }
+        return result;
+      });
     },
 
     // U7.4 — mirrors releaseLease's passthrough; guarded (like writeFiles/
@@ -1070,7 +1172,14 @@ export function sandboxProviderRuntime(
       if (typeof provider.resumeLease !== "function") {
         throw new Error(`Sandbox provider "${providerKey}" does not support resume.`);
       }
-      return provider.resumeLease(input);
+      return provider.resumeLease(input).then((result) => {
+        try {
+          metrics?.providerLifecycle({ operation: "resume", outcome: "succeeded", count: 1 });
+        } catch {
+          /* best-effort telemetry */
+        }
+        return result;
+      });
     },
 
     execute(providerKey: string, input: SandboxProviderExecuteInput) {

@@ -131,11 +131,11 @@ describe("project workspace skill discovery", () => {
   });
 
   it("finds bounded skill roots under supported workspace paths", async () => {
-    const workspace = await makeTempDir("aoa-skill-workspace-");
+    const workspace = await makeTempDir("paperclip-skill-workspace-");
     await writeSkillDir(workspace, "Workspace Root");
     await writeSkillDir(path.join(workspace, "skills", "find-skills"), "Find Skills");
     await writeSkillDir(path.join(workspace, ".agents", "skills", "release"), "Release");
-    await writeSkillDir(path.join(workspace, "skills", ".system", "aoa"), "AoA");
+    await writeSkillDir(path.join(workspace, "skills", ".system", "paperclip"), "Paperclip");
     await fs.writeFile(path.join(workspace, "README.md"), "# ignore\n", "utf8");
 
     const discovered = await discoverProjectWorkspaceSkillDirectories({
@@ -145,13 +145,13 @@ describe("project workspace skill discovery", () => {
     expect(discovered).toEqual([
       { skillDir: path.resolve(workspace), inventoryMode: "project_root" },
       { skillDir: path.resolve(workspace, ".agents", "skills", "release"), inventoryMode: "full" },
-      { skillDir: path.resolve(workspace, "skills", ".system", "aoa"), inventoryMode: "full" },
+      { skillDir: path.resolve(workspace, "skills", ".system", "paperclip"), inventoryMode: "full" },
       { skillDir: path.resolve(workspace, "skills", "find-skills"), inventoryMode: "full" },
     ]);
   });
 
   it("limits root SKILL.md imports to skill-related support folders", async () => {
-    const workspace = await makeTempDir("aoa-root-skill-");
+    const workspace = await makeTempDir("paperclip-root-skill-");
     await writeSkillDir(workspace, "Workspace Skill");
     await fs.mkdir(path.join(workspace, "references"), { recursive: true });
     await fs.mkdir(path.join(workspace, "scripts"), { recursive: true });
@@ -180,7 +180,7 @@ describe("project workspace skill discovery", () => {
   });
 
   it("parses inline object array items in skill frontmatter metadata", async () => {
-    const workspace = await makeTempDir("aoa-inline-skill-yaml-");
+    const workspace = await makeTempDir("paperclip-inline-skill-yaml-");
     await fs.mkdir(workspace, { recursive: true });
     await fs.writeFile(
       path.join(workspace, "SKILL.md"),
@@ -190,7 +190,7 @@ describe("project workspace skill discovery", () => {
         "metadata:",
         "  sources:",
         "    - kind: github-dir",
-        "      repo: aoaai/aoa",
+        "      repo: paperclipai/paperclip",
         "      path: skills/aoa",
         "---",
         "",
@@ -211,7 +211,7 @@ describe("project workspace skill discovery", () => {
       sources: [
         {
           kind: "github-dir",
-          repo: "aoaai/aoa",
+          repo: "paperclipai/paperclip",
           path: "skills/aoa",
         },
       ],
@@ -221,7 +221,7 @@ describe("project workspace skill discovery", () => {
 
 describe("missing local skill reconciliation", () => {
   it("flags local-path skills whose directory was removed", async () => {
-    const workspace = await makeTempDir("aoa-missing-skill-dir-");
+    const workspace = await makeTempDir("paperclip-missing-skill-dir-");
     const skillDir = path.join(workspace, "skills", "ghost");
     await writeSkillDir(skillDir, "Ghost");
     await fs.rm(skillDir, { recursive: true, force: true });
@@ -243,7 +243,7 @@ describe("missing local skill reconciliation", () => {
   });
 
   it("flags local-path skills whose SKILL.md file was removed", async () => {
-    const workspace = await makeTempDir("aoa-missing-skill-file-");
+    const workspace = await makeTempDir("paperclip-missing-skill-file-");
     const skillDir = path.join(workspace, "skills", "ghost");
     await writeSkillDir(skillDir, "Ghost");
     await fs.rm(path.join(skillDir, "SKILL.md"), { force: true });
@@ -262,7 +262,7 @@ describe("missing local skill reconciliation", () => {
 
 describe("runtime catalog bundle injection", () => {
   it("injects ancillary files from catalog bundle install path", async () => {
-    const bundleDir = await makeTempDir("aoa-catalog-bundle-runtime-");
+    const bundleDir = await makeTempDir("paperclip-catalog-bundle-runtime-");
     await fs.mkdir(path.join(bundleDir, "references"), { recursive: true });
     await fs.mkdir(path.join(bundleDir, "scripts"), { recursive: true });
     await fs.writeFile(path.join(bundleDir, "SKILL.md"), "# OpenAI Docs\n", "utf8");

@@ -24,7 +24,7 @@ import { CommentThread } from "./CommentThread";
 import { IssueDocumentsSection } from "./IssueDocumentsSection";
 import { IssueProperties } from "./IssueProperties";
 import { LiveRunWidget } from "./LiveRunWidget";
-import { WorkspaceTimeline } from "./workspace/WorkspaceTimeline";
+import { TaskConversationContent } from "./task-detail/TaskConversationContent";
 import { IssueWorkspaceCard } from "./IssueWorkspaceCard";
 import { ImageGalleryModal } from "./ImageGalleryModal";
 import {
@@ -64,7 +64,7 @@ import {
   FileCode,
   GitPullRequestArrow,
   MonitorPlay,
-  FilePlus2,
+  Paperclip,
   Plus,
   Search,
   Trash2,
@@ -1089,9 +1089,9 @@ export function TaskDetail({
             </div>
 
             {/* Shared workspace timeline + input */}
-            <WorkspaceTimeline
+            <TaskConversationContent
               issueId={issueId!}
-              compact
+              active={active}
               anchorId={workspaceAnchorId}
               className="flex-1 min-h-0"
             />
@@ -1799,7 +1799,7 @@ export function TaskDetail({
                               onClick={() => fileInputRef.current?.click()}
                               disabled={uploadAttachment.isPending}
                             >
-                              <FilePlus2 className="h-3.5 w-3.5 mr-1.5" />
+                              <Paperclip className="h-3.5 w-3.5 mr-1.5" />
                               {uploadAttachment.isPending ? "Uploading..." : "Upload image"}
                             </Button>
                           </div>

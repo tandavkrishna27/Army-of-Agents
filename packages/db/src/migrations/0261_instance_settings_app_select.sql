@@ -1,0 +1,75 @@
+-- REL-004 Lane C (clause 3a) custom security DDL. drizzle-kit cannot express role grants;
+-- every statement below is naturally idempotent per C14.
+--
+-- WHY. The worker poll must know whether placement on this target's provider has been killed
+-- before it offers a lease. It reads `instance_settings.kill_switches` (migration 0260) on the
+-- NON-OWNER `aoa_app` pool (NOSUPERUSER / NOBYPASSRLS), and `instance_settings` has never had
+-- an `aoa_app` grant of any kind. `assertExactServingRoleAuthority` enumerates
+-- `has_table_privilege` for every table at startup and enforces EXACT ACLs, so today the role
+-- holds ZERO privileges on it and the read would fail at RUNTIME with permission denied — not
+-- at compile time, and not in any unit test.
+--
+-- WHY TABLE-LEVEL, NOT COLUMN-LEVEL. This mirrors 0259 (`provider_credentials`) and
+-- `company_memberships` (0214_e2_serving_role_hardening.sql). The column-level form used for
+-- `execution_targets` (0221) exists to keep a WRITEABLE, worker-owned table narrow, and it
+-- carries its own bespoke column-allowlist constant plus a separate `has_column_privilege`
+-- assertion pass; adding a second such mechanism for a read-only singleton lookup would be
+-- more machinery, not less exposure.
+--
+-- The exposure is proportionate and was verified rather than assumed: `instance_settings`
+-- stores NO secret. Its columns are id, singleton_key, general, experimental, kill_switches,
+-- created_at and updated_at; `general` and `experimental` hold UI flags, a feedback-sharing
+-- preference, a backup-retention policy, and migration snapshots.
+--
+-- Scoping is not needed and not possible: the table is a singleton with no organization
+-- column. The read is pinned to `singleton_key = 'default'` in the query, never to a value
+-- taken from the wire.
+--
+-- NO RLS POLICY, matching the 0259/0214 precedent for legacy non-tenant tables.
+-- `assertExactCatalogCertificate` enumerates every relation with row security ENABLED and
+-- requires exact equality with `RLS_RELATIONS`; `instance_settings` is deliberately absent
+-- from that list, so enabling RLS here would itself be the drift.
+--
+-- MANIFEST COUPLING — this file alone is not enough, and getting it wrong is a BOOT CRASH
+-- rather than a test failure. A grant without a manifest entry, or a manifest entry without the
+-- grant, throws `distributed_execution_app_authority` and BOTH replicas refuse to start.
+--
+-- 0259's version of this comment listed FIVE places. That list is INCOMPLETE, and following it
+-- is how REL-004 Lane C broke the 0213/0214 byte-identity test. DSK-001 Lane B had already
+-- found the missing ones — its design doc says "the terrain map counted five artifacts, there
+-- are SEVEN" — but the correction never reached the comment a successor copies. The complete
+-- list, for a grant added the RECOMMENDED way (its own constant):
+--
+--   1. this migration                       (REVOKE ALL FROM PUBLIC; GRANT ... TO "aoa_app")
+--   2. a NEW `*_APP_GRANTS` constant        server/src/db/job-control-legacy-grants.ts
+--        -> NOT `JOB_CONTROL_LEGACY_GRANTS`. See (9).
+--   3. the `APP_SERVING_RELATIONS` union    same file — `Object.keys(<new constant>)`
+--   4. `PLAN_DERIVED_ACL_MATRIX.relations`  same file (production copy)
+--   5. `RELATION_ACL_NULLNESS_CERTIFICATE`  same file (production copy)
+--   6. `appTablePrivileges()`               server/src/db/distributed-execution-databases.ts
+--        -> spread the new constant in; the startup assertion reads THIS, not the manifests
+--   7. `PLAN_DERIVED_ACL_MATRIX`            server/src/__tests__/job-control-legacy-grants
+--        + `PLAN_DERIVED_RELATION_ACL_NULLNESS`   .contract.test.ts — INDEPENDENT hand copies,
+--        deliberately duplicated so a production change cannot rewrite its own certificate
+--   8. the TWO serving-relation unions      same test file (`appExpected` and `relations`) —
+--        they re-derive the inventory from the named constants, so a new constant must be
+--        listed in both or the ACL-manifest assertions fail
+--   9. ONLY IF you put the grant in `JOB_CONTROL_LEGACY_GRANTS` anyway: `GRANTED_AFTER_0213`
+--        AND `GRANTED_AFTER_0214` in server/src/db/rls-tenant.ts. That object RECONSTRUCTS the
+--        bodies of the immutable applied migrations 0213/0214, so an entry without both
+--        exclusions retroactively rewrites two migrations that already ran. Do not go this way.
+--
+--   (RLS is separate and does not apply here: `instance_settings` is an instance singleton with
+--    no organization column, so no `RLS_RELATIONS` / `POLICY_COUNTS` / `RLS_POLICY_MANIFEST`
+--    entry. `assertExactCatalogCertificate` requires exact equality with that list, so enabling
+--    RLS here would itself be the drift.)
+--
+-- `job-control-legacy-grants.contract.test.ts` now pins the exact key set of
+-- `JOB_CONTROL_LEGACY_GRANTS`, so choosing route (9) by accident fails with an instruction
+-- instead of a forty-line SQL byte diff thirty minutes into `verify`.
+
+-- C14 hand-authored security DDL: drizzle-kit cannot emit this statement; REVOKE is idempotent.
+REVOKE ALL ON "instance_settings" FROM PUBLIC;
+--> statement-breakpoint
+-- C14 hand-authored security DDL: drizzle-kit cannot emit this statement; GRANT is idempotent.
+GRANT SELECT ON "instance_settings" TO "aoa_app";

@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "id": "batch-success",
+  "workloadType": "batch",
+  "purpose": "A coding job stages a base snapshot and returns a reviewable patch.",
+  "source": {
+    "kind": "task_run",
+    "runId": "run_X1CFRQPDEPSF4S9081AEXPYT89",
+    "issueId": "issue_22GA0V348KDQS6H3XQ2QJM9EVC"
+  },
+  "organization": {
+    "id": "org_JYZJ73W1EQYNYW3CX4WVC9N4A7",
+    "name": "Northwind Robotics"
+  },
+  "company": {
+    "id": "company_KD9296WTTX18SW3FC8BE2VKQRS",
+    "name": "Northwind Robotics HQ",
+    "organizationId": "org_JYZJ73W1EQYNYW3CX4WVC9N4A7"
+  },
+  "requester": {
+    "type": "founder",
+    "id": "user-founder-1",
+    "displayName": "Ada Founder"
+  },
+  "executor": {
+    "type": "worker",
+    "id": "cloud-worker-batch-1"
+  },
+  "placement": {
+    "targetPolicy": "pinned_generation",
+    "provider": "e2b",
+    "region": "us-east-1",
+    "generation": 1
+  },
+  "inputBase": {
+    "workspaceBaseId": "wsbase-15tn2ddntdsk4t55s2ad0cnj7p",
+    "gitRemote": "https://git.example.com/northwind/app.git",
+    "gitRef": "refs/heads/main",
+    "baseDigest": "a1659af5226dedd57a0d595344da85a519e22acd804cf5d28736c769e00ee6d0",
+    "immutable": true
+  },
+  "identity": {
+    "jobId": "job_95VGXJXBR3XBT3DH5ZTNXMA8FR",
+    "attempts": [
+      {
+        "attempt": 1,
+        "workerId": "worker_YW6K965XPTB16Y006X38FJZK7Z",
+        "leaseId": "lease_FE5TWACEC1HGA5KN2Z94SPCSA0",
+        "fenceToken": 100
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "submit"
+    },
+    {
+      "action": "lease_and_ack",
+      "emits": [
+        "attempt_started"
+      ]
+    },
+    {
+      "action": "stage_workspace"
+    },
+    {
+      "action": "execute_adapter",
+      "emits": [
+        "log",
+        "usage"
+      ]
+    },
+    {
+      "action": "upload_patch",
+      "emits": [
+        "artifact_prepared"
+      ]
+    },
+    {
+      "action": "complete",
+      "emits": [
+        "terminal"
+      ]
+    }
+  ],
+  "failureInjection": null,
+  "expectedEvents": [
+    {
+      "protocolVersion": 1,
+      "eventId": "ZWXHQ1K2C8HGE436ATF3G9PRQY",
+      "eventType": "attempt_started",
+      "organizationId": "org_JYZJ73W1EQYNYW3CX4WVC9N4A7",
+      "companyId": "company_KD9296WTTX18SW3FC8BE2VKQRS",
+      "workerId": "worker_YW6K965XPTB16Y006X38FJZK7Z",
+      "jobId": "job_95VGXJXBR3XBT3DH5ZTNXMA8FR",
+      "attempt": 1,
+      "leaseId": "lease_FE5TWACEC1HGA5KN2Z94SPCSA0",
+      "fenceToken": 100,
+      "seq": 1,
+      "occurredAt": "2026-08-08T12:00:00.000Z",
+      "payload": {},
+      "eventDigest": "e69b0f70d1aeb9714ad5c45181bb37344daf36c7078a050e2034bff91d9e2110"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "90DJCK7CKAC988K3JFN45TF1VY",
+      "eventType": "log",
+      "organizationId": "org_JYZJ73W1EQYNYW3CX4WVC9N4A7",
+      "companyId": "company_KD9296WTTX18SW3FC8BE2VKQRS",
+      "workerId": "worker_YW6K965XPTB16Y006X38FJZK7Z",
+      "jobId": "job_95VGXJXBR3XBT3DH5ZTNXMA8FR",
+      "attempt": 1,
+      "leaseId": "lease_FE5TWACEC1HGA5KN2Z94SPCSA0",
+      "fenceToken": 100,
+      "seq": 2,
+      "occurredAt": "2026-08-08T12:00:03.000Z",
+      "payload": {
+        "detail": "staged base snapshot and started the adapter",
+        "stage": "execute"
+      },
+      "eventDigest": "0e4359e696c4f02104054a79e26149ae5f973f71304393f7a458fa0134169105"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "K58W3TMVX8ZZWW2PZ0Q8VAKK7Q",
+      "eventType": "usage",
+      "organizationId": "org_JYZJ73W1EQYNYW3CX4WVC9N4A7",
+      "companyId": "company_KD9296WTTX18SW3FC8BE2VKQRS",
+      "workerId": "worker_YW6K965XPTB16Y006X38FJZK7Z",
+      "jobId": "job_95VGXJXBR3XBT3DH5ZTNXMA8FR",
+      "attempt": 1,
+      "leaseId": "lease_FE5TWACEC1HGA5KN2Z94SPCSA0",
+      "fenceToken": 100,
+      "seq": 3,
+      "occurredAt": "2026-08-08T12:00:42.000Z",
+      "payload": {
+        "metrics": {
+          "tokensIn": 31000,
+          "tokensOut": 14210,
+          "costCents": 120,
+          "durationMs": 42000
+        },
+        "tags": [
+          "adapter",
+          "batch"
+        ]
+      },
+      "eventDigest": "f1d654af769a2c18655c36d1cef930f0d13549da5e6bf18574f26edd92d8928b"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "R61W9SBYM9TDEW18FV2AM39X2A",
+      "eventType": "artifact_prepared",
+      "organizationId": "org_JYZJ73W1EQYNYW3CX4WVC9N4A7",
+      "companyId": "company_KD9296WTTX18SW3FC8BE2VKQRS",
+      "workerId": "worker_YW6K965XPTB16Y006X38FJZK7Z",
+      "jobId": "job_95VGXJXBR3XBT3DH5ZTNXMA8FR",
+      "attempt": 1,
+      "leaseId": "lease_FE5TWACEC1HGA5KN2Z94SPCSA0",
+      "fenceToken": 100,
+      "seq": 4,
+      "occurredAt": "2026-08-08T12:00:43.000Z",
+      "payload": {
+        "artifactRef": "workspace_patch",
+        "hash": "8dcd78f0b6536097dbc83db67fe1b6d8233f2de4d168d757a8d4103066a34996",
+        "sizeBytes": 20480,
+        "prefix": "artifacts/job/patch"
+      },
+      "eventDigest": "287319d18aaae0a19859241eb57d7d819f6ead25a1448ca6cf194f1e627cd879"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "88WC5X6D5DGP6KE59Y5GJHX9HB",
+      "eventType": "terminal",
+      "organizationId": "org_JYZJ73W1EQYNYW3CX4WVC9N4A7",
+      "companyId": "company_KD9296WTTX18SW3FC8BE2VKQRS",
+      "workerId": "worker_YW6K965XPTB16Y006X38FJZK7Z",
+      "jobId": "job_95VGXJXBR3XBT3DH5ZTNXMA8FR",
+      "attempt": 1,
+      "leaseId": "lease_FE5TWACEC1HGA5KN2Z94SPCSA0",
+      "fenceToken": 100,
+      "seq": 5,
+      "occurredAt": "2026-08-08T12:00:44.000Z",
+      "payload": {
+        "detail": "job succeeded",
+        "code": "succeeded"
+      },
+      "eventDigest": "11a6dd705deaad14ef2d4c1f3a0419a762667e897e4f6bf929028e9d6e265a7a"
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "maxTotalCents": 500,
+    "observedTotalCents": 120,
+    "tokenBudget": 200000,
+    "observedTokens": 45210
+  },
+  "timing": {
+    "queuedAt": "2026-08-08T11:59:55.000Z",
+    "startedAt": "2026-08-08T12:00:00.000Z",
+    "finishedAt": "2026-08-08T12:00:45.000Z",
+    "maxWallClockMs": 600000,
+    "observedWallClockMs": 45000
+  },
+  "cleanup": {
+    "authority": "lease_holder",
+    "scope": "job:job_95VGXJXBR3XBT3DH5ZTNXMA8FR",
+    "idempotent": true,
+    "deadlineMs": 30000,
+    "restoresEffectAuthority": false
+  },
+  "control": {
+    "cancellation": "none",
+    "productApproval": "none",
+    "runtimeDecision": "none"
+  },
+  "expected": {
+    "terminalState": "succeeded",
+    "artifacts": [
+      "workspace_patch"
+    ],
+    "auditActions": [
+      "job.submitted",
+      "lease.issued",
+      "artifact.committed",
+      "job.succeeded"
+    ],
+    "forbiddenEffects": [
+      "worker_database_write",
+      "host_command_execution"
+    ]
+  }
+}

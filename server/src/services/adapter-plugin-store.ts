@@ -9,6 +9,8 @@
  * the first read. Writes invalidate the cache so the next read picks up
  * the new state without a redundant disk round-trip.
  *
+ * Ported from Paperclip (2026-04-20, Phase 0 Task 0.2).
+ *
  * @module server/services/adapter-plugin-store
  */
 
@@ -21,7 +23,7 @@ import { resolveAoaHomeDir } from "../home-paths.js";
 // ---------------------------------------------------------------------------
 
 export interface AdapterPluginRecord {
-  /** npm package name (e.g., "droid-aoa-adapter") */
+  /** npm package name (e.g., "droid-paperclip-adapter") */
   packageName: string;
   /** Absolute local filesystem path (for locally linked adapters) */
   localPath?: string;
@@ -78,10 +80,10 @@ function ensureDirs(): void {
   const pkgJsonPath = path.join(root, "package.json");
   if (!fs.existsSync(pkgJsonPath)) {
     fs.writeFileSync(pkgJsonPath, JSON.stringify({
-      name: "aoa-adapter-plugins",
+      name: "paperclip-adapter-plugins",
       version: "0.0.0",
       private: true,
-      description: "Managed directory for AoA external adapter plugins. Do not edit manually.",
+      description: "Managed directory for Paperclip external adapter plugins. Do not edit manually.",
     }, null, 2) + "\n");
   }
 }

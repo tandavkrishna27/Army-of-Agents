@@ -164,7 +164,7 @@ export const GitGraphCanvas = forwardRef<GitGraphCanvasHandle, GitGraphCanvasPro
     // (both AoA task branches AND plain git branches), capped at the N most
     // recently-committed so the Map stays readable. Done/cancelled show via the
     // "Merged" chip; the full list lives in the Pipeline tab. The cap matters
-    // for real repos (e.g. SeaMaster has ~80 branches, aoa ~296) where
+    // for real repos (e.g. SeaMaster has ~80 branches, paperclip ~296) where
     // showing every branch at once is an unreadable smear.
     const visibleBranches = useMemo(() => {
       if (filter === "running") return sortByRecency(branches.filter((b) => b.linkedIssueStatus === "in_progress"), MAX_DEFAULT_BRANCHES);

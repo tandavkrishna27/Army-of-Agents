@@ -42,6 +42,19 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function sanitizeValue(value: unknown): unknown {
   if (value === null || value === undefined) return value;
+  // BRW-003d-2 FIX A — a STRING reached here (an array element, or any non-record
+  // position) used to fall through the `!isPlainObject` guard below untouched, so
+  // it skipped BOTH the key-name check and the value-pattern check. Only
+  // `sanitizeRecord` tested string values, and only for values it reached as a
+  // RECORD ENTRY — which an array element never is.
+  //
+  // The consequence was live: `{args:["--token","sk-ant-…"]}` leaked verbatim
+  // while the identical secret at `{cfg:{thing:"sk-ant-…"}}` redacted correctly.
+  // `args` arrays are what process / claude_local adapter configs carry, and this
+  // redactor serves agent.adapterConfig and GET /heartbeat-runs/:runId/events.
+  if (typeof value === "string") {
+    return looksLikeSecretValue(value) ? REDACTED_EVENT_VALUE : value;
+  }
   if (Array.isArray(value)) return value.map(sanitizeValue);
   if (isSecretRefBinding(value)) return value;
   if (isPlainBinding(value)) return { type: "plain", value: sanitizeValue(value.value) };
@@ -116,4 +129,88 @@ export function redactEventPayload(payload: Record<string, unknown> | null): Rec
   if (!payload) return null;
   if (!isPlainObject(payload)) return payload;
   return sanitizeRecord(payload);
+}
+
+/**
+ * BRW-003d-2 FIX B — STRUCTURAL URL redaction.
+ *
+ * The rest of this module is PATTERN-based: it catches a secret that looks like
+ * one. A URL query parameter is precisely the case where it does not —
+ * `?access_token=abc123` matches nothing, because `abc123` is shaped like
+ * nothing. Structure is the only thing left to key on, and structure does not
+ * care whether the value is recognisable.
+ *
+ * Drops the query and the fragment and strips userinfo, keeping scheme, host and
+ * path so the URL stays diagnostically useful. A removed component leaves a
+ * MARKER: an operator who sees a bare URL would otherwise conclude it carried no
+ * parameters, which is a worse failure than showing that something was withheld.
+ */
+const URL_IN_TEXT_RE = /\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>]+/gi;
+/** Punctuation that ends a sentence rather than the URL inside it. */
+const TRAILING_PUNCTUATION_RE = /[.,;:!?)\]}'"]+$/;
+
+export function redactUrlSecretsInString(value: string): string {
+  return value.replace(URL_IN_TEXT_RE, (match) => {
+    const trailing = TRAILING_PUNCTUATION_RE.exec(match)?.[0] ?? "";
+    const url = trailing ? match.slice(0, match.length - trailing.length) : match;
+    return redactOneUrl(url) + trailing;
+  });
+}
+
+function redactOneUrl(raw: string): string {
+  try {
+    const parsed = new URL(raw);
+    const hadQuery = parsed.search.length > 0;
+    const hadHash = parsed.hash.length > 0;
+    // Strip credentials embedded in the authority (https://user:pass@host).
+    parsed.username = "";
+    parsed.password = "";
+    parsed.search = "";
+    parsed.hash = "";
+    let out = parsed.toString();
+    // URL#toString re-adds a trailing slash for a bare origin; keep what the
+    // author wrote rather than inventing a path.
+    if (out.endsWith("/") && !raw.slice(raw.indexOf("://") + 3).includes("/")) {
+      out = out.slice(0, -1);
+    }
+    if (hadQuery) out += `?${REDACTED_EVENT_VALUE}`;
+    if (hadHash) out += `#${REDACTED_EVENT_VALUE}`;
+    return out;
+  } catch {
+    // Not parseable as a URL. Fail CLOSED: cut at the first query/fragment
+    // delimiter rather than returning the original with its parameters intact.
+    const cut = raw.search(/[?#]/);
+    return cut === -1 ? raw : `${raw.slice(0, cut)}${raw[cut]}${REDACTED_EVENT_VALUE}`;
+  }
+}
+
+function stripUrlsDeep(value: unknown): unknown {
+  if (typeof value === "string") return redactUrlSecretsInString(value);
+  if (Array.isArray(value)) return value.map(stripUrlsDeep);
+  if (!isPlainObject(value)) return value;
+  const out: Record<string, unknown> = {};
+  for (const [key, inner] of Object.entries(value)) out[key] = stripUrlsDeep(inner);
+  return out;
+}
+
+/**
+ * The redactor for EVENT payloads on their way out of the server.
+ *
+ * ★ DELIBERATELY NOT `redactEventPayload` ITSELF. That function also serves
+ * `adapterConfig`, `runtimeConfig`, approvals and activity details, where an
+ * `http` adapter's webhook URL has a legitimate query string. Stripping queries
+ * globally would corrupt what an operator sees rather than secure it — a display
+ * regression wearing a security fix's clothes. FIX A goes in the shared path
+ * because it only ever redacts MORE; this does not.
+ *
+ * Key-agnostic by construction: the frozen forbidden-key scan is keys-only, so a
+ * credential in a VALUE under an innocuous key is legal on the wire. A name list
+ * cannot be the control here.
+ */
+export function redactRunEventPayload(
+  payload: Record<string, unknown> | null,
+): Record<string, unknown> | null {
+  const base = redactEventPayload(payload);
+  if (!base || !isPlainObject(base)) return base;
+  return stripUrlsDeep(base) as Record<string, unknown>;
 }

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "note": "Pinned enforced-citation CENSUS for scripts/check-register-citation-integrity.mjs (required `policy` job). WHY IT EXISTS: the guard only checks the citations it actually emits, so a parser or scope regression that silently DROPS citations (e.g. losing recognition of the `packages` repo root would remove 71) would shrink coverage while both policy commands stayed green — a guard that quietly stops guarding part of the register. This manifest pins how many enforced (explicit, repo-anchored) citations there are, in TOTAL and PER REPO-ROOT, and the guard reds if the live count drifts from it. A legitimate register change (a citation added/removed) is a DELIBERATE re-pin: run `node scripts/check-register-citation-integrity.mjs --update-census` and commit this file alongside the register change, exactly like bumping a snapshot. An ABSENT manifest is a FAIL, not a skipped check. `byRoot` counts unique enforced citations grouped by their path's first segment; roots with zero enforced citations (ui, tests, …) are simply absent.",
+  "total": 397,
+  "byRoot": {
+    ".github": 18,
+    "docs": 2,
+    "packages": 140,
+    "scripts": 24,
+    "server": 213
+  }
+}

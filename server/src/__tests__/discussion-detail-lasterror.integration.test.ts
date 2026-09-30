@@ -59,7 +59,7 @@ describe.skipIf(process.platform === "win32")("discussion getById — lastError 
       connectionString = `postgres://test:test@localhost:${PORT}/postgres`;
       await applyPendingMigrations(connectionString);
       db = createDb(connectionString);
-      const company = await companyService(db).create({ name: "LastError Co" } as never);
+      const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "LastError Co" } as never);
       companyId = company.id;
     } catch (err) {
       setupError = err;

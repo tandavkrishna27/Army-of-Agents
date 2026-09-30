@@ -177,7 +177,7 @@ describe.skipIf(process.platform === "win32" && process.env.AOA_RUN_WIN_INTEGRAT
 
       co = firstId(
         await db.execute<{ id: string }>(sql`
-          INSERT INTO companies (id, name) VALUES (gen_random_uuid(), 'Leak Co') RETURNING id`),
+          INSERT INTO companies (organization_id, id, name) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Leak Co') RETURNING id`),
       );
       deptA = firstId(
         await db.execute<{ id: string }>(sql`

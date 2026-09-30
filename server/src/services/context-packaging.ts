@@ -420,7 +420,7 @@ export function contextPackagingService(db: Db) {
     // 9. Plugin tools (if available)
     try {
       const dispatcher: import("./plugin-tool-dispatcher.js").PluginToolDispatcher | undefined =
-        (globalThis as any).__aoaPluginToolDispatcher;
+        (globalThis as any).__paperclipPluginToolDispatcher;
       if (dispatcher) {
         const tools = dispatcher.listToolsForAgent({ companyId });
         if (tools.length > 0) {

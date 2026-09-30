@@ -2,18 +2,18 @@
 
 # release-lib.sh — shared utilities for AoA release scripts.
 #
-# Ported from upstream release-lib.sh (306 LOC, CalVer) with the
+# Ported from Paperclip scripts/release-lib.sh (306 LOC, CalVer) with the
 # following AoA-specific adaptations for SemVer (Phase H decision D2):
 #
-#   - compute_next_version() replaces upstream's next_stable_version() +
+#   - compute_next_version() replaces Paperclip's next_stable_version() +
 #     next_canary_version() (both CalVer, both shelled to node + npm view).
-#     This implementation is shell-only and deterministic from inputs —
+#     AoA's implementation is shell-only and deterministic from inputs —
 #     no registry round-trip needed because SemVer increments are algorithmic.
 #
 #   - stable_version_slot_for_date() + utc_date_iso() removed entirely
 #     (CalVer-only: derived today's date into "YYYY.MDD" slot).
 #
-#   - canary_tag_name() rewritten: Upstream tags canaries as
+#   - canary_tag_name() rewritten: Paperclip tags canaries as
 #     "canary/v{base}" because CalVer canaries share the stable base string.
 #     AoA embeds "-canary.N" directly in the SemVer pre-release suffix, so
 #     both channels use the same "v{version}" tag form (v0.1.0-canary.1).
@@ -22,7 +22,7 @@
 #     and parameterized. AoA currently releases off Porting1.1; will be
 #     main post-Phase H merge.
 #
-#   - get_last_stable_tag() filters out canary tags (upstream CalVer
+#   - get_last_stable_tag() filters out canary tags (Paperclip's CalVer
 #     canary tags live under refs/tags/canary/* so they were naturally
 #     excluded by the "v*" glob — AoA's canary tags match "v*" too).
 #
@@ -129,7 +129,7 @@ git_remote_tag_exists() {
   git -C "$REPO_ROOT" ls-remote --exit-code --tags "$2" "refs/tags/$1" >/dev/null 2>&1
 }
 
-# AoA deviation: filter out "-canary." pre-releases. upstream CalVer canaries
+# AoA deviation: filter out "-canary." pre-releases. Paperclip's CalVer canaries
 # lived under canary/v* (a separate ref namespace), so "v*" implicitly excluded
 # them. AoA canary tags match the "v*" glob, so we filter explicitly here.
 get_last_stable_tag() {
@@ -156,7 +156,7 @@ get_current_stable_version() {
 #   bump:    patch | minor | major
 #   channel: stable | canary
 #
-# Replaces upstream's next_stable_version() + next_canary_version(), both of
+# Replaces Paperclip's next_stable_version() + next_canary_version(), both of
 # which were CalVer (date-slot) and queried npm for the max existing suffix.
 # SemVer is deterministic, so we can compute everything from the current
 # version string.
@@ -229,7 +229,7 @@ stable_tag_name() {
   printf 'v%s\n' "$1"
 }
 
-# AoA deviation: upstream used "canary/v{base}" so CalVer canaries wouldn't
+# AoA deviation: Paperclip used "canary/v{base}" so CalVer canaries wouldn't
 # collide with the stable tag sharing the same base string. SemVer embeds
 # "-canary.N" in the version itself, so both channels use "v{version}".
 canary_tag_name() {
@@ -305,7 +305,7 @@ require_clean_worktree() {
   fi
 }
 
-# AoA deviation: upstream hardcoded "master". AoA released from Porting1.1
+# AoA deviation: Paperclip hardcoded "master". AoA releases from Porting1.1
 # during the port; main post-Phase H merge. Caller specifies the expected
 # branch (defaults to "main").
 require_on_release_branch() {

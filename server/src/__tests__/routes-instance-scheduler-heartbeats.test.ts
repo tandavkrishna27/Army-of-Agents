@@ -158,7 +158,7 @@ describe("GET /api/instance/scheduler-heartbeats", () => {
     const res = await request(app).get("/api/instance/scheduler-heartbeats");
 
     expect(res.status).toBe(200);
-    // paused/terminated/pending_approval are filtered out entirely per AoA parity
+    // paused/terminated/pending_approval are filtered out entirely per Paperclip parity
     expect(res.body).toHaveLength(0);
   });
 

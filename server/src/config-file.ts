@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { aoaConfigSchema, type AoaConfig } from "@armyofagents/shared";
+import { paperclipConfigSchema, type AoaConfig } from "@armyofagents/shared";
 import { resolveAoaConfigPath } from "./paths.js";
 
 export function readConfigFile(): AoaConfig | null {
@@ -9,7 +9,7 @@ export function readConfigFile(): AoaConfig | null {
 
   try {
     const raw = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-    return aoaConfigSchema.parse(raw);
+    return paperclipConfigSchema.parse(raw);
   } catch {
     return null;
   }

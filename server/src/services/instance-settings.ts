@@ -10,8 +10,14 @@ import {
   type PatchInstanceGeneralSettings,
   type InstanceSettings,
   type PatchInstanceExperimentalSettings,
+  EXECUTION_TARGET_KINDS,
 } from "@armyofagents/shared";
 import { eq } from "drizzle-orm";
+import {
+  buildKillSwitchDocument,
+  type KillSwitchWriteEntry,
+  type KillSwitchDocument,
+} from "./execution-kill-switches.js";
 
 const DEFAULT_SINGLETON_KEY = "default";
 const MIGRATION_SNAPSHOTS_KEY = "migrationSnapshots";
@@ -172,5 +178,41 @@ export function instanceSettingsService(db: Db) {
         .select({ id: companies.id })
         .from(companies)
         .then((rows) => rows.map((row) => row.id)),
+
+    // ── REL-004 Lane C — the operator kill-switch write path ──────────────────────
+    // Writes the dedicated `kill_switches` column, NOT the `general` bag (updateGeneral
+    // rebuilds `general` from a fixed field list and would clobber it). Owner-pool writes;
+    // aoa_app holds SELECT only on this column.
+
+    getKillSwitches: async (): Promise<unknown> => {
+      const row = await getOrCreateRow();
+      return row.killSwitches ?? null;
+    },
+
+    setKillSwitches: async (
+      switches: readonly KillSwitchWriteEntry[],
+    ): Promise<{ document: KillSwitchDocument; settingsId: string }> => {
+      // Fail-closed: validate BEFORE writing. A stored document the poll path cannot read
+      // drains every fleet, so buildKillSwitchDocument throws rather than persist a bad doc.
+      const document = buildKillSwitchDocument(switches, EXECUTION_TARGET_KINDS);
+      const current = await getOrCreateRow();
+      await db
+        .update(instanceSettings)
+        // The jsonb column's setter is typed `Record<string, unknown>`; the document is exactly
+        // that at runtime (a plain object), but its precise interface lacks an index signature.
+        .set({ killSwitches: document as unknown as Record<string, unknown>, updatedAt: new Date() })
+        .where(eq(instanceSettings.id, current.id));
+      return { document, settingsId: current.id };
+    },
+
+    clearKillSwitches: async (): Promise<{ settingsId: string }> => {
+      const current = await getOrCreateRow();
+      // SQL NULL — the "absent" steady state, never the drain-causing bare {}.
+      await db
+        .update(instanceSettings)
+        .set({ killSwitches: null, updatedAt: new Date() })
+        .where(eq(instanceSettings.id, current.id));
+      return { settingsId: current.id };
+    },
   };
 }

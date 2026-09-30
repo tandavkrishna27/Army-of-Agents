@@ -27,6 +27,9 @@ vi.mock("../services/index.js", () => ({
   assetService: () => mockService,
   logActivity: vi.fn(),
 }));
+vi.mock("../services/universe-asset-access.js", () => ({
+  assertUniverseAssetAccess: vi.fn(),
+}));
 
 import { assetRoutes } from "../routes/assets.js";
 

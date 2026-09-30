@@ -4,7 +4,8 @@ export type SecretCandidateUnavailableCode =
   | "secret_unbound"
   | "secret_version_missing"
   | "provider_config_disabled"
-  | "aws_secret_not_found";
+  | "aws_secret_not_found"
+  | "restricted_credential_denied";
 
 /**
  * A credential candidate that is locally unusable, while provider resolution

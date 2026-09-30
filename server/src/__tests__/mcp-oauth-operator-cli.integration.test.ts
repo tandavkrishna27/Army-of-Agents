@@ -17,6 +17,7 @@ import {
   createDb,
   type Db,
 } from "@armyofagents/db";
+import { insertTestCompany } from "./helpers/insert-test-company.js";
 import {
   decodeOAuthBundle,
   deriveOAuthBundleKey,
@@ -101,7 +102,7 @@ function jsonOutput(result: SpawnSyncReturns<string>): Record<string, unknown> {
 
 async function seedCompany(label: string) {
   const id = randomUUID();
-  await db.insert(companies).values({
+  await insertTestCompany(db, {
     id,
     name: `OAuth operator ${label}`,
     issuePrefix: `O${randomUUID()

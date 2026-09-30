@@ -151,7 +151,7 @@
 
 - [ ] **Step 3: Implement** the gate resolution (instance config → profile capability + server-side guard). Default all three ON.
 
-- [ ] **Step 4: Run — PASS.** UI test: gate off → no upstream; gate on → upstream present.
+- [ ] **Step 4: Run — PASS.** UI test: gate off → no paperclip; gate on → paperclip present.
 
 - [ ] **Step 5: Commit** — `feat(composer): per-surface capability gates (default on)`.
 

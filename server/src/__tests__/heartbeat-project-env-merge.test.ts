@@ -15,7 +15,7 @@ import { describe, it, expect } from "vitest";
  * be clobbered by project defaults.
  *
  * SEE: server/src/services/heartbeat.ts (mergedConfigWithProjectEnv block, ~line 1890) and
- *      docs/superpowers/plans/2026-04-26-upstream-aoa-resync.md (T18).
+ *      docs/superpowers/plans/2026-04-26-upstream-paperclip-resync.md (T18).
  */
 describe("Project env merge precedence", () => {
   function mergeRunEnv(layers: {

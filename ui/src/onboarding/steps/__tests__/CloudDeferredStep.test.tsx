@@ -76,4 +76,29 @@ describe("cloud onboarding continuations", () => {
     expect(screen.getByTestId("local-verify-step")).toBeInTheDocument();
     expect(screen.queryByTestId("cloud-provider-key-notice")).not.toBeInTheDocument();
   });
+
+  it("defers local CLI verification for distributed authenticated staging", async () => {
+    const onComplete = vi.fn();
+    render(
+      <CloudAwareVerifyStep
+        ctx={{
+          ...ctx,
+          deploymentMode: "authenticated",
+          distributedExecutionEnabled: true,
+        } as never}
+        onComplete={onComplete}
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByTestId("local-verify-step")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /continue setup/i }));
+
+    expect(advanceOnboarding).toHaveBeenCalledWith({
+      companyId: "company-1",
+      journey: "founder",
+      requestedState: "COMMANDER_VERIFIED",
+    });
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
 });

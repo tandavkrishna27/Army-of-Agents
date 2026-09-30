@@ -1,3 +1,4 @@
+import "./config/env-compat.js"; // side-effect: mirror PAPERCLIP_* env to AOA_* for migration
 import { Command } from "commander";
 import { onboard } from "./commands/onboard.js";
 import { doctor } from "./commands/doctor.js";
@@ -9,6 +10,7 @@ import { runCommand } from "./commands/run.js";
 import { bootstrapCeoInvite } from "./commands/auth-bootstrap-ceo.js";
 import { registerClientAuthCommands } from "./commands/client/auth.js";
 import { dbBackupCommand } from "./commands/db-backup.js";
+import { dbRestoreCommand } from "./commands/db-restore.js";
 import { registerContextCommands } from "./commands/client/context.js";
 import { registerCompanyCommands } from "./commands/client/company.js";
 import { registerIssueCommands } from "./commands/client/issue.js";
@@ -82,10 +84,20 @@ program
   .option("-d, --data-dir <path>", DATA_DIR_OPTION_HELP)
   .option("--dir <path>", "Backup output directory (overrides config)")
   .option("--retention-days <days>", "Retention window used for pruning", (value) => Number(value))
-  .option("--filename-prefix <prefix>", "Backup filename prefix", "aoa")
+  .option("--filename-prefix <prefix>", "Backup filename prefix", "paperclip")
   .option("--json", "Print backup metadata as JSON")
   .action(async (opts) => {
     await dbBackupCommand(opts);
+  });
+
+program
+  .command("db:restore")
+  .description("Restore the database from a backup file (OVERWRITES current schema and data)")
+  .option("-c, --config <path>", "Path to config file")
+  .option("-d, --data-dir <path>", DATA_DIR_OPTION_HELP)
+  .option("--file <path>", "Backup file to restore from (required)")
+  .action(async (opts) => {
+    await dbRestoreCommand(opts);
   });
 
 program

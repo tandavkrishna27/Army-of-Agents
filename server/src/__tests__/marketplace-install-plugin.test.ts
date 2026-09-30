@@ -12,6 +12,7 @@ vi.mock("drizzle-orm", () => ({
 import { installMarketplacePlugin } from "../services/marketplace-install/plugin-installer.js";
 import type { CatalogItem } from "@armyofagents/shared";
 import { setDeploymentMode } from "../config/deployment-mode.js";
+import { CloudPluginExecutionBlockedError } from "../services/cloud-plugin-execution.js";
 
 afterEach(() => setDeploymentMode("local_trusted"));
 
@@ -104,7 +105,7 @@ describe("installMarketplacePlugin", () => {
     expect(result.pluginId).toBe("existing-plug");
   });
 
-  it("U10: no longer reconciles/denies an existing cloud row at the (now-lifted) block gate — idempotent return instead", async () => {
+  it("FND-006: reconciles then denies an existing cloud row at the loader block gate (Decision #103)", async () => {
     setDeploymentMode("cloud_auth");
     const blockActivationInCloud = vi.fn();
     const lifecycleLoadMock = vi.fn();
@@ -127,23 +128,24 @@ describe("installMarketplacePlugin", () => {
       }),
     };
 
-    // isCloudPluginExecutionBlocked() is always false now (U10) — the
-    // `if (isCloudPluginExecutionBlocked())` reconcile-and-deny branch in
-    // plugin-installer.ts is dead code, so this same-version existing row
-    // hits the normal idempotency shortcut instead of a typed denial.
-    const result = await installMarketplacePlugin({
-      catalogItem: PLUGIN,
-      companyId: "c1",
-      db: mockDb as any,
-      pluginLoader: {
-        installPlugin: installPluginMock,
-        registry: { getByKeyScoped: vi.fn() },
-        lifecycle: { load: lifecycleLoadMock, blockActivationInCloud },
-      } as any,
-    });
+    // Decision #103 amendment / FND-006: the loader sink fails closed on
+    // cloud_auth. A persisted, non-uninstalled row is first reconciled to the
+    // blocked state from stored JSON (blockActivationInCloud), then the install
+    // is denied with the typed error — no package I/O, no idempotent shortcut.
+    await expect(
+      installMarketplacePlugin({
+        catalogItem: PLUGIN,
+        companyId: "c1",
+        db: mockDb as any,
+        pluginLoader: {
+          installPlugin: installPluginMock,
+          registry: { getByKeyScoped: vi.fn() },
+          lifecycle: { load: lifecycleLoadMock, blockActivationInCloud },
+        } as any,
+      }),
+    ).rejects.toBeInstanceOf(CloudPluginExecutionBlockedError);
 
-    expect(result).toEqual({ pluginId: "existing-plug", alreadyInstalled: true });
-    expect(blockActivationInCloud).not.toHaveBeenCalled();
+    expect(blockActivationInCloud).toHaveBeenCalledWith("existing-plug", "marketplace");
     expect(installPluginMock).not.toHaveBeenCalled();
     expect(lifecycleLoadMock).not.toHaveBeenCalled();
   });
@@ -186,7 +188,7 @@ describe("installMarketplacePlugin", () => {
     expect(result).toEqual({ pluginId: "existing-plug", alreadyInstalled: false });
   });
 
-  it("U10: reinstalls a soft-uninstalled cloud plugin instead of denying it at the (now-lifted) block gate", async () => {
+  it("FND-006: denies a soft-uninstalled cloud plugin at the loader block gate without package I/O (Decision #103)", async () => {
     setDeploymentMode("cloud_auth");
     const installPluginMock = vi.fn(async () => DISCOVERED);
     const lifecycleLoadMock = vi.fn(async () => {});
@@ -206,26 +208,28 @@ describe("installMarketplacePlugin", () => {
       }),
     };
 
-    // isCloudPluginExecutionBlocked() is always false now — cloud_auth no
-    // longer denies a soft-uninstalled row before reinstall; the reinstall
-    // proceeds exactly like the local_trusted case above.
-    const result = await installMarketplacePlugin({
-      catalogItem: PLUGIN,
-      companyId: "c1",
-      db: mockDb as any,
-      pluginLoader: {
-        installPlugin: installPluginMock,
-        registry: {
-          getByKeyScoped: vi.fn(async () => ({ id: "existing-plug", pluginKey: "aoa.slack" })),
-        },
-        lifecycle: { load: lifecycleLoadMock, blockActivationInCloud },
-      } as any,
-    });
+    // Decision #103 amendment / FND-006: a soft-uninstalled row is denied at the
+    // loader gate WITHOUT package I/O or JS import — and without a reconcile
+    // write (there is no live row to reconcile), so blockActivationInCloud is
+    // not called for the uninstalled row.
+    await expect(
+      installMarketplacePlugin({
+        catalogItem: PLUGIN,
+        companyId: "c1",
+        db: mockDb as any,
+        pluginLoader: {
+          installPlugin: installPluginMock,
+          registry: {
+            getByKeyScoped: vi.fn(async () => ({ id: "existing-plug", pluginKey: "aoa.slack" })),
+          },
+          lifecycle: { load: lifecycleLoadMock, blockActivationInCloud },
+        } as any,
+      }),
+    ).rejects.toBeInstanceOf(CloudPluginExecutionBlockedError);
 
     expect(blockActivationInCloud).not.toHaveBeenCalled();
-    expect(installPluginMock).toHaveBeenCalledOnce();
-    expect(lifecycleLoadMock).toHaveBeenCalledWith("existing-plug");
-    expect(result).toEqual({ pluginId: "existing-plug", alreadyInstalled: false });
+    expect(installPluginMock).not.toHaveBeenCalled();
+    expect(lifecycleLoadMock).not.toHaveBeenCalled();
   });
 
   it("throws if catalog item missing npm field", async () => {

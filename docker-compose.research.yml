@@ -25,7 +25,7 @@ x-research-env: &research-env
   HOST: "127.0.0.1"
   PORT: "3100"
   SERVE_UI: "true"
-  DATABASE_URL: "postgres://aoa:aoa@db:5432/aoa"
+  DATABASE_URL: "postgres://paperclip:paperclip@db:5432/paperclip"
   AOA_HOME: "/research/aoa-home"
   AOA_INSTANCE_ID: "docker-research"
   AOA_DEPLOYMENT_MODE: "local_trusted"
@@ -60,11 +60,11 @@ services:
   db:
     image: pgvector/pgvector:pg18
     environment:
-      POSTGRES_USER: aoa
-      POSTGRES_PASSWORD: aoa
-      POSTGRES_DB: aoa
+      POSTGRES_USER: paperclip
+      POSTGRES_PASSWORD: paperclip
+      POSTGRES_DB: paperclip
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aoa -d aoa"]
+      test: ["CMD-SHELL", "pg_isready -U paperclip -d paperclip"]
       interval: 2s
       timeout: 5s
       retries: 60
@@ -126,7 +126,7 @@ services:
     environment:
       <<: *research-env
       AOA_E2E_PORT: "3199"
-      AOA_RESEARCH_E2E_DATABASE_URL: "postgres://aoa:aoa@db:5432/aoa_e2e"
+      AOA_RESEARCH_E2E_DATABASE_URL: "postgres://paperclip:paperclip@db:5432/paperclip_e2e"
     entrypoint: ["/usr/bin/tini", "--", "bash", "docker/research/run-e2e.sh"]
     command: []
     volumes:
@@ -148,7 +148,7 @@ services:
       AOA_HOME: "/tmp/aoa-real-provider-e2e-home"
       AOA_INSTANCE_ID: "docker-research-real-provider-e2e"
       AOA_E2E_PORT: "3299"
-      AOA_RESEARCH_E2E_DATABASE_URL: "postgres://aoa:aoa@db:5432/aoa_e2e_real_provider"
+      AOA_RESEARCH_E2E_DATABASE_URL: "postgres://paperclip:paperclip@db:5432/paperclip_e2e_real_provider"
       AOA_E2E_FAKE_CREW_LLM: "0"
       AOA_E2E_FAKE_EMBEDDER: "0"
       AOA_E2E_SKIP_LLM: "false"
@@ -195,11 +195,11 @@ services:
       db:
         condition: service_healthy
     environment:
-      PGPASSWORD: "aoa"
+      PGPASSWORD: "paperclip"
     command:
       [
         "psql",
-        "postgres://aoa:aoa@db:5432/aoa"
+        "postgres://paperclip:paperclip@db:5432/paperclip"
       ]
     networks:
       - research

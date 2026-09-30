@@ -26,6 +26,10 @@ vi.mock("@armyofagents/db", () => ({
 import { isPluginPackageName } from "../services/plugin-loader.js";
 
 describe("isPluginPackageName — name convention acceptance", () => {
+  it("accepts paperclip-plugin-* (legacy)", () => {
+    expect(isPluginPackageName("paperclip-plugin-linear")).toBe(true);
+  });
+
   it("accepts @scope/plugin-* (scoped)", () => {
     expect(isPluginPackageName("@armyofagents/plugin-discord")).toBe(true);
   });

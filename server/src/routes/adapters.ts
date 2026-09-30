@@ -1,7 +1,8 @@
 /**
  * @fileoverview Adapter management REST API routes
  *
- * Exposes 9 endpoints for managing external adapter plugins:
+ * Ported from Paperclip (2026-04-20, Phase 0 Task 0.3). Exposes 9 endpoints
+ * for managing external adapter plugins:
  *   GET    /adapters
  *   POST   /adapters/install
  *   PATCH  /adapters/:type
@@ -12,10 +13,19 @@
  *   GET    /adapters/:type/config-schema
  *   GET    /adapters/:type/ui-parser.js
  *
- * All endpoints require instance-admin authorization because adapter installs
- * are instance-wide and execute package code in the server process.
- * Session-management defaults come from adapter-utils through the registry;
- * built-in adapters may set adapter-specific behavior.
+ * All endpoints require instance-admin authorization (AoA's
+ * assertCanManageInstanceSettings, which is the equivalent of Paperclip's
+ * assertBoardOrgAccess — adapter installs are instance-wide and run npm install
+ * + import() in the server process, so any board user is too broad).
+ *
+ * AoA deviations from Paperclip:
+ *   - Uses assertCanManageInstanceSettings from routes/authz.ts (Paperclip uses assertBoardOrgAccess).
+ *   - Uses adapter-utils session-management defaults through the server
+ *     registry. Built-in adapters may still set sessionManagement directly
+ *     when they need adapter-specific behavior.
+ *   - Uses AoA's service export names: getAdapterPluginByType (not
+ *     getAdapterPlugin), isAdapterDisabled (not isAdapterPluginDisabled),
+ *     setAdapterDisabled (not setAdapterPluginDisabled).
  *
  * @module server/routes/adapters
  */
@@ -89,7 +99,7 @@ function rejectCloudExternalAdapterExecution(
 // ---------------------------------------------------------------------------
 
 interface AdapterInstallRequest {
-  /** npm package name (e.g., "droid-aoa-adapter") or local path */
+  /** npm package name (e.g., "droid-paperclip-adapter") or local path */
   packageName: string;
   /** True if packageName is a local filesystem path */
   isLocalPath?: boolean;
@@ -380,7 +390,7 @@ export function adapterRoutes() {
     }
 
     // Strip version suffix if the UI sends "pkg@1.2.3" instead of separating
-    // e.g. "@henkey/hermes-aoa-adapter@0.3.0" → packageName + version
+    // e.g. "@henkey/hermes-paperclip-adapter@0.3.0" → packageName + version
     let canonicalName = packageName;
     let explicitVersion = version;
     const versionSuffix = packageName.match(/@(\d+\.\d+\.\d+.*)$/);

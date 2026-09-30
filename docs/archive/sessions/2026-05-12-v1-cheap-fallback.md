@@ -1070,7 +1070,7 @@ Expected: 0 errors.
 
 ```bash
 cd AoA-2.5
-grep -rn "pcp_\|upstream\." --include="*.ts" --include="*.tsx" \
+grep -rn "pcp_\|paperclip\." --include="*.ts" --include="*.tsx" \
   server/src/services/cheap-fallback.ts \
   ui/src/components/settings/sections/CommanderSection.tsx \
   ui/src/api/internal-agent.ts

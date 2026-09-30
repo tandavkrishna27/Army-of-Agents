@@ -1,0 +1,78 @@
+{
+  "$comment": [
+    "WRK-008 slice 2b Step 9a \u2014 each D1 worker's declared DISPATCH gate posture, checked",
+    "against docker-compose.d1.yml on every PR (scripts/check-d1-dispatch-declared.mjs).",
+    "The plan's 'D1 must enable dispatch in its own compose file as a separate, attributable",
+    "change' made mechanical. ALL FOUR landable gates are declared, not just the flag: a",
+    "checker that parsed only AOA_WORKER_DISPATCH_ENABLED would stay green through the event",
+    "it exists to catch (design \u00a78 (i)).",
+    "expect: 'absent' = the var must NOT be set; 'present' = set (any value); else the exact value.",
+    "Blocker B: the worker image now CONTAINS worker-networked-host, so AOA_WORKER_PROVIDER_URL stopped being unreadable-by-any-code. The gate moved to the command/entrypoint, which this env-only checker cannot see - scripts/lib/d1-compose-invariants.mjs carries that clause."
+  ],
+  "workers": {
+    "worker-a": {
+      "dispatchEnabled": {
+        "var": "AOA_WORKER_DISPATCH_ENABLED",
+        "expect": "absent",
+        "reason": "dispatch is OFF; enabling it is a separate attributable compose diff."
+      },
+      "keyStoreMode": {
+        "var": "AOA_WORKER_KEY_STORE_MODE",
+        "expect": "mounted_secret",
+        "reason": "gate 3: mounted_secret with no OS-custody store means no device identity \u2014 the container's structural identity gate."
+      },
+      "sandboxProvider": {
+        "var": "AOA_WORKER_SANDBOX_PROVIDER",
+        "expect": "absent",
+        "reason": "gate 1: the DEP-010 resolver reads this; absent \u21d2 no provider. D1 runs bin/worker-daemon.js (the CONTAINER root), which has no resolver at all, so gate 1 stays STRUCTURAL through Sprint 2."
+      },
+      "e2bTemplate": {
+        "var": "AOA_WORKER_E2B_TEMPLATE",
+        "expect": "absent",
+        "reason": "the second half of the DEP-010 provider construction; absent."
+      },
+      "providerUrl": {
+        "var": "AOA_WORKER_PROVIDER_URL",
+        "expect": "present",
+        "reason": "PRESENT, and NO LONGER DEAD CODE. Set to a live in-net fake-provider for health. Until Blocker B no shipped image contained a bin that reads it, so it was inert whoever set it; the worker image now ships worker-networked-host at /worker-net-app/dist/bin/networked-host.js, which DOES read it. The image CMD still enters the DAEMON bin (repointing it globally would crash-loop the fleet: runContainerHost builds FileRecordStores unconditionally and resolveCustody REFUSES mounted_secret with stores), so the gate is now the command/entrypoint, NOT this variable. checkWorkersEnterTheDaemonBin in scripts/lib/d1-compose-invariants.mjs guards that override; this row records that the variable itself is deliberately present."
+      },
+      "eventOutboxPath": {
+        "var": "AOA_WORKER_EVENT_OUTBOX_PATH",
+        "expect": "absent",
+        "reason": "gate 4: absent \u21d2 no durable outbox home \u21d2 no_event_outbox_path (refuses first only once gates 1/3 pass)."
+      }
+    },
+    "worker-b": {
+      "dispatchEnabled": {
+        "var": "AOA_WORKER_DISPATCH_ENABLED",
+        "expect": "absent",
+        "reason": "dispatch is OFF; enabling it is a separate attributable compose diff."
+      },
+      "keyStoreMode": {
+        "var": "AOA_WORKER_KEY_STORE_MODE",
+        "expect": "file_record",
+        "reason": "WRK-017 \u2014 worker-b is the ENROLLING worker: it boots the CONTAINER custody root (a compose `command:` override on dist/bin/container-host.js) and persists a DeviceIdentityRecord + receipt to its named volume. Gate 3 is therefore SATISFIED here, deliberately, and it is the only D1 worker for which that is true \u2014 worker-a stays mounted_secret as the negative control. This does NOT enable dispatch: gates 1 (no AOA_WORKER_SANDBOX_PROVIDER \u2192 no provider) and 4 (no AOA_WORKER_EVENT_OUTBOX_PATH) still refuse, and AOA_WORKER_DISPATCH_ENABLED is still absent. NOTE the coupling this row cannot see: file_record WITHOUT the container-host command, or that command without file_record, are BOTH pre-socket exit(1) crash loops \u2014 checkWorkerCustodyBootRoot in scripts/lib/d1-compose-invariants.mjs carries that clause, exactly as checkWorkersEnterTheDaemonBin carries the providerUrl one."
+      },
+      "sandboxProvider": {
+        "var": "AOA_WORKER_SANDBOX_PROVIDER",
+        "expect": "absent",
+        "reason": "gate 1: absent \u21d2 no provider. worker-b now runs the CONTAINER root (container-host.js), which \u2014 like the daemon root \u2014 constructs no provider: runContainerHost passes `provider: undefined` for the shipped container by design (DEP-010/E4-D01, the daemon image cannot carry a provider package). So gate 1 stays STRUCTURAL even though gate 3 no longer does."
+      },
+      "e2bTemplate": {
+        "var": "AOA_WORKER_E2B_TEMPLATE",
+        "expect": "absent",
+        "reason": "absent."
+      },
+      "providerUrl": {
+        "var": "AOA_WORKER_PROVIDER_URL",
+        "expect": "present",
+        "reason": "PRESENT, and NO LONGER DEAD CODE \u2014 see worker-a. The gate is the command/entrypoint (guarded by checkWorkersEnterTheDaemonBin), not this variable."
+      },
+      "eventOutboxPath": {
+        "var": "AOA_WORKER_EVENT_OUTBOX_PATH",
+        "expect": "absent",
+        "reason": "gate 4: absent \u21d2 no_event_outbox_path."
+      }
+    }
+  }
+}

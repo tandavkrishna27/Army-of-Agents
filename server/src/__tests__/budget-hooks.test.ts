@@ -83,7 +83,10 @@ function createSequenceDb(config: {
     const chain: Record<string, unknown> = {};
     const methods = [
       "from", "where", "orderBy", "limit", "leftJoin", "innerJoin",
-      "values", "set", "returning", "groupBy",
+      // `onConflictDoNothing` — JOB-012 made createIncidentIfNeeded's incident INSERT
+      // race-safe (ON CONFLICT DO NOTHING on the open-incident unique). It is a no-op
+      // in the sequence mock (returns the chain; the next `inserts[]` row resolves).
+      "values", "set", "returning", "groupBy", "onConflictDoNothing",
     ];
     for (const m of methods) {
       chain[m] = (..._args: unknown[]) => chain;

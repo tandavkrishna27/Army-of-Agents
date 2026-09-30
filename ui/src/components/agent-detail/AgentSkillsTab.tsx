@@ -53,7 +53,7 @@ export function AgentSkillsTab({
   // Freshest optimistic-concurrency token. Like `latestSkillKeys`, this is
   // advanced from the SUCCESSFUL update response so a second toggle fired before
   // the post-success refetch lands sends the up-to-date token (not the stale prop)
-  // and doesn't self-409 against this component's own prior write. (Decision #104)
+  // and doesn't self-409 against this component's own prior write. (Decision #125)
   const latestExpectedUpdatedAt = useRef(expectedUpdatedAt);
   useEffect(() => {
     latestExpectedUpdatedAt.current = expectedUpdatedAt;
@@ -125,7 +125,7 @@ export function AgentSkillsTab({
       setLocalKeys(latestSkillKeys.current);
       if (e instanceof ApiError && e.status === 409) {
         // Concurrent edit: the agent changed under us. Refetch + tell the user
-        // to redo their toggle against the reloaded state (Decision #104).
+        // to redo their toggle against the reloaded state (Decision #125).
         void queryClient.invalidateQueries({ queryKey: ["agents", "detail"] });
         pushToast({
           title: "This agent changed elsewhere",

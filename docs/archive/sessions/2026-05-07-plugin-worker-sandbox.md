@@ -253,7 +253,7 @@ cd server && pnpm test __tests__/plugin-sandbox.test.ts
 Read lines 1840–1882 of `server/src/services/plugin-loader.ts` to understand the available variables at the spawn site:
 
 - `plugin` — the `PluginRecord` from the DB (has `trustTier` after C3 ships)
-- `manifest` — the `UpstreamPluginManifestV1` (has `capabilities: string[]`)
+- `manifest` — the `PaperclipPluginManifestV1` (has `capabilities: string[]`)
 - `workerOptions` — the `WorkerStartOptions` object being assembled
 - `workerOptions.execArgv` — already set to `["--import", tsxLoader]` for local-path plugins
 

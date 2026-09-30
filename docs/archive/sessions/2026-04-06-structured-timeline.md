@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-04-06-structured-timeline-design.md`
 
-**Reference file to consult:** `reference/upstream-RunTranscriptView.tsx` (AoA's transcript rendering — copied into AoA. The `normalizeTranscript()` function and helpers are ported from here)
+**Reference file to consult:** `reference/paperclip-RunTranscriptView.tsx` (AoA's transcript rendering — copied into AoA. The `normalizeTranscript()` function and helpers are ported from here)
 
 **CRITICAL PORT NOTES (AoA vs AoA TranscriptEntry differences):**
 1. AoA's `tool_call` entry has NO `toolUseId` field (AoA's does). When porting normalizeTranscript, do NOT reference `entry.toolUseId` on tool_call entries — use `extractToolUseId(entry.input)` only.
@@ -333,7 +333,7 @@ git commit -m "feat(workspace): add structured timeline types — TranscriptBloc
 - Create: `ui/src/components/workspace/transcript/normalize-transcript.ts`
 - Create: `ui/src/__tests__/transcript/normalize-transcript.test.ts`
 
-**Reference:** Read `upstream-master/upstream/ui/src/components/transcript/RunTranscriptView.tsx` lines 109-580 — the helper functions and normalizeTranscript(). Port this code, adapting imports to use our local `types.ts`.
+**Reference:** Read `paperclip-master/paperclip/ui/src/components/transcript/RunTranscriptView.tsx` lines 109-580 — the helper functions and normalizeTranscript(). Port this code, adapting imports to use our local `types.ts`.
 
 - [ ] **Step 1: Write tests for normalizeTranscript**
 
@@ -444,7 +444,7 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Create normalize-transcript.ts by porting from AoA**
 
-Read `upstream-master/upstream/ui/src/components/transcript/RunTranscriptView.tsx` lines 109-580. Port the following functions into `ui/src/components/workspace/transcript/normalize-transcript.ts`:
+Read `paperclip-master/paperclip/ui/src/components/transcript/RunTranscriptView.tsx` lines 109-580. Port the following functions into `ui/src/components/workspace/transcript/normalize-transcript.ts`:
 
 - All helper functions: `asRecord`, `compactWhitespace`, `truncate`, `humanizeLabel`, `stripWrappedShell`, `formatUnknown`, `formatToolPayload`, `extractToolUseId`, `summarizeRecord`, `summarizeToolInput`, `parseStructuredToolResult`, `isCommandTool`, `displayToolName`, `summarizeToolResult`, `parseSystemActivity`, `shouldHideNiceModeStderr`
 - `groupCommandBlocks()`

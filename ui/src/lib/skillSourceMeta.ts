@@ -74,7 +74,7 @@ export function skillSourceMeta(
         label: sourceLabel ?? "Local",
         managedLabel: "Local skill",
       };
-    case "aoa":
+    case "paperclip":
       return {
         Icon: Boxes,
         tone: "indigo",

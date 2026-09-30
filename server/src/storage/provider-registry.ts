@@ -12,6 +12,7 @@ export function createStorageProviderFromConfig(config: Config): StorageProvider
     bucket: config.storageS3Bucket,
     region: config.storageS3Region,
     endpoint: config.storageS3Endpoint,
+    presignEndpoint: config.storageS3PresignEndpoint,
     prefix: config.storageS3Prefix,
     forcePathStyle: config.storageS3ForcePathStyle,
   });

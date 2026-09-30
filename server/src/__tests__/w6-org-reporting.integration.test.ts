@@ -62,7 +62,7 @@ afterAll(async () => {
 async function seedCompanyWithFounder(): Promise<{ companyId: string; founderId: string }> {
   // issue_prefix is NOT NULL DEFAULT 'PAP' with a UNIQUE index; omitting it makes
   // every seeded company collide on the second insert. Generate a distinct prefix.
-  const companyId = firstId(await db.execute(sql`INSERT INTO companies (id, name, issue_prefix) VALUES (gen_random_uuid(), 'W6 Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12))) RETURNING id`));
+  const companyId = firstId(await db.execute(sql`INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'W6 Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12))) RETURNING id`));
   const founderId = firstId(await db.execute(sql`INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at) VALUES (gen_random_uuid()::text, 'f@w6.test', 'Founder', false, now(), now()) RETURNING id`));
   await db.execute(sql`INSERT INTO company_memberships (id, company_id, principal_type, principal_id, membership_role, status, created_at, updated_at) VALUES (gen_random_uuid(), ${companyId}, 'user', ${founderId}, 'owner', 'active', now(), now())`);
   await db.execute(sql`INSERT INTO user_roles (id, company_id, user_id, role) VALUES (gen_random_uuid(), ${companyId}, ${founderId}, 'founder')`);
@@ -120,7 +120,7 @@ describe.skipIf(process.platform === "win32")("W6 org reporting — real DB", ()
     if (setupError) throw new Error(String(setupError));
     // Seed ONLY a company — no founder user, membership, or role.
     const companyId = firstId(
-      await db.execute(sql`INSERT INTO companies (id, name, issue_prefix) VALUES (gen_random_uuid(), 'W6 Operator Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12))) RETURNING id`),
+      await db.execute(sql`INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'W6 Operator Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12))) RETURNING id`),
     );
 
     const operatorId = await accessService(db).ensureRealOperator(companyId, null);
@@ -212,6 +212,10 @@ describe.skipIf(process.platform === "win32")("W6 org reporting — real DB", ()
         include: { company: true, agents: true },
       },
       null,
+      // TEN-006a / E2-D07: a direct (non-route) self-hosted import must resolve
+      // the Default Org EXPLICITLY — the writer no longer silently buckets it.
+      undefined,
+      { organizationId: "00000000-0000-0000-0000-000000000001" },
     );
 
     const companyId = result.company.id;
@@ -325,7 +329,7 @@ describe.skipIf(process.platform === "win32")("W6 org reporting — real DB", ()
     // getFounderUserId resolves null and create() must hard-fail rather than
     // produce a rootless org agent.
     const companyId = firstId(
-      await db.execute(sql`INSERT INTO companies (id, name, issue_prefix) VALUES (gen_random_uuid(), 'W6 No-Founder Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12))) RETURNING id`),
+      await db.execute(sql`INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'W6 No-Founder Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12))) RETURNING id`),
     );
 
     await expect(

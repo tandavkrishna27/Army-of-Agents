@@ -3,23 +3,23 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "description": "An AoA plugin",
+  "description": "A Paperclip plugin",
   "scripts": {
     "prebuild": "node ../../../../scripts/ensure-plugin-build-deps.mjs",
     "build": "node ./esbuild.config.mjs",
     "build:rollup": "rollup -c",
     "dev": "node ./esbuild.config.mjs --watch",
-    "dev:ui": "aoa-plugin-dev-server --root . --ui-dir dist/ui --port 4177",
+    "dev:ui": "paperclip-plugin-dev-server --root . --ui-dir dist/ui --port 4177",
     "test": "vitest run --config ./vitest.config.ts",
     "typecheck": "node ../../../../scripts/build-plugin-sdk-locked.mjs && tsc --noEmit"
   },
-  "aoaPlugin": {
+  "paperclipPlugin": {
     "manifest": "./dist/manifest.js",
     "worker": "./dist/worker.js",
     "ui": "./dist/ui/"
   },
   "keywords": [
-    "aoa",
+    "paperclip",
     "plugin",
     "connector"
   ],

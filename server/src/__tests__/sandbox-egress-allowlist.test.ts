@@ -1,8 +1,11 @@
 /**
  * S4 (U6.2) — sandbox provider create/resume path accepts an optional
  * `egressAllowlist?: string[]` and records it verbatim in the returned
- * `SandboxProviderLease.metadata`. Best-effort only: managed E2B egress is
- * not fully lockable (spec §11/§12), so the provider records the allowlist
+ * `SandboxProviderLease.metadata`. Best-effort only: the spec said "managed
+ * E2B egress is not fully lockable" (§11/§12) — a CAPABILITY claim that the
+ * installed e2b SDK refutes, see E8-F007; what is actually true, and what
+ * this test pins, is that the value crosses as `metadata` and is enforced by
+ * nothing (E8-F003 measured that). So the provider records the allowlist
  * for later reference but must never throw when it cannot enforce it. When
  * no allowlist is supplied the key stays absent (not defaulted to `[]`) so
  * the pre-existing exact-shape lease-metadata assertions elsewhere in
@@ -84,9 +87,10 @@ describe("sandbox provider egress allowlist (S4, U6.2)", () => {
       });
 
       expect(lease.metadata.egressAllowlist).toEqual(["api.github.com", "registry.npmjs.org"]);
-      // Best-effort managed recording only (§11/§12 — managed E2B egress is
-      // not fully lockable); passed through Sandbox.create metadata, never
-      // used to gate/throw on acquisition.
+      // Best-effort managed recording only — the spec's "managed E2B egress is
+      // not fully lockable" (§11/§12) is REFUTED as a capability claim, E8-F007;
+      // this asserts only the shape that ships today: passed through
+      // Sandbox.create metadata, never used to gate/throw on acquisition.
       expect(create).toHaveBeenCalledWith(
         "base",
         expect.objectContaining({

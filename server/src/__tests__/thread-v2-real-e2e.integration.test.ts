@@ -97,7 +97,7 @@ describe.skipIf(isWin32 || !hasRealE2E || !hasDbUrl)(
 
         // Seed a test company. companyService.create seeds the full crew
         // (Adjutant, Engineer, Scout, Commander, Command Staff) idempotently.
-        const company = await companyService(db).create({
+        const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001",
           name: `Thread v2 E2E Co ${Date.now()}`,
         });
         companyId = company.id;
@@ -363,7 +363,7 @@ describe.skipIf(isWin32 || !hasRealE2E || !hasDbUrl)(
 
         // Seed a test company. companyService.create seeds the full AoA crew:
         // Adjutant, Scout, Engineer, Commander, Command Staff. Idempotent.
-        const company = await companyService(db).create({
+        const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001",
           name: `T5.2 Crew Work E2E Co ${Date.now()}`,
         });
         companyId = company.id;

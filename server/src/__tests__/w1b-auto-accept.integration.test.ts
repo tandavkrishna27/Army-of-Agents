@@ -66,7 +66,7 @@ async function seedCompanyAndAgent(label: string): Promise<{
   companyId: string;
   agentId: string;
 }> {
-  const company = await companyService(db).create({ name: `W1b ${label} Co` } as never);
+  const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: `W1b ${label} Co` } as never);
   const companyId = company.id;
   // companyService.create() auto-seeds the AoA crew (incl. 'Engineer'); a second INSERT
   // would violate agents_aoa_name_per_company_idx. Reuse the seeded Engineer — the same

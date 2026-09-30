@@ -11,7 +11,7 @@ import {
 import { hubItemsService } from "../services/hub-items.js";
 
 const apiBase = process.env.AOA_API_BASE ?? "http://127.0.0.1:3100/api";
-const databaseUrl = process.env.DATABASE_URL ?? "postgres://aoa:aoa@127.0.0.1:54329/aoa";
+const databaseUrl = process.env.DATABASE_URL ?? "postgres://paperclip:paperclip@127.0.0.1:54329/paperclip";
 const companyId = process.env.COMMANDER_SEED_COMPANY_ID;
 
 if (!companyId) {

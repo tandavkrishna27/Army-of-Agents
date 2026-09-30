@@ -70,7 +70,10 @@ import {
 } from "../services/plugin-lifecycle.js";
 import { createPluginHostServiceCleanup } from "../services/plugin-host-service-cleanup.js";
 import { setDeploymentMode } from "../config/deployment-mode.js";
-import { PLUGIN_WORKER_BLOCKED_IN_CLOUD } from "../services/cloud-plugin-execution.js";
+import {
+  CloudPluginExecutionBlockedError,
+  PLUGIN_WORKER_BLOCKED_IN_CLOUD,
+} from "../services/cloud-plugin-execution.js";
 
 afterEach(() => setDeploymentMode("local_trusted"));
 
@@ -96,28 +99,29 @@ describe("cloud plugin lifecycle policy", () => {
     );
   });
 
-  it("U10: no longer denies load() at the (now-lifted) cloud block gate — activation proceeds normally", async () => {
+  it("FND-006: denies load() on cloud_auth — persists the typed blocked state and throws (Decision #103)", async () => {
     setDeploymentMode("cloud_auth");
     const loadSingle = vi.fn().mockResolvedValue({ success: true });
     const lifecycle = pluginLifecycleManager({} as any, {
       loader: { hasRuntimeServices: () => true, loadSingle } as any,
     });
 
-    // isCloudPluginExecutionBlocked() is always false now — blockActivationInCloud()
-    // (called first inside load()) is a no-op, so load() proceeds to the real
-    // ready-transition + worker activation instead of persisting the typed
-    // blocked state and throwing CloudPluginExecutionBlockedError.
-    const result = await lifecycle.load("plugin-1");
+    // blockActivationInCloud() (called first inside load()) fails closed on
+    // cloud_auth: it persists status="error" + PLUGIN_WORKER_BLOCKED_IN_CLOUD
+    // and throws CloudPluginExecutionBlockedError before any ready-transition
+    // or worker activation.
+    await expect(lifecycle.load("plugin-1")).rejects.toBeInstanceOf(
+      CloudPluginExecutionBlockedError
+    );
 
-    expect(result.status).toBe("ready");
-    expect(mockUpdateStatus).not.toHaveBeenCalledWith(
+    expect(mockUpdateStatus).toHaveBeenCalledWith(
       "plugin-1",
       expect.objectContaining({ statusReasonCode: PLUGIN_WORKER_BLOCKED_IN_CLOUD })
     );
-    expect(loadSingle).toHaveBeenCalledWith("plugin-1");
+    expect(loadSingle).not.toHaveBeenCalled();
   });
 
-  it("fails closed when persisting the ready-transition state fails (U10: no longer the blocked-state write)", async () => {
+  it("fails closed when persisting the blocked-state write fails on cloud_auth (no activation)", async () => {
     setDeploymentMode("cloud_auth");
     mockUpdateStatus.mockRejectedValueOnce(new Error("database unavailable"));
     const loadSingle = vi.fn();
@@ -125,9 +129,9 @@ describe("cloud plugin lifecycle policy", () => {
       loader: { hasRuntimeServices: () => true, loadSingle } as any,
     });
 
-    // blockActivationInCloud() is a no-op now, so the first updateStatus call
-    // inside load() is the normal ready-transition (not the blocked-state
-    // persist) — a failure there still fails load() closed before activation.
+    // On cloud_auth the first updateStatus inside load() is
+    // blockActivationInCloud()'s blocked-state persist. If that write fails, the
+    // exception still fails load() closed before any worker activation.
     await expect(lifecycle.load("plugin-1")).rejects.toThrow(
       "database unavailable"
     );

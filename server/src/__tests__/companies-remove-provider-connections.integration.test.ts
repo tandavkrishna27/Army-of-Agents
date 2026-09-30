@@ -97,8 +97,8 @@ afterAll(async () => {
 async function seedCompany(name: string, prefix: string): Promise<string> {
   return firstId(
     await db.execute<{ id: string }>(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (gen_random_uuid(), ${name}, ${prefix})
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), ${name}, ${prefix})
       RETURNING id
     `),
   );

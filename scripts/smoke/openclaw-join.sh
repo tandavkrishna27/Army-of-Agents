@@ -17,8 +17,8 @@ OPENCLAW_AGENT_NAME="${OPENCLAW_AGENT_NAME:-OpenClaw Smoke Agent}"
 OPENCLAW_WEBHOOK_URL="${OPENCLAW_WEBHOOK_URL:-}"
 OPENCLAW_WEBHOOK_AUTH="${OPENCLAW_WEBHOOK_AUTH:-Bearer openclaw-smoke-secret}"
 USE_DOCKER_RECEIVER="${USE_DOCKER_RECEIVER:-1}"
-SMOKE_IMAGE="${SMOKE_IMAGE:-aoa-openclaw-smoke:local}"
-SMOKE_CONTAINER_NAME="${SMOKE_CONTAINER_NAME:-aoa-openclaw-smoke}"
+SMOKE_IMAGE="${SMOKE_IMAGE:-paperclip-openclaw-smoke:local}"
+SMOKE_CONTAINER_NAME="${SMOKE_CONTAINER_NAME:-paperclip-openclaw-smoke}"
 SMOKE_PORT="${SMOKE_PORT:-19091}"
 SMOKE_TIMEOUT_SEC="${SMOKE_TIMEOUT_SEC:-45}"
 
@@ -142,7 +142,7 @@ if [[ -z "$OPENCLAW_WEBHOOK_URL" ]]; then
   fail "OPENCLAW_WEBHOOK_URL must be set when USE_DOCKER_RECEIVER=0"
 fi
 
-log "checking AoA health"
+log "checking Paperclip health"
 api_request "GET" "/health"
 assert_status "200"
 DEPLOYMENT_MODE="$(jq -r '.deploymentMode // "unknown"' <<<"$RESPONSE_BODY")"
@@ -179,7 +179,7 @@ if [[ -z "$ONBOARDING_TEXT_PATH" ]]; then
 fi
 api_request "GET" "/invites/${INVITE_TOKEN}/onboarding.txt"
 assert_status "200"
-if ! grep -q "AoA OpenClaw Onboarding" <<<"$RESPONSE_BODY"; then
+if ! grep -q "Paperclip OpenClaw Onboarding" <<<"$RESPONSE_BODY"; then
   fail "onboarding.txt response missing expected header"
 fi
 

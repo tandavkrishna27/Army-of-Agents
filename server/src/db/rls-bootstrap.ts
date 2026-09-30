@@ -44,9 +44,15 @@ export async function bootstrapRlsCanary(
   const escapedPassword = appPassword.replace(/'/g, "''");
   const sql = postgres(adminUrl, { max: 1 });
   try {
-    // Idempotent role creation (non-owner, non-superuser, no BYPASSRLS).
+    // Idempotent role provisioning (non-owner, non-superuser, no BYPASSRLS).
+    // The role may already exist as NOLOGIN — migrations 0211/0233 pre-create
+    // aoa_app/aoa_operator NOLOGIN for the distributed serving pools — so on the
+    // ELSE branch we must still grant LOGIN + the canary password; otherwise the
+    // later `${appRole}:<pw>` connection fails auth (the role stays NOLOGIN,
+    // password unset). ALTER ROLE is idempotent and does not touch the role's
+    // NOSUPERUSER/NOBYPASSRLS posture set at creation.
     await sql.unsafe(
-      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${appRole}') THEN CREATE ROLE "${appRole}" LOGIN PASSWORD '${escapedPassword}'; END IF; END $$;`,
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${appRole}') THEN CREATE ROLE "${appRole}" LOGIN PASSWORD '${escapedPassword}'; ELSE ALTER ROLE "${appRole}" LOGIN PASSWORD '${escapedPassword}'; END IF; END $$;`,
     );
     await sql.unsafe(`GRANT SELECT, INSERT, UPDATE, DELETE ON company_secrets TO "${appRole}"`);
     await sql.unsafe(`ALTER TABLE company_secrets ENABLE ROW LEVEL SECURITY`);

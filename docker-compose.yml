@@ -51,9 +51,9 @@ x-aoa-env: &aoa-env
   # in a hardened password survive postgres.js URL parsing). Left empty here so a
   # host-shell / .env DATABASE_URL still propagates and wins over assembly.
   DATABASE_URL: ${DATABASE_URL:-}
-  AOA_POSTGRES_USER: ${AOA_POSTGRES_USER:-aoa}
-  AOA_POSTGRES_PASSWORD: ${AOA_POSTGRES_PASSWORD:-aoa}
-  AOA_POSTGRES_DB: ${AOA_POSTGRES_DB:-aoa}
+  AOA_POSTGRES_USER: ${AOA_POSTGRES_USER:-paperclip}
+  AOA_POSTGRES_PASSWORD: ${AOA_POSTGRES_PASSWORD:-paperclip}
+  AOA_POSTGRES_DB: ${AOA_POSTGRES_DB:-paperclip}
   BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
   AOA_AGENT_JWT_SECRET: ${AOA_AGENT_JWT_SECRET:-}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -92,9 +92,9 @@ services:
     image: ${AOA_POSTGRES_IMAGE:-pgvector/pgvector:pg18}
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${AOA_POSTGRES_USER:-aoa}
-      POSTGRES_PASSWORD: ${AOA_POSTGRES_PASSWORD:-aoa}
-      POSTGRES_DB: ${AOA_POSTGRES_DB:-aoa}
+      POSTGRES_USER: ${AOA_POSTGRES_USER:-paperclip}
+      POSTGRES_PASSWORD: ${AOA_POSTGRES_PASSWORD:-paperclip}
+      POSTGRES_DB: ${AOA_POSTGRES_DB:-paperclip}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 5s
@@ -162,12 +162,12 @@ services:
       db:
         condition: service_healthy
     environment:
-      PGPASSWORD: ${AOA_POSTGRES_PASSWORD:-aoa}
+      PGPASSWORD: ${AOA_POSTGRES_PASSWORD:-paperclip}
     command:
       - psql
       - --host=db
-      - --username=${AOA_POSTGRES_USER:-aoa}
-      - --dbname=${AOA_POSTGRES_DB:-aoa}
+      - --username=${AOA_POSTGRES_USER:-paperclip}
+      - --dbname=${AOA_POSTGRES_DB:-paperclip}
     networks:
       - aoa
 

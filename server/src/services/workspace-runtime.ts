@@ -498,7 +498,7 @@ function sanitizeBranchName(value: string): string {
     .replace(/[^A-Za-z0-9._/-]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^[-/.]+|[-/.]+$/g, "")
-    .slice(0, 120) || "aoa-work";
+    .slice(0, 120) || "paperclip-work";
 }
 
 function isAbsolutePath(value: string) {
@@ -3347,7 +3347,7 @@ function selectRuntimeServiceEntries(input: {
 }
 
 // ensureServerWorkspaceLinksCurrent — AoA port stub.
-// AoA uses this to re-link pnpm workspace packages in git-worktree checkouts.
+// Paperclip uses this to re-link pnpm workspace packages in git-worktree checkouts.
 // AoA's runtime control flow does not require this for start/stop/restart (only for
 // runWorkspaceJobForControl). Ported as a no-op; full implementation deferred.
 export async function ensureServerWorkspaceLinksCurrent(

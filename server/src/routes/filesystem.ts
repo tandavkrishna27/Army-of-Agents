@@ -202,8 +202,31 @@ export function filesystemRoutes() {
         : os.platform() === "win32"
           ? "explorer"
           : "xdg-open";
-    const child = spawn(cmd, [target], { detached: true, stdio: "ignore" });
-    child.unref();
+    const launched = await new Promise<boolean>((resolve) => {
+      let settled = false;
+      try {
+        const child = spawn(cmd, [target], { detached: true, stdio: "ignore" });
+        // Retain the listener after launch so later errors stay handled.
+        child.on("error", () => {
+          if (settled) return;
+          settled = true;
+          resolve(false);
+        });
+        child.once("spawn", () => {
+          if (settled) return;
+          settled = true;
+          child.unref();
+          resolve(true);
+        });
+      } catch {
+        settled = true;
+        resolve(false);
+      }
+    });
+    if (!launched) {
+      res.status(500).json({ error: "Unable to launch the file manager" });
+      return;
+    }
     res.json({ ok: true });
   });
 

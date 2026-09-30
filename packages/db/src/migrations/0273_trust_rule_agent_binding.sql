@@ -1,0 +1,25 @@
+-- BRW-004 / E8-F002 — THE TENTH NULL-HAZARD: the trust rule with no agent to be bound to.
+--
+-- Pure `db:generate` output. Nothing is hand-authored, and nothing needs to be: unlike 0272's
+-- `ADD CONSTRAINT`, `ALTER COLUMN ... SET NOT NULL` is RE-APPLIABLE, so the migration-readiness
+-- test's "delete the last journal row and re-run the tail" case passes without a guard. That
+-- distinction — "generated DDL" is not the same property as "re-appliable DDL" — is the lesson
+-- 0272 paid for on PR #356, and it is checked here rather than assumed.
+--
+-- ★★★ WHY NARROWING IS SAFE, MEASURED RATHER THAN ASSUMED. The only production writer of
+-- `agent_runtime_trust_rules` is `answerWithTrustRule`, reached solely from `answerPrompt`,
+-- which until this branch copied `agent_runtime_decisions.agent_id` while that column was still
+-- NOT NULL. The service's own `createTrustRule` (which accepted an optional agentId) has ZERO
+-- production callers — the routes expose only list + revoke. So no unbound row can exist.
+--
+-- ★ AND IF ONE DID, failing here is the correct direction. An unbound trust rule was a
+-- COMPANY-WIDE WILDCARD grant: `trustRuleMatchesPrompt` skipped its agent clause on a null, so
+-- the rule auto-allowed every agent on the same adapter type. A migration that stops on such a
+-- row is a migration that refuses to bless a privilege escalation, not one that broke.
+--
+-- ★★ This is NOT the sibling's check. `agent_runtime_decisions` carries
+-- `(agent_id IS NULL) = (run_id IS NULL)`; copying it here would reject every persistent trust
+-- rule ever written, because a persistent grant is agent-bound and run-less BY DESIGN. The
+-- decision table's invariant is "all or nothing"; this table's is "always bound", and `run_id`
+-- stays nullable because null there means persistent, not unbound.
+ALTER TABLE "agent_runtime_trust_rules" ALTER COLUMN "agent_id" SET NOT NULL;

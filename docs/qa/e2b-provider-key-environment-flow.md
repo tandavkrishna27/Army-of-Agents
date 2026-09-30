@@ -1,13 +1,13 @@
 # E2B Provider Key Environment Flow QA
 
 Date: 2026-06-01
-Workspace: [historical AoA worktree]
+Workspace: C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5\.worktrees\paperclip-runtime-cloud-plan-review
 URL: http://127.0.0.1:5174
 API: http://127.0.0.1:3110/api
 
 ## Environment
 
-- Started the backend from this worktree on port `3110` with an isolated temp embedded Postgres config at `C:\Users\TK\AppData\Local\Temp\aoa-aoa-runtime-cloud-plan-review\config.json`.
+- Started the backend from this worktree on port `3110` with an isolated temp embedded Postgres config at `C:\Users\TK\AppData\Local\Temp\aoa-paperclip-runtime-cloud-plan-review\config.json`.
 - Started Vite from this worktree on port `5174`, proxying to backend port `3110`.
 - Verified `GET /api/health` returned `status: "ok"`, `deploymentMode: "local_trusted"`, and `bootstrapStatus: "ready"`.
 - Browser console error check during the exercised screens returned no error-level logs.

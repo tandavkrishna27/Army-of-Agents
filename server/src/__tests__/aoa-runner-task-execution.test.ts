@@ -21,7 +21,7 @@
 // the runner performs is intercepted by `vi.mock("../services/issues.js", ...)`
 // (vitest resolves both relative ids to the same module). Windows-runnable.
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   writeFileMock,
@@ -139,7 +139,10 @@ vi.mock("../services/heartbeat.js", () => ({
     runtimeCommandSpec: {},
   })),
   resolveGuardedAdapterExecutionContext: vi.fn(() => ({
-    executionTarget: {},
+    // MIG-006: a real `type` so the shadow seam can be proved to read the RESOLVED
+    // target rather than a constant. Production `AdapterExecutionTarget` always
+    // carries one (runner.ts branches on `executionTarget.type`).
+    executionTarget: { type: "provider-sandbox" },
     runtimeCommandSpec: {},
   })),
   applyEnvironmentAcquisitionConfig: (config: unknown) => config,
@@ -212,6 +215,7 @@ vi.mock("../middleware/logger.js", () => {
 });
 
 import { runAoaAgent } from "../services/internal-agent/aoa-agents/runner.js";
+import { setDistributedShadowPort } from "../services/distributed-shadow-port.js";
 
 // Db harness that records every update().set() payload + its where() arg into
 // `_sets`. For a task wakeup (issueId set, NO entryId) the runner only calls
@@ -544,5 +548,67 @@ describe("Spec B Task 5: runner issueId branch", () => {
     expect(result.status).not.toBe("failed");
     const release = db._sets.find((s: any) => s.set?.status === "todo");
     expect(release).toBeUndefined();
+  });
+  // ─── MIG-006 ───────────────────────────────────────────────────────────────
+  describe("MIG-006 — the crew shadow observation", () => {
+    afterEach(() => setDistributedShadowPort(null));
+
+    it("records nothing when no port is registered, and the dispatch is unchanged", async () => {
+      const db = makeDb();
+      const result = await runAoaAgent(db as any, "a-1", TASK_PAYLOAD);
+      expect(result.status).toBe("succeeded");
+      expect(adapterExecute).toHaveBeenCalledTimes(1);
+    });
+
+    it("records exactly one observation carrying the crew run's own identity", async () => {
+      const record = vi.fn(async () => {});
+      setDistributedShadowPort({ record });
+      const db = makeDb();
+      await runAoaAgent(db as any, "a-1", TASK_PAYLOAD);
+
+      expect(record).toHaveBeenCalledTimes(1);
+      const observed = record.mock.calls[0]?.[0] as {
+        source: { kind: string; crewRunId: string };
+        principal: { kind: string; id: string };
+        routing: { executionTargetType: string };
+      };
+      expect(observed.source.kind).toBe("crew_run");
+      expect(observed.source.crewRunId).toBe("run-1");
+      // A crew_run has no run/issue fields — the FROZEN .strict() variant refuses them,
+      // and the task this dispatch happens to serve is NOT the source identity.
+      expect(observed.source).not.toHaveProperty("runId");
+      expect(observed.source).not.toHaveProperty("issueId");
+      expect(observed.principal).toEqual({ kind: "agent", id: "a-1" });
+      // The RESOLVED target, not a constant the seam invented.
+      expect(observed.routing.executionTargetType).toBe("provider-sandbox");
+    });
+
+    it("observes BEFORE the adapter runs — intent, not outcome", async () => {
+      const order: string[] = [];
+      setDistributedShadowPort({
+        record: async () => {
+          order.push("shadow");
+        },
+      });
+      adapterExecute.mockImplementationOnce(async () => {
+        order.push("execute");
+        return { status: "completed", output: "done" };
+      });
+      const db = makeDb();
+      await runAoaAgent(db as any, "a-1", TASK_PAYLOAD);
+      expect(order).toEqual(["shadow", "execute"]);
+    });
+
+    it("a port that throws never fails the dispatch", async () => {
+      setDistributedShadowPort({
+        record: async () => {
+          throw new Error("shadow exploded");
+        },
+      });
+      const db = makeDb();
+      const result = await runAoaAgent(db as any, "a-1", TASK_PAYLOAD);
+      expect(result.status).toBe("succeeded");
+      expect(adapterExecute).toHaveBeenCalledTimes(1);
+    });
   });
 });

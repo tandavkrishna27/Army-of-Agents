@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("drizzle-orm", () => ({
   eq: (col: unknown, val: unknown) => ({ op: "eq", col, val }),
   ne: (col: unknown, val: unknown) => ({ op: "ne", col, val }),
+  isNotNull: (col: unknown) => ({ op: "isNotNull", col }),
   and: (...clauses: unknown[]) => ({ op: "and", clauses }),
 }));
 vi.mock("@armyofagents/db", () => {
@@ -23,18 +24,25 @@ function matches(row: Record<string, unknown>, clause: any): boolean {
   if (clause.op === "and") return clause.clauses.every((part: any) => matches(row, part));
   if (clause.op === "eq") return row[clause.col] === clause.val;
   if (clause.op === "ne") return row[clause.col] !== clause.val;
+  if (clause.op === "isNotNull") return row[clause.col] != null;
   return false;
 }
 
-function makeFakeDb(rows: Array<{ id: string; workerTokenHash: string | null; status?: string }>) {
+function makeFakeDb(rows: Array<{
+  id: string;
+  workerTokenHash: string | null;
+  status?: string;
+  organizationId?: string | null;
+}>) {
   return {
     select: () => ({
       from: () => ({
         where: (clause: any) =>
           Promise.resolve(
             rows
+              .map((r) => ({ organizationId: "org-A", ...r }))
               .filter((r) => matches({ status: "active", ...r }, clause))
-              .map((r) => ({ id: r.id })),
+              .map((r) => ({ targetId: r.id, organizationId: r.organizationId })),
           ),
       }),
     }),
@@ -81,6 +89,16 @@ describe("worker-token helpers (Finding #3 — the row id is no longer the crede
     const db = makeFakeDb([
       { id: "t-1", workerTokenHash: hashWorkerToken(token), status: "disabled" },
     ]);
+    expect(await resolveWorkerTargetId(db, token)).toBeNull();
+  });
+
+  it("never resolves a null-Organization platform bootstrap token", async () => {
+    const token = createWorkerToken();
+    const db = makeFakeDb([{
+      id: "platform-target",
+      organizationId: null,
+      workerTokenHash: hashWorkerToken(token),
+    }]);
     expect(await resolveWorkerTargetId(db, token)).toBeNull();
   });
 

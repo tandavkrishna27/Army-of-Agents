@@ -171,7 +171,7 @@ describe("NewProjectDialog — function type picker", () => {
       functionType: "software_development",
     }));
     expect(projectApiMocks.createWorkspace).toHaveBeenCalledWith("proj-1", expect.objectContaining({
-      cwd: "/__aoa_repo_only__",
+      cwd: "/__paperclip_repo_only__",
       repoUrl: "https://github.com/acme/app",
     }));
   });

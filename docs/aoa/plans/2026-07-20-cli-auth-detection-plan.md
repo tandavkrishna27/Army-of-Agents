@@ -280,7 +280,7 @@ What changed, and why it matters to later tasks:
    the package index; if Task 4 or 5 wants it directly, import from
    `@armyofagents/adapter-utils/login-url-detector` or add the barrel export.
 
-3. **`5\d{2}` was anchored** to `(?:error|status|HTTP)\D{0,10}5\d{2}`,
+3. **`\b5\d{2}\b` was anchored** to `(?:error|status|HTTP)\D{0,10}\b5\d{2}\b`,
    because the bare form matched any three-digit number (`Used 512 tokens.`).
 
 4. **The classifier regexes are now built from named pattern arrays** joined with

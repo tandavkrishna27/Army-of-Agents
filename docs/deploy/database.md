@@ -15,8 +15,8 @@ pnpm dev
 
 On first start, the server:
 
-1. Creates `~/.aoa/instances/default/db/` for storage
-2. Ensures the `aoa` database exists (database NAME inside Postgres is wire-compat with the embedded cluster bootstrap, separate from the AoA brand)
+1. Creates `~/.aoa/instances/default/db/` for storage (legacy `~/.paperclip/` is still used as a fallback if it exists and `~/.aoa/` does not, see `cli/src/config/home.ts`)
+2. Ensures the `paperclip` database exists (database NAME inside Postgres is wire-compat with the embedded cluster bootstrap, separate from the AoA brand)
 3. Runs migrations automatically
 4. Starts serving requests
 
@@ -32,7 +32,7 @@ The default Docker Compose stack runs AoA with a durable PostgreSQL database tha
 docker compose up --build -d
 ```
 
-Inside the stack, the server gets `DATABASE_URL=postgres://aoa:aoa@db:5432/aoa` automatically. The database is not published on `localhost:5432` by default; it is only reachable by services on the Compose network.
+Inside the stack, the server gets `DATABASE_URL=postgres://paperclip:paperclip@db:5432/paperclip` automatically. The database is not published on `localhost:5432` by default; it is only reachable by services on the Compose network.
 
 Open a psql shell with:
 
@@ -55,7 +55,7 @@ Then set the connection string for the host process.
 
 ```sh
 # Either export it for the session:
-export DATABASE_URL=postgres://aoa:aoa@localhost:5432/aoa
+export DATABASE_URL=postgres://paperclip:paperclip@localhost:5432/paperclip
 # …or write it into the AoA config dir's .env (NOT the repo root):
 #   ~/.aoa/instances/default/.env
 ```
@@ -64,7 +64,7 @@ For a disposable local development database only, you can push the current
 schema directly:
 
 ```sh
-DATABASE_URL=postgres://aoa:aoa@localhost:5432/aoa \
+DATABASE_URL=postgres://paperclip:paperclip@localhost:5432/paperclip \
   npx drizzle-kit push
 ```
 

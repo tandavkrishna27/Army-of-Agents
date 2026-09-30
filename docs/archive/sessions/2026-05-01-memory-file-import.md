@@ -192,7 +192,7 @@ In `packages/db/src/schema/memory_items.ts`, add `importJobId` after the `pinned
 - [ ] **Step 3: Generate migration**
 
 ```bash
-cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-2.5"
+cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5"
 pnpm db:generate
 ```
 

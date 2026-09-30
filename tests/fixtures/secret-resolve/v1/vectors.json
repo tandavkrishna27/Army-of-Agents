@@ -1,0 +1,316 @@
+{
+  "version": "1",
+  "schema": "aoa-secret-resolve-vectors/v1",
+  "context": {
+    "jobOwner": { "executorPrincipalKind": "user", "executorPrincipalId": "11111111-1111-4111-8111-111111111111" },
+    "liveTargetGeneration": 7,
+    "liveTargetId": "a3000000-0000-4000-8000-000000000003",
+    "note": "Post-fence authorization vectors ONLY. Fence identity (org/job/attempt/worker/target/generation cutoff/fresh-expiry/terminal) is proven earlier by guardActiveFence and is NOT re-derived here; wrong-tenant / stale-fence / terminal-attempt / target-disabled are covered by the embedded-PG integration suite."
+  },
+  "admitVectors": [
+    {
+      "_note": "device_local on the FENCE-PROXY seam. Rule 3b bans only remote_server_fenced, so this has always admitted -- but no vector covered it, which left nothing stopping a future edit from widening 3b to ban fence_proxy and silently killing the seam DSK-002's proxy arm depends on. refId is a UUID: for device_local it is provider_credentials.id (DSK-001 Lane B D-B2).",
+      "name": "device_local_fence_proxy_with_destination",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "proxy",
+        "usePolicy": "fence_proxy", "destination": "https://api.provider.example", "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "deviceCredential": { "state": "verified", "ownerUserId": "11111111-1111-4111-8111-111111111111", "executionTargetId": "a3000000-0000-4000-8000-000000000003" },
+      "ownerMembershipActive": true
+    },
+    {
+      "name": "company_secret_sandbox_local_env",
+      "handle": {
+        "status": "active", "refKind": "company_secret", "refId": "company-secret-1", "materialization": "env",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "provider_key_remote_server_fenced_file",
+      "handle": {
+        "status": "active", "refKind": "provider_key", "refId": "provider:anthropic", "materialization": "file",
+        "usePolicy": "remote_server_fenced", "destination": "https://api.provider.example",
+        "boundTargetGeneration": null, "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "connector_oauth_fence_proxy_with_destination",
+      "handle": {
+        "status": "active", "refKind": "connector_oauth", "refId": "mcp:oauth:notion", "materialization": "proxy",
+        "usePolicy": "fence_proxy", "destination": "https://api.notion.com",
+        "boundTargetGeneration": null, "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "device_local_owner_bound_active_membership",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "deviceCredential": { "state": "verified", "ownerUserId": "11111111-1111-4111-8111-111111111111", "executionTargetId": "a3000000-0000-4000-8000-000000000003" },
+      "ownerMembershipActive": true
+    },
+    {
+      "name": "generation_pinned_matches_live",
+      "handle": {
+        "status": "active", "refKind": "company_secret", "refId": "company-secret-2", "materialization": "env",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": 7,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "_note": "run_jwt (DAT-007 / CLI-008) — the mint-at-resolve agent bearer. Owner-unbound here; owner-binding is shared logic covered by the vectors above, so this isolates that run_jwt is a recognized ref_kind resolving on env + sandbox_local_only. refId is the jobId; the broker re-derives the run id from heartbeat_runs at resolve.",
+      "name": "run_jwt_sandbox_local_env",
+      "handle": {
+        "status": "active", "refKind": "run_jwt", "refId": "c4000000-0000-4000-8000-000000000004", "materialization": "env",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    }
+  ],
+  "rejectVectors": [
+    {
+      "_note": "A slug that CONTAINS a uuid is still not a uuid. Caught by mutation: un-anchoring the shape regex left every other vector green, and an unanchored match would pass a malformed ref_id into eq(uuid_column, ...), which Postgres rejects with a type error instead of a clean refusal.",
+      "name": "device_local_ref_id_merely_contains_a_uuid",
+      "reason": "ref_pointer_malformed",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "provider-credential-b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "ownerMembershipActive": true,
+      "deviceCredential": { "state": "verified", "ownerUserId": "11111111-1111-4111-8111-111111111111", "executionTargetId": "a3000000-0000-4000-8000-000000000003" }
+    },
+    {
+      "_note": "D12/1: ref_id IS provider_credentials.id. The column comment sanctioned 'id-or-slug'; for this ref_kind the slug reading is retired. No DB FK can enforce it (org-scoped handle vs company-scoped credential is the cross-tenant oracle E2-F013 removed), so the shape is proven here.",
+      "name": "device_local_ref_id_is_a_slug",
+      "reason": "ref_pointer_malformed",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "provider-credential-1", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "ownerMembershipActive": true,
+      "deviceCredential": { "state": "verified", "ownerUserId": "11111111-1111-4111-8111-111111111111", "executionTargetId": "a3000000-0000-4000-8000-000000000003" }
+    },
+    {
+      "_note": "provider_credentials.owner_user_id references the user table, so a worker principal can never own a device credential. Checked ahead of the owner-binding rule because it is a property of the HANDLE alone -- otherwise it would be unreachable whenever the job executor is itself a worker, which is exactly the case that motivates it.",
+      "name": "device_local_owner_is_not_a_user",
+      "reason": "owner_principal_kind_invalid",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "worker", "ownerPrincipalId": "22222222-2222-4222-8222-222222222222"
+      },
+      "ownerMembershipActive": true,
+      "deviceCredential": { "state": "verified", "ownerUserId": "11111111-1111-4111-8111-111111111111", "executionTargetId": "a3000000-0000-4000-8000-000000000003" }
+    },
+    {
+      "_note": "D12/3: fail-closed on absence. A handle pointing at a credential that does not exist in the LOCKED lease's company is unresolvable, never resolvable-by-default.",
+      "name": "device_local_credential_absent",
+      "reason": "credential_not_found",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "ownerMembershipActive": true,
+      "deviceCredential": null
+    },
+    {
+      "_note": "D12/3: only state='verified' may be activated. state is plain text with NO CHECK constraint, so this is a positive equality test and never 'not revoked'.",
+      "name": "device_local_credential_pending",
+      "reason": "credential_unverified",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "ownerMembershipActive": true,
+      "deviceCredential": { "state": "pending", "ownerUserId": "11111111-1111-4111-8111-111111111111", "executionTargetId": "a3000000-0000-4000-8000-000000000003" }
+    },
+    {
+      "_note": "D12/4, owner triple leg 2: rule 6 proves handle owner === LOCKED job executor; this closes it over the credential itself.",
+      "name": "device_local_credential_owned_by_another_user",
+      "reason": "credential_owner_mismatch",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "ownerMembershipActive": true,
+      "deviceCredential": { "state": "verified", "ownerUserId": "22222222-2222-4222-8222-222222222222", "executionTargetId": "a3000000-0000-4000-8000-000000000003" }
+    },
+    {
+      "_note": "A device_local value sits in ONE machine's OS keystore, named by provider_credentials.execution_target_id. If the job is placed anywhere else that machine cannot read it. Corrected from the design's owner-id comparison, which said nothing about WHICH device holds the value and could never hold for an organization-scoped target.",
+      "name": "device_local_credential_lives_on_another_device",
+      "reason": "credential_target_mismatch",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "ownerMembershipActive": true,
+      "deviceCredential": { "state": "verified", "ownerUserId": "11111111-1111-4111-8111-111111111111", "executionTargetId": "a3000000-0000-4000-8000-0000000000ff" }
+    },
+    {
+      "name": "revoked_handle",
+      "reason": "handle_revoked",
+      "handle": {
+        "status": "revoked", "refKind": "company_secret", "refId": "company-secret-1", "materialization": "env",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "unknown_ref_kind",
+      "reason": "unknown_ref_kind",
+      "handle": {
+        "status": "active", "refKind": "aws_kms", "refId": "arn:whatever", "materialization": "env",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "ref_pointer_missing",
+      "reason": "ref_pointer_missing",
+      "handle": {
+        "status": "active", "refKind": "company_secret", "refId": null, "materialization": "env",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "proxy_not_fence_proxy",
+      "reason": "materialization_policy_conflict",
+      "handle": {
+        "status": "active", "refKind": "connector_oauth", "refId": "mcp:oauth:notion", "materialization": "proxy",
+        "usePolicy": "remote_server_fenced", "destination": "https://api.notion.com",
+        "boundTargetGeneration": null, "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "env_claims_fence_proxy",
+      "reason": "materialization_policy_conflict",
+      "handle": {
+        "status": "active", "refKind": "company_secret", "refId": "company-secret-1", "materialization": "env",
+        "usePolicy": "fence_proxy", "destination": "https://egress.example",
+        "boundTargetGeneration": null, "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "file_claims_fence_proxy",
+      "reason": "materialization_policy_conflict",
+      "handle": {
+        "status": "active", "refKind": "provider_key", "refId": "provider:anthropic", "materialization": "file",
+        "usePolicy": "fence_proxy", "destination": "https://egress.example",
+        "boundTargetGeneration": null, "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "sandbox_local_only_with_network_destination",
+      "reason": "sandbox_local_network_destination",
+      "handle": {
+        "status": "active", "refKind": "company_secret", "refId": "company-secret-1", "materialization": "env",
+        "usePolicy": "sandbox_local_only", "destination": "https://exfil.example",
+        "boundTargetGeneration": null, "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "target_generation_mismatch",
+      "reason": "target_generation_mismatch",
+      "handle": {
+        "status": "active", "refKind": "company_secret", "refId": "company-secret-1", "materialization": "env",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": 6,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "device_local_missing_owner",
+      "reason": "owner_binding_incomplete",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": true
+    },
+    {
+      "name": "owner_is_not_job_executor",
+      "reason": "owner_binding_incomplete",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "99999999-9999-4999-8999-999999999999"
+      },
+      "ownerMembershipActive": true
+    },
+    {
+      "name": "owner_membership_lost",
+      "reason": "owner_membership_lost",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "ownerMembershipActive": false
+    },
+    {
+      "name": "connector_oauth_env_sandbox_local_leak",
+      "reason": "ref_kind_policy_conflict",
+      "handle": {
+        "status": "active", "refKind": "connector_oauth", "refId": "mcp:oauth:notion", "materialization": "env",
+        "usePolicy": "sandbox_local_only", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "name": "device_local_remote_server_fenced",
+      "reason": "ref_kind_policy_conflict",
+      "handle": {
+        "status": "active", "refKind": "device_local", "refId": "b3f1c2d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e", "materialization": "file",
+        "usePolicy": "remote_server_fenced", "destination": "https://api.provider.example",
+        "boundTargetGeneration": null, "ownerPrincipalKind": "user", "ownerPrincipalId": "11111111-1111-4111-8111-111111111111"
+      },
+      "ownerMembershipActive": true
+    },
+    {
+      "name": "network_use_missing_destination",
+      "reason": "network_destination_missing",
+      "handle": {
+        "status": "active", "refKind": "provider_key", "refId": "provider:anthropic", "materialization": "file",
+        "usePolicy": "remote_server_fenced", "destination": null, "boundTargetGeneration": null,
+        "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    },
+    {
+      "_note": "run_jwt has no egress form: rule 3b locks it to sandbox_local_only + env. With a destination present, rule 4b would otherwise pass and rules 5/6 admit — so this vector ADMITS (and fails) if the run_jwt lock is removed. Non-vacuity for the lock.",
+      "name": "run_jwt_network_seam_locked",
+      "reason": "ref_kind_policy_conflict",
+      "handle": {
+        "status": "active", "refKind": "run_jwt", "refId": "c4000000-0000-4000-8000-000000000004", "materialization": "env",
+        "usePolicy": "remote_server_fenced", "destination": "https://api.provider.example",
+        "boundTargetGeneration": null, "ownerPrincipalKind": null, "ownerPrincipalId": null
+      },
+      "ownerMembershipActive": null
+    }
+  ]
+}

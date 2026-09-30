@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import { createHash, randomUUID } from "node:crypto";
 import type { Db } from "@armyofagents/db";
 import {
@@ -37,6 +37,10 @@ import type {
   IssueCommentPresentation,
 } from "@armyofagents/shared";
 import { requestTrackedProcessTermination } from "@armyofagents/adapter-utils/server-utils";
+import {
+  dispatchCancel,
+  getDistributedCancellationPort,
+} from "./distributed-cancellation-port.js";
 import { conflict, forbidden, notFound, unprocessable } from "../errors.js";
 import { logger } from "../middleware/logger.js";
 import { dependencyService, TERMINAL_STATUSES } from "./dependencies.js";
@@ -159,7 +163,7 @@ async function cancelActiveWorkQuestionsForIssue(
         inArray(agentWakeupRequests.id, wakeupIds),
       ));
       const activeRuns = await tx
-        .select({ id: heartbeatRuns.id, status: heartbeatRuns.status })
+        .select({ id: heartbeatRuns.id, status: heartbeatRuns.status, executionOwner: heartbeatRuns.executionOwner })
         .from(heartbeatRuns)
         .where(and(
           eq(heartbeatRuns.companyId, input.companyId),
@@ -173,7 +177,29 @@ async function cancelActiveWorkQuestionsForIssue(
         .filter((run) => run.status === "running")
         .map((run) => run.id);
       const activeRunIds = activeRuns.map((run) => run.id);
+      // CLI-006 (H3) — the issue EXECUTION LOCK must not be handed back while a
+      // distributed attempt is still executing. Releasing it lets a different
+      // agent check the same task out and run it concurrently; the per-agent
+      // concurrency clamp does not help, because it is a different agent. The
+      // sibling path in `heartbeat.cancelRun` already gets this right.
+      //
+      // The earlier note "the release must cover both subsets" was wrong: it
+      // assumed an ineligible task cannot be claimed, but for `reassigned` the
+      // task stays perfectly eligible — just for someone else. The projector
+      // releases the lock when the attempt's real terminal arrives.
+      const legacyRunIds = activeRuns
+        .filter((run) => run.executionOwner !== "distributed")
+        .map((run) => run.id);
       if (activeRunIds.length > 0) {
+        // CLI-006 (4-D2) — this is a BULK terminal write that bypasses
+        // `setRunStatus` entirely, so the CLI-006 terminal latch does not protect
+        // it. Exclude distributed-owned runs IN THE PREDICATE rather than
+        // partitioning in JS: the attempt is their terminal authority, and
+        // latching `cancelled` here would make the projector discard the real
+        // terminal when it arrives. The `or(isNull, ne)` shape mirrors
+        // `resolveCancelRoute` — an unrecognised owner value reads as legacy, so
+        // a future owner kind this build does not understand is still cancelled
+        // normally rather than silently skipped.
         await tx.update(heartbeatRuns).set({
           status: "cancelled",
           finishedAt: now,
@@ -184,6 +210,7 @@ async function cancelActiveWorkQuestionsForIssue(
           eq(heartbeatRuns.companyId, input.companyId),
           inArray(heartbeatRuns.id, activeRunIds),
           inArray(heartbeatRuns.status, ["queued", "running", "scheduled_retry"]),
+          or(isNull(heartbeatRuns.executionOwner), ne(heartbeatRuns.executionOwner, "distributed")),
         ));
         await tx.update(issues).set({
           executionRunId: null,
@@ -193,7 +220,7 @@ async function cancelActiveWorkQuestionsForIssue(
         }).where(and(
           eq(issues.companyId, input.companyId),
           eq(issues.id, input.issueId),
-          inArray(issues.executionRunId, activeRunIds),
+          inArray(issues.executionRunId, legacyRunIds),
         ));
       }
     }
@@ -249,6 +276,106 @@ async function cancelActiveWorkQuestionsForIssue(
 function terminateTrackedRuns(runIds: string[]) {
   for (const runId of runIds) {
     requestTrackedProcessTermination(runId);
+  }
+}
+
+/**
+ * CLI-006 (4-D2) — the distributed half of the same stop.
+ *
+ * `terminateTrackedRuns` signals an in-process child, which a distributed attempt
+ * never has, so without this a task going ineligible left the worker running with
+ * nothing to stop it. Runs AFTER the transaction commits, deliberately: the fence
+ * revoke goes through `runInTenant` on a different pool and must not be entangled
+ * with this transaction's lifetime, and reading the rows post-commit sees the
+ * state that actually landed.
+ *
+ * Best-effort and never throws into the caller — the task change has already
+ * committed, and `onError:"skip"` keeps one unreachable attempt from aborting the
+ * rest of the batch.
+ */
+async function routeDistributedCancelsForRuns(
+  db: Db,
+  runIds: string[],
+  reason: string,
+): Promise<void> {
+  if (runIds.length === 0) return;
+  // NO `if (!port) return;` HERE — that guard defeated the handling written for exactly this
+  // case. `dispatchCancel` takes `port: DistributedCancellationPort | undefined` by design and
+  // answers LEGACY with `writeLegacyTerminal: true`, documented as "the legacy write is the only
+  // convergent outcome" for "a control-plane restart with the distributed flag off leaves marked
+  // runs behind and no port". Returning early meant this fifth writer never reached that — in
+  // precisely the post-rollback state it exists for — so the H1 convergence block below (latch
+  // `cancelled`, release the execution lock) was dead when it mattered, pinning the run at
+  // `running` and, at the permanent concurrency default of 1, stopping that agent dispatching
+  // again. Found by the Wave-3→4 gate clause-3 review.
+  //
+  // Cost of removing it: one indexed SELECT on terminate paths. The query filters on
+  // `executionOwner = "distributed"`, so a deployment that never enabled distributed execution
+  // matches zero rows and the loop body never runs.
+  const port = getDistributedCancellationPort();
+  const unprojectedRunIds: string[] = [];
+  const rows = await db
+    .select({
+      id: heartbeatRuns.id,
+      companyId: heartbeatRuns.companyId,
+      executionOwner: heartbeatRuns.executionOwner,
+      distributedJobId: heartbeatRuns.distributedJobId,
+    })
+    .from(heartbeatRuns)
+    .where(and(inArray(heartbeatRuns.id, runIds), eq(heartbeatRuns.executionOwner, "distributed")));
+  for (const row of rows) {
+    const outcome = await dispatchCancel({
+      run: row,
+      companyId: row.companyId,
+      reason,
+      graceful: true,
+      port,
+      onError: "skip",
+    });
+    if (outcome.degraded) {
+      logger.warn(
+        { runId: row.id, jobId: row.distributedJobId, degraded: outcome.degraded },
+        "[CLI-006] distributed cancel degraded for ineligible task",
+      );
+    }
+    // H1 made this flag load-bearing: `true` means NOTHING will ever project a
+    // terminal for this attempt (the repo finalized it directly with row updates
+    // and wrote no `job_events` row, or it was already terminal / not found), so
+    // THIS caller owns the terminal. The four heartbeat writers consume it via
+    // `routeRunCancellation`; this fifth one used to read only `.degraded` and
+    // drop it, which pinned the run at `running` with no convergence path —
+    // no worker event, the reaper standing down on the marker, and the stale-lock
+    // breaker covering only queued/scheduled_retry. Worse than a stranded row:
+    // `countRunningRunsForAgent` counts it with no owner filter, so at the
+    // permanent HEARTBEAT_MAX_CONCURRENT_RUNS_DEFAULT of 1 the canary agent then
+    // never dispatches again.
+    if (outcome.writeLegacyTerminal) unprojectedRunIds.push(row.id);
+  }
+
+  // Post-commit, and only for the subset nothing will project. Latching here is
+  // safe precisely BECAUSE those statuses mean no projector terminal is coming,
+  // so the in-transaction block's "latching would discard the real terminal"
+  // reasoning does not apply to them.
+  if (unprojectedRunIds.length > 0) {
+    const now = new Date();
+    await db.update(heartbeatRuns).set({
+      status: "cancelled",
+      finishedAt: now,
+      error: `Task ${reason}`,
+      errorCode: "task_no_longer_eligible",
+      updatedAt: now,
+    }).where(and(
+      inArray(heartbeatRuns.id, unprojectedRunIds),
+      inArray(heartbeatRuns.status, ["queued", "running", "scheduled_retry"]),
+    ));
+    // Release the execution lock the in-transaction block deliberately withheld.
+    // On the delete path this is a harmless no-op — the issue is already gone.
+    await db.update(issues).set({
+      executionRunId: null,
+      executionAgentNameKey: null,
+      executionLockedAt: null,
+      updatedAt: now,
+    }).where(inArray(issues.executionRunId, unprojectedRunIds));
   }
 }
 
@@ -2022,6 +2149,11 @@ export function issueService(db: Db) {
       });
 
       terminateTrackedRuns(runsToTerminate);
+      // CLI-006 (4-D2) — the distributed half. Best-effort: the task change
+      // has already committed and must not be undone by an unreachable worker.
+      void routeDistributedCancelsForRuns(db, runsToTerminate, "Task no longer eligible").catch(
+        (err: unknown) => logger.warn({ err }, "[CLI-006] distributed cancel routing failed"),
+      );
 
       if (!existing) return null;
 
@@ -2156,13 +2288,24 @@ export function issueService(db: Db) {
         return { removed: enriched, runsToTerminate: runIdsToTerminate };
       });
       terminateTrackedRuns(runsToTerminate);
+      // CLI-006 (4-D2) — the distributed half. Best-effort: the task change
+      // has already committed and must not be undone by an unreachable worker.
+      void routeDistributedCancelsForRuns(db, runsToTerminate, "Task no longer eligible").catch(
+        (err: unknown) => logger.warn({ err }, "[CLI-006] distributed cancel routing failed"),
+      );
       return removed;
     },
 
     // Concurrency: Uses atomic conditional UPDATE (WHERE status = expected AND assignee conditions)
     // rather than SELECT FOR UPDATE. Two simultaneous checkout attempts will issue the same UPDATE,
     // but only one will match the WHERE clause — a valid optimistic concurrency pattern that avoids deadlocks.
-    checkout: async (id: string, agentId: string, expectedStatuses: string[], checkoutRunId: string | null) => {
+    checkout: async (
+      id: string,
+      agentId: string,
+      expectedStatuses: string[],
+      checkoutRunId: string | null,
+      options?: { deferPublish?: (publish: () => void) => void },
+    ) => {
       const issueCompany = await db
         .select({ companyId: issues.companyId })
         .from(issues)
@@ -2222,11 +2365,20 @@ export function issueService(db: Db) {
         // issueService.update (raw atomic write → in_progress). Publish
         // issue.status_changed (company-broadcast, R3) so the board reflects
         // the card going in_progress live. Best-effort — never break checkout.
-        try {
-          publishIssueStatusChanged(updated.companyId, updated.id, "in_progress");
-        } catch (publishErr) {
-          logger.warn({ err: publishErr, issueId: updated.id }, "issue.status_changed publish failed on checkout (best-effort, ignored)");
-        }
+        const runStatusPublish = () => {
+          try {
+            publishIssueStatusChanged(updated.companyId, updated.id, "in_progress");
+          } catch (publishErr) {
+            logger.warn({ err: publishErr, issueId: updated.id }, "issue.status_changed publish failed on checkout (best-effort, ignored)");
+          }
+        };
+        // JOB-010: the admission bridge drives checkout INSIDE its own authoritative
+        // tenant transaction. A live in-memory publish must never fire before that
+        // outer tx commits (and never at all on rollback), so the bridge passes a
+        // deferPublish sink that fires the publish AFTER commit. Legacy callers pass
+        // no option → publish inline after checkout's own transaction (byte-unchanged).
+        if (options?.deferPublish) options.deferPublish(runStatusPublish);
+        else runStatusPublish();
         const [enriched] = await withIssueLabels(db, [updated]);
         return enriched;
       }

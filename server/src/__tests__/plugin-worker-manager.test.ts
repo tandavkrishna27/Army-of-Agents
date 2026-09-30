@@ -69,35 +69,46 @@ describe("plugin-worker-manager stderr failure context", () => {
   });
 });
 
-describe("cloud plugin worker final sinks (U10: host-resident worker — no cloud block)", () => {
-  // Disable auto-restart so a fork failure (this fixture's entrypoint does
-  // not exist on disk) doesn't schedule a background backoff-restart timer
-  // that outlives the test.
+describe("cloud plugin worker final sinks (FND-006: fail closed on cloud_auth)", () => {
+  // Disable auto-restart so a denied start (or fork failure) doesn't schedule a
+  // background backoff-restart timer that outlives the test.
   const noRestartOptions = { ...workerOptions, autoRestart: false };
 
-  it("does not short-circuit with the cloud-block error before attempting to fork", async () => {
+  it("startWorker short-circuits with the cloud-block error BEFORE forking (worker-manager sink)", async () => {
     setDeploymentMode("cloud_auth");
     const manager = createPluginWorkerManager();
 
-    // assertCloudPluginExecutionAllowed no longer throws on cloud_auth, so
-    // startWorker proceeds to the real fork attempt — which fails for an
-    // unrelated reason (this fixture's entrypoint doesn't exist), never for
-    // the cloud-block sentinel.
+    // Decision #103 amendment / FND-006: the worker-manager sink fails closed on
+    // cloud_auth, so startWorker rejects with the typed cloud-block sentinel
+    // before any handle construction or fork attempt.
+    await expect(
+      manager.startWorker("plugin-a", noRestartOptions)
+    ).rejects.toBeInstanceOf(CloudPluginExecutionBlockedError);
+    // No executable worker state was left behind (denied before registration).
+    expect(manager.getWorker("plugin-a")).toBeUndefined();
+  });
+
+  it("a direct handle rejects immediately with the cloud-block error before fork (worker-fork sink)", async () => {
+    setDeploymentMode("cloud_auth");
+    const handle = createPluginWorkerHandle("plugin-a", noRestartOptions);
+
+    await expect(handle.start()).rejects.toBeInstanceOf(
+      CloudPluginExecutionBlockedError
+    );
+    // The fork was never attempted — the worker-fork sink denied before it.
+    expect(handle.status).not.toBe("crashed");
+  });
+
+  it("off cloud (local_trusted): the worker sinks do NOT short-circuit — the fork is attempted", async () => {
+    setDeploymentMode("local_trusted");
+    const manager = createPluginWorkerManager();
+
+    // Self-hosted positive: startWorker proceeds to a real fork attempt, which
+    // fails for an unrelated reason (this fixture's entrypoint does not exist),
+    // never for the cloud-block sentinel.
     await expect(
       manager.startWorker("plugin-a", noRestartOptions)
     ).rejects.not.toBeInstanceOf(CloudPluginExecutionBlockedError);
     expect(manager.getWorker("plugin-a")?.status).toBe("crashed");
-  });
-
-  it("a direct handle no longer rejects immediately with the cloud-block error before fork", async () => {
-    setDeploymentMode("cloud_auth");
-    const handle = createPluginWorkerHandle("plugin-a", noRestartOptions);
-
-    await expect(handle.start()).rejects.not.toBeInstanceOf(
-      CloudPluginExecutionBlockedError
-    );
-    // The fork was actually attempted (and crashed for an unrelated reason),
-    // proving the cloud block no longer short-circuits before fork.
-    expect(handle.status).toBe("crashed");
   });
 });

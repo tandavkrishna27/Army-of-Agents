@@ -1,5 +1,5 @@
 // ui/src/components/workspace/transcript/normalize-transcript.ts
-// Ported from AoA's RunTranscriptView.tsx — adapted for AoA TranscriptEntry types.
+// Ported from Paperclip's RunTranscriptView.tsx — adapted for AoA TranscriptEntry types.
 
 import type { TranscriptEntry } from "@armyofagents/adapter-utils";
 import type { TranscriptBlock } from "./types";

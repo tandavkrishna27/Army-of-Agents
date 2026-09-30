@@ -4,7 +4,12 @@ import pino from "pino";
 import { pinoHttp } from "pino-http";
 import { readConfigFile } from "../config-file.js";
 import { resolveDefaultLogsDir, resolveHomeAwarePath } from "../home-paths.js";
-import { shouldSilenceHttpSuccessLog } from "./http-log-policy.js";
+import {
+  safeHttpLogUrl,
+  isSensitiveWorkerControlPath,
+  shouldOmitHttpRequestPayload,
+  shouldSilenceHttpSuccessLog,
+} from "./http-log-policy.js";
 import { redactSensitiveBodyFields } from "./redact-sensitive.js";
 
 function resolveServerLogDir(): string {
@@ -21,6 +26,10 @@ const logDir = resolveServerLogDir();
 fs.mkdirSync(logDir, { recursive: true });
 
 const logFile = path.join(logDir, "server.log");
+
+function isJobSubmissionPath(url: string | undefined): boolean {
+  return /^\/(?:api\/)?organizations\/[^/]+\/companies\/[^/]+\/jobs(?:\?|$)/.test(url ?? "");
+}
 
 const sharedOpts = {
   translateTime: "HH:MM:ss",
@@ -59,6 +68,21 @@ export const logger =
 
 export const httpLogger = pinoHttp({
   logger,
+  serializers: {
+    req(req) {
+      if (!shouldOmitHttpRequestPayload(req.method, req.url)) return req;
+      return {
+        id: req.id,
+        method: req.method,
+        url: safeHttpLogUrl(req.method, req.url),
+      };
+    },
+    err() {
+      // pino-http synthesizes an Error for every 5xx. Keep the useful stable
+      // classification without serializing any stack or nested driver cause.
+      return { type: "HttpError", message: "HTTP request failed" };
+    },
+  },
   customLogLevel(_req, res, err) {
     if (shouldSilenceHttpSuccessLog(_req.method, _req.url, res.statusCode)) {
       return "silent";
@@ -68,34 +92,57 @@ export const httpLogger = pinoHttp({
     return "info";
   },
   customSuccessMessage(req, res) {
-    return `${req.method} ${req.url} ${res.statusCode}`;
+    return `${req.method} ${safeHttpLogUrl(req.method, req.url)} ${res.statusCode}`;
   },
   customErrorMessage(req, res, err) {
+    if (isJobSubmissionPath(req.url)) {
+      return `${req.method} ${safeHttpLogUrl(req.method, req.url)} ${res.statusCode} — job_submission_internal_error`;
+    }
+    if (isSensitiveWorkerControlPath(req.url)) {
+      return `${req.method} ${safeHttpLogUrl(req.method, req.url)} ${res.statusCode} - worker_control_internal_error`;
+    }
     const ctx = (res as any).__errorContext;
     const errMsg = ctx?.error?.message || err?.message || (res as any).err?.message || "unknown error";
-    return `${req.method} ${req.url} ${res.statusCode} — ${errMsg}`;
+    return `${req.method} ${safeHttpLogUrl(req.method, req.url)} ${res.statusCode} — ${errMsg}`;
   },
   customProps(req, res) {
+    const omitPayload = shouldOmitHttpRequestPayload(req.method, req.url);
     if (res.statusCode >= 400) {
+      if (isJobSubmissionPath(req.url)) {
+        const safe = (res as any).__jobSubmissionLogContext;
+        return safe ?? {
+          organizationId: (req as any).params?.organizationId,
+          companyId: (req as any).params?.companyId,
+          sourceKind: (req as any).body?.source?.kind,
+          replayed: false,
+          reasonCode: res.statusCode >= 500
+            ? "job_submission_internal_error"
+            : "job_submission_rejected",
+        };
+      }
+      if (isSensitiveWorkerControlPath(req.url)) {
+        return { reasonCode: res.statusCode >= 500
+          ? "worker_control_internal_error"
+          : "worker_control_rejected" };
+      }
       const ctx = (res as any).__errorContext;
       if (ctx) {
         // ctx.{reqBody,reqParams,reqQuery} are already redacted by error-handler.
         return {
           err: ctx.error,
-          reqBody: ctx.reqBody,
           reqParams: ctx.reqParams,
-          reqQuery: ctx.reqQuery,
+          ...(omitPayload ? {} : { reqBody: ctx.reqBody, reqQuery: ctx.reqQuery }),
         };
       }
       const props: Record<string, unknown> = {};
       const { body, params, query } = req as any;
-      if (body && typeof body === "object" && Object.keys(body).length > 0) {
+      if (!omitPayload && body && typeof body === "object" && Object.keys(body).length > 0) {
         props.reqBody = redactSensitiveBodyFields(body);
       }
       if (params && typeof params === "object" && Object.keys(params).length > 0) {
         props.reqParams = redactSensitiveBodyFields(params);
       }
-      if (query && typeof query === "object" && Object.keys(query).length > 0) {
+      if (!omitPayload && query && typeof query === "object" && Object.keys(query).length > 0) {
         props.reqQuery = redactSensitiveBodyFields(query);
       }
       if ((req as any).route?.path) {

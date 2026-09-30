@@ -3,6 +3,7 @@ import type {
   CompanySecretBinding,
   CompanySecretProviderConfig,
   CreateRuntimeProviderKey,
+  CreateRuntimeProviderKeyWithSecret,
   RemoteSecretImportResult,
   RemoteSecretImportPreviewResult,
   RuntimeProviderKey,
@@ -103,6 +104,8 @@ export const secretsApi = {
       api.get<RuntimeProviderKey[]>(`/companies/${companyId}/runtime-provider-keys`),
     create: (companyId: string, data: CreateRuntimeProviderKey) =>
       api.post<RuntimeProviderKey>(`/companies/${companyId}/runtime-provider-keys`, data),
+    createWithSecret: (companyId: string, data: CreateRuntimeProviderKeyWithSecret) =>
+      api.post<RuntimeProviderKey>(`/companies/${companyId}/runtime-provider-keys/with-secret`, data),
     update: (id: string, data: UpdateRuntimeProviderKey) =>
       api.patch<RuntimeProviderKey>(`/runtime-provider-keys/${id}`, data),
     remove: (id: string) => api.delete<{ ok: true }>(`/runtime-provider-keys/${id}`),

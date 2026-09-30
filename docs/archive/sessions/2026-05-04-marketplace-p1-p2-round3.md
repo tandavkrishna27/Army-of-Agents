@@ -68,7 +68,7 @@ Add these tests inside the existing `describe("resolveInstallDecision", ...)` bl
 - [ ] **Step 2: Run the tests to verify they fail**
 
 ```bash
-cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-2.5\.claude\worktrees\marketplace-v1"
+cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5\.claude\worktrees\marketplace-v1"
 pnpm --filter server test -- --reporter=verbose marketplace-installs-request
 ```
 

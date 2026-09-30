@@ -13,8 +13,9 @@ import { canAccessProjectScopedEntity } from "./scope.js";
 const DOCUMENT_TYPE = "document";
 
 /**
- * A task document is a single artifact (type="document") linked from
- * `issues.artifactId`. See Decision annotation (2026-04-21).
+ * Paperclip's `paperclipUpsertIssueDocument` wraps a keyed markdown body
+ * on an issue. AoA's equivalent is a single artifact (type="document")
+ * linked from `issues.artifactId`. See Decision annotation (2026-04-21).
  *
  * Immutability invariant (Decisions #43/#45): artifact versions are never
  * mutated. `restore` always creates a NEW version copied from the target.

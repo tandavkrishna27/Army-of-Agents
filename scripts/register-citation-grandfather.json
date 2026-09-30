@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "note": "Grandfather allow-list for scripts/check-register-citation-integrity.mjs (required `policy` job). It exempts an ENFORCED citation (explicit + repo-anchored `path/to/file.ts:LINE` in docs/architecture/distributed-execution-threat-controls.json) that legitimately CANNOT be anchored/resolved at HEAD — a frozen historical block pointing at since-moved or since-deleted code, or a citation the prose itself pins to a specific past commit, whose surrounding prose is a record of a past measurement and must not be rewritten. Each entry names the crossing, the exact cited path and line, and a one-line reason. THE LIST IS SELF-CLEANING: an entry that no longer corresponds to a live violation (the citation was fixed, or the file grew back) REDS as STALE, so a grandfather can never outlive its reason. An ABSENT file is a FAIL, not an empty allow-list — mirrors the `ownerTicketDeferrals` fail-closed posture in distributed-execution-audit-debt.json and the `unowned`-with-reason pattern of REL-FOUNDATION-GATE S9-1. Grandfather ONLY citations that cannot resolve; a citation that CAN resolve is drift and must be FIXED (re-pointed to the construct + anchored), not parked here. Bare `:LINE` refs and unanchored/relative-shorthand paths are OUT of enforcement scope by measurement (see the guard header) and therefore need no entry here.",
+  "entries": [
+    {
+      "crossing": "DE-12",
+      "path": "packages/db/src/repositories/tenant/job-control.ts",
+      "line": "2799",
+      "category": "missing-anchor",
+      "reason": "Historical reference: the prose pins this line to a SPECIFIC PAST COMMIT ('one update(services) at job-control.ts:2799 OF THAT COMMIT' — SVC-007a, 7f95b1ae8), so it names a construct as it stood then, not at HEAD; it cannot be anchored to the current tree and must not be re-pointed. Only the missing-anchor is excused — a new missing-file/out-of-range/blank failure at this line would still red."
+    }
+  ]
+}

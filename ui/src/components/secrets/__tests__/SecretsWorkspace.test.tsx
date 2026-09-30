@@ -36,6 +36,7 @@ vi.mock("@/api/secrets", () => ({
     runtimeProviderKeys: {
       list: vi.fn(),
       create: vi.fn(),
+      createWithSecret: vi.fn(),
       update: vi.fn(),
       remove: vi.fn(),
     },
@@ -95,6 +96,7 @@ function makeBinding(partial: Partial<CompanySecretBinding>): CompanySecretBindi
 beforeEach(() => {
   vi.mocked(secretsApi.runtimeProviderKeys.list).mockResolvedValue([]);
   vi.mocked(secretsApi.runtimeProviderKeys.create).mockResolvedValue({} as never);
+  vi.mocked(secretsApi.runtimeProviderKeys.createWithSecret).mockResolvedValue({} as never);
   vi.mocked(secretsApi.runtimeProviderKeys.update).mockResolvedValue({} as never);
   vi.mocked(secretsApi.runtimeProviderKeys.remove).mockResolvedValue({ ok: true });
 });
@@ -218,6 +220,45 @@ describe("SecretsWorkspace", () => {
 
     expect(screen.getByRole("dialog", { name: "Import from vault" })).toBeInTheDocument();
     expect(screen.getByText("Production AWS")).toBeInTheDocument();
+  });
+
+  it("adds an E2B key in one step from the Sandbox Providers tab", async () => {
+    const user = userEvent.setup();
+    vi.mocked(secretsApi.list).mockResolvedValue([]);
+    vi.mocked(secretsApi.providers).mockResolvedValue([]);
+    vi.mocked(secretsApi.providerConfigs.list).mockResolvedValue([]);
+    vi.mocked(secretsApi.runtimeProviderKeys.list).mockResolvedValue([]);
+    vi.mocked(secretsApi.runtimeProviderKeys.createWithSecret).mockResolvedValue({
+      id: "key-1",
+      companyId: "company-1",
+      provider: "e2b",
+      displayName: "Prod E2B",
+      secretId: "secret-1",
+      status: "active",
+      isDefault: true,
+      metadata: null,
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    renderWithProviders(<SecretsWorkspace companyId="company-1" />);
+
+    await user.click(await screen.findByRole("tab", { name: "Sandbox Providers" }));
+    await user.click(await screen.findByRole("button", { name: /add e2b key/i }));
+    const dialog = screen.getByRole("dialog", { name: "Add E2B key" });
+    await user.clear(within(dialog).getByLabelText(/name/i));
+    await user.type(within(dialog).getByLabelText(/name/i), "Prod E2B");
+    await user.type(within(dialog).getByLabelText(/api key/i), "e2b_live_topsecret");
+    await user.click(within(dialog).getByRole("button", { name: "Add E2B key" }));
+
+    expect(secretsApi.runtimeProviderKeys.createWithSecret).toHaveBeenCalledWith("company-1", {
+      provider: "e2b",
+      displayName: "Prod E2B",
+      value: "e2b_live_topsecret",
+      isDefault: true,
+    });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Add E2B key" })).not.toBeInTheDocument());
+    expect(document.body.textContent).not.toContain("e2b_live_topsecret");
   });
 
   it("shows an error instead of the empty state when secrets fail to load", async () => {

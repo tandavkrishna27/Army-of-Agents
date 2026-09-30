@@ -47,7 +47,7 @@ Operational fields:
 
 Notes:
 - Prompts are piped via stdin (Codex receives "-" prompt argument).
-- AoA auto-injects local skills into Codex personal skills dir ("$CODEX_HOME/skills" or "~/.codex/skills") when missing, so Codex can discover "$aoa" and related skills.
+- Paperclip auto-injects local skills into Codex personal skills dir ("$CODEX_HOME/skills" or "~/.codex/skills") when missing, so Codex can discover "$paperclip" and related skills.
 - Some model/tool combinations reject certain effort levels (for example minimal with web search enabled).
 - fastMode (boolean, optional): enable Codex Fast tier for lower-latency runs. Currently supported on gpt-5.4 only; ignored on other models. Consumes credits faster.
 `;

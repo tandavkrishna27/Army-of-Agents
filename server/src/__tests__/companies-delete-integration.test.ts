@@ -120,6 +120,7 @@ describe.skipIf(process.platform !== "linux")(
       const company = await svc.create({
         name: "FK Cascade Sweep Co",
         description: "Integration test for migration 0066",
+        organizationId: "00000000-0000-0000-0000-000000000001",
       });
       expect(company).toBeDefined();
       const companyId = company!.id;

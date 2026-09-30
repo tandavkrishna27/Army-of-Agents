@@ -18,10 +18,10 @@ describe("buildSandboxEnvAllowlist", () => {
 
   it("keeps run-identity + connector tokens (AOA_MCP_*_TOKEN prefix)", () => {
     const out = buildSandboxEnvAllowlist(
-      { AOA_API_URL: "https://cp", AOA_RUN_ID: "r1", AOA_EXECUTION_TARGET_ID: "t1", AOA_RUNTIME_HOOK_TOKEN: "hk", AOA_MCP_NOTION_TOKEN: "ntn", AOA_API_KEY: "jwt2" },
+      { AOA_API_URL: "https://cp", AOA_RUN_ID: "r1", AOA_EXECUTION_TARGET_ID: "t1", AOA_RUNTIME_HOOK_TOKEN: "hk", AOA_MCP_NOTION_TOKEN: "ntn", PAPERCLIP_API_KEY: "jwt2" },
       { provider: "anthropic" },
     );
-    expect(out).toMatchObject({ AOA_API_URL: "https://cp", AOA_RUN_ID: "r1", AOA_EXECUTION_TARGET_ID: "t1", AOA_RUNTIME_HOOK_TOKEN: "hk", AOA_MCP_NOTION_TOKEN: "ntn", AOA_API_KEY: "jwt2" });
+    expect(out).toMatchObject({ AOA_API_URL: "https://cp", AOA_RUN_ID: "r1", AOA_EXECUTION_TARGET_ID: "t1", AOA_RUNTIME_HOOK_TOKEN: "hk", AOA_MCP_NOTION_TOKEN: "ntn", PAPERCLIP_API_KEY: "jwt2" });
   });
 
   it("OPENAI_API_KEY disambiguation: claude agent -> absent; codex agent -> present", () => {

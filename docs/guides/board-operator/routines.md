@@ -180,7 +180,7 @@ Authorization: Bearer {webhookSecret}
 ```
 
 For HMAC mode, sign `{timestamp}.{rawBody}` with SHA-256 HMAC and send the
-timestamp and hex signature in `X-AoA-Timestamp` and `X-AoA-Signature`. The
+timestamp and hex signature in `X-Aoa-Timestamp` and `X-Aoa-Signature`. The
 default replay window is 300 seconds.
 
 Use an idempotency key for integrations that may retry. AoA returns the

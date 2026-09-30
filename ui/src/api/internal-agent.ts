@@ -1,4 +1,4 @@
-import type { CommanderContextScope, CompanySkillListItem, ShowRef, UpdateInternalAgentConfig } from "@armyofagents/shared";
+import type { CommanderContextScope, CompanySkillListItem, ShowRef, UniverseContext, UpdateInternalAgentConfig } from "@armyofagents/shared";
 import { api, ApiError } from "./client";
 
 /* ------------------------------------------------------------------ */
@@ -201,6 +201,7 @@ export async function* streamAgentChat(
   contextScope?: CommanderContextScope | null,
   attachmentAssetIds?: string[],
   clientSubmissionId?: string,
+  universeContext?: UniverseContext,
 ): AsyncGenerator<SSEEvent> {
   const response = await fetch(
     `/api/companies/${encodeURIComponent(companyId)}/internal-agent/chat`,
@@ -218,6 +219,7 @@ export async function* streamAgentChat(
         // replays the matching conversation turn instead of double-posting
         // when a failed-looking request actually landed.
         ...(clientSubmissionId ? { clientSubmissionId } : {}),
+        ...(universeContext ? { universeContext } : {}),
       }),
       signal,
     },
@@ -437,6 +439,15 @@ export const commanderConversationsApi = {
     api.delete<{ ok: true }>(
       `/companies/${companyId}/internal-agent/conversations/order`,
     ),
+
+  getSubmissionOutcome: (companyId: string, convId: string, clientSubmissionId: string) =>
+    api.get<
+        | { state: "not_found" }
+        | { state: "unknown"; userMessageId: string; reason: "legacy_identity" }
+      | { state: "accepted"; userMessageId: string }
+      | { state: "completed"; userMessageId: string; assistantMessageId: string }
+      | { state: "failed"; userMessageId: string }
+    >(`/companies/${companyId}/internal-agent/conversations/${encodeURIComponent(convId)}/submissions/${encodeURIComponent(clientSubmissionId)}`),
 };
 
 /* ------------------------------------------------------------------ */

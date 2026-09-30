@@ -1,0 +1,301 @@
+# =============================================================================
+# E7-1 KEYED-RUN campaign overlay (docker/campaign/docker-compose.campaign.yml).
+#
+# A campaign-minimal fleet for ONE real distributed job end-to-end over the FULL
+# containerized path:  worker (networked-host) -> adapter-manager -> real E2B.
+# It is LAYERED over docker-compose.staging.yml with a second `-f`:
+#
+#   docker compose \
+#     -f docker-compose.staging.yml \
+#     -f docker/campaign/docker-compose.campaign.yml \
+#     --env-file docker/campaign/.env.campaign \
+#     up --wait migrate control-plane adapter-manager
+#
+# See docs/replatform/RUNBOOK-e7-1-keyed-run.md for the full ordered procedure
+# (this overlay is the topology; the runbook is the operator authority).
+#
+# -----------------------------------------------------------------------------
+# ★ WHY THIS IS A SEPARATE FILE AND NOT A `docker-compose.staging.yml` EDIT.
+#
+# The staging manifest is frozen by scripts/check-staging-manifest.mjs, which runs
+# in the always-on pr.yml `policy` gate. That runner hardcodes ONE path:
+#
+#   composePath = path.join(repoRoot, "docker-compose.staging.yml")   (:32)
+#
+# It does NOT glob `docker/**`, `*.yml`, or `docker/campaign/*` — CONFIRMED by
+# reading check-staging-manifest.mjs and staging-manifest-invariants.mjs at HEAD.
+# So this file is invisible to that gate, which is the entire point:
+#
+#   * `checkDispatchDefaultOff` (staging-manifest-invariants.mjs:527-545) REJECTS
+#     `AOA_WORKER_DISPATCH_ENABLED`, `AOA_WORKER_SANDBOX_PROVIDER`, and
+#     `AOA_WORKER_PROVIDER_URL` on ANY worker in staging.yml — env OR inline
+#     command/entrypoint (DEP-010: dispatch stays OFF by default on the shipped
+#     staging surface). The campaign worker below MUST arm exactly those switches
+#     to reach the adapter-manager, so it can only live in a file the guard does
+#     not read. Arming them HERE is legal because this is not the shipped fleet;
+#     it is an operator-run, keyed, single-job campaign slice.
+#
+# Editing staging.yml to arm dispatch would (a) break the `policy` gate and (b)
+# turn the shipped staging fleet into a dispatch-armed one — the exact regression
+# DEP-010 exists to prevent. Hence: a separate overlay, never a staging.yml edit.
+#
+# -----------------------------------------------------------------------------
+# ★ THE PROVIDER-CONTROL BOUNDARY IS PRESERVED (the full / honest posture).
+#
+# Even though this file is outside the guard, it keeps the boundary the guard
+# enforces on staging (staging-manifest-invariants.mjs §2.5):
+#
+#   * E2B_API_KEY is injected ONLY into the `adapter-manager` service (below),
+#     via a bare `${E2B_API_KEY}` interpolation — rotatable, never a baked literal.
+#   * The `worker`, `control-plane`, and `migrate` services carry NO E2B key. The
+#     worker reaches E2B EXCLUSIVELY through `AOA_WORKER_PROVIDER_URL` -> the
+#     adapter-manager's gated provider wire (NetworkedProviderDriver). The E2B key
+#     never sits on the worker.
+#   * Only the adapter-manager is attached to the base `provider-ctl-net` egress
+#     network (inherited from staging.yml). The worker is on control-net +
+#     store-egress-net only.
+#
+# -----------------------------------------------------------------------------
+# ★ "EXACTLY ONE WORKER", and why the operator brings services up BY NAME.
+#
+# staging.yml declares a two-failure-domain fleet: control-plane + control-plane-b
+# + worker-a1/a2/b1/b2 + migrate + adapter-manager. A compose overlay can ADD and
+# OVERRIDE services but CANNOT DELETE the base's. So this overlay ADDS one service
+# (`worker`) and OVERRIDES the three it reuses (`migrate`, `control-plane`,
+# `adapter-manager`); the runbook then starts ONLY the campaign slice by name
+# (`migrate control-plane adapter-manager` at bring-up, then `worker` after
+# enrollment). The base's control-plane-b + worker-a1/a2/b1/b2 are never in a
+# named service's depends_on closure, so `up` never starts them — the campaign
+# runs exactly one worker.
+#
+# Use `docker compose up`, NEVER swarm: swarm ignores `depends_on`, which would
+# break the load-bearing migration-first gate the base encodes.
+#
+# -----------------------------------------------------------------------------
+# ★ SECRETS ARE `${VAR}` PLACEHOLDERS / FILE MOUNTS ONLY. No real key, template
+# id, password, or bearer is committed here. Every value comes from the operator's
+# docker/campaign/.env.campaign (see docker/campaign/.env.campaign.example) or a
+# mounted key file. NEVER hardcode a real E2B key.
+#
+# ★ IMAGES ARE BUILT LOCALLY BY THE OPERATOR (CI builds none of these). The three
+# dedicated per-role Dockerfiles all build cleanly at HEAD (the deps/build manifest
+# asymmetry that once broke docker/control-plane/Dockerfile is fixed in-tree):
+#   control-plane + migrate : docker/control-plane/Dockerfile  (ships
+#                             migrate-entrypoint.sh; runs `node dist/index.js`)
+#   adapter-manager         : docker/adapter-manager/Dockerfile
+#   worker                  : docker/worker/Dockerfile         (ships the
+#                             networked-host boot root at
+#                             /worker-net-app/dist/bin/networked-host.js)
+# The image refs below use a BARE `${VAR}` (no `:-default`) so a forgotten build
+# fails LOUD at `up` rather than silently pulling a nonexistent ghcr staging tag.
+# =============================================================================
+
+services:
+  # --- migration one-shot (reuses the control-plane image) -------------------
+  # Inherits entrypoint (migrate-entrypoint.sh), command ([]), depends-gating,
+  # and the store-egress network from staging.yml. Only the image + the owner DB
+  # URL change. DATABASE_URL here MUST be the OWNER login (NOT aoa_app): migrations
+  # create the aoa_app / aoa_operator serving roles NOLOGIN, and the owner is the
+  # only role permitted to run the DDL + the LOGIN grant.
+  migrate:
+    image: "${AOA_CAMPAIGN_CONTROL_PLANE_IMAGE}"
+    environment:
+      DATABASE_URL: "${AOA_CAMPAIGN_MIGRATION_DATABASE_URL}"
+
+  # --- control plane (app) ---------------------------------------------------
+  # The distributed scheduler + worker-control + adapter-manager truth route live
+  # here. It grants LOGIN to the two serving roles at boot
+  # (maybeProvisionDistributedExecutionRoles, from AOA_APP_DB_PASSWORD /
+  # AOA_OPERATOR_DB_PASSWORD) then opens the bounded aoa_app / aoa_operator pools.
+  control-plane:
+    image: "${AOA_CAMPAIGN_CONTROL_PLANE_IMAGE}"
+    # Reachable from the host via the store-egress-net gateway (control-net is
+    # internal). Single-operator box; publish the app port for the founder UI/API.
+    ports:
+      - "${AOA_CAMPAIGN_CONTROL_PLANE_PORT:-3100}:3100"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3100"
+      # Deployment mode: `authenticated` is the terrain-proven default (a multi-human
+      # board; needs an auth provider + AOA_ALLOWED_HOSTNAMES — see the runbook).
+      # `local_trusted` is the lowest-auth-friction single-operator option. The
+      # distributed path is armed by the flag + rollout below regardless of mode.
+      AOA_DEPLOYMENT_MODE: "${AOA_CAMPAIGN_DEPLOYMENT_MODE:-authenticated}"
+      AOA_DEPLOYMENT_EXPOSURE: "${AOA_CAMPAIGN_DEPLOYMENT_EXPOSURE:-private}"
+      # authenticated + private → /api/worker-control/* 403s unless the CP service
+      # name is an allowed hostname (silent-kill: SK-12). Include it.
+      AOA_ALLOWED_HOSTNAMES: "${AOA_CAMPAIGN_ALLOWED_HOSTNAMES:-control-plane}"
+      # The distributed-execution deployment gate (default-off). Required true, and
+      # then the two serving-role DB URLs below become mandatory at boot
+      # (assertHostedExecutionStartupSafe).
+      AOA_DISTRIBUTED_EXECUTION_ENABLED: "true"
+      # ★ SK-2, THE #1 SILENT KILL. Unset ⇒ every org OFF ⇒ silent legacy fallback.
+      # Armed as a deliberate runbook step (§6) by setting the campaign var to the
+      # canary JSON and RECREATING this service; empty here = safe default (off).
+      # A malformed value fails CLOSED to legacy, never throws into a live run.
+      AOA_DISTRIBUTED_EXECUTION_ROLLOUT: "${AOA_CAMPAIGN_DISTRIBUTED_EXECUTION_ROLLOUT:-}"
+      # The three DB URLs are ONE database + role-scoped logins. DATABASE_URL is the
+      # OWNER; the distributed path uses the bounded app/operator pools and NEVER
+      # falls back to the owner pool (a blank app/operator URL throws at boot).
+      DATABASE_URL: "${AOA_CAMPAIGN_DATABASE_URL}"
+      AOA_APP_DATABASE_URL: "${AOA_CAMPAIGN_APP_DATABASE_URL}"
+      AOA_OPERATOR_DATABASE_URL: "${AOA_CAMPAIGN_OPERATOR_DATABASE_URL}"
+      # LOGIN-grant provisioning (terrain-recommended, works anywhere): these MUST
+      # match the passwords embedded in the two serving-role URLs above — boot
+      # provisions then immediately verifies the bounded pools.
+      AOA_APP_DB_PASSWORD: "${AOA_CAMPAIGN_APP_DB_PASSWORD}"
+      AOA_OPERATOR_DB_PASSWORD: "${AOA_CAMPAIGN_OPERATOR_DB_PASSWORD}"
+      AOA_WORKER_SESSION_SIGNING_KEY: "${AOA_CAMPAIGN_WORKER_SESSION_SIGNING_KEY}"
+      # The ed25519 control-plane PRIVATE mint key (matched pair with the AM public
+      # key). Mounted out-of-band as a compose file-secret; verified at C0 by
+      # `pnpm verify:cp-am-keypair` against the MOUNTED files BEFORE the canary.
+      AOA_CONTROL_PLANE_SIGNING_KEY_FILE: "/run/secrets/control-plane-signing-key"
+      # ★ SK-11. The AM->CP lease-truth route stays 404 (double-gated) unless this
+      # is exactly "1"; without it every reaper lease resolves "unknown" and the
+      # reaper reclaims nothing.
+      AOA_ADAPTER_MANAGER_TRUTH_ROUTE_ENABLED: "1"
+      AOA_ADAPTER_MANAGER_TRUTH_SHARED_SECRET: "${AOA_CAMPAIGN_TRUTH_SHARED_SECRET}"
+      AOA_WORKER_POLL_RATE_LIMIT_MAX: "20000"
+      AOA_WORKER_POLL_RATE_LIMIT_WINDOW_MS: "60000"
+      # Object store. Artifact grant URLs are https-only; none of the E7-1 verifier
+      # clauses require an artifact, so a bundle-less first canary needs no working
+      # object store — but the CP still boots with a valid storage config. Point at
+      # an external S3 or a TLS MinIO (see the runbook).
+      AOA_STORAGE_PROVIDER: "${AOA_CAMPAIGN_STORAGE_PROVIDER:-s3}"
+      AOA_STORAGE_S3_ENDPOINT: "${AOA_CAMPAIGN_S3_ENDPOINT:-}"
+      AOA_STORAGE_S3_PRESIGN_ENDPOINT: "${AOA_CAMPAIGN_S3_PRESIGN_ENDPOINT:-}"
+      AOA_STORAGE_S3_BUCKET: "${AOA_CAMPAIGN_S3_BUCKET:-}"
+      AOA_STORAGE_S3_REGION: "${AOA_CAMPAIGN_S3_REGION:-us-east-1}"
+      AOA_STORAGE_S3_FORCE_PATH_STYLE: "true"
+      # ★ The instance-wide secrets-vault master key (AES-256-GCM) the control plane
+      # uses to DECRYPT company provider keys at run time. It MUST be mapped here, not
+      # only via an out-of-band override file: a GitHub-managed `up --force-recreate`
+      # that omits the override drops the key, and the CP then fails a run with
+      # `pre_spawn_failed: Unsupported state or unable to authenticate data` (it can no
+      # longer decrypt the anthropic secret). Bare `${VAR}` by the campaign convention
+      # above — a missing key fails LOUD at first decrypt rather than silently falling
+      # back to a (nonexistent, read-only-fs) key file. Supplied from .env.campaign.
+      AOA_SECRETS_MASTER_KEY: "${AOA_CAMPAIGN_SECRETS_MASTER_KEY}"
+    # Deployment-mode AUTH config (BetterAuth/Google trio for `authenticated`, etc.)
+    # goes here — a file the operator supplies. `required: false` so a `local_trusted`
+    # run needs no such file. ★ This file MUST NEVER contain E2B_API_KEY (the control
+    # plane is not the provider-control surface — that boundary still holds here).
+    env_file:
+      - path: "${AOA_CAMPAIGN_CONTROL_PLANE_ENV_FILE:-./cp-extra.env}"
+        required: false
+    secrets:
+      - control-plane-signing-key
+    volumes:
+      - aoa-state:/aoa
+
+  # --- adapter-manager (the provider-control boundary; the ONLY E2B-key surface) -
+  # Inherits control-net + provider-ctl-net + healthcheck from staging.yml. The
+  # bin fail-closes (refuses to boot) without provider=e2b + a non-empty template +
+  # a usable E2B_API_KEY + a mounted ed25519 CP PUBLIC key.
+  adapter-manager:
+    image: "${AOA_CAMPAIGN_ADAPTER_MANAGER_IMAGE}"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8090"
+      AOA_DEPLOYMENT_MODE: "${AOA_CAMPAIGN_DEPLOYMENT_MODE:-authenticated}"
+      # ★ THE ONE E2B-KEY SURFACE. Injected (rotatable), never baked. ABSENT from
+      # every other service in this overlay.
+      E2B_API_KEY: "${E2B_API_KEY}"
+      # Optional self-hosted E2B domain; empty ⇒ the public api.e2b.app.
+      E2B_DOMAIN: "${AOA_CAMPAIGN_E2B_DOMAIN:-}"
+      AOA_ADAPTER_MANAGER_SANDBOX_PROVIDER: "e2b"
+      # ★ The CUSTOM template (aoa-base) — NOT the stock `base`. A DIFFERENT var
+      # from the monolith's E2B_TEMPLATE. A stock template has no CLI on PATH and
+      # the distributed path has no install-at-spawn fallback (one execute only).
+      AOA_ADAPTER_MANAGER_E2B_TEMPLATE: "${AOA_CAMPAIGN_E2B_TEMPLATE}"
+      AOA_ADAPTER_MANAGER_CONTROL_PLANE_PUBLIC_KEY_FILE: "/run/secrets/adapter-manager-cp-pubkey"
+      AOA_ADAPTER_MANAGER_TRUTH_SHARED_SECRET: "${AOA_CAMPAIGN_TRUTH_SHARED_SECRET}"
+      # ★ SK-10. The reaper that reclaims orphan E2B sandboxes runs ONLY on exactly
+      # "1" (NOT "true"). Unset ⇒ orphan sandboxes accrue and BILL FOREVER.
+      AOA_ADAPTER_MANAGER_REAPER_ENABLED: "1"
+      # The reaper needs the CP truth route to resolve lease truth.
+      AOA_ADAPTER_MANAGER_CONTROL_PLANE_URL: "${AOA_CAMPAIGN_ADAPTER_MANAGER_CONTROL_PLANE_URL:-http://control-plane:3100}"
+    secrets:
+      - adapter-manager-cp-pubkey
+    volumes:
+      - am-state:/am
+
+  # --- the ONE campaign worker (networked-host -> adapter-manager wire) -------
+  # A brand-new service (the base workers stay unstarted). It runs the container
+  # networked-host boot root, which wraps runContainerHost (file_record custody +
+  # enrollment) AND injects makeNetworkedRunProvider(AOA_WORKER_PROVIDER_URL), so
+  # dispatch composes over the gated wire without the worker ever holding an E2B key.
+  worker:
+    image: "${AOA_CAMPAIGN_WORKER_IMAGE}"
+    # ★ ABSOLUTE path: the networked-host bin ships in its own pruned deploy tree at
+    # /worker-net-app/dist/bin/networked-host.js (the image WORKDIR is /worker-app,
+    # where it does NOT exist). The entrypoint is `exec "$@"`, so this override runs
+    # the networked host instead of the default worker-daemon.js CMD.
+    command: ["node", "/worker-net-app/dist/bin/networked-host.js"]
+    environment:
+      AOA_WORKER_TARGET_PROFILE_ID: "${AOA_CAMPAIGN_WORKER_PROFILE_ID:-campaign-worker}"
+      AOA_WORKER_TARGET_SCOPE: "organization"
+      AOA_WORKER_CONTROL_PLANE_URL: "${AOA_CAMPAIGN_WORKER_CONTROL_PLANE_URL:-http://control-plane:3100}"
+      # ★ The provider wire. This is the ONLY way the worker reaches E2B. The
+      # E2B key is NOT here — it lives on the adapter-manager the URL points at.
+      AOA_WORKER_PROVIDER_URL: "${AOA_CAMPAIGN_WORKER_PROVIDER_URL:-http://adapter-manager:8090}"
+      # ★ SK-3. Dispatch composes ONLY on exactly "1"; any other value throws.
+      AOA_WORKER_DISPATCH_ENABLED: "1"
+      # ★ Blocker-C fix: file_record custody (NOT mounted_secret, which never
+      # enrolls) + a durable state dir on a NAMED VOLUME. A lost identity.json
+      # re-mints a workerId the server denies worker_transfer_denied FOREVER (no
+      # container reset), so the volume MUST be durable.
+      AOA_WORKER_KEY_STORE_MODE: "file_record"
+      AOA_WORKER_STATE_DIR: "/worker"
+      # ★ SK-4. Unset ⇒ no_event_outbox_path. On the durable volume.
+      AOA_WORKER_EVENT_OUTBOX_PATH: "/worker/event-outbox.db"
+      # ★ SK-6. This file holds an ENROLLMENT TICKET (aoa_tkt_<base64url(...)>),
+      # NOT a raw aoa_enr_ code. Written by the operator after enrollment (runbook
+      # §7), then the worker is brought up so the 10-min-TTL code inside is redeemed
+      # promptly.
+      AOA_WORKER_ENROLLMENT_CODE_FILE: "/run/secrets/worker-enrollment-ticket"
+      AOA_WORKER_S3_ENDPOINT: "${AOA_CAMPAIGN_S3_PRESIGN_ENDPOINT:-}"
+      AOA_WORKER_HEALTH_HOST: "127.0.0.1"
+      AOA_WORKER_HEALTH_PORT: "9464"
+    secrets:
+      - worker-enrollment-ticket
+    volumes:
+      - worker-state:/worker
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      control-plane:
+        condition: service_healthy
+      adapter-manager:
+        condition: service_healthy
+    healthcheck:
+      # No curl in the worker image; Node's global fetch probes the loopback surface.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9464/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    stop_grace_period: "120s"
+    stop_signal: "SIGTERM"
+    labels:
+      com.aoa.role: "campaign-networked-worker"
+    networks:
+      - control-net
+      - store-egress-net
+
+# Durable named volumes. worker-state is the load-bearing one (§4 identity
+# persistence); aoa-state / am-state keep the CP + AM writable state across recreate.
+volumes:
+  worker-state:
+  aoa-state:
+  am-state:
+
+# Compose file-secrets, mounted at /run/secrets/<name> (plain `docker compose`,
+# not swarm). The operator fills the source paths in .env.campaign. None of these
+# names match the provider-control credential pattern, and none carries the E2B key.
+secrets:
+  control-plane-signing-key:
+    file: "${AOA_CAMPAIGN_CP_SIGNING_KEY_FILE}"
+  adapter-manager-cp-pubkey:
+    file: "${AOA_CAMPAIGN_AM_CP_PUBLIC_KEY_FILE}"
+  worker-enrollment-ticket:
+    file: "${AOA_CAMPAIGN_WORKER_ENROLLMENT_TICKET_FILE}"

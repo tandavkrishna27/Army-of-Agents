@@ -1,0 +1,153 @@
+{
+  "_comment": "WRK-011 shared fixture — a ratified target profile pair read by BOTH the server integration suite (worker-hello-refresh.integration.test.ts) and the daemon self-check test (hello-provisioning.test.ts). Both parse it through the FROZEN schemas and VERIFY the digests, so a canonical-algo drift reds both. `providerConstraintProfile.digest` = sha256(canonicalProviderConstraintProfileDigestInputV1(profile-without-digest)); `registeredProfileHash` = sha256(canonicalizeJsonV1(registeredProfile)). `leaseOffer` is a REAL offer captured by re-running the server integration suite with AOA_WRK011_CAPTURE=1 (Step 7), read by the daemon self-check (Step 8c).",
+  "ids": {
+    "organizationId": "b0000000-0000-4000-8000-000000000001",
+    "targetId": "b0000000-0000-4000-8000-000000000003",
+    "policyHash": "7777777777777777777777777777777777777777777777777777777777777777"
+  },
+  "registeredProfile": {
+    "protocolVersion": 1,
+    "targetId": "b0000000-0000-4000-8000-000000000003",
+    "targetClass": "organization_dedicated",
+    "scope": "organization",
+    "organizationId": "b0000000-0000-4000-8000-000000000001",
+    "ownerPrincipalId": null,
+    "trustCeiling": "organization_isolated",
+    "credentialCeiling": "organization_brokered",
+    "dataLocalityCeiling": "organization_target_only",
+    "providerConstraints": {
+      "profileId": "wrk011-provider",
+      "version": 1,
+      "digest": "09a65cebab39a61c86e533864af091cc0995d16ca2e1a253282ddb8bcd254614"
+    },
+    "capabilityCeiling": [
+      "workload.batch",
+      "sandbox.process_isolated"
+    ],
+    "deviceGeneration": 1,
+    "revokedAt": null,
+    "policyHash": "7777777777777777777777777777777777777777777777777777777777777777"
+  },
+  "registeredProfileHash": "23469528c0272d907c3b153a1d6303a15274c26a5e90d39d3e5b7d55bd64dedb",
+  "providerConstraintProfile": {
+    "profileId": "wrk011-provider",
+    "version": 1,
+    "maxContinuousRuntimeSeconds": 3600,
+    "maxIdleSeconds": 300,
+    "resourceCeiling": {
+      "cpuMillis": 2000,
+      "memoryMiB": 4096,
+      "pids": 512,
+      "diskMiB": 8192
+    },
+    "maxConcurrentOperations": 2,
+    "supportedOperations": [
+      "create",
+      "execute",
+      "cancel",
+      "kill",
+      "destroy",
+      "list",
+      "inspect",
+      "reconcile_cleanup"
+    ],
+    "localityTags": [
+      "organization_target_only"
+    ],
+    "checkpointMode": "none",
+    "healthMode": "none",
+    "digest": "09a65cebab39a61c86e533864af091cc0995d16ca2e1a253282ddb8bcd254614"
+  },
+  "leaseOffer": {
+    "protocolVersion": 1,
+    "workerId": "b0000000-0000-4000-8000-000000000005",
+    "leaseId": "83d17ff1-dee5-4757-b171-e9f6c3efa011",
+    "fenceToken": "ZmygWkLwI-_6jbga9ng_bvD1cMX2f04x68oMWK2zr9E",
+    "ackDeadline": "2026-08-25T15:29:06.565Z",
+    "expiresAt": "2026-08-25T15:33:51.565Z",
+    "job": {
+      "protocolVersion": 1,
+      "jobId": "b6100000-0000-4000-8000-000000000001",
+      "attempt": 1,
+      "organizationId": "b0000000-0000-4000-8000-000000000001",
+      "companyId": "b0000000-0000-4000-8000-000000000002",
+      "source": {
+        "kind": "one_shot",
+        "operationId": "b6100000-0000-4000-8000-000000000001",
+        "operationKind": "extraction",
+        "requestedBy": {
+          "principalType": "system",
+          "principalId": "wrk011-test"
+        },
+        "executionPrincipal": {
+          "principalType": "user",
+          "principalId": "b0000000-0000-4000-8000-000000000005"
+        }
+      },
+      "createdAt": "2026-08-25T15:27:51.481Z",
+      "notBefore": "2026-08-25T15:27:51.481Z",
+      "deadline": "2026-08-25T15:38:51.565Z",
+      "inputHash": "5555555555555555555555555555555555555555555555555555555555555555",
+      "policyHash": "7777777777777777777777777777777777777777777777777777777777777777",
+      "placement": {
+        "policyId": "job-submission-default",
+        "version": 1,
+        "digest": "6666666666666666666666666666666666666666666666666666666666666666",
+        "targetRequirements": {
+          "allowedTargetClasses": [
+            "organization_dedicated"
+          ],
+          "allowedTrustClasses": [
+            "organization_isolated"
+          ],
+          "requiredOwnerPrincipalId": null,
+          "credentialKind": "organization_brokered",
+          "dataLocality": "organization_target_only",
+          "fallback": {
+            "mode": "forbidden",
+            "orderedTargetClasses": []
+          },
+          "providerConstraints": {
+            "profileId": "wrk011-provider",
+            "version": 1,
+            "digest": "09a65cebab39a61c86e533864af091cc0995d16ca2e1a253282ddb8bcd254614"
+          }
+        }
+      },
+      "adapter": {
+        "type": "aoa_job_control",
+        "version": "1",
+        "configArtifactId": null
+      },
+      "requiredCapabilities": [
+        "workload.batch"
+      ],
+      "workspace": null,
+      "secretHandles": [],
+      "resourceLimits": {
+        "cpuMillis": 1000,
+        "memoryMiB": 1024,
+        "pids": 128,
+        "diskMiB": 1024
+      },
+      "networkPolicy": {
+        "policyId": "job-default-deny",
+        "version": 1,
+        "digest": "6666666666666666666666666666666666666666666666666666666666666666"
+      },
+      "offlinePolicy": "cancel",
+      "extensions": [],
+      "workloadType": "batch",
+      "workload": {
+        "command": "codex",
+        "args": [
+          "exec",
+          "--json"
+        ],
+        "stdinArtifactId": null,
+        "maxRuntimeSeconds": 600
+      }
+    },
+    "extensions": []
+  }
+}

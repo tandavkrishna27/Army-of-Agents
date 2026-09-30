@@ -1,0 +1,71 @@
+name: Verdict reconcile
+
+# DEP-013 Slice B — the CONSUMER for CI verdicts that no required check reads.
+#
+# Why this exists: `d1-merge-train` failed on three consecutive integration-branch merges,
+# uploaded a complete evidence bundle every time exactly as DEP-004 specified, and all three
+# expired UNREAD. Production was specified, built and honoured; consumption was never
+# specified at all. This workflow is the reader.
+#
+# ★ WHY `push` IS HERE and not only `schedule`. GitHub runs `schedule` (and registers
+# `workflow_dispatch`) ONLY from the DEFAULT branch. This repository already relies on that
+# fact in two places that say so at the line — `d1-merge-train.yml` ("workflow_dispatch is
+# omitted deliberately: it requires the workflow on the default branch (main)") and
+# `keyed-e2b-conformance.yml` — and the API agrees: every scheduled run of
+# cross-platform-weekly / catalog-audit / thread-v2-e2e is on `main`. So until this file
+# reaches `main`, the cron below fires for nothing, and a consumer that cannot run on the
+# branch the incident happened on would be decorative — which is the defect, not the fix.
+# The `push` trigger is what makes it real here, and it costs seconds.
+#
+# NO `paths:` FILTER, deliberately. The marker this publishes is a HEARTBEAT read by
+# `policy`; filtering the trigger would let a quiet path age the marker out and red every
+# open PR for a reason that has nothing to do with any of them.
+#
+# It REPORTS. It does not fix a lane and does not block a merge. A finding here is a verdict
+# that has been read, not a verdict that must be green.
+
+on:
+  schedule:
+    # Every 6 hours. Live only once this file is on the default branch (see above).
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - docs/replatform-program
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+concurrency:
+  group: verdict-reconcile
+  # NEVER cancel a reconciliation. A cancelled run is a run that published nothing while
+  # recording a completed conclusion — precisely the shape the `policy` reader exists to
+  # catch, and there is no reason to manufacture it here.
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      # ★★ ONE STEP, DELIBERATELY. The evaluation and the publish are a single process, and
+      # the publish is its last action. As two steps without an explicit success condition, a
+      # throwing evaluator would still let the write run — which is the 2026-09-03 incident
+      # verbatim (a validation ran, FAILED, and the `git add` beside it ran anyway). Do not
+      # split this into "evaluate" + "publish" steps.
+      - name: Reconcile workflow verdicts and publish the consumed artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/reconcile-workflow-verdicts.mjs

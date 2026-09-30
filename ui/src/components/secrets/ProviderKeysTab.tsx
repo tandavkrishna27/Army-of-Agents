@@ -1,9 +1,14 @@
 import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
 import type { CompanySecret, RuntimeProviderKey } from "@armyofagents/shared";
-import type { CreateRuntimeProviderKey, UpdateRuntimeProviderKey } from "@armyofagents/shared";
+import type {
+  CreateRuntimeProviderKey,
+  CreateRuntimeProviderKeyWithSecret,
+  UpdateRuntimeProviderKey,
+} from "@armyofagents/shared";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ProviderKeyDialog } from "./ProviderKeyDialog";
+import { ProviderKeyQuickAddDialog } from "./ProviderKeyQuickAddDialog";
 
 interface ProviderKeysTabProps {
   providerKeys: RuntimeProviderKey[];
@@ -11,6 +16,12 @@ interface ProviderKeysTabProps {
   errorMessage?: string | null;
   actionErrorMessage?: string | null;
   onCreate: (input: CreateRuntimeProviderKey) => Promise<unknown>;
+  onCreateWithSecret: (input: CreateRuntimeProviderKeyWithSecret) => Promise<unknown>;
+  // Fired when the quick-add dialog opens/closes so the parent can reset the
+  // quick-add mutation on close (Codex P2) — otherwise a failed quick-add's error
+  // lingers at the tab AND inside the unrelated existing-secret dialog, which
+  // shares this `actionErrorMessage`, until the next quick-add submission.
+  onQuickAddOpenChange?: (open: boolean) => void;
   onUpdate: (id: string, input: UpdateRuntimeProviderKey) => Promise<unknown>;
   onRemove: (id: string) => Promise<unknown>;
 }
@@ -21,9 +32,12 @@ export function ProviderKeysTab({
   errorMessage,
   actionErrorMessage,
   onCreate,
+  onCreateWithSecret,
+  onQuickAddOpenChange,
   onUpdate,
   onRemove,
 }: ProviderKeysTabProps) {
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<RuntimeProviderKey | null>(null);
   const secretById = new Map(secrets.map((secret) => [secret.id, secret]));
@@ -37,17 +51,27 @@ export function ProviderKeysTab({
             Company-level credentials for sandbox runtimes. Not used for CLI or LLM provider authentication.
           </p>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => {
-            setEditTarget(null);
-            setDialogOpen(true);
-          }}
-        >
-          <Plus className="size-3.5" />
-          Add key
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setEditTarget(null);
+              setDialogOpen(true);
+            }}
+          >
+            Use existing secret
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setQuickAddOpen(true)}
+          >
+            <Plus className="size-3.5" />
+            Add E2B key
+          </Button>
+        </div>
       </div>
 
       {(errorMessage || actionErrorMessage) && (
@@ -61,7 +85,7 @@ export function ProviderKeysTab({
           <KeyRound className="mx-auto mb-3 size-7 text-muted-foreground/40" />
           <p className="text-sm font-medium">No sandbox provider keys yet</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Add an E2B provider key backed by an existing secret.
+            Add an E2B key in one step, or back a key with an existing secret.
           </p>
         </div>
       ) : (
@@ -113,6 +137,19 @@ export function ProviderKeysTab({
           })}
         </div>
       )}
+
+      <ProviderKeyQuickAddDialog
+        open={quickAddOpen}
+        errorMessage={actionErrorMessage}
+        onOpenChange={(open) => {
+          setQuickAddOpen(open);
+          onQuickAddOpenChange?.(open);
+        }}
+        onSubmit={async (input) => {
+          await onCreateWithSecret(input);
+          setQuickAddOpen(false);
+        }}
+      />
 
       <ProviderKeyDialog
         open={dialogOpen}

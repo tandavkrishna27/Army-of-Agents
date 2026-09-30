@@ -1,0 +1,31 @@
+{
+  "$comment": [
+    "WRK-008 slice 2b Step 9b — the repository's worker boot roots and their provider posture.",
+    "A boot root is a file that obtains bootstrapWorkerDaemon. Enumerated by scanning the worker",
+    "bin directories; a root the scan finds that is not declared here FAILS (the important",
+    "direction). providerPosture 'none' = passes no provider key; 'resolver' = passes a provider",
+    "produced by resolverFile, whose default MUST be {kind:'none'} (resolverNoneMarker)."
+  ],
+  "roots": {
+    "packages/worker-daemon/src/bin/worker-daemon.ts": {
+      "providerPosture": "none",
+      "reason": "The CONTAINER root. bootstrapWorkerDaemon({env, proc}) passes no provider key, and E4-D01 forbids worker-daemon from importing a provider — so gate 1 is STRUCTURAL here and DEP-010 left this root untouched."
+    },
+    "packages/worker-daemon/src/bin/container-host.ts": {
+      "providerPosture": "none",
+      "reason": "WRK-014 — the file_record CONTAINER host root. Its invokedDirectly guard calls runContainerHost({env, proc}), which passes no provider; the optional deps.provider is a test/embedder seam and is undefined for the shipped binary. E4-D01 forbids worker-daemon from importing a provider (there is no resolver here, unlike the desktop root), so gate 1 is STRUCTURAL, exactly as on worker-daemon.ts. Landed INERT: the Dockerfile CMD still runs worker-daemon.js; WRK-015 repoints it."
+    },
+    "packages/worker-keystore/src/bin/desktop-host.ts": {
+      "providerPosture": "resolver",
+      "resolverFile": "packages/worker-keystore/src/bin/sandbox-provider.ts",
+      "resolverNoneMarker": "return { kind: \"none\" };",
+      "reason": "The DESKTOP root. It passes a provider RESOLVED by resolveSandboxProvider (DEP-010), whose default (AOA_WORKER_SANDBOX_PROVIDER unset/empty/none) returns {kind:'none'} — so the shipped default resolves to no provider. The provider is confined to PROVIDER_HOST_PATH (DEP-010's boundary checker)."
+    },
+    "packages/worker-networked-host/src/bin/networked-host.ts": {
+      "providerPosture": "resolver",
+      "resolverFile": "packages/worker-networked-host/src/resolve-provider-url.ts",
+      "resolverNoneMarker": "return { kind: \"none\" };",
+      "reason": "DEP-011 Slice 2b — the CONTAINER networked-provider root. It supplies a per-run makeRunProvider factory RESOLVED by resolveProviderUrl, whose default (AOA_WORKER_PROVIDER_URL unset/empty/whitespace) returns {kind:'none'} — so the shipped default resolves to NO provider and the bin boots exactly as the inert container-host default. The networked driver lives OUTSIDE worker-daemon (E4-D01 holds); the factory is threaded via the container host's bootstrap seam. Blocker B gave this bin an image home (/worker-net-app in docker/worker/Dockerfile), but the image CMD is UNCHANGED and still enters the daemon bin, so no shipped service runs it: entering it requires a per-service command/entrypoint override, which the staging manifest and the D1 compose invariants both now reject. The SHIPPED DEFAULT this guard reads is unchanged - resolveProviderUrl still returns { kind: 'none' } with the env unset."
+    }
+  }
+}

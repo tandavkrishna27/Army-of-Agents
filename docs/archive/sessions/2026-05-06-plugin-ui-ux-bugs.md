@@ -86,7 +86,7 @@ it("keeps polling and resolves toast after modal closes", async () => {
 - [ ] **Step 2: Run the test to confirm it fails**
 
 ```
-cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-2.5"
+cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5"
 pnpm --filter ui test -- --run src/components/marketplace/install/__tests__/PluginInstallModal.test.tsx
 ```
 

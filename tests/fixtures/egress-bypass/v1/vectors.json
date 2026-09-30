@@ -1,0 +1,124 @@
+{
+  "version": "1",
+  "schema": "aoa-egress-bypass-vectors/v1",
+  "context": {
+    "note": "DEP-008 §2.6 hostile egress-BYPASS corpus. Extends the DAT-005 default-deny classifier (server/src/services/egress-policy.ts classifyEgressDestination) with adversarial SSRF/rebind spellings a managed sandbox must never let through: hex-mapped IPv4-in-IPv6 metadata/control-plane, first-word-zero IPv6, bracket/case/whitespace obfuscation, decimal/octal-looking octets that must fail closed, and DNS-rebind [public,private] multi-homing (deny-if-ANY). `controlPlaneCidrs` is the INJECTED AOA_CONTROL_PLANE_DENY_CIDRS fixture — deliberately PUBLIC ranges isPrivateIP would NOT catch — so a control-plane probe cannot vacuously pass on an empty deny set (proven by the injected-load-bearing test). Bound to the REAL classifier in server/src/__tests__/egress-bypass.test.ts and re-derived independently in scripts/check-egress-bypass-vectors.mjs.",
+    "allow": [
+      { "host": "api.notion.com", "port": 443 },
+      { "host": "api.github.com", "port": 443 }
+    ],
+    "controlPlaneCidrs": ["45.55.0.0/16", "2606:1234::/32"]
+  },
+  "allowVectors": [
+    {
+      "name": "allowlisted_public_control_gate_off_for_public_dns",
+      "requestedUrl": "https://api.notion.com/v1/pages",
+      "resolvedAddrs": ["104.18.32.7"]
+    },
+    {
+      "name": "allowlisted_public_ipv6",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["2606:4700::6812:2007"]
+    }
+  ],
+  "denyVectors": [
+    {
+      "name": "metadata_hex_mapped_ipv6",
+      "note": "::ffff:a9fe:a9fe is the HEX spelling of ::ffff:169.254.169.254 == 169.254.169.254. Must canonicalize to family-4 or it evades the family-4 metadata CIDR.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["::ffff:a9fe:a9fe"],
+      "class": "metadata"
+    },
+    {
+      "name": "metadata_hex_mapped_ipv6_uppercase",
+      "note": "Case-obfuscated hex spelling of the IMDS address — parseIp lowercases before matching.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["::FFFF:A9FE:A9FE"],
+      "class": "metadata"
+    },
+    {
+      "name": "metadata_bracketed_mapped_ipv6",
+      "note": "Bracket-wrapped IPv4-mapped IMDS address — brackets are stripped before parsing.",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["[::ffff:169.254.169.254]"],
+      "class": "metadata"
+    },
+    {
+      "name": "control_plane_hex_mapped_public_ipv6",
+      "note": "::ffff:2d37:6301 == ::ffff:45.55.99.1 == 45.55.99.1, a PUBLIC control-plane IP (in the injected 45.55.0.0/16). isPrivateIP cannot catch a public IP — only the family-4 control_plane gate stands, and ONLY if the hex form is canonicalized to family-4.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["::ffff:2d37:6301"],
+      "class": "control_plane"
+    },
+    {
+      "name": "control_plane_public_ipv4_injected_only",
+      "note": "45.55.99.1 is a genuinely PUBLIC address; it is denied ONLY because of the injected controlPlaneCidrs. With an empty deny set it would ALLOW — the injected-load-bearing test asserts exactly that, so this vector can never vacuously pass.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["45.55.99.1"],
+      "class": "control_plane"
+    },
+    {
+      "name": "first_word_zero_ipv6_compatible",
+      "note": "::10 — an IPv4-compatible / first-word-zero IPv6 address (::/16).",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["::10"],
+      "class": "private"
+    },
+    {
+      "name": "loopback_hex_mapped_ipv6",
+      "note": "::ffff:7f00:0001 == ::ffff:127.0.0.1 == 127.0.0.1.",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["::ffff:7f00:0001"],
+      "class": "private"
+    },
+    {
+      "name": "decimal_ip_literal_fail_closed",
+      "note": "2130706433 is the 32-bit decimal form of 127.0.0.1. It is NOT dotted-quad, so parseIp returns null and the classifier fails CLOSED to private (never allow).",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["2130706433"],
+      "class": "private"
+    },
+    {
+      "name": "octal_looking_octet_fail_closed",
+      "note": "0177.0.0.1 has a 4-digit first octet that the strict /^\\d{1,3}$/ octet rule rejects → parseIp null → fail-closed private.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["0177.0.0.1"],
+      "class": "private"
+    },
+    {
+      "name": "dns_rebind_public_then_private",
+      "note": "DNS-rebind: an allowlisted host resolves to [public, private]. Deny-if-ANY resolved address is unsafe (the attacker connects to the private one).",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["104.18.32.7", "192.168.5.5"],
+      "class": "private"
+    },
+    {
+      "name": "dns_rebind_public_then_metadata",
+      "note": "Multi-homed rebind whose second address is the cloud metadata endpoint — metadata precedence over the public first address.",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["140.82.112.3", "169.254.169.254"],
+      "class": "metadata"
+    },
+    {
+      "name": "empty_resolution_fail_closed",
+      "note": "An unverifiable/empty resolution cannot be proven public → fail-closed private.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": [],
+      "class": "private"
+    },
+    {
+      "name": "non_allowlisted_public_host_default_deny",
+      "note": "A genuinely PUBLIC, non-allowlisted host resolving to a public IP: the default-deny allowlist gate returns not_allowlisted BEFORE any address classification, exercising the allowlist-bypass path within the DEP-008 corpus itself (not only DAT-005's).",
+      "requestedUrl": "https://attacker.example/steal",
+      "resolvedAddrs": ["93.184.216.34"],
+      "class": "not_allowlisted"
+    },
+    {
+      "name": "non_https_scheme_default_deny",
+      "note": "A non-https spelling of an otherwise-allowlisted host: isAllowlisted rejects any non-https scheme, so default-deny returns not_allowlisted.",
+      "requestedUrl": "http://api.notion.com/v1",
+      "resolvedAddrs": ["104.18.32.7"],
+      "class": "not_allowlisted"
+    }
+  ]
+}

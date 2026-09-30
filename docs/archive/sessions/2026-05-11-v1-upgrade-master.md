@@ -2,14 +2,14 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement each sub-plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Land every decision from the 2026-05-11 Upstream→AoA gap analysis (11 verified-real-bug fixes + 10 product decisions) on a single integration branch `v1-upgrade`, ship as v1.0.0 final.
+**Goal:** Land every decision from the 2026-05-11 Paperclip→AoA gap analysis (11 verified-real-bug fixes + 10 product decisions) on a single integration branch `v1-upgrade`, ship as v1.0.0 final.
 
 **Architecture:** Long-lived integration branch off `workspace-fixes`. Each decision area gets its own sub-branch + PR merged into the integration branch. Final whole-suite regression on the integration branch before merging to mainline + tagging v1.0.0. Two cross-cutting subsystems (recovery service in v1.3 slot, execution-target abstraction + Tauri desktop in v2.0 slot) are foundational dependencies for several smaller features and must land before their dependents.
 
 **Tech Stack:** Drizzle ORM (no raw SQL) | Vitest (server/UI/cli/packages projects) | Playwright (e2e + release-smoke) | Changesets (release) | embedded-postgres@18.1.0-beta.16 (test DB) | Tauri 2.x (desktop, v2.0 slice) | @aws-sdk/client-secrets-manager (D10) | pnpm 9.15.4 workspaces
 
 **Reference docs:**
-- Upstream→AoA gap analysis output (this session, both pulls)
+- Paperclip→AoA gap analysis output (this session, both pulls)
 - `memory/project_v1_to_v2_roadmap.md` — locked decisions D1-D10
 - `memory/feedback_aoa_user_model.md` — founding-team lens
 - `CLAUDE.md` Critical Rules 1-10 (Drizzle ORM, naming, V2.5 spec)
@@ -101,19 +101,19 @@ Strict: `pnpm-lock.yaml` cannot be committed unless either:
 
 9 grep-based guards. The 9 guards:
 1. No `pcp_(invite|mcp|claim)_` token prefixes
-2. No `upstream.*-example` plugin keys
-3. No `UPSTREAM` ASCII banner
-4. No user-visible "Upstream <Word>" prose in shipping code (with allow-list)
-5. `upstream:` localStorage keys (allow-list: `lib/storage-migrations.ts`, migration tests, `ui/index.html`)
-6. `[upstream]` log prefix (allow-list: `normalize-transcript.ts` only)
-7. No `upstream-*` CSS classes (no allow-list — full rename required)
-8. No quoted "Upstream <Word>" prose in shipping code (allow-list documented in pr.yml)
+2. No `paperclip.*-example` plugin keys
+3. No `PAPERCLIP` ASCII banner
+4. No user-visible "Paperclip <Word>" prose in shipping code (with allow-list)
+5. `paperclip:` localStorage keys (allow-list: `lib/storage-migrations.ts`, migration tests, `ui/index.html`)
+6. `[paperclip]` log prefix (allow-list: `normalize-transcript.ts` only)
+7. No `paperclip-*` CSS classes (no allow-list — full rename required)
+8. No quoted "Paperclip <Word>" prose in shipping code (allow-list documented in pr.yml)
 9. `AOA_*` env-var doc completeness (catches docs drift)
 
 **Plan implication:** every sub-branch that introduces new code must use AoA-prefixed names:
 - New env vars: `AOA_WORKSPACE_*`, `AOA_FEEDBACK_*`, `AOA_TAURI_*`, etc.
-- New log prefixes: `[aoa]` (NEVER `[upstream]`)
-- New CSS classes: `aoa-*` (NEVER `upstream-*`)
+- New log prefixes: `[aoa]` (NEVER `[paperclip]`)
+- New CSS classes: `aoa-*` (NEVER `paperclip-*`)
 - New localStorage keys: `aoa.*`
 - New plugin keys: `aoa.*` or `aoa-*`
 - New telemetry: extend `AOA_*` env-var doc allow-list as needed
@@ -185,10 +185,10 @@ Every sub-branch PR:
 
 ### External setup (blocking-status per sub-branch)
 
-Confirmed via Upstream + AoA infrastructure investigation (2026-05-11):
+Confirmed via Paperclip + AoA infrastructure investigation (2026-05-11):
 
 **Not blocking v1.0 (Phases A–D):**
-- **AWS Secrets Manager testing** — Upstream has no AWS in CI; tests via mocks. D10 plan follows the same approach. **No external setup needed.**
+- **AWS Secrets Manager testing** — Paperclip has no AWS in CI; tests via mocks. D10 plan follows the same approach. **No external setup needed.**
 - **GHCR signing (cosign)** — neither repo has setup. v1.0 ships unsigned GHCR images per current Phase H state. **Optional for v1.0.** Recommend as separate Phase I security follow-up.
 
 **Blocking for v2.0 Tauri sub-branch (Phase E #11) — start procurement NOW if you want signed installers in v1.0:**
@@ -250,14 +250,14 @@ Calendar estimates assume subagent-driven-development with parallel sub-branches
 | Drizzle 0.38→0.45 surfaces breaking API drift | medium | high | Bug 2 lands FIRST after bug-batch core; full test suite must pass before any sub-branch with new schema starts. |
 | Brand-check regressions block PRs | medium | medium | Each sub-branch's plan includes a brand-check pre-flight (grep the 9 patterns before opening PR). |
 | Migration ordering conflicts when parallel sub-branches both add migrations | high | medium | Strict numbering allocation above (B sub-branches get 0088-0090; C gets 0091-0093; D gets 0094-0095). Sub-branches merge in numerical order — last sub-branch with a migration may need to `pnpm db:generate` against the most-current state. |
-| `inboxDismissals` vs `issueInboxArchives` schema divergence breaks Bug 9 port | confirmed | medium | Bug 9 plan uses AoA's `inboxDismissals` with `itemKey="issue:<id>"` format (not upstream's `issueInboxArchives`). Plan documents this explicitly. |
+| `inboxDismissals` vs `issueInboxArchives` schema divergence breaks Bug 9 port | confirmed | medium | Bug 9 plan uses AoA's `inboxDismissals` with `itemKey="issue:<id>"` format (not paperclip's `issueInboxArchives`). Plan documents this explicitly. |
 | Windows e2e remains skipped (Issue #114, embedded-postgres) | confirmed | low | Documented in v1.0 release notes; not a v1.0 blocker. Fix planned as separate Issue. |
 | Recovery service port introduces cost-runaway via auto-retry | medium | high | D1 plan includes per-recovery-action budget check; productivity-review LLM calls use the cheap profile from D4 (lands first). |
 | Tauri Mac/Windows builds need code-signing certs not yet acquired | medium | medium | v2.0 Tauri sub-branch can ship unsigned for v1.0; signed installers in v1.1 if cert acquisition slips. |
-| `pnpm test:run` 5,094 cases on single worker exceeds 20-min CI timeout as suite grows | medium | low | Phase E plan adds vitest sharding (upstream pattern: 4-shard matrix). |
-| AoA's `deriveAuthTrustedOrigins` is stricter than Upstream (no http variant in authenticated mode) | confirmed | low | Bug 4 plan explicitly documents this as a decision point. Default: preserve AoA's stricter behavior. |
-| `create-upstream-plugin/` package directory not yet renamed | confirmed | low | Add to `fix/v1-bug-batch` cherry-pick set as a separate commit. |
-| Upstream ships drizzle-orm 0.46+ while AoA's v1-upgrade is mid-flight on 0.45.2 | low | medium | Pin AoA at 0.45.2 for v1.0 final. Defer further drizzle bumps to v1.1 polish batch. Watch Upstream pulls but don't cherry-pick a 0.46 bump until v1.0 is shipped. |
+| `pnpm test:run` 5,094 cases on single worker exceeds 20-min CI timeout as suite grows | medium | low | Phase E plan adds vitest sharding (paperclip pattern: 4-shard matrix). |
+| AoA's `deriveAuthTrustedOrigins` is stricter than Paperclip (no http variant in authenticated mode) | confirmed | low | Bug 4 plan explicitly documents this as a decision point. Default: preserve AoA's stricter behavior. |
+| `create-paperclip-plugin/` package directory not yet renamed | confirmed | low | Add to `fix/v1-bug-batch` cherry-pick set as a separate commit. |
+| Paperclip ships drizzle-orm 0.46+ while AoA's v1-upgrade is mid-flight on 0.45.2 | low | medium | Pin AoA at 0.45.2 for v1.0 final. Defer further drizzle bumps to v1.1 polish batch. Watch Paperclip pulls but don't cherry-pick a 0.46 bump until v1.0 is shipped. |
 | Recovery service port (Phase D) needs schema columns `livenessState`, `livenessReason`, `continuationAttempt`, `nextAction` on `heartbeat_runs` — pre-flight check that those columns exist | medium | medium | At the START of `feat/v1-recovery-service` work, `grep -n "livenessState\|livenessReason\|continuationAttempt\|nextAction" packages/db/src/schema/heartbeat_runs.ts`. If any are missing, add as Migration 0094 PRE-step (rename the planned monitors migration to 0095, system-notices to 0096, and target-aware envs slot to 0097). Document the cascade in the recovery sub-plan. |
 | Subagent-driven development on long sub-branches accumulates merge debt vs. workspace-fixes | medium | low | Periodically rebase `v1-upgrade` against `workspace-fixes` (or whatever becomes mainline). When rebasing, only fast-forward sub-branches; if a sub-branch needs conflict resolution, halt and have a human review the conflict. |
 

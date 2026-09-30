@@ -487,7 +487,7 @@ describe.skipIf(
     registerMarketplaceCatalogService(service);
     expect(await catalogCacheSource()).toBe("cdn");
 
-    const company = await companyService(db).create({ name: "Marketplace Crew Co" } as never);
+    const company = await companyService(db).create({ name: "Marketplace Crew Co", organizationId: "00000000-0000-0000-0000-000000000001" } as never);
     const crew = await crewRows(company.id);
 
     const marketplaceCrew = crew.filter((row) => row.template_origin?.startsWith("agent:aoa-curated/"));
@@ -558,7 +558,7 @@ describe.skipIf(
     await service.sync();
     registerMarketplaceCatalogService(service);
 
-    const company = await companyService(db).create({ name: "Stale Crew Catalog Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Stale Crew Catalog Co" } as never);
     const crew = await crewRows(company.id);
     const steward = crew.find((row) => row.name === "Steward");
 
@@ -601,7 +601,7 @@ describe.skipIf(
     await service.sync();
     registerMarketplaceCatalogService(service);
 
-    const company = await companyService(db).create({ name: "Published Bodies Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Published Bodies Co" } as never);
 
     const crew = await crewRows(company.id);
     const marketplaceCrew = crew.filter((r) => r.template_origin?.startsWith("agent:aoa-curated/"));
@@ -714,13 +714,13 @@ describe.skipIf(
     await service.sync();
     registerMarketplaceCatalogService(service);
 
-    const company = await companyService(db).create({ name: "Skill Parity Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Skill Parity Co" } as never);
 
     // The reference: a company whose rows the real installer wrote directly.
     const referenceId = randomUUID();
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${referenceId}, 'Skill Reference Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${referenceId}, 'Skill Reference Co', ${nextIssuePrefix()})
     `);
     for (const item of FIXTURE_CATALOG.items.filter((i) => i.type === "skill")) {
       await installSkill({ catalogItem: item as CatalogItem, companyId: referenceId, db });
@@ -788,7 +788,7 @@ describe.skipIf(
     // Proves the catalog really came from the snapshot fallback, not a CDN hit.
     expect(await catalogCacheSource()).toBe("bundled");
 
-    const company = await companyService(db).create({ name: "Offline Crew Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Offline Crew Co" } as never);
     const crew = await crewRows(company.id);
 
     expect(
@@ -816,7 +816,7 @@ describe.skipIf(
       // A create path that merely read the cache would degrade to @legacy here.
       expect(await loadCachedCatalog(db)).toBeNull();
 
-      const company = await companyService(db).create({ name: "Cold Cache Co" } as never);
+      const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Cold Cache Co" } as never);
       const crew = await crewRows(company.id);
 
       expect(
@@ -840,7 +840,7 @@ describe.skipIf(
     // starts, phase 1 fails.
     brokenUrls.add(`${FIXTURE_HOST}/teams/default-crew/team.json`);
 
-    const company = await companyService(db).create({ name: "Degraded Crew Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Degraded Crew Co" } as never);
     expect(company.id).toBeTruthy();
 
     const crew = await crewRows(company.id);
@@ -899,7 +899,7 @@ describe.skipIf(
     // slate exactly as it does inside create().
     const companyId = randomUUID();
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix) VALUES (${companyId}, 'Post Commit Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Post Commit Co', ${nextIssuePrefix()})
     `);
 
     const outcome = await provisionCompanyCrew(db, companyId, {
@@ -961,7 +961,7 @@ describe.skipIf(
 
     const companyId = randomUUID();
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix) VALUES (${companyId}, 'Repair Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Repair Co', ${nextIssuePrefix()})
     `);
 
     // Land in the R1 state: install commits, bookkeeping fails.
@@ -1024,7 +1024,7 @@ describe.skipIf(
 
     const companyId = randomUUID();
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix) VALUES (${companyId}, 'Stranded Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Stranded Co', ${nextIssuePrefix()})
     `);
     // Exactly what a killed process leaves behind: claimed, never finished.
     await db.execute(sql`
@@ -1068,7 +1068,7 @@ describe.skipIf(
 
     const companyId = randomUUID();
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix) VALUES (${companyId}, 'Live Install Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Live Install Co', ${nextIssuePrefix()})
     `);
     await db.execute(sql`
       INSERT INTO marketplace_install_operations
@@ -1096,7 +1096,7 @@ describe.skipIf(
     registerMarketplaceCatalogService(service);
     emptyTeamTemplate = true;
 
-    const company = await companyService(db).create({ name: "Empty Team Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Empty Team Co" } as never);
 
     const teamRows = rowsOf<{ n: string }>(
       await db.execute(sql`SELECT count(*)::text AS n FROM teams WHERE company_id = ${company.id}`),
@@ -1123,7 +1123,7 @@ describe.skipIf(
 
     const companyId = randomUUID();
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix) VALUES (${companyId}, 'Deadline Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Deadline Co', ${nextIssuePrefix()})
     `);
 
     const startedAt = Date.now();
@@ -1155,7 +1155,7 @@ describe.skipIf(
     await service.sync();
     registerMarketplaceCatalogService(service);
 
-    const company = await companyService(db).create({ name: "Idempotent Crew Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Idempotent Crew Co" } as never);
     const before = await crewRows(company.id);
 
     // Call the provisioner directly — company create's own pre-gate would
@@ -1188,7 +1188,7 @@ describe.skipIf(
     await clearCatalogCache();
     registerMarketplaceCatalogService(null);
 
-    const company = await companyService(db).create({ name: "No Service Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "No Service Co" } as never);
 
     const crew = await crewRows(company.id);
     expect(crew.some((r) => r.name === "Adjutant")).toBe(true);

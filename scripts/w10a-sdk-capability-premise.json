@@ -1,0 +1,91 @@
+{
+  "_readme": [
+    "The declaration behind scripts/check-w10a-sdk-capability-premise.mjs. See E8-F007.",
+    "",
+    "`surfaceMarkers` are the literal strings a human READ in the resolved package on the",
+    "date below. They are quoted, not inferred: the defect this guard closes is a sentence",
+    "about a dependency that nobody re-read for a year.",
+    "",
+    "`stalePatterns` are stored as regex SOURCE strings so this file does not match the",
+    "pattern it declares (`not\\s+fully\\s+lockable` as literal text contains backslash-s,",
+    "not whitespace).",
+    "",
+    "This declaration asserts a CAPABILITY IN AN ARTIFACT. It asserts nothing about whether",
+    "the operator's E2B tier honours a network body at runtime. That was unmeasured when this",
+    "file was written; the separate probe unit has since run (workflow run 34085130892,",
+    "2026-09-07) and MEASURED THAT IT DOES NOT FOR ONE SHAPE -- a denyOut CIDR list with no",
+    "allowOut. The tier accepts, validates, stores and",
+    "echoes the deny set back verbatim, and routes the denied traffic anyway. Finding E8-F008.",
+    "NARROWED 2026-09-09 (W10B-B): the default-deny-plus-allowOut construction E2B documents as",
+    "the fine-grained control is UNMEASURED; an arm for it is built (W10B runbook section 13).",
+    "That arm was DISPATCHED TWICE on 2026-09-09 (runs 34328502574 and 34328780645) and returned",
+    "UNRUN -- arm-was-never-created -- both times: Sandbox.create failed to place the body with a",
+    "500 'Failed to place sandbox ... please retry' while the sibling arms placed seconds apart on",
+    "the same template. So the documented shape REPRODUCIBLY FAILS TO PLACE at this tier (cause",
+    "unknown; a 500-with-retry-hint is not a validation refusal, and it is not transient because it",
+    "reproduced with successful siblings) and enforcement for it is STILL UNMEASURED. UNRUN IS NOT",
+    "INERT. Unmeasured is not 'probably works' -- DE-08 stays not-delivered.",
+    "Neither reading changes this file's job: the CAPABILITY claim is what is pinned here, it",
+    "still stands, and the surfaceMarkers below are unaffected. Do not read this file as",
+    "'egress is locked', and do not read the new result as 'the old premise was right' --",
+    "the old premise asserted the API did not EXIST, which is still false."
+  ],
+  "package": "e2b",
+  "measuredVersion": "2.30.5",
+  "measuredOn": "2026-09-07",
+  "measuredBy": "W10A",
+  "finding": "E8-F007",
+  "resolveFrom": ["server/package.json", "packages/sandbox-e2b-provider/package.json"],
+  "correctionMarkers": ["E8-F007"],
+  "contextWindowLines": 6,
+  "surfaceMarkers": [
+    {
+      "file": "dist/index.d.ts",
+      "needle": "type SandboxNetworkOpts = {",
+      "why": "the egress option type exists at all: allowOut / denyOut / rules / allowPublicTraffic"
+    },
+    {
+      "file": "dist/index.d.ts",
+      "needle": "network?: SandboxNetworkOpts;",
+      "why": "SandboxOpts — i.e. Sandbox.create's own options — carries it"
+    },
+    {
+      "file": "dist/index.d.ts",
+      "needle": "network?: SandboxNetworkInfo;",
+      "why": "SandboxInfo carries it back, so an applied configuration is READABLE (the read-back that makes a tolerant or self-hosted 200 detectable)"
+    },
+    {
+      "file": "dist/index.d.ts",
+      "needle": "updateNetwork(network: SandboxNetworkUpdate",
+      "why": "a RUNNING sandbox's egress configuration can be replaced"
+    },
+    {
+      "file": "dist/index.js",
+      "needle": "function buildNetworkBody(",
+      "why": "the runtime actually serialises the option rather than declaring a type nothing sends"
+    },
+    {
+      "file": "dist/index.js",
+      "needle": "network: buildNetworkBody(",
+      "why": "and puts the result in the POST /sandboxes body"
+    },
+    {
+      "file": "dist/index.js",
+      "needle": "\"/sandboxes/{sandboxID}/network\"",
+      "why": "the update endpoint is real, not a type-only stub"
+    },
+    {
+      "file": "dist/index.js",
+      "needle": "network: res.data.network ?",
+      "why": "getInfo maps the server's response back, which is what a read-back verification would consume"
+    }
+  ],
+  "stalePatterns": [
+    {
+      "id": "not-fully-lockable",
+      "pattern": "not\\s+(?:fully\\s+)?lockable",
+      "minOccurrences": 1,
+      "why": "The sentence family that actually occurred, in six tracked files, for a year: 'Managed-E2B egress is not fully lockable' (REFUTED as a capability claim — E8-F007). It is a NEGATIVE CAPABILITY CLAIM about a dependency, and the installed dependency contradicts it (surfaceMarkers above). Quoting it stays legal — the record has to be able to quote what it corrects — but only with a correctionMarker within contextWindowLines. This pattern covers the sentence, NOT the idea: a rewording evades it, and saying so is cheaper than letting a reader believe the class is covered."
+    }
+  ]
+}

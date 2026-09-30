@@ -1,0 +1,117 @@
+name: Keyed E2B — DAT-009 artifact export
+
+# DAT-009's LIVE lane. `E2bSandboxProvider` declared `artifactExportMode = "none"`
+# and declined `digestArtifact`/`exportArtifact` with `#transport.readFile` sitting
+# one line away, uncalled (CLI-008 Unit F design §1.6, link 2). This lane observes
+# the implemented pair against a REAL E2B sandbox:
+#
+#   1. a file the SANDBOX ITSELF produced (a real `sh -c` writes it) is digested
+#      through the real driver — sha256 and BYTE size, over all 256 byte values;
+#   2. the export returns a REFERENCE and hands the store byte-identical bytes;
+#   3. a file the sandbox changed after the grant was minted is REFUSED, and
+#      nothing is uploaded (the TOCTOU case, live);
+#   4. a missing path throws the domain not-found instead of a fabricated digest.
+#
+# Deliberately SEPARATE from `keyed-e2b-unit-d.yml` and `keyed-e2b-conformance.yml`,
+# for their stated reason: a result should never be buried inside another ticket's
+# suite, and re-firing this must not re-run theirs.
+#
+# ★ WHAT THIS LANE DOES NOT PROVE. The uploader is INJECTED, so no real HTTPS PUT
+# happens here. That half is already live-proven against real MinIO by DAT-002
+# (`d1-merge-train` run 31885553697, 13/13 green), and the `x-amz-checksum-sha256`
+# header the default uploader sends is pinned deterministically in the no-key suite.
+# This lane's subject is the SANDBOX half, which nothing had ever run.
+#
+# ★★ TRIGGERS. `workflow_dispatch` works from a non-default branch via
+# `gh workflow run --ref <branch>` — MEASURED on 2026-09-03 against
+# `keyed-e2b-conformance.yml`, which is not on `main` and dispatched fine, and again
+# for this lane on 2026-09-04. The push trigger is kept so the lane RE-FIRES BY
+# ITSELF whenever the export path changes — `e2b-provider.ts` and `real-transport.ts`
+# are in `paths` on purpose, so a future edit cannot quietly return this to
+# argued-not-observed.
+#
+# OPERATOR ACTION: none. `E2B_API_KEY` already exists as a repo secret and is
+# available to same-repo branches. Without it the cases SKIP cleanly (never faked)
+# and the final step FAILS the lane rather than reporting a phantom green.
+
+on:
+  workflow_dispatch:
+    inputs:
+      e2b_template:
+        description: E2B sandbox template alias. Empty = bare "base".
+        required: false
+        default: ""
+        type: string
+  push:
+    branches:
+      - docs/replatform-program
+      # The proving branch for this ticket. Harmless once deleted — a push
+      # trigger on a branch that no longer exists never fires.
+      - claude/e2b-export-artifact
+    paths:
+      - ".github/workflows/keyed-e2b-dat-009-export.yml"
+      - "packages/sandbox-e2b-provider/src/__tests__/keyed-dat-009-artifact-export.test.ts"
+      # The implementation under test. An edit to either re-fires the lane.
+      - "packages/sandbox-e2b-provider/src/e2b-provider.ts"
+      - "packages/sandbox-e2b-provider/src/real-transport.ts"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keyed-e2b-dat-009-export
+  cancel-in-progress: false
+
+jobs:
+  keyed-e2b-dat-009-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build dist-only leaves
+        # Mirrors the proven block in `keyed-e2b-unit-d.yml`. This case imports
+        # `@armyofagents/worker-protocol` types and the provider's own modules, but the
+        # provider package DECLARES these workspace deps and the selective build is
+        # cheap next to a wrong-reason red.
+        run: |
+          pnpm --filter @armyofagents/worker-protocol build
+          pnpm --filter @armyofagents/worker-daemon build
+          pnpm --filter @armyofagents/sandbox-fake-provider build
+          pnpm --filter @armyofagents/sandbox-provider-contract build
+
+      - name: Run the DAT-009 export cases against REAL E2B
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          E2B_TEMPLATE: ${{ inputs.e2b_template }}
+        run: pnpm --filter @armyofagents/sandbox-e2b-provider exec vitest run src/__tests__/keyed-dat-009-artifact-export.test.ts
+
+      - name: Fail if the cases SKIPPED (a skip is not a pass)
+        # ★ THE POSITIVE CONTROL ON THE LANE ITSELF. `describe.skip` without a key is a
+        # GREEN vitest run, so a lane that lost its secret would report success while
+        # proving nothing — this programme's single most repeated defect class ("a check
+        # that nothing runs is not a check"). Assert the key was actually present.
+        if: always()
+        run: |
+          if [ -z "${E2B_API_KEY}" ]; then
+            echo "::error::E2B_API_KEY was empty — the DAT-009 export cases SKIPPED and this lane proved NOTHING."
+            exit 1
+          fi
+          echo "E2B_API_KEY was present; the cases ran for real."
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}

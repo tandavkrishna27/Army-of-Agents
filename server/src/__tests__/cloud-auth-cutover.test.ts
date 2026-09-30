@@ -35,7 +35,10 @@ describe("company-create org gate (anti-tenant-hop)", () => {
     // The org written to the company is exactly the org that was authorized.
     expect(resolveCompanyOrganizationId({ organizationId: "orgA" } as any)).toBe("orgA");
   });
-  it("falls back to DEFAULT_ORGANIZATION_ID when the client omits organizationId (self-hosted)", () => {
+  it("explicitly resolves the Default Organization when the client omits organizationId (self-hosted)", () => {
+    // TEN-006a / E2-D07: this is the PRESERVED explicit self-hosted resolution —
+    // the non-enforced branch of resolveCompanyOrganizationId returns the Default
+    // Org as a concrete, documented value (not a silent writer-side `??`).
     expect(resolveCompanyOrganizationId({} as any)).toBe(DEFAULT_ORGANIZATION_ID);
   });
 });

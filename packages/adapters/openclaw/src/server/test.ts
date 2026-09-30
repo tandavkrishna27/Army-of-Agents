@@ -84,7 +84,7 @@ function pushDeploymentDiagnostics(
       checks.push({
         code: "openclaw_private_bind_hostname_not_allowed",
         level: "warn",
-        message: `AoA bind host "${bindHost}" is not in allowed hostnames.`,
+        message: `Paperclip bind host "${bindHost}" is not in allowed hostnames.`,
         hint: `Run pnpm aoa allowed-hostname ${bindHost} so remote OpenClaw callbacks can pass host checks.`,
       });
     }
@@ -93,7 +93,7 @@ function pushDeploymentDiagnostics(
       checks.push({
         code: "openclaw_private_bind_loopback",
         level: "warn",
-        message: "AoA is bound to loopback in authenticated/private mode.",
+        message: "Paperclip is bound to loopback in authenticated/private mode.",
         hint: "Bind to a reachable private hostname/IP so remote OpenClaw agents can call back.",
       });
     }
@@ -191,7 +191,7 @@ export async function testEnvironment(
       checks.push({
         code: "openclaw_loopback_endpoint",
         level: "warn",
-        message: "Endpoint uses loopback hostname. Remote OpenClaw workers cannot reach localhost on the AoA host.",
+        message: "Endpoint uses loopback hostname. Remote OpenClaw workers cannot reach localhost on the Paperclip host.",
         hint: "Use a reachable hostname/IP (for example Tailscale/private hostname or public domain).",
       });
     }
@@ -254,7 +254,7 @@ export async function testEnvironment(
         code: "openclaw_endpoint_probe_failed",
         level: "warn",
         message: err instanceof Error ? err.message : "Endpoint probe failed",
-        hint: "This may be expected in restricted networks; validate from the AoA server host.",
+        hint: "This may be expected in restricted networks; validate from the Paperclip server host.",
       });
     } finally {
       clearTimeout(timeout);

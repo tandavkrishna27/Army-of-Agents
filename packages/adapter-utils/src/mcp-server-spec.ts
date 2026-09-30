@@ -175,6 +175,31 @@ export function aoaSecretPlaceholderFor(varName: string): string {
 }
 
 /**
+ * The brokered `aoa` HTTP MCP server entry a distributed (E2B) run stages so its CLI reaches
+ * `mcp__aoa__*` over the same transport the in-process crew/org runner uses. The on-disk config
+ * carries the `${AOA_API_KEY}` PLACEHOLDER (the CLI expands it from env, FU-21) — never the token.
+ * Pure + leaf so the sandbox-invocation builder can serialize it upstream without importing server
+ * code. Single source of truth for the brokered `aoa` shape (cli-mode.ts calls this).
+ */
+export interface BrokeredAoaHttpEntry {
+  readonly type: "http";
+  readonly url: string;
+  readonly headers: { readonly Authorization: string };
+}
+export function brokeredAoaHttpEntry(params: {
+  // `apiBaseUrl` mirrors McpConfigParams.apiBaseUrl (optional, only consulted for a brokered
+  // run); an undefined base coerces in the template exactly as the pre-Unit-C inline entry did.
+  apiBaseUrl: string | undefined;
+  companyId: string;
+}): BrokeredAoaHttpEntry {
+  return {
+    type: "http",
+    url: `${params.apiBaseUrl}/companies/${params.companyId}/mcp`,
+    headers: { Authorization: `Bearer ${aoaSecretPlaceholderFor("AOA_API_KEY")}` },
+  };
+}
+
+/**
  * Env var names this module will reference from a config file. Deliberately the
  * POSIX-portable charset: `authTokenEnvVar` is always produced by
  * `envVarNameFor` (server) and therefore already conforms, but a writer must

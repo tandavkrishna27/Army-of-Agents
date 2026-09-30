@@ -1,0 +1,357 @@
+{
+  "$comment": [
+    "TRACK-002 execution census. Every *.test.mjs on disk must appear here.",
+    "runs  = declared to run, naming the workflow + step; the checker verifies that step still names it (comments stripped).",
+    "unrun = deliberately not run, with a reason that says WHAT WOULD HAVE TO CHANGE. A reason is not an excuse.",
+    "IMPORTANT: a runs verdict means the declaration still matches the tree, NOT observed execution. See scripts/lib/execution-census.mjs."
+  ],
+  "files": {
+    "docker/d1/__tests__/ctl-allowlist.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Previously-unrun guard self-tests (TRACK-002)"
+    },
+    "docker/d1/__tests__/enrolment-seed.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Previously-unrun guard self-tests (TRACK-002)"
+    },
+    "docker/images/__tests__/dockerfile-static.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Split-image Dockerfile static checks (DEP-001)"
+    },
+    "docker/images/__tests__/image-contents.test.mjs": {
+      "status": "runs",
+      "workflow": "d1-merge-train.yml",
+      "step": "Least-privilege assertions on the BUILT images (DEP-001 / WRK-009)"
+    },
+    "docker/images/__tests__/image-startup-smoke.test.mjs": {
+      "status": "unrun",
+      "reason": "Its worker case mounts a root-owned `--tmpfs /worker` OVER the Dockerfile chown node:node, so the non-root daemon dies with mkdir EACCES. A defect in the TEST, not the image: D1 uses a named volume, which inherits the image ownership. TO WIRE: give the tmpfs uid/gid matching the node user, or use a named volume, then move it into the D1 image-assertions step beside image-contents."
+    },
+    "scripts/check-adapter-manager-boundary.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Sandbox e2b provider dependency boundary"
+    },
+    "scripts/check-artifact-commit-vectors.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Artifact-commit verification vectors (DAT-002)"
+    },
+    "scripts/check-browser-suite-executed.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Browser-lane execution guard self-test (BRW-002)"
+    },
+    "scripts/check-bundled-snapshot-inputs.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Previously-unrun guard self-tests (TRACK-002)"
+    },
+    "scripts/check-ci-timeout-budgets.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "CI timeout caps derive from budgets bounded by declared measurements (E3-F036 class)"
+    },
+    "scripts/check-d1-compose.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Previously-unrun guard self-tests (TRACK-002)"
+    },
+    "scripts/check-desktop-surface-disabled.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Desktop surface stays disabled (DSK-00 / I22 clauses 6+7)"
+    },
+    "scripts/check-device-proof-vectors.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Shared device-proof canonicalization vectors"
+    },
+    "scripts/check-distributed-execution-foundation.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Distributed execution foundation contracts"
+    },
+    "scripts/check-egress-bypass-vectors.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Egress-policy destination-BYPASS vectors (DEP-008)"
+    },
+    "scripts/check-egress-policy-vectors.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Egress-policy destination vectors (DAT-005)"
+    },
+    "scripts/check-evidence-immutability.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Evidence-ledger immutability (QA/handoff records are write-once)"
+    },
+    "scripts/check-frozen-worker-protocol-consumer-isolation.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Frozen worker-protocol v1 consumer (E1)"
+    },
+    "scripts/check-frozen-worker-protocol-consumer.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Frozen worker-protocol v1 consumer (E1)"
+    },
+    "scripts/check-gate-clause-wiring.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Gate-clause wiring (an epic may not claim a capability nothing calls)"
+    },
+    "scripts/check-image-deps-stages.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Validate split-image deps stages (DEP-001)"
+    },
+    "scripts/check-register-citation-integrity.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Register citation integrity (source citations must not silently rot)"
+    },
+    "scripts/check-release-admission.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Release admission gate (REL-004)"
+    },
+    "scripts/check-sandbox-coding-disposition.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Sandbox coding adapter disposition coverage (CLI-002)"
+    },
+    "scripts/check-sandbox-e2b-provider-boundary.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Sandbox e2b provider dependency boundary"
+    },
+    "scripts/check-sandbox-fake-provider-boundary.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Sandbox fake provider dependency boundary"
+    },
+    "scripts/check-schema-migration-drift.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Schema↔migration drift gate self-test (E8-F005 decision logic + wiring)"
+    },
+    "scripts/check-secret-resolve-vectors.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Secret-resolve authorization vectors (DAT-004)"
+    },
+    "scripts/check-staging-manifest.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Staging manifest config contract (DEP-006)"
+    },
+    "scripts/check-test-inventory.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Test-suite inventory (may not silently shrink)"
+    },
+    "scripts/check-threat-control-audit-debt.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Threat-control audit debt (an unaudited Critical control must not sit forever)"
+    },
+    "scripts/check-verdict-consumer-freshness.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Verdict consumer is alive (DEP-013)"
+    },
+    "scripts/check-w10a-sdk-capability-premise.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "SDK capability premise (a negative claim about a dependency is a claim)"
+    },
+    "scripts/check-worker-daemon-boundary.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Worker daemon dependency boundary"
+    },
+    "scripts/check-worker-keystore-boundary.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Sandbox e2b provider dependency boundary"
+    },
+    "scripts/check-worker-protocol-boundary.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Worker protocol dependency boundary"
+    },
+    "scripts/check-workflow-verdict-manifest.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Workflow-verdict manifest completeness (DEP-013)"
+    },
+    "scripts/check-workspace-patch-vectors.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Workspace-patch diff + apply vectors (DAT-003)"
+    },
+    "scripts/check-workspace-snapshot-vectors.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Workspace-snapshot hash vectors (DAT-001)"
+    },
+    "scripts/lib/__tests__/boot-roots-browser-spawn-free.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Browser-spawn boot-root guard (BRW-hostspawn-gate)"
+    },
+    "scripts/lib/__tests__/boot-roots-provider-free.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Dispatch-composition declaration guards (WRK-008 slice 2b)"
+    },
+    "scripts/lib/__tests__/build-desktop-staging.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Desktop staging manifest (DSK-003)"
+    },
+    "scripts/lib/__tests__/ci-lanes.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "CI lane routing invariants (DEP-004)"
+    },
+    "scripts/lib/__tests__/ci-local-install-guard.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Invisible control characters (a shell must not write a regex escape)"
+    },
+    "scripts/lib/__tests__/collect-d1-evidence.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Previously-unrun guard self-tests (TRACK-002)"
+    },
+    "scripts/lib/__tests__/d1-compose-invariants.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Previously-unrun guard self-tests (TRACK-002)"
+    },
+    "scripts/lib/__tests__/d1-dispatch-declared.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Dispatch-composition declaration guards (WRK-008 slice 2b)"
+    },
+    "scripts/lib/__tests__/d1-evidence-bundle.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "CI lane routing invariants (DEP-004)"
+    },
+    "scripts/lib/__tests__/dependency-graph.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Programme dependency graph (the plan may not schedule work behind an unscheduled blocker)"
+    },
+    "scripts/lib/__tests__/embedded-secret-scan.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Embedded-secret scan self-test (DSK-003)"
+    },
+    "scripts/lib/__tests__/execution-census.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Execution census (a test file that nothing runs is not coverage)"
+    },
+    "scripts/lib/__tests__/finding-ownership.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Finding ownership (an open finding must name an owner, or say it has none)"
+    },
+    "scripts/lib/__tests__/gate-clause-wiring.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Gate-clause wiring (an epic may not claim a capability nothing calls)"
+    },
+    "scripts/lib/__tests__/guard-inventory.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Guard inventory (every check declares what runs it)"
+    },
+    "scripts/lib/__tests__/image-admission.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Image admission verifier (DEP-001)"
+    },
+    "scripts/lib/__tests__/installer-admission.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Desktop installer admission (DSK-003)"
+    },
+    "scripts/lib/__tests__/invisible-control-chars.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Invisible control characters (a shell must not write a regex escape)"
+    },
+    "scripts/lib/__tests__/register-id-uniqueness.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Register id uniqueness (an id must name one thing)"
+    },
+    "scripts/lib/__tests__/release-manifest.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Release admission gate (REL-004)"
+    },
+    "scripts/lib/__tests__/staging-manifest.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Desktop staging manifest (DSK-003)"
+    },
+    "scripts/lib/__tests__/test-inventory.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Test-suite inventory (may not silently shrink)"
+    },
+    "scripts/lib/__tests__/ticket-graph-coverage.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Programme dependency graph (the plan may not schedule work behind an unscheduled blocker)"
+    },
+    "scripts/lib/__tests__/update-admission.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Desktop update admission (DSK-004)"
+    },
+    "scripts/lib/__tests__/vulnerability-policy.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Release admission gate (REL-004)"
+    },
+    "scripts/lib/__tests__/w10b-egress-enforcement-probe.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "W10B egress-enforcement decision logic (proven WITHOUT the key)"
+    },
+    "scripts/lib/__tests__/w7u1-agent-output-probe.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "W7U1 output-probe decision logic (proven WITHOUT the key)"
+    },
+    "scripts/lib/__tests__/workflow-verdict.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Workflow-verdict manifest completeness (DEP-013)"
+    },
+    "scripts/run-e3-perf-01.test.mjs": {
+      "status": "unrun",
+      "reason": "One-off E3 PERF-01 performance harness; exceeds 2 minutes locally and measures throughput rather than asserting an invariant, so it is a benchmark record rather than a gate. TO WIRE: it would need a time budget and a stable-hardware lane; the PR gate is neither."
+    },
+    "scripts/update-worker-protocol-contract-manifest.test.mjs": {
+      "status": "runs",
+      "workflow": "pr.yml",
+      "step": "Verify contract manifest bytes (mutation corpus + committed --check)"
+    },
+    "scripts/verify-e3-perf-01-handoff.test.mjs": {
+      "status": "unrun",
+      "reason": "Self-test for scripts/verify-e3-perf-01-handoff.mjs, which guard-inventory.json already declares dormant for the same reason: a one-off E3 PERF-01 handoff verifier retained as the record of how that handoff was verified. TO WIRE: only if that handoff is ever re-run."
+    }
+  }
+}

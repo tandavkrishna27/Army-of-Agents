@@ -36,8 +36,10 @@ import type { OrgCapability } from "../services/organization-access.js";
  * always wins (it is then authorized via canOrg against that exact id).
  *
  * When the client omits organizationId:
- *   - self-hosted (isolation NOT enforced): fall back to P1's
- *     DEFAULT_ORGANIZATION_ID (single-tenant sentinel), as before.
+ *   - self-hosted (isolation NOT enforced): EXPLICITLY resolve the single-tenant
+ *     Default Organization (DEFAULT_ORGANIZATION_ID). TEN-006a / E2-D07: this is
+ *     a documented, explicit resolution the caller performs and passes to the
+ *     Company writer — the writers no longer silently bucket to the sentinel.
  *   - cloud_auth (isolation enforced) — P3 last-writer, resolves the P2
  *     follow-up: "create another company" must land in the founder's OWN org,
  *     not the shared sentinel. Derive from the actor's org membership when it is
@@ -58,6 +60,10 @@ export function resolveCompanyOrganizationId(
         : "organizationId is required: you belong to multiple organizations",
     );
   }
+  // Self-hosted / isolation-not-enforced: EXPLICITLY resolve the single-tenant
+  // Default Organization (TEN-006a / E2-D07). This is the caller's explicit,
+  // documented resolution — the Company writers no longer silently default an
+  // omitted Organization to this sentinel.
   return DEFAULT_ORGANIZATION_ID;
 }
 

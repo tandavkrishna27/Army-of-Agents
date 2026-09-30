@@ -170,3 +170,13 @@ describe("LobbyCompanyCard", () => {
     expect(screen.queryByLabelText(/unread notifications/i)).not.toBeInTheDocument();
   });
 });
+
+it("opens Universe through a separate accessible control", async () => {
+  const onClick = vi.fn();
+  const onOpenUniverse = vi.fn();
+  const { container } = renderWithProviders(<LobbyCompanyCard company={makeCompany({name: "Acme"})} onClick={onClick} onOpenUniverse={onOpenUniverse} />);
+  await userEvent.click(screen.getByRole("button", {name: "Open Acme Universe"}));
+  expect(onOpenUniverse).toHaveBeenCalledOnce();
+  expect(onClick).not.toHaveBeenCalled();
+  expect(container.querySelector("button button")).toBeNull();
+});

@@ -7,7 +7,7 @@ import { QuotaBar } from "./QuotaBar";
 
 const STALE_THRESHOLD_MS = 10 * 60 * 1000;
 
-// Provider display names — mirrors AoA's `providerDisplayName` util, inlined
+// Provider display names — mirrors Paperclip's `providerDisplayName` util, inlined
 // so we don't introduce a utils change for just 4 providers.
 const PROVIDER_LABELS: Record<string, string> = {
   anthropic: "Anthropic",

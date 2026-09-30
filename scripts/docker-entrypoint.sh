@@ -26,6 +26,15 @@ export AOA_INSTANCE_ID="${AOA_INSTANCE_ID:-default}"
 export AOA_CONFIG="${AOA_CONFIG:-$AOA_HOME/instances/$AOA_INSTANCE_ID/config.json}"
 export HOME="${HOME:-$AOA_HOME}"
 
+# New images use /aoa. An old Compose file mounts the named volume over the
+# compatibility symlink at /paperclip, leaving /aoa on a different anonymous
+# volume. Refuse that mixed layout instead of silently initializing empty data.
+if [ "$AOA_HOME" = "/aoa" ] && [ -d /paperclip ] && [ ! -L /paperclip ]; then
+    echo "ERROR: legacy /paperclip is mounted but AOA_HOME is /aoa." >&2
+    echo "Upgrade the Compose file so the existing aoa-data volume mounts at /aoa." >&2
+    exit 1
+fi
+
 mkdir -p "$AOA_HOME"
 layout_sentinel="$AOA_HOME/.aoa-data-layout-version"
 if [ -f "$layout_sentinel" ]; then

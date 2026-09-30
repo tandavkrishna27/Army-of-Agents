@@ -60,7 +60,7 @@ The repo has **five** distinct test layers. A task is not done until it has cove
 | **T2** | `buildIsolatedClaudeEnv` | — | — | — | **ADD** — env capture + isolation spec (see below) |
 | **T3** | `provisionClaudeConfigHome` | — | — | — | credentials-only home; no `settings.json`/`plugins/`/user `skills/` in the spawned config dir |
 | **T4** | env policy per D16 | — | — | — | folded into the T2 isolation spec |
-| **T5** | resolution helper | runner sets `upstreamWorkspace` | — | **ADD** — real workspace resolved for a `software_development` project | **ADD** — assert spawn `cwd` is the workspace (harness already records `cwd`) |
+| **T5** | resolution helper | runner sets `paperclipWorkspace` | — | **ADD** — real workspace resolved for a `software_development` project | **ADD** — assert spawn `cwd` is the workspace (harness already records `cwd`) |
 | **T6** | — | `context.skills` set / omitted / warn-on-failure | — | — | **ADD** — attached skill reaches the CLI (assert via `argv` / skills dir) |
 | **T7** | — | — | — | assign → deliver → enforce round-trip | **EXTEND** `agent-skill-toggle-persist.spec.ts` — attached skill is delivered, unattached is denied |
 | **T8** | actor-identity shape | **bridge-level** (not just tool-level) | — | — | `ask_human` still works for crew |
@@ -305,12 +305,12 @@ git commit -m "feat(agents): explicit Claude-instruction isolation policy for ag
 >
 > **Consequence for this task:** resolving a workspace is not only about giving the agent a repo to work in; it is what makes tier two of D16 mean the right thing. Until it lands, "project instructions are allowed" is actively harmful rather than merely absent. Where no workspace resolves, decide explicitly what `cwd` should be — inheriting the server's repo must stop being the fallback.
 
-**Why:** crew tasks are **not** workspace-backed today — the crew runner never sets `context.upstreamWorkspace` (heartbeat resolves it at `heartbeat.ts:1549` → `:3628`). Without this, a crew agent has no repo to work in, and a scratch cwd also breaks Claude session resume (`execute.ts:450` requires identical cwd).
+**Why:** crew tasks are **not** workspace-backed today — the crew runner never sets `context.paperclipWorkspace` (heartbeat resolves it at `heartbeat.ts:1549` → `:3628`). Without this, a crew agent has no repo to work in, and a scratch cwd also breaks Claude session resume (`execute.ts:450` requires identical cwd).
 
 **Files:** `runner.ts` (context assembly); mirror `heartbeat.ts:1549-3628`; test `server/src/__tests__/crew-workspace-resolution.test.ts`.
 
 - [ ] **Step 1: Read heartbeat's workspace resolution** and record exactly which inputs it uses (project, `executionWorkspacePolicy`, `functionType`, existing workspace reuse).
-- [ ] **Step 2: Failing test** — a crew task on a `software_development` project resolves a workspace and passes `context.upstreamWorkspace`; a task with no project/policy resolves none and does **not** fabricate one.
+- [ ] **Step 2: Failing test** — a crew task on a `software_development` project resolves a workspace and passes `context.paperclipWorkspace`; a task with no project/policy resolves none and does **not** fabricate one.
 - [ ] **Step 3: Implement** resolution in the crew runner, mirroring heartbeat. Preserve precedence: workspace cwd > configured cwd > fallback.
 - [ ] **Step 4: Run → PASS.**
 - [ ] **Step 5: Verify + commit.**

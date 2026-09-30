@@ -5,7 +5,6 @@ import { join } from "node:path";
 import { sql } from "drizzle-orm";
 import { applyPendingMigrations, createDb, type Db } from "@armyofagents/db";
 import { DEFAULT_ORGANIZATION_ID } from "@armyofagents/shared";
-import { companyService } from "../services/companies.js";
 import { allocateEmbeddedPgPort } from "./helpers/embedded-pg-port.js";
 
 type PG = { initialise(): Promise<void>; start(): Promise<void>; stop(): Promise<void> };
@@ -47,7 +46,17 @@ describe.skipIf(process.platform !== "linux")("0188 backfill — real DB", () =>
   });
 
   it("attaches every created company to the default org and enforces NOT NULL", async () => {
-    const company = await companyService(db).create({ name: "Backfill Co" });
+    // TEN-006a / E2-D07: the guarded Company writer can no longer create an
+    // org-less company (it fails closed on an unresolved Organization), so seed
+    // the company directly with the EXPLICIT Default Org — the value the 0188
+    // sentinel-default backfill assigns. The org-attachment assertion below still
+    // proves a company lands on the Default Org; the NOT NULL proof (explicit-NULL
+    // insert -> 23502) further down is unchanged.
+    const insertedRows = await db.execute(
+      sql`INSERT INTO companies (organization_id, name, issue_prefix) VALUES (${DEFAULT_ORGANIZATION_ID}, 'Backfill Co', 'BKF') RETURNING id`,
+    );
+    const insertedArr = Array.isArray(insertedRows) ? insertedRows : (insertedRows as any).rows;
+    const company = { id: insertedArr[0].id as string };
     const rows = await db.execute(sql`SELECT organization_id FROM companies WHERE id = ${company.id}`);
     const arr = Array.isArray(rows) ? rows : (rows as any).rows;
     expect(arr[0].organization_id).toBe(DEFAULT_ORGANIZATION_ID);

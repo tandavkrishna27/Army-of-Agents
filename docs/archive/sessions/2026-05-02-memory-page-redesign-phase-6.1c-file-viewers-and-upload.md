@@ -70,7 +70,7 @@ The upload endpoint sits in its own route file (mirroring `memory-folders.ts` / 
 - [ ] **Step 1: Branch safety**
 
 ```bash
-cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-2.5/.claude/worktrees/memory-phase-6-0"
+cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5/.claude/worktrees/memory-phase-6-0"
 git rev-parse --abbrev-ref HEAD
 ```
 

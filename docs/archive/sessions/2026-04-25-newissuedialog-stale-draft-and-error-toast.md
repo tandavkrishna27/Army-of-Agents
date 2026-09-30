@@ -248,7 +248,7 @@ The preview server is already up at `http://127.0.0.1:3100`. After Task 2 + Task
 In the preview browser console:
 
 ```js
-localStorage.setItem('upstream:issue-draft', JSON.stringify({
+localStorage.setItem('paperclip:issue-draft', JSON.stringify({
   title: 'Stale draft test',
   description: 'should still submit',
   status: 'todo',

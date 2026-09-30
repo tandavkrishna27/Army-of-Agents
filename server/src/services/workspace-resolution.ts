@@ -16,14 +16,17 @@ import {
 } from "./execution-workspace-policy.js";
 import { instanceSettingsService } from "./instance-settings.js";
 
+// AoA canonical name. Rows still using the legacy paperclip name are read
+// transparently via isRepoOnlySentinel below.
 const REPO_ONLY_CWD_SENTINEL = "/__aoa_repo_only__";
+const LEGACY_REPO_ONLY_CWD_SENTINEL = "/__paperclip_repo_only__";
 
 /**
  * True if `cwd` is the "repo-only / no-local-cwd" sentinel,
- * for a repo-only workspace.
+ * regardless of whether the row holds the legacy or new value.
  */
 export function isRepoOnlySentinel(cwd: string | null | undefined): boolean {
-  return cwd === REPO_ONLY_CWD_SENTINEL;
+  return cwd === REPO_ONLY_CWD_SENTINEL || cwd === LEGACY_REPO_ONLY_CWD_SENTINEL;
 }
 
 function readNonEmptyString(value: unknown): string | null {
@@ -151,7 +154,7 @@ export async function resolveExecutionWorkspacePolicyInputs(
  *
  * It NEVER returns nothing: (3) is a floor, created eagerly. That floor is what
  * keeps `process.cwd()` unreachable for callers that populate
- * `context.aoaWorkspace` from this result.
+ * `context.paperclipWorkspace` from this result.
  */
 export async function resolveWorkspaceForRun(
   db: Db,

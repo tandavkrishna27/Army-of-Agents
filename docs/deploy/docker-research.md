@@ -89,7 +89,7 @@ docker compose -f docker-compose.research.yml run --rm e2e \
   tests/e2e/commander-codex-reply.spec.ts
 ```
 
-The e2e service uses a separate database named `aoa_e2e` and resets it by
+The e2e service uses a separate database named `paperclip_e2e` and resets it by
 default before each run. Set `AOA_RESEARCH_E2E_RESET_DB=0` if you want to keep
 state between e2e runs.
 
@@ -138,7 +138,7 @@ docker compose -f docker-compose.research.yml --profile real-provider run --rm -
 ```
 
 The real-provider lane uses a separate database named
-`aoa_e2e_real_provider` and resets it by default. Artifacts are written
+`paperclip_e2e_real_provider` and resets it by default. Artifacts are written
 under:
 
 ```txt

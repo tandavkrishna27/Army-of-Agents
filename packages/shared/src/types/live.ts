@@ -7,6 +7,16 @@ export interface LiveEvent {
   type: LiveEventType;
   createdAt: string;
   payload: Record<string, unknown>;
+  /**
+   * MIG-003: the durable, per-company contiguous sequence assigned by the
+   * `live_event_log` when a durable-eligible event is appended. ADDITIVE and
+   * OPTIONAL — the synchronous same-replica local-emit fast path carries no
+   * seq; only events delivered through the durable log reader (cross-replica
+   * fan-out + `?sinceSeq=N` reconnect catch-up) carry one. Clients track the
+   * max `seq` seen for gap-recovery + duplicate suppression. `id` stays the
+   * process-local React list key and is NOT a cursor.
+   */
+  seq?: number;
 }
 
 export interface HubItemChangedLivePayload {

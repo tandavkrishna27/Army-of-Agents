@@ -4,6 +4,7 @@ import {
   SECRET_PROVIDERS,
   type SecretProvider,
   createRuntimeProviderKeySchema,
+  createRuntimeProviderKeyWithSecretSchema,
   createSecretBindingSchema,
   createSecretProviderConfigSchema,
   createSecretSchema,
@@ -173,6 +174,47 @@ export function secretRoutes(db: Db) {
         details: { provider: created.provider, displayName: created.displayName, isDefault: created.isDefault },
       });
       res.status(201).json(created);
+    },
+  );
+
+  // One-step "Add E2B key": create the company secret (from the pasted raw key)
+  // AND its default provider key atomically. Mirrors the two-step POST above for
+  // auth + activity logging; the raw `value` is stored encrypted by
+  // `createWithSecret` and is NEVER logged or echoed in the response.
+  router.post(
+    "/companies/:companyId/runtime-provider-keys/with-secret",
+    validate(createRuntimeProviderKeyWithSecretSchema),
+    async (req, res) => {
+      assertBoard(req);
+      const companyId = req.params.companyId as string;
+      await assertCompanyAccess(db, req, companyId);
+      const { secret, providerKey } = await runtimeKeysSvc.createWithSecret(
+        companyId,
+        req.body,
+        { userId: req.actor.userId ?? "board", agentId: null },
+      );
+      // Audit BOTH mutations, matching the two-step path (Codex P1): the generated
+      // secret gets its own `secret.created` event so a one-step credential has the
+      // same provenance as a normally-created secret. The raw value is never logged.
+      await logActivity(db, {
+        companyId,
+        actorType: "user",
+        actorId: req.actor.userId ?? "board",
+        action: "secret.created",
+        entityType: "secret",
+        entityId: secret.id,
+        details: { name: secret.name, provider: secret.provider },
+      });
+      await logActivity(db, {
+        companyId,
+        actorType: "user",
+        actorId: req.actor.userId ?? "board",
+        action: "runtime_provider_key.created",
+        entityType: "runtime_provider_key",
+        entityId: providerKey.id,
+        details: { provider: providerKey.provider, displayName: providerKey.displayName, isDefault: providerKey.isDefault },
+      });
+      res.status(201).json(providerKey);
     },
   );
 

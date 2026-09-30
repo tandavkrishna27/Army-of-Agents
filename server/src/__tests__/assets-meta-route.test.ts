@@ -14,6 +14,10 @@ const { mockService, mockLogActivity } = vi.hoisted(() => ({
 vi.mock("drizzle-orm", () => drizzleOperatorStubs());
 vi.mock("@armyofagents/db", () => ({
   companies: makeTableProxy("companies"),
+  discussions: makeTableProxy("discussions"),
+  internalAgentConversations: makeTableProxy("internal_agent_conversations"),
+  threadParticipants: makeTableProxy("thread_participants"),
+  universeIntakes: makeTableProxy("universe_intakes"),
 }));
 vi.mock("../services/index.js", () => ({
   assetService: () => mockService,
@@ -26,6 +30,13 @@ const companyId = "company-1";
 const assetId = "asset-1";
 
 const storageStub = {} as never;
+const dbStub = {
+  select: () => ({
+    from: () => ({
+      where: () => Promise.resolve([]),
+    }),
+  }),
+} as never;
 
 function makeApp(actor: Express.Request["actor"] = {
   type: "board",
@@ -38,7 +49,7 @@ function makeApp(actor: Express.Request["actor"] = {
     req.actor = actor;
     next();
   });
-  app.use("/api", assetRoutes({} as never, storageStub));
+  app.use("/api", assetRoutes(dbStub, storageStub));
   app.use((err: { status?: number; message?: string }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     res.status(err.status ?? 500).json({ error: err.message ?? "Internal Server Error" });
   });

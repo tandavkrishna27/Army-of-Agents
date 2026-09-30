@@ -20,7 +20,7 @@ A confirm+refute verification pass over the 3 Codex P2 comments on [#203](https:
 
 ## Worktree + commands
 
-Work in `C:/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-prb` (branch `feat/prb-thread-scoped-claim`). Mock unit + typecheck run on Windows; the real-DB integration tests **skip on Windows** and are verified in a `node:24` Docker container (`pr.yml` does not run on `feat/v1-combined`):
+Work in `C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-prb` (branch `feat/prb-thread-scoped-claim`). Mock unit + typecheck run on Windows; the real-DB integration tests **skip on Windows** and are verified in a `node:24` Docker container (`pr.yml` does not run on `feat/v1-combined`):
 - Unit: `pnpm -C "<wt>/server" exec vitest run src/__tests__/<file>`
 - Typecheck: `pnpm -C "<wt>/server" typecheck`
 - Docker integration (controller runs this): `git archive HEAD | docker run -i node:24 bash -lc '… pnpm install … build deps … su node -c "vitest run src/__tests__/thread-commit-idempotency.integration.test.ts"'`

@@ -8,7 +8,7 @@ export function classifyStderr(text: string): StderrSeverity {
   const normalized = compactWhitespace(text).toLowerCase();
 
   if (
-    normalized.startsWith("[aoa] skipping saved session resume") ||
+    normalized.startsWith("[paperclip] skipping saved session resume") ||
     normalized.startsWith("[aoa] skipping saved session resume")
   ) {
     return "hidden";

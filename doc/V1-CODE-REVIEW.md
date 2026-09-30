@@ -36,11 +36,11 @@
 - **File:** `ui/src/pages/BriefReview.tsx`
 - `onError` extracts `error.message` from `ApiError` instead of showing generic text
 
-### 6. Branding: the upstream project → AoA
+### 6. Branding: Paperclip → AoA
 - **Files:** ~15 UI files (App.tsx, Auth.tsx, CompanySettings.tsx, OnboardingWizard.tsx, Sidebar.tsx, etc.)
-- All user-visible "the upstream project" text → "AoA"
-- CLI commands (`pnpm aoaai`) and `@aoaai/` package scopes preserved
-- Lucide `the upstream project` icon imports preserved (icon name, not branding)
+- All user-visible "Paperclip" text → "AoA"
+- CLI commands (`pnpm paperclipai`) and `@paperclipai/` package scopes preserved
+- Lucide `Paperclip` icon imports preserved (icon name, not branding)
 
 ### 7. Route Rename /dashboard → /home
 - **Files:** Sidebar, CommandPalette, MobileBottomNav, Layout, CompanyRail, App.tsx

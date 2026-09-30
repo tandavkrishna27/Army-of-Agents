@@ -1,4 +1,17 @@
-/** Integration coverage for run-scoped skill selection and merge. */
+/**
+ * Integration test for the skill auto-enable flow introduced in T17 of the
+ * upstream Paperclip → AoA resync (2026-04-26).
+ *
+ * Phase B audit found that existing tests in heartbeat-skill-mentions.test.ts
+ * and adapter-utils-skills.test.ts cover each individual function in isolation
+ * but no test exercises the FULL flow: extraction → merge with pre-existing
+ * skill keys → dual-write of paperclipSkillSync → back-compat read.
+ *
+ * Mutation-tested: dropping the existing keys in applyRunScopedMentionedSkillKeys
+ * (changing merge to just skillKeys) fails test 3 — "pre-existing" goes missing.
+ *
+ * Refs: docs/superpowers/plans/2026-04-27-resync-verification.md (Task 3)
+ */
 
 import { vi } from "vitest";
 
@@ -124,9 +137,11 @@ describe("Skill auto-enable — full extraction → merge integration", () => {
     expect(pref.desiredSkills.sort()).toEqual(["new-skill-1", "new-skill-2", "pre-existing"]);
   });
 
-  it("writes the AoA skill preference", () => {
+  it("dual-writes paperclipSkillSync for back-compat", () => {
     const out = applyRunScopedMentionedSkillKeys({} as any, ["x", "y"]);
-    expect((out as any).aoaSkillSync).toEqual({ desiredSkills: ["x", "y"] });
+    expect((out as any).aoaSkillSync).toBeDefined();
+    expect((out as any).paperclipSkillSync).toBeDefined();
+    expect((out as any).paperclipSkillSync).toEqual((out as any).aoaSkillSync);
   });
 
   it("is a no-op when skillKeys array is empty", () => {
@@ -135,4 +150,9 @@ describe("Skill auto-enable — full extraction → merge integration", () => {
     expect(merged).toEqual(startingConfig);
   });
 
+  it("reads back compat field paperclipSkillSync when aoaSkillSync absent", () => {
+    const config = { paperclipSkillSync: { mode: "explicit", desiredSkills: ["legacy"] } };
+    const pref = readAoaSkillSyncPreference(config as Record<string, unknown>);
+    expect(pref.desiredSkills).toContain("legacy");
+  });
 });

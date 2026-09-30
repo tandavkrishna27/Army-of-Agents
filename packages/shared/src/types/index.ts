@@ -386,7 +386,7 @@ export type {
   PluginLauncherDeclaration,
   PluginMinimumHostVersion,
   PluginUiDeclaration,
-  AoAPluginManifestV1,
+  PaperclipPluginManifestV1,
   PluginRecord,
   PluginStateRecord,
   PluginConfig,

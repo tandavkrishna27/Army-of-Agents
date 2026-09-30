@@ -167,7 +167,7 @@ describe("validatePackageFileKey", () => {
 
 describe("import package — orphaned file clearing behaviour", () => {
   it("files absent from the new file map are not present after re-import", async () => {
-    const skillDir = await makeTempDir("aoa-import-pkg-");
+    const skillDir = await makeTempDir("paperclip-import-pkg-");
 
     // First import: SKILL.md + references/old.md
     await fs.writeFile(path.join(skillDir, "SKILL.md"), "# v1", "utf8");
@@ -194,7 +194,7 @@ describe("import package — orphaned file clearing behaviour", () => {
   });
 
   it("files present in the new file map replace old content at the same path", async () => {
-    const skillDir = await makeTempDir("aoa-import-pkg-replace-");
+    const skillDir = await makeTempDir("paperclip-import-pkg-replace-");
 
     // First import
     await fs.writeFile(path.join(skillDir, "SKILL.md"), "# v1", "utf8");

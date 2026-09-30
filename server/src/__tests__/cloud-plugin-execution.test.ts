@@ -25,6 +25,7 @@ import {
   projectCloudPluginPolicyState,
   recordCloudPluginBlock,
   recordCloudPluginBootReconciled,
+  stripHostedPluginWorkerMarker,
 } from "../services/cloud-plugin-execution.js";
 import { setDeploymentMode } from "../config/deployment-mode.js";
 
@@ -90,7 +91,7 @@ describe("cloud plugin execution observability", () => {
     expect(JSON.stringify(docsConfig.navigation)).toContain("guides/cloud-plugin-execution");
   });
 
-  it("U10: leaves every non-blocked-history cloud row untouched (no live block projection)", () => {
+  it("FND-006: projects a live block for every non-uninstalled cloud row", () => {
     setDeploymentMode("cloud_auth");
     for (const status of ["installed", "disabled", "error", "upgrade_pending"]) {
       const plugin = {
@@ -99,11 +100,19 @@ describe("cloud plugin execution observability", () => {
         statusReasonCode: null,
         lastError: status === "error" ? "generic error" : null,
       };
-      // isCloudPluginExecutionBlocked() is always false now (host-resident
-      // worker model), so the live projection is a no-op — the row passes
-      // through byte-identical instead of being rewritten to status: "error".
-      expect(projectCloudPluginPolicyState(plugin)).toBe(plugin);
+      // Decision #103 amendment: cloud_auth executes no host-process plugin
+      // worker, so isCloudPluginExecutionBlocked() is true and the read
+      // projection rewrites every non-uninstalled row to the blocked state so a
+      // stale `ready`/`installed` row can never appear runnable in the UI.
+      const projected = projectCloudPluginPolicyState(plugin);
+      expect(projected).not.toBe(plugin);
+      expect(projected).toMatchObject({
+        status: "error",
+        statusReasonCode: "PLUGIN_WORKER_BLOCKED_IN_CLOUD",
+        lastError: CLOUD_PLUGIN_BLOCK_MESSAGE,
+      });
     }
+    // Uninstalled rows are terminal and are left untouched.
     expect(
       projectCloudPluginPolicyState({
         id: "plugin-uninstalled",
@@ -140,15 +149,15 @@ describe("cloud plugin execution observability", () => {
   });
 });
 
-describe("cloud plugin execution — host-resident worker model (U10)", () => {
+describe("cloud plugin execution — Decision #103 amendment: fail closed on cloud_auth (FND-006)", () => {
   afterEach(() => setDeploymentMode("local_trusted"));
 
-  it("does NOT block plugin worker execution on cloud_auth (host-resident worker, U10)", () => {
+  it("BLOCKS plugin worker execution on cloud_auth (bare/legacy form)", () => {
     setDeploymentMode("cloud_auth");
-    expect(isCloudPluginExecutionBlocked()).toBe(false);
+    expect(isCloudPluginExecutionBlocked()).toBe(true);
   });
 
-  it("assertCloudPluginExecutionAllowed no longer throws on cloud for a host worker fork", () => {
+  it("assertCloudPluginExecutionAllowed throws on cloud for a host worker fork", () => {
     setDeploymentMode("cloud_auth");
     expect(() =>
       assertCloudPluginExecutionAllowed({
@@ -156,105 +165,81 @@ describe("cloud plugin execution — host-resident worker model (U10)", () => {
         sink: "worker-fork",
         source: "direct",
       }),
-    ).not.toThrow();
+    ).toThrow(CloudPluginExecutionBlockedError);
   });
 
-  it("stays false on every deployment mode (desktop/local_trusted unchanged, still permissive)", () => {
-    for (const mode of ["local_trusted", "authenticated", "cloud_auth"] as const) {
-      setDeploymentMode(mode);
-      expect(isCloudPluginExecutionBlocked()).toBe(false);
-    }
+  it("bare form: true ONLY on cloud_auth; false on local_trusted/authenticated (self-hosted unchanged)", () => {
+    setDeploymentMode("local_trusted");
+    expect(isCloudPluginExecutionBlocked()).toBe(false);
+    setDeploymentMode("authenticated");
+    expect(isCloudPluginExecutionBlocked()).toBe(false);
+    setDeploymentMode("cloud_auth");
+    expect(isCloudPluginExecutionBlocked()).toBe(true);
   });
 });
 
-describe("cloud plugin execution — sink-aware gate (RW5a, fixes the U10-a regression)", () => {
+describe("cloud plugin execution — six-sink parent gate (FND-006, fixes the U10-a allowlist)", () => {
   afterEach(() => {
     setDeploymentMode("local_trusted");
     delete process.env[PLUGIN_WORKER_PROCESS_ENV_VAR];
   });
 
-  it("allows the worker-fork and worker-manager sinks on cloud (U10's actual justification)", () => {
+  it("BLOCKS all six sinks on cloud_auth in the parent (worker-manager, worker-fork, lifecycle, loader, loader-import, ui-static)", () => {
     setDeploymentMode("cloud_auth");
-    expect(isCloudPluginExecutionBlocked("worker-fork")).toBe(false);
-    expect(isCloudPluginExecutionBlocked("worker-manager")).toBe(false);
-    expect(() =>
-      assertCloudPluginExecutionAllowed({
-        pluginId: "p1",
-        sink: "worker-fork",
-        source: "direct",
-      }),
-    ).not.toThrow();
-    expect(() =>
-      assertCloudPluginExecutionAllowed({
-        pluginId: "p1",
-        sink: "worker-manager",
-        source: "direct",
-      }),
-    ).not.toThrow();
+    for (const sink of [
+      "worker-manager",
+      "worker-fork",
+      "lifecycle",
+      "loader",
+      "loader-import",
+      "ui-static",
+    ] as const) {
+      expect(isCloudPluginExecutionBlocked(sink)).toBe(true);
+      expect(() =>
+        assertCloudPluginExecutionAllowed({
+          pluginId: "p1",
+          sink,
+          source: "direct",
+        }),
+      ).toThrow(CloudPluginExecutionBlockedError);
+    }
   });
 
-  it("allows the lifecycle sink on cloud (activation reads the already-persisted manifest, never re-imports)", () => {
-    setDeploymentMode("cloud_auth");
-    expect(isCloudPluginExecutionBlocked("lifecycle")).toBe(false);
-  });
-
-  it("allows the loader (install/upgrade ENTRY boundary) sink on cloud — download/write files, no code execution", () => {
-    setDeploymentMode("cloud_auth");
-    expect(isCloudPluginExecutionBlocked("loader")).toBe(false);
-    expect(() =>
-      assertCloudPluginExecutionAllowed({
-        pluginId: "p1",
-        sink: "loader",
-        source: "marketplace",
-      }),
-    ).not.toThrow();
-  });
-
-  it("BLOCKS the loader-import sink on cloud — a direct in-process import() of tenant code in the control plane", () => {
-    setDeploymentMode("cloud_auth");
-    expect(isCloudPluginExecutionBlocked("loader-import")).toBe(true);
-    expect(() =>
-      assertCloudPluginExecutionAllowed({
-        pluginId: "p1",
-        sink: "loader-import",
-        source: "unknown",
-      }),
-    ).toThrow(CloudPluginExecutionBlockedError);
-  });
-
-  it("BLOCKS the ui-static sink on cloud — same-origin executable JS served to the browser", () => {
-    setDeploymentMode("cloud_auth");
-    expect(isCloudPluginExecutionBlocked("ui-static")).toBe(true);
-    expect(() =>
-      assertCloudPluginExecutionAllowed({
-        pluginId: "p1",
-        sink: "ui-static",
-        source: "direct",
-      }),
-    ).toThrow(CloudPluginExecutionBlockedError);
-  });
-
-  it("allows loader-import on cloud FROM INSIDE the worker child (marker set) — the worker's own load is isolated", () => {
+  it("the parent worker-child marker AOA_PLUGIN_WORKER_PROCESS=1 NEVER bypasses the cloud gate (any sink)", () => {
     setDeploymentMode("cloud_auth");
     process.env[PLUGIN_WORKER_PROCESS_ENV_VAR] = "1";
-    expect(isCloudPluginExecutionBlocked("loader-import")).toBe(false);
-    expect(() =>
-      assertCloudPluginExecutionAllowed({
-        pluginId: "p1",
-        sink: "loader-import",
-        source: "unknown",
-      }),
-    ).not.toThrow();
+    for (const sink of [
+      "worker-manager",
+      "worker-fork",
+      "lifecycle",
+      "loader",
+      "loader-import",
+      "ui-static",
+    ] as const) {
+      expect(isCloudPluginExecutionBlocked(sink)).toBe(true);
+    }
+    // Bare form too.
+    expect(isCloudPluginExecutionBlocked()).toBe(true);
   });
 
-  it("does NOT let the worker-child marker unblock ui-static — a browser-trust boundary, not a process one", () => {
+  it("stripHostedPluginWorkerMarker(): removes a spoofed marker from the hosted parent env; no-op off-cloud", () => {
     setDeploymentMode("cloud_auth");
     process.env[PLUGIN_WORKER_PROCESS_ENV_VAR] = "1";
-    expect(isCloudPluginExecutionBlocked("ui-static")).toBe(true);
-  });
+    expect(stripHostedPluginWorkerMarker()).toBe(true);
+    expect(process.env[PLUGIN_WORKER_PROCESS_ENV_VAR]).toBeUndefined();
+    // Idempotent second call: nothing left to strip.
+    expect(stripHostedPluginWorkerMarker()).toBe(false);
 
-  it("off-cloud (local_trusted): every sink stays allowed, including loader-import and ui-static", () => {
+    // Off-cloud: never strips (the self-hosted worker child legitimately sets it).
     setDeploymentMode("local_trusted");
+    process.env[PLUGIN_WORKER_PROCESS_ENV_VAR] = "1";
+    expect(stripHostedPluginWorkerMarker()).toBe(false);
+    expect(process.env[PLUGIN_WORKER_PROCESS_ENV_VAR]).toBe("1");
+  });
+
+  it("off-cloud (local_trusted): every sink + bare stays allowed (self-hosted positives preserved)", () => {
+    setDeploymentMode("local_trusted");
+    expect(isCloudPluginExecutionBlocked()).toBe(false);
     for (const sink of [
       "worker-fork",
       "worker-manager",
@@ -264,6 +249,13 @@ describe("cloud plugin execution — sink-aware gate (RW5a, fixes the U10-a regr
       "ui-static",
     ] as const) {
       expect(isCloudPluginExecutionBlocked(sink)).toBe(false);
+      expect(() =>
+        assertCloudPluginExecutionAllowed({
+          pluginId: "p1",
+          sink,
+          source: "direct",
+        }),
+      ).not.toThrow();
     }
   });
 });

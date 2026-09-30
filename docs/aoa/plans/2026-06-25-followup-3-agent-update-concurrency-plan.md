@@ -1,5 +1,18 @@
 # Agent-Update Optimistic Concurrency (Follow-up #3) Implementation Plan
 
+> ★ **RENUMBERED 2026-09-03 — every "Decision #104" in this document now means
+> [Decision #125](../../architecture/decisions.md).** The decision this plan created was filed as
+> `#104`, and a second, unrelated locked decision (*Keyless-except-embeddings*, 2026-06-26) was filed
+> under the same number one day later. The collision was resolved by renumbering THIS one to `#125`,
+> because every citation of the other lives in frozen ticket-result and QA records that policy
+> forbids rewriting, and all four `CLAUDE.md` citations mean the other one too.
+>
+> **This document is deliberately NOT rewritten.** It is a shipped historical plan, and its Task-7
+> steps ("Insert a new `## Decision #104` section", "Commit: `docs(decisions): record Decision
+> #104`") are the record of what was actually instructed and done at the time. The quoted code
+> comments at lines ~110/582/614/687 have since been updated to `#125` in the real source files;
+> the snippets here preserve what the plan said. Read `#104` in this file as `#125` throughout.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add OPTIONAL optimistic concurrency to agent updates so two concurrent editors can't silently clobber each other. The token is the existing `updatedAt` (no DB migration). When the client sends `expectedUpdatedAt` and the row changed underneath, the write returns HTTP **409** (with the current `updatedAt` in the body so the client can refetch). When `expectedUpdatedAt` is absent, behavior is unchanged last-write-wins (full back-compat). Scope is the whole `agents` row.

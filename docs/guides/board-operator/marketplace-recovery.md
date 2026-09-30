@@ -195,4 +195,5 @@ fixture.
 | A2 write selector | `AOA_MARKETPLACE_SKILLS_WRITE_ROOT=persistent` |
 | Rollback | Change only the selector; both fixed roots remain readable and jailed |
 
-`/aoa` is the persistent data mount.
+`/paperclip` is a compatibility symlink to `/aoa`, not the authoritative
+persistent mount.

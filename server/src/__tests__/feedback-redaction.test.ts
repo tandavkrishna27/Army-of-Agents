@@ -165,7 +165,7 @@ describe("feedback-redaction: truncation + recursion + passthroughs", () => {
     const state = createFeedbackRedactionState();
     const longInput = "a".repeat(500);
     const output = sanitizeFeedbackText(longInput, state, "body", 200);
-    // AoA pattern: slice(0, maxLength - 1) + "..." → maxLength - 1 + 3 = maxLength + 2
+    // Paperclip pattern: slice(0, maxLength - 1) + "..." → maxLength - 1 + 3 = maxLength + 2
     expect(output.length).toBe(202);
     expect(output.endsWith("...")).toBe(true);
     expect(state.truncatedFields.has("body")).toBe(true);

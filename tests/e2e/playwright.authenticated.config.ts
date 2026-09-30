@@ -9,7 +9,7 @@ const BASE_URL = `http://127.0.0.1:${PORT}`;
 const DB_PORT = Number(process.env.AOA_AUTH_E2E_DB_PORT ?? PORT + 52_000);
 const AOA_HOME = fs.mkdtempSync(path.join(os.tmpdir(), "aoa-auth-e2e-home-"));
 const DATABASE_URL = process.env.DATABASE_URL?.trim()
-  || `postgres://aoa:aoa@127.0.0.1:${DB_PORT}/aoa`;
+  || `postgres://paperclip:paperclip@127.0.0.1:${DB_PORT}/paperclip`;
 
 process.env.AOA_AUTH_E2E_DATABASE_URL = DATABASE_URL;
 process.env.AOA_AUTH_E2E_BASE_URL = BASE_URL;

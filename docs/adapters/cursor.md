@@ -31,7 +31,7 @@ The adapter stores a session identifier after each run. On the next heartbeat, i
 
 ## Skills Injection
 
-AoA auto-injects skills into `~/.cursor/skills/` via symlinks so Cursor can discover `$aoa` and related skills on local runs. Skills files are materialized to disk before execution (`requiresMaterializedRuntimeSkills: true`).
+AoA auto-injects skills into `~/.cursor/skills/` via symlinks so Cursor can discover `$paperclip` and related skills on local runs. Skills files are materialized to disk before execution (`requiresMaterializedRuntimeSkills: true`).
 
 ## Invocation
 

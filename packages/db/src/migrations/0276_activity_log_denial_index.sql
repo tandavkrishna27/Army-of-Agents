@@ -1,0 +1,55 @@
+-- E0-F013 Decision 2, acceptance condition (a), second half: the denial-prefix
+-- index. Filed NOT DONE by the unit that shipped the reader
+-- (docs/replatform/epics/E0-foundation/findings.md), because
+-- packages/db/src/schema/activity_log.ts was that wave's OTHER unit's file and a
+-- second index migration would have collided with 0274 on both the hunk and the
+-- migration number. 0274 has landed, so the collision is over and this is paid.
+--
+-- (Numbered 0276, not 0275: 0275_service_instance_reconciler landed on the base
+-- branch first. The DDL below is re-generated output, not a renamed file.)
+--
+-- WHAT IT IS FOR. `activityService.securityDenials` is the only production
+-- reader of the reserved `security.denied.` namespace. It filters
+-- `action LIKE 'security.denied.%'` under a TOTAL order (`created_at DESC,
+-- id DESC`) and pages by a row-value keyset over that same pair. With no index
+-- on `action` and none on `created_at` alone, every page was planned as
+-- `Limit <- Sort <- Seq Scan`, so deep paging was O(table) PER PAGE. The plan
+-- before and after is pasted in the findings entry.
+--
+-- The namespace rides the index PREDICATE rather than the key, so the index
+-- contains only denial rows: ordinary product rows cost nothing to maintain and
+-- are invisible to it. `DESC NULLS FIRST` matches what bare `DESC` means in the
+-- reader's ORDER BY — see the schema comment; without it the planner keeps the
+-- Sort.
+--
+-- All DDL below is `pnpm db:generate` OUTPUT from
+-- packages/db/src/schema/activity_log.ts. Nothing here is hand-authored schema.
+--
+-- C14 CLASS (a) HAND-APPENDED IDEMPOTENCY GUARD ONLY. The readiness gate
+-- RE-APPLIES the pending tail, so a bare `CREATE INDEX` breaks recovery against
+-- a partially- or fully-applied database. `IF NOT EXISTS` is the whole of the
+-- hand edit. Exemplars: 0189, 0195, 0240, 0274.
+--
+-- N/N-1 COMPATIBILITY (expand phase). `remote-compose-deploy.sh` rolls the
+-- binary back WITHOUT reverting the database. An index is invisible to every
+-- binary: it changes no column, no constraint and no result set, only the plan
+-- chosen for one query. The N-1 binary neither names it nor is affected by it,
+-- and there is no CONTRACT step.
+--
+-- NOT `CONCURRENTLY`, and the reason is a constraint rather than a preference:
+-- drizzle's migrator runs each migration file inside a transaction, and
+-- `CREATE INDEX CONCURRENTLY` cannot run in one. Every other index in this
+-- chain is built the same way.
+--
+-- ★ WHAT THAT COSTS, STATED ACCURATELY RATHER THAN MINIMISED. A partial index
+-- does NOT mean a partial build: Postgres still scans the whole `activity_log`
+-- heap to find the rows matching the predicate, so build TIME is proportional to
+-- the table, not to the denial count. What the predicate bounds is the resulting
+-- index SIZE, not the scan. Plain `CREATE INDEX` holds a SHARE lock for that
+-- scan — concurrent reads continue, concurrent WRITES to `activity_log` block
+-- until it finishes. On a large instance that is a real write pause on the audit
+-- table, and it is accepted here for the same reason the rest of the chain
+-- accepts it. Rebuilding it `CONCURRENTLY` out of band is the escape hatch if
+-- that pause is ever measured to matter. The build cost is UNMEASURED at
+-- production scale; only the resulting plan is measured.
+CREATE INDEX IF NOT EXISTS "activity_log_denial_created_idx" ON "activity_log" USING btree ("created_at" DESC NULLS FIRST,"id" DESC NULLS FIRST) WHERE action LIKE 'security.denied.%';

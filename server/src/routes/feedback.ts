@@ -47,7 +47,7 @@ export function feedbackRoutes(db: Db) {
   const issues = issueService(db);
 
   // POST /issues/:id/feedback-votes — upsert current user's vote on an issue target.
-  // Mirrors AoA's POST /issues/:id/feedback-votes (aoa routes/issues.ts:2529),
+  // Mirrors Paperclip's POST /issues/:id/feedback-votes (paperclip routes/issues.ts:2529),
   // minus the `allowSharing` flag (feedback-data-sharing toggle is wired in F.4).
   router.post(
     "/issues/:id/feedback-votes",

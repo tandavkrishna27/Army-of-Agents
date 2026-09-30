@@ -153,7 +153,7 @@ describe("tenant-scoped plugin collections", () => {
     ]);
   });
 
-  it("U10: no longer projects non-ready plugin rows as blocked in cloud list responses", async () => {
+  it("FND-006: projects non-ready plugin rows as blocked in cloud list responses (Decision #103)", async () => {
     setDeploymentMode("cloud_auth");
     registry.listInstalledForCompanies.mockResolvedValue([
       {
@@ -168,20 +168,19 @@ describe("tenant-scoped plugin collections", () => {
       "/api/plugins"
     );
 
-    // isCloudPluginExecutionBlocked() is always false now (host-resident
-    // worker model) — the live block-projection is a no-op, so the row's
-    // real status/reason/error pass through untouched instead of being
-    // rewritten to "error"/blocked.
+    // Decision #103 amendment / FND-006: on cloud_auth the live block projection
+    // rewrites every non-uninstalled row to the blocked state so a stale row can
+    // never appear runnable.
     expect(response.status).toBe(200);
     expect(response.body[0]).toMatchObject({
       id: PLUGIN_A,
-      status: "disabled",
-      statusReasonCode: null,
-      lastError: null,
+      status: "error",
+      statusReasonCode: PLUGIN_WORKER_BLOCKED_IN_CLOUD,
+      lastError: CLOUD_PLUGIN_BLOCK_MESSAGE,
     });
   });
 
-  it("U10: no longer projects ready rows as blocked across detail, health, and dashboard reads", async () => {
+  it("FND-006: projects ready rows as blocked across detail, health, and dashboard reads (Decision #103)", async () => {
     setDeploymentMode("cloud_auth");
     registry.getById.mockResolvedValue(plugin(PLUGIN_A, COMPANY_A));
 
@@ -189,23 +188,21 @@ describe("tenant-scoped plugin collections", () => {
       .get(`/api/plugins/${PLUGIN_A}`)
       .expect(200);
     expect(detail.body).toMatchObject({
-      status: "ready",
-      lastError: null,
+      status: "error",
+      statusReasonCode: PLUGIN_WORKER_BLOCKED_IN_CLOUD,
+      lastError: CLOUD_PLUGIN_BLOCK_MESSAGE,
     });
-    expect(detail.body.statusReasonCode).not.toBe(PLUGIN_WORKER_BLOCKED_IN_CLOUD);
 
     const health = await makeApp(makeActor([COMPANY_A], true))
       .get(`/api/plugins/${PLUGIN_A}/health`)
       .expect(200);
-    // Health may still be unhealthy for unrelated reasons in this minimal
-    // fixture (e.g. no worker process running) — the invariant U10 cares
-    // about is that the cloud-block message/reason is gone.
-    expect(health.body.lastError).not.toBe(CLOUD_PLUGIN_BLOCK_MESSAGE);
+    // The projected row surfaces the canonical cloud-block message.
+    expect(health.body.lastError).toBe(CLOUD_PLUGIN_BLOCK_MESSAGE);
 
     const dashboard = await makeApp(makeActor([COMPANY_A], true))
       .get(`/api/plugins/${PLUGIN_A}/dashboard`)
       .expect(200);
-    expect(dashboard.body.health.lastError).not.toBe(CLOUD_PLUGIN_BLOCK_MESSAGE);
+    expect(dashboard.body.health.lastError).toBe(CLOUD_PLUGIN_BLOCK_MESSAGE);
   });
 
   it("scopes status-filtered lists and short-circuits an actor with no companies", async () => {
@@ -265,7 +262,7 @@ describe("tenant-scoped plugin collections", () => {
 });
 
 describe("legacy company plugin settings cloud projection", () => {
-  it("U10: clears a historical cloud-blocked row's reason/error instead of re-affirming it", async () => {
+  it("FND-006: re-affirms a cloud-blocked row's reason/error on cloud_auth (Decision #103)", async () => {
     setDeploymentMode("cloud_auth");
     let selectIndex = 0;
     let installedPredicate: unknown;
@@ -304,16 +301,14 @@ describe("legacy company plugin settings cloud projection", () => {
     const response = await supertest(app)
       .get(`/api/companies/${COMPANY_A}/plugin-settings`)
       .expect(200);
-    // isCloudPluginExecutionBlocked() is always false now, so this historical
-    // row (persisted from before the host-resident-worker model shipped) is
-    // recoverable: the projection clears the stale reason/error in the read
-    // response instead of re-affirming the live block. `status` is left as
-    // the persisted "error" — only a successful lifecycle write clears it.
+    // Decision #103 amendment / FND-006: on cloud_auth the live block is
+    // re-affirmed in the read projection — a blocked row keeps status="error",
+    // the typed reason, and the canonical message (not cleared).
     expect(response.body[0]).toMatchObject({
       pluginId: PLUGIN_A,
       status: "error",
-      statusReasonCode: null,
-      lastError: null,
+      statusReasonCode: PLUGIN_WORKER_BLOCKED_IN_CLOUD,
+      lastError: CLOUD_PLUGIN_BLOCK_MESSAGE,
     });
 
     const query = new PgDialect().sqlToQuery(installedPredicate as never);
@@ -584,7 +579,7 @@ describe("tenant-scoped plugin runtime calls", () => {
     docs: CLOUD_PLUGIN_EXECUTION_DOC_PATH,
   };
 
-  it("U10: no longer short-circuits any cloud worker-backed route at the (now-lifted) block gate", async () => {
+  it("FND-006: short-circuits every cloud worker-backed route at the loader/worker-manager block gate (canonical 503)", async () => {
     setDeploymentMode("cloud_auth");
     const operator = makeActor([COMPANY_A], true);
     const cases: Array<{
@@ -653,17 +648,16 @@ describe("tenant-scoped plugin runtime calls", () => {
         testCase.method === "get"
           ? await request.get(testCase.path)
           : await request.post(testCase.path).send(testCase.body ?? {});
-      // isCloudPluginExecutionBlocked() is always false now (U10: the plugin
-      // worker is host-resident, reached over the broker with run-JWT authz).
-      // Every `rejectBlockedCloudExecution` call site is a no-op, so none of
-      // these routes can ever surface the canonical blocked envelope anymore
-      // — each request instead proceeds to its normal authz/business logic
-      // (whatever that resolves to for this minimal fixture).
-      expect(response.body, testCase.path).not.toEqual(blockedEnvelope);
+      // Decision #103 amendment / FND-006: the loader/worker-manager sinks fail
+      // closed on cloud_auth, so every `rejectBlockedCloudExecution` call site
+      // now short-circuits with the canonical 503 blocked envelope before any
+      // business logic.
+      expect(response.status, testCase.path).toBe(503);
+      expect(response.body, testCase.path).toEqual(blockedEnvelope);
     }
   });
 
-  it("U10: no longer short-circuits install at the (now-lifted) cloud block gate", async () => {
+  it("FND-006: short-circuits install at the loader block gate (canonical 503) on cloud_auth", async () => {
     setDeploymentMode("cloud_auth");
     const installed = plugin(PLUGIN_A, COMPANY_A);
     registry.getByKeyScoped.mockResolvedValue(installed);
@@ -680,12 +674,13 @@ describe("tenant-scoped plugin runtime calls", () => {
       .post("/api/plugins/install")
       .send({ packageName: "@acme/shared", companyId: COMPANY_A });
 
-    // The `rejectBlockedCloudExecution({ sink: "loader" })` gate immediately
-    // after input validation is now inert — the request proceeds past it
-    // into real company-resolution/authz logic instead of short-circuiting
-    // at 503 with the blocked envelope.
-    expect(response.status).not.toBe(503);
-    expect(response.body).not.toEqual(blockedEnvelope);
+    // Decision #103 amendment / FND-006: the `rejectBlockedCloudExecution({ sink:
+    // "loader" })` gate immediately after input validation fails closed on
+    // cloud_auth, short-circuiting at 503 with the blocked envelope before any
+    // company-resolution/install work.
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual(blockedEnvelope);
+    expect(installPlugin).not.toHaveBeenCalled();
   });
 
   it("persists the cloud reason before enable without mutating the company overlay", async () => {
@@ -738,7 +733,7 @@ describe("tenant-scoped plugin runtime calls", () => {
     expect(db.select).not.toHaveBeenCalled();
   });
 
-  it("U10: no longer short-circuits rollback at the (now-lifted) cloud block gate", async () => {
+  it("FND-006: short-circuits rollback at the block gate (canonical 503) on cloud_auth", async () => {
     setDeploymentMode("cloud_auth");
     const upgradePlugin = vi.fn();
     const db = { select: vi.fn() };
@@ -748,12 +743,12 @@ describe("tenant-scoped plugin runtime calls", () => {
       loader: { upgradePlugin },
     }).post(`/api/plugins/${PLUGIN_A}/rollback`);
 
-    // The `rejectBlockedCloudExecution` gate at the top of the rollback
-    // handler is now inert — the route proceeds to actually resolve the
-    // plugin (and 404s because this fixture never registers PLUGIN_A),
-    // instead of short-circuiting at 503 with the blocked envelope.
-    expect(response.body).not.toEqual(blockedEnvelope);
-    expect(registry.getById).toHaveBeenCalled();
+    // Decision #103 amendment / FND-006: the `rejectBlockedCloudExecution` gate
+    // at the top of the rollback handler fails closed on cloud_auth,
+    // short-circuiting at 503 with the blocked envelope before resolving the
+    // plugin or touching the loader/lifecycle.
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual(blockedEnvelope);
     expect(upgradePlugin).not.toHaveBeenCalled();
     expect(lifecycle.load).not.toHaveBeenCalled();
   });

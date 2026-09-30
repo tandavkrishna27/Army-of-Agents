@@ -13,6 +13,7 @@ import {
   activityLog,
 } from "@armyofagents/db";
 import { hubItemsService } from "../hub-items.js";
+import { notDenialNamespace } from "../activity-namespace.js";
 
 // Mirror of dependencies.ts TERMINAL_STATUSES (A-H9). Kept as a local literal
 // rather than imported to avoid dragging the issues/heartbeat/memory module
@@ -480,6 +481,11 @@ export async function morningDigest(
       and(
         eq(activityLog.companyId, companyId),
         gte(activityLog.createdAt, twelveHoursAgo),
+        // E0-F013 Decision 3 (Q3), founder-ruled 2026-09-11: never disclose a
+        // `security.denied.*` row to a tenant. This bare `select()` takes every
+        // column and feeds it to an LLM, so the denial namespace is excluded
+        // here as at every other tenant-facing reader.
+        notDenialNamespace(),
       ),
     );
 

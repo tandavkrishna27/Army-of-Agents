@@ -124,8 +124,12 @@ export function verifyLocalAgentJwt(token: string): LocalAgentJwtClaims | null {
 
   const issuer = typeof claims.iss === "string" ? claims.iss : undefined;
   const audience = typeof claims.aud === "string" ? claims.aud : undefined;
-  if (issuer && issuer !== config.issuer) return null;
-  if (audience && audience !== config.audience) return null;
+  // Accept both legacy ("paperclip"/"paperclip-api") and current issuer/audience
+  // to avoid rejecting in-flight JWTs during the rename transition.
+  const validIssuers = new Set([config.issuer, "paperclip"]);
+  const validAudiences = new Set([config.audience, "paperclip-api"]);
+  if (issuer && !validIssuers.has(issuer)) return null;
+  if (audience && !validAudiences.has(audience)) return null;
 
   return {
     sub,
@@ -243,8 +247,8 @@ export function verifyCommanderRunJwt(token: string): CommanderJwtClaims | null 
 
   const issuer = typeof claims.iss === "string" ? claims.iss : undefined;
   const audience = typeof claims.aud === "string" ? claims.aud : undefined;
-  const validIssuers = new Set([config.issuer]);
-  const validAudiences = new Set([config.audience]);
+  const validIssuers = new Set([config.issuer, "paperclip"]);
+  const validAudiences = new Set([config.audience, "paperclip-api"]);
   if (issuer && !validIssuers.has(issuer)) return null;
   if (audience && !validAudiences.has(audience)) return null;
 

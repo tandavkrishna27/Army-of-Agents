@@ -10,7 +10,7 @@ export const companySkillSourceTypeSchema = z.enum([
 ]);
 export const companySkillTrustLevelSchema = z.enum(["markdown_only", "assets", "scripts_executables"]);
 export const companySkillCompatibilitySchema = z.enum(["compatible", "unknown", "invalid"]);
-export const companySkillSourceBadgeSchema = z.enum(["aoa", "github", "local", "url", "catalog", "skills_sh"]);
+export const companySkillSourceBadgeSchema = z.enum(["paperclip", "github", "local", "url", "catalog", "skills_sh"]);
 
 export const companySkillFileInventoryEntrySchema = z.object({
   path: z.string().min(1),

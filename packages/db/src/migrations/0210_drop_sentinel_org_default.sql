@@ -1,0 +1,26 @@
+-- TEN-006b (E2-D07): drop the fail-OPEN sentinel DEFAULT on
+-- companies.organization_id. 0188 set this DEFAULT to the Default-Org sentinel
+-- ('00000000-0000-0000-0000-000000000001') as belt-and-suspenders so any writer
+-- that omitted organization_id bucketed into the Default Org instead of tripping
+-- NOT NULL. TEN-006a swept every Company-insert site to resolve the Organization
+-- EXPLICITLY, so the fail-open crutch is removed here: an omitting writer now
+-- fails CLOSED on the (retained) NOT NULL (23502).
+--
+-- NO company->real-org backfill at E2 (E2-D07): in the beta every company
+-- legitimately sits on the Default Org and there is no real target Organization to
+-- remap to, so this migration's only operative content is the DROP DEFAULT (a
+-- no-op scaffold — a real backfill activates only when a mapping source is
+-- provisioned in a later epic). Program-design TEN-006's "mapped OR blocks
+-- rollout" is satisfied by the BLOCKS-ROLLOUT arm: the sentinel/unmapped
+-- admission-denial helper (server/src/services/tenant-admission.ts, consuming
+-- FND-007 forbiddenOrganizationSentinels; wired end-to-end at E3 JOB-001/JOB-010)
+-- plus `organization_id NOT NULL` on the new-path tables prevent an
+-- unmapped/sentinel Organization from being admitted to distributed execution.
+--
+-- Idempotency (C14): `ALTER COLUMN ... DROP DEFAULT` is naturally idempotent —
+-- dropping a non-existent default is a no-op, not an error — so no
+-- `IF NOT EXISTS` / `DO $$ ... duplicate_object` guard is needed, and this
+-- statement is not matched by migration-idempotency.test.ts's CREATE-scan. The
+-- statement below is verbatim `db:generate` output (Rule #1); only this header
+-- comment was hand-added.
+ALTER TABLE "companies" ALTER COLUMN "organization_id" DROP DEFAULT;

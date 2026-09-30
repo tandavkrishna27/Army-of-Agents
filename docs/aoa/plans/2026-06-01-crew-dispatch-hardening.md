@@ -97,7 +97,7 @@ describe("resolveCrewRole", () => {
 
 - [ ] **Step 2: Run it (fails — module missing)**
 
-Run: `cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-threads/server" && pnpm exec vitest run src/__tests__/resolve-crew-role.test.ts`
+Run: `cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-threads/server" && pnpm exec vitest run src/__tests__/resolve-crew-role.test.ts`
 Expected: FAIL — `Cannot find module '.../resolve-crew-role.js'`.
 
 - [ ] **Step 3: Write the leaf resolver**

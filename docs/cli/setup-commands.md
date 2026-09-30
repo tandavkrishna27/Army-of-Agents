@@ -103,7 +103,7 @@ pnpm aoa allowed-hostname my-tailscale-host
 | Storage | `~/.aoa/instances/default/data/storage` |
 | Secrets key | `~/.aoa/instances/default/secrets/master.key` |
 
-
+> **Legacy fallback:** if `~/.aoa/` does not exist but `~/.paperclip/` does, the CLI uses `~/.paperclip/` automatically for one release to keep existing installs working. The fallback is removed after the next major version. See `cli/src/config/home.ts`.
 
 Override with:
 
@@ -132,7 +132,7 @@ Optional flags:
 |------|-------------|
 | `--dir <path>` | Backup output directory (overrides config) |
 | `--retention-days <days>` | Number of days to keep backups before pruning |
-| `--filename-prefix <prefix>` | Filename prefix for the backup file (default: `aoa`) |
+| `--filename-prefix <prefix>` | Filename prefix for the backup file (default: `paperclip`) |
 | `--json` | Print backup metadata as JSON |
 
 Example — backup to a custom directory and print JSON metadata:

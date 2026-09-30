@@ -45,7 +45,7 @@ const projectStatuses = [
 ];
 
 type WorkspaceSetup = "none" | "local" | "repo" | "both";
-const REPO_ONLY_CWD_SENTINEL = "/__aoa_repo_only__";
+const REPO_ONLY_CWD_SENTINEL = "/__paperclip_repo_only__";
 
 // Department taxonomy lives in @armyofagents/shared (Stage C / C9) so onboarding
 // and NewProjectDialog stay in sync.

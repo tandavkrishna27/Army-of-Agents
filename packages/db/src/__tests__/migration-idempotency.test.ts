@@ -35,10 +35,15 @@
  * audit grep used to triage C14 has the same shape.
  */
 
-import { describe, it, expect } from "vitest";
+import { afterAll, beforeAll, describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
+import { mkdtemp, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
+import net from "node:net";
+import postgres, { type Sql } from "postgres";
+import { applyPendingMigrations } from "../client.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -195,3 +200,183 @@ describe("migration idempotency", () => {
     ).toEqual([]);
   });
 });
+
+// DEP-003 (E6 deployment harness): prove the generated marker-table migration AND its
+// C14 custom RLS/GRANT/POLICY migration REPLAY idempotently against an already-migrated
+// database — a hard behavioral guarantee, not just the static IF-NOT-EXISTS lint above.
+type EmbeddedPostgresInstance = { initialise(): Promise<void>; start(): Promise<void>; stop(): Promise<void> };
+type EmbeddedPostgresCtor = new (opts: Record<string, unknown>) => EmbeddedPostgresInstance;
+
+const DEP003_MIGRATIONS = [
+  "0232_distributed_cutover_markers.sql",
+  "0233_distributed_cutover_marker_rls.sql",
+];
+
+function splitStatements(sql: string): string[] {
+  return sql
+    .split("--> statement-breakpoint")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+describe.skipIf(process.platform === "win32" && process.env.AOA_RUN_WIN_INTEGRATION !== "1")(
+  "DEP-003 marker migrations replay idempotently",
+  () => {
+    let embedded: EmbeddedPostgresInstance | null = null;
+    let dataDir = "";
+    let admin: Sql | null = null;
+    let setupError: unknown = null;
+
+    beforeAll(async () => {
+      try {
+        dataDir = await mkdtemp(join(tmpdir(), "aoa-marker-replay-"));
+        const { default: EmbeddedPostgres } = (await import("embedded-postgres")) as { default: EmbeddedPostgresCtor };
+        const port = await new Promise<number>((resolve, reject) => {
+          const server = net.createServer();
+          server.listen(0, "127.0.0.1", () => {
+            const address = server.address();
+            server.close((error) =>
+              error || !address || typeof address === "string"
+                ? reject(error ?? new Error("port allocation failed"))
+                : resolve(address.port));
+          });
+          server.on("error", reject);
+        });
+        embedded = new EmbeddedPostgres({
+          databaseDir: join(dataDir, "db"),
+          user: "test",
+          password: "test",
+          port,
+          persistent: false,
+          initdbFlags: ["--encoding=UTF8", "--locale=C"],
+        });
+        await embedded.initialise();
+        await embedded.start();
+        const url = `postgres://test:test@127.0.0.1:${port}/postgres`;
+        await applyPendingMigrations(url);
+        admin = postgres(url, { max: 1 });
+      } catch (error) {
+        setupError = error;
+      }
+    }, 180_000);
+
+    afterAll(async () => {
+      try { await admin?.end(); } catch { /* ignore */ }
+      try { await embedded?.stop(); } catch { /* ignore */ }
+      try { if (dataDir) await rm(dataDir, { recursive: true, force: true }); } catch { /* ignore */ }
+    }, 60_000);
+
+    it("re-executes 0232 + 0233 twice against an already-migrated DB with no error", async () => {
+      if (setupError) throw new Error(`embedded-postgres setup failed: ${String(setupError)}`);
+      if (!admin) throw new Error("database client unavailable");
+      // Two extra replays on top of the initial migrate() apply = three total.
+      for (let pass = 0; pass < 2; pass += 1) {
+        for (const file of DEP003_MIGRATIONS) {
+          const sql = readFileSync(join(MIGRATIONS_DIR, file), "utf8");
+          for (const statement of splitStatements(sql)) {
+            await admin.unsafe(statement);
+          }
+        }
+      }
+      // The table, FORCE RLS, both policies, and the unique index all survive replay.
+      const rls = await admin<{ relforcerowsecurity: boolean }[]>`
+        SELECT relforcerowsecurity FROM pg_class WHERE relname = 'distributed_cutover_markers'
+      `;
+      expect(rls[0]?.relforcerowsecurity).toBe(true);
+      const policies = await admin<{ policyname: string }[]>`
+        SELECT policyname FROM pg_policies WHERE tablename = 'distributed_cutover_markers' ORDER BY policyname
+      `;
+      expect(policies.map((p) => p.policyname)).toEqual([
+        "distributed_cutover_markers_app_read",
+        "distributed_cutover_markers_operator_write",
+      ]);
+    });
+
+    it("re-executes SVC-001's 0264 twice with no error, and the grants survive", async () => {
+      // NECESSARY, not belt-and-braces. The static guard in this same file matches only
+      // /^\s*CREATE (UNIQUE )?(TABLE|INDEX)\s+"/, so 0264's ADD CONSTRAINT statements and
+      // its data-only UPDATE backfill are covered by NO static check at all. Without this
+      // case, `migrations` would pass on a first apply while `migration-idempotency` and
+      // `readiness` failed on a replay.
+      if (setupError) throw new Error(`embedded-postgres setup failed: ${String(setupError)}`);
+      if (!admin) throw new Error("database client unavailable");
+      for (let pass = 0; pass < 2; pass += 1) {
+        const sql = readFileSync(join(MIGRATIONS_DIR, "0264_public_patch.sql"), "utf8");
+        for (const statement of splitStatements(sql)) {
+          await admin.unsafe(statement);
+        }
+      }
+      const rls = await admin<{ relforcerowsecurity: boolean }[]>`
+        SELECT relforcerowsecurity FROM pg_class WHERE relname = 'service_generations'
+      `;
+      expect(rls[0]?.relforcerowsecurity).toBe(true);
+      // The grant omission is the immutability mechanism, so a replay must not widen it.
+      const privileges = await admin<{ privilege_type: string }[]>`
+        SELECT privilege_type FROM information_schema.role_table_grants
+        WHERE table_name = 'service_generations' AND grantee = 'aoa_app'
+        ORDER BY privilege_type
+      `;
+      expect(privileges.map((row) => row.privilege_type)).toEqual(["INSERT", "SELECT"]);
+    });
+
+    it("re-executes SVC-002's 0275 twice with no error, and the live-instance index survives", async () => {
+      // NECESSARY for the same reason as the 0264 case above, and one statement more so:
+      // 0275 carries ADD COLUMN, DROP CONSTRAINT and ADD CONSTRAINT, none of which the
+      // static guard in this file can see (it matches only CREATE TABLE/INDEX). The one
+      // statement it CAN see -- the partial unique index -- is the ticket's whole
+      // duplicate-placement authority, so a replay that dropped or duplicated it would be
+      // the worst possible silent failure.
+      if (setupError) throw new Error(`embedded-postgres setup failed: ${String(setupError)}`);
+      if (!admin) throw new Error("database client unavailable");
+      for (let pass = 0; pass < 2; pass += 1) {
+        const sql = readFileSync(join(MIGRATIONS_DIR, "0275_service_instance_reconciler.sql"), "utf8");
+        for (const statement of splitStatements(sql)) {
+          await admin.unsafe(statement);
+        }
+      }
+      const indexes = await admin<{ indexdef: string }[]>`
+        SELECT indexdef FROM pg_indexes
+        WHERE tablename = 'service_instances' AND indexname = 'service_instances_live_service_uq'
+      `;
+      expect(indexes).toHaveLength(1);
+      expect(indexes[0]?.indexdef).toContain("UNIQUE");
+      // The widened parent FK must survive the replay as the SOLE service FK: the old pair
+      // constraint is gone and the triple is present exactly once.
+      const constraints = await admin<{ conname: string }[]>`
+        SELECT con.conname FROM pg_constraint con JOIN pg_class rel ON rel.oid = con.conrelid
+        WHERE rel.relname = 'service_instances' AND con.contype = 'f'
+        ORDER BY con.conname
+      `;
+      const names = constraints.map((row) => row.conname);
+      expect(names).toContain("service_instances_org_company_service_fk");
+      expect(names).not.toContain("service_instances_org_service_fk");
+    });
+
+    it("re-executes SVC-003b's 0278 twice with no error, and the column stays NULLABLE", async () => {
+      // NECESSARY, not belt-and-braces: 0278 is a single bare `ADD COLUMN`, and the static
+      // guard in this file matches only CREATE TABLE/INDEX — so nothing else in the tree
+      // would notice a missing `IF NOT EXISTS` until a re-apply raised 42701 in production.
+      //
+      // ★ AND THE NULLABILITY IS ASSERTED, not just the absence of an error. SVC-003b's whole
+      // two-window design rests on NULL meaning "the worker has never been observed": a
+      // DEFAULT or a NOT NULL here would forge an observation at INSERT time and let the short
+      // liveness window judge an instance that is merely still starting.
+      if (setupError) throw new Error(`embedded-postgres setup failed: ${String(setupError)}`);
+      if (!admin) throw new Error("database client unavailable");
+      for (let pass = 0; pass < 2; pass += 1) {
+        const sql = readFileSync(join(MIGRATIONS_DIR, "0278_service_instance_last_observed_at.sql"), "utf8");
+        for (const statement of splitStatements(sql)) {
+          await admin.unsafe(statement);
+        }
+      }
+      const columns = await admin<{ is_nullable: string; column_default: string | null; data_type: string }[]>`
+        SELECT is_nullable, column_default, data_type FROM information_schema.columns
+        WHERE table_name = 'service_instances' AND column_name = 'last_observed_at'
+      `;
+      expect(columns).toHaveLength(1);
+      expect(columns[0]?.is_nullable).toBe("YES");
+      expect(columns[0]?.column_default).toBeNull();
+      expect(columns[0]?.data_type).toBe("timestamp with time zone");
+    });
+  },
+);

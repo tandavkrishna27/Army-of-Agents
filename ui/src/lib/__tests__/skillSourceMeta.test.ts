@@ -30,8 +30,8 @@ describe("skillSourceMeta", () => {
     expect(meta.label).toBe("Local");
   });
 
-  it("returns Boxes + indigo for aoa (AoA-managed)", () => {
-    const meta = skillSourceMeta("aoa", null);
+  it("returns Boxes + indigo for paperclip (AoA-managed)", () => {
+    const meta = skillSourceMeta("paperclip", null);
     expect(meta.Icon).toBe(Boxes);
     expect(meta.tone).toBe("indigo");
     expect(meta.label).toBe("AoA");
@@ -47,6 +47,6 @@ describe("skillSourceMeta", () => {
     expect(skillSourceMeta("github", "owner/repo").managedLabel).toBe("GitHub managed");
     expect(skillSourceMeta("skills_sh", "skills.sh").managedLabel).toBe("skills.sh managed");
     expect(skillSourceMeta("local", null).managedLabel).toBe("Local skill");
-    expect(skillSourceMeta("aoa", null).managedLabel).toBe("AoA managed");
+    expect(skillSourceMeta("paperclip", null).managedLabel).toBe("AoA managed");
   });
 });

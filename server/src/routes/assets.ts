@@ -23,6 +23,7 @@ import { officeRenderLimiter } from "../middleware/rate-limit.js";
 import { HttpError } from "../errors.js";
 import { assertCompanyAccess, getActorInfo } from "./authz.js";
 import { resolveStorageTenant } from "./authz-tenant.js";
+import { assertUniverseAssetAccess } from "../services/universe-asset-access.js";
 
 const MAX_ASSET_IMAGE_BYTES = Number(process.env.AOA_ATTACHMENT_MAX_BYTES) || 10 * 1024 * 1024;
 // General asset upload contract (artifacts, API consumers, uploadFileArtifact):
@@ -393,6 +394,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
       return;
     }
     await assertCompanyAccess(db, req, asset.companyId);
+    await assertUniverseAssetAccess(db, asset.id, req.actor);
 
     res.json({
       id: asset.id,
@@ -411,6 +413,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
       return;
     }
     await assertCompanyAccess(db, req, asset.companyId);
+    await assertUniverseAssetAccess(db, asset.id, req.actor);
 
     const object = await storage.getObject(
       await resolveStorageTenant(db, asset.companyId),
@@ -452,6 +455,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
         return;
       }
       await assertCompanyAccess(db, req, asset.companyId);
+      await assertUniverseAssetAccess(db, asset.id, req.actor);
 
       const contentType = (asset.contentType || "").toLowerCase();
       if (contentType !== DOCX_MIME && contentType !== XLSX_MIME) {

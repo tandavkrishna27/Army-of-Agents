@@ -86,8 +86,8 @@ describe.skipIf(process.platform === "win32")("secrets schema — real DB integr
     }
 
     const companyInserted = await db.execute<{ id: string }>(sql`
-      INSERT INTO companies (id, name)
-      VALUES (gen_random_uuid(), 'Secrets Schema Co')
+      INSERT INTO companies (organization_id, id, name)
+      VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Secrets Schema Co')
       RETURNING id
     `);
     const companyId = firstId(companyInserted);

@@ -143,10 +143,10 @@ describe("runtime service process cleanup", () => {
 });
 
 async function createTempRepo() {
-  const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-worktree-repo-"));
+  const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-worktree-repo-"));
   await runGit(repoRoot, ["init"]);
-  await runGit(repoRoot, ["config", "user.email", "aoa@example.com"]);
-  await runGit(repoRoot, ["config", "user.name", "AoA Test"]);
+  await runGit(repoRoot, ["config", "user.email", "paperclip@example.com"]);
+  await runGit(repoRoot, ["config", "user.name", "Paperclip Test"]);
   await fs.writeFile(path.join(repoRoot, "README.md"), "hello\n", "utf8");
   await runGit(repoRoot, ["add", "README.md"]);
   await runGit(repoRoot, ["commit", "-m", "Initial commit"]);
@@ -528,17 +528,17 @@ describe("realizeExecutionWorkspace", () => {
   });
 
   // Skipped on Windows: provisionCommand uses a bash script. (Issue #113)
-  it.skipIf(process.platform === "win32")("writes an isolated repo-local AoA config and worktree branding when provisioning", async () => {
+  it.skipIf(process.platform === "win32")("writes an isolated repo-local Paperclip config and worktree branding when provisioning", async () => {
     const repoRoot = await createTempRepo();
     const previousCwd = process.cwd();
-    const aoaHome = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-worktree-home-"));
-    const isolatedWorktreeHome = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-worktrees-"));
+    const paperclipHome = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-worktree-home-"));
+    const isolatedWorktreeHome = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-worktrees-"));
     const instanceId = "worktree-base";
-    const sharedConfigDir = path.join(aoaHome, "instances", instanceId);
+    const sharedConfigDir = path.join(paperclipHome, "instances", instanceId);
     const sharedConfigPath = path.join(sharedConfigDir, "config.json");
     const sharedEnvPath = path.join(sharedConfigDir, ".env");
 
-    process.env.AOA_HOME = aoaHome;
+    process.env.AOA_HOME = paperclipHome;
     process.env.AOA_INSTANCE_ID = instanceId;
     process.env.AOA_WORKTREES_DIR = isolatedWorktreeHome;
 
@@ -585,7 +585,7 @@ describe("realizeExecutionWorkspace", () => {
               baseDir: path.join(sharedConfigDir, "storage"),
             },
             s3: {
-              bucket: "aoa",
+              bucket: "paperclip",
               region: "us-east-1",
               prefix: "",
               forcePathStyle: false,
@@ -604,7 +604,7 @@ describe("realizeExecutionWorkspace", () => {
       ) + "\n",
       "utf8",
     );
-    await fs.writeFile(sharedEnvPath, 'DATABASE_URL="postgres://worktree:test@db.example.com:6543/aoa"\n', "utf8");
+    await fs.writeFile(sharedEnvPath, 'DATABASE_URL="postgres://worktree:test@db.example.com:6543/paperclip"\n', "utf8");
 
     await fs.mkdir(path.join(repoRoot, "scripts"), { recursive: true });
     await fs.copyFile(
@@ -845,7 +845,7 @@ describe("realizeExecutionWorkspace", () => {
   });
 
   it("preserves a forged runtime-created local path outside approved roots", async () => {
-    const victimRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-cleanup-victim-"));
+    const victimRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-cleanup-victim-"));
     const marker = path.join(victimRoot, "keep.txt");
     await fs.writeFile(marker, "keep", "utf8");
 
@@ -1016,7 +1016,7 @@ describe("realizeExecutionWorkspace", () => {
 
 describe("ensureRuntimeServicesForRun", () => {
   it("rejects and rolls back the whole run batch when an earlier service exits during later readiness", async () => {
-    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-run-late-exit-"));
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-run-late-exit-"));
     const workspace = buildWorkspace(workspaceRoot);
     const delayedReadyService = {
       name: "delayed-ready-survivor",
@@ -1066,7 +1066,7 @@ describe("ensureRuntimeServicesForRun", () => {
   }, 15_000);
 
   it("rolls back a shared manual service when a later run service fails", async () => {
-    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-run-batch-"));
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-run-batch-"));
     const workspace = buildWorkspace(workspaceRoot);
     const sharedService = {
       name: "run-batch-shared",
@@ -1102,7 +1102,7 @@ describe("ensureRuntimeServicesForRun", () => {
   });
 
   it("serializes concurrent run acquisition so a failed batch rolls back before the next run starts", async () => {
-    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-run-adopt-"));
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-run-adopt-"));
     const workspace = buildWorkspace(workspaceRoot);
     const sharedService = {
       name: "run-adopted-shared",
@@ -1174,7 +1174,7 @@ describe("ensureRuntimeServicesForRun", () => {
         }),
       }),
     } as never;
-    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-run-release-fail-"));
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-run-release-fail-"));
     const workspace = buildWorkspace(workspaceRoot);
     const sharedService = {
       name: "run-release-fail-shared",
@@ -1222,7 +1222,7 @@ describe("ensureRuntimeServicesForRun", () => {
         }),
       }),
     } as never;
-    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-release-all-"));
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-release-all-"));
     const services = await ensureRuntimeServicesForRun({
       db,
       runId: "run-release-all",
@@ -1266,7 +1266,7 @@ describe("ensureRuntimeServicesForRun", () => {
           }),
         }),
       } as never;
-      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-final-persist-"));
+      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-final-persist-"));
 
       await expect(startLocalRuntimeService({
         db,
@@ -1308,7 +1308,7 @@ describe("ensureRuntimeServicesForRun", () => {
           }),
         }),
       } as never;
-      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-terminal-retry-"));
+      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-terminal-retry-"));
       const executionWorkspaceId = "execution-workspace-terminal-retry";
       const record = await startLocalRuntimeService({
         db,
@@ -1346,7 +1346,7 @@ describe("ensureRuntimeServicesForRun", () => {
   );
 
   it("observes a rejecting runtime log sink without escaping the service lifecycle", async () => {
-    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-log-sink-"));
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-log-sink-"));
     const executionWorkspaceId = "execution-workspace-log-sink";
     const onLog = vi.fn(async () => {
       throw new Error("log persistence unavailable");
@@ -1382,7 +1382,7 @@ describe("ensureRuntimeServicesForRun", () => {
   it.skipIf(process.platform === "win32")(
     "blocks a queued shared start when failed readiness leaves the first process unresolved",
     async () => {
-      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-single-flight-fail-"));
+      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-single-flight-fail-"));
       const workspace = buildWorkspace(workspaceRoot);
       const pidPath = path.join(workspaceRoot, "service-pids.jsonl");
       const command = `node -e ${JSON.stringify(
@@ -1459,7 +1459,7 @@ describe("ensureRuntimeServicesForRun", () => {
   );
 
   it("reuses shared runtime services across runs and starts a new service after release", async () => {
-    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-workspace-"));
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-workspace-"));
     const workspace = buildWorkspace(workspaceRoot);
     const serviceCommand =
       "node -e \"require('node:http').createServer((req,res)=>res.end('ok')).listen(Number(process.env.PORT), '127.0.0.1')\"";
@@ -1580,8 +1580,8 @@ describe("ensureRuntimeServicesForRun", () => {
     expect(third[0]?.id).not.toBe(first[0]?.id);
   });
 
-  it.skipIf(process.platform === "win32")("does not leak parent AoA instance env into runtime service commands", async () => {
-    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-env-"));
+  it.skipIf(process.platform === "win32")("does not leak parent Paperclip instance env into runtime service commands", async () => {
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-env-"));
     const workspace = buildWorkspace(workspaceRoot);
     const envCapturePath = path.join(workspaceRoot, "captured-env.json");
     const serviceCommand = [
@@ -1590,9 +1590,9 @@ describe("ensureRuntimeServicesForRun", () => {
         [
           "const fs = require('node:fs');",
           `fs.writeFileSync(${JSON.stringify(envCapturePath)}, JSON.stringify({`,
-          "aoaConfig: process.env.AOA_CONFIG ?? null,",
-          "aoaHome: process.env.AOA_HOME ?? null,",
-          "aoaInstanceId: process.env.AOA_INSTANCE_ID ?? null,",
+          "paperclipConfig: process.env.AOA_CONFIG ?? null,",
+          "paperclipHome: process.env.AOA_HOME ?? null,",
+          "paperclipInstanceId: process.env.AOA_INSTANCE_ID ?? null,",
           "databaseUrl: process.env.DATABASE_URL ?? null,",
           "customEnv: process.env.RUNTIME_CUSTOM_ENV ?? null,",
           "port: process.env.PORT ?? null,",
@@ -1602,10 +1602,10 @@ describe("ensureRuntimeServicesForRun", () => {
       ),
     ].join(" ");
 
-    process.env.AOA_CONFIG = "/tmp/base-aoa-config.json";
-    process.env.AOA_HOME = "/tmp/base-aoa-home";
+    process.env.AOA_CONFIG = "/tmp/base-paperclip-config.json";
+    process.env.AOA_HOME = "/tmp/base-paperclip-home";
     process.env.AOA_INSTANCE_ID = "base-instance";
-    process.env.DATABASE_URL = "postgres://shared-db.example.com/aoa";
+    process.env.DATABASE_URL = "postgres://shared-db.example.com/paperclip";
 
     const runId = "run-env";
     leasedRunIds.add(runId);
@@ -1649,9 +1649,9 @@ describe("ensureRuntimeServicesForRun", () => {
 
     expect(services).toHaveLength(1);
     const captured = JSON.parse(await fs.readFile(envCapturePath, "utf8")) as Record<string, string | null>;
-    expect(captured.aoaConfig).toBeNull();
-    expect(captured.aoaHome).toBeNull();
-    expect(captured.aoaInstanceId).toBeNull();
+    expect(captured.paperclipConfig).toBeNull();
+    expect(captured.paperclipHome).toBeNull();
+    expect(captured.paperclipInstanceId).toBeNull();
     expect(captured.databaseUrl).toBeNull();
     expect(captured.customEnv).toBe("from-adapter");
     expect(captured.port).toMatch(/^\d+$/);
@@ -1661,7 +1661,7 @@ describe("ensureRuntimeServicesForRun", () => {
   });
 
   it.skipIf(process.platform === "win32")("stops execution workspace runtime services by executionWorkspaceId", async () => {
-    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-stop-"));
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-stop-"));
     const workspace = buildWorkspace(workspaceRoot);
     const runId = "run-stop";
     leasedRunIds.add(runId);
@@ -1717,7 +1717,7 @@ describe("ensureRuntimeServicesForRun", () => {
   it.skipIf(process.platform === "win32")(
     "confirms a SIGTERM-resistant descendant exits before completing a tracked stop",
     async () => {
-      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-stop-tree-"));
+      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-stop-tree-"));
       const workspace = buildWorkspace(workspaceRoot);
       const runId = "run-stop-tree";
       leasedRunIds.add(runId);
@@ -1777,7 +1777,7 @@ describe("ensureRuntimeServicesForRun", () => {
   it.skipIf(process.platform === "win32")(
     "keeps a readiness-failed process tracked when cleanup cannot be confirmed",
     async () => {
-      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-readiness-fail-"));
+      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-readiness-fail-"));
       const workspace = buildWorkspace(workspaceRoot);
       const pidPath = path.join(workspaceRoot, "service.pid");
       const command = `node -e ${JSON.stringify(
@@ -1846,7 +1846,7 @@ describe("ensureRuntimeServicesForRun", () => {
   it.skipIf(process.platform === "win32")(
     "does not signal a stale PID after the readiness child already exited",
     async () => {
-      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-readiness-exit-"));
+      const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-readiness-exit-"));
       const signal = vi.fn();
 
       await expect(startLocalRuntimeService({
@@ -1889,7 +1889,7 @@ describe("ensureRuntimeServicesForRun", () => {
   );
 
   it("does not stop services in sibling directories when matching by workspace cwd", async () => {
-    const workspaceParent = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-runtime-sibling-"));
+    const workspaceParent = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-runtime-sibling-"));
     const targetWorkspaceRoot = path.join(workspaceParent, "project");
     const siblingWorkspaceRoot = path.join(workspaceParent, "project-extended", "service");
     await fs.mkdir(targetWorkspaceRoot, { recursive: true });

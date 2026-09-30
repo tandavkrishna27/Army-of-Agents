@@ -12,7 +12,7 @@ export function resolveActiveDatabaseUrl(): string {
   const externalUrl = config.databaseUrl?.trim();
   if (externalUrl) return externalUrl;
 
-  return `postgres://aoa:aoa@127.0.0.1:${config.embeddedPostgresPort}/aoa`;
+  return `postgres://paperclip:paperclip@127.0.0.1:${config.embeddedPostgresPort}/paperclip`;
 }
 
 export function readRequiredFlag(name: string): string {

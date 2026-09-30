@@ -3,6 +3,13 @@ name: PR
 permissions:
   contents: read
 
+# The `server` package's `tsc`/build exceeds Node's ~2 GB default old-space heap and OOMs
+# (exit 134) on the 16 GB CI runner, failing the `verify` Typecheck step AND the `e2e` /
+# `e2e-pgvector` Build steps for every PR into this branch. Raise the heap ceiling workflow-wide
+# so every server tsc/build child inherits it. A ceiling is not a reservation. Mirrors d382dea13.
+env:
+  NODE_OPTIONS: --max-old-space-size=8192
+
 on:
   # No branches: filter — every PR into ANY base branch is gated. This is the
   # fix for the porting-era allow-list that silently ran zero checks on
@@ -26,7 +33,25 @@ on:
 
 concurrency:
   group: pr-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded runs EVERYWHERE EXCEPT the shared integration branch.
+  #
+  # `docs/replatform-program` (PR #323) is worked by two lanes concurrently. `verify` is a
+  # ~35-40 minute pole and the lanes push every ~25 minutes, so with unconditional
+  # cancel-in-progress the required gate could never finish: SEVEN consecutive runs were
+  # cancelled, and the last green PR run predated hours of landed work on BOTH lanes. A gate
+  # that structurally cannot complete is not a gate — every ticket's definition of done says
+  # "CI watched to green", and that was unachievable for either lane.
+  #
+  # Setting this false for that branch makes runs QUEUE instead of cancel, so every push gets
+  # a verdict. It is bounded: GitHub keeps at most one PENDING run per concurrency group (a
+  # newer trigger replaces the pending one), so the queue never grows beyond
+  # one in-progress + one pending. The in-progress run always reaches a verdict and the
+  # newest push is always next.
+  #
+  # `github.head_ref` is the source BRANCH on a pull_request event (github.ref there is
+  # `refs/pull/<n>/merge`, which would never match a branch name); `github.ref` covers the
+  # push-to-main trigger. Both are checked so neither event type slips through.
+  cancel-in-progress: ${{ github.head_ref != 'docs/replatform-program' && github.ref != 'refs/heads/docs/replatform-program' }}
 
 jobs:
   # Cheap change-detector: decides whether the heavy suite needs to run.
@@ -40,27 +65,46 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     timeout-minutes: 5
+    # DEP-004: the SINGLE change detector emits `code` (docs-only skip) PLUS the
+    # distributed path-classes (protocol/schema/fixtures/provider/compose) that
+    # drive the conditional `distributed-contract` consumer. There is DELIBERATELY
+    # no trigger-level `paths:` filter — a skipped REQUIRED check passes silently,
+    # so ALL conditional routing goes through these outputs + the ci-required
+    # verdict (enforced statically on EVERY PR by the always-on `policy` job's
+    # "CI lane routing invariants (DEP-004)" step: scripts/check-ci-lanes.mjs +
+    # its node:test suite).
     outputs:
       code: ${{ steps.detect.outputs.code }}
+      protocol: ${{ steps.detect.outputs.protocol }}
+      schema: ${{ steps.detect.outputs.schema }}
+      fixtures: ${{ steps.detect.outputs.fixtures }}
+      provider: ${{ steps.detect.outputs.provider }}
+      compose: ${{ steps.detect.outputs.compose }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Detect non-doc changes
+      - name: Detect non-doc + distributed path-class changes
         id: detect
         run: |
+          emit() { echo "$1=$2" >> "$GITHUB_OUTPUT"; echo "  $1=$2"; }
+          emit_all() {
+            emit code "$1"; emit protocol "$1"; emit schema "$1"
+            emit fixtures "$1"; emit provider "$1"; emit compose "$1"
+          }
           if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "code=true" >> "$GITHUB_OUTPUT"
-            echo "push event -> code=true"
+            echo "push event -> all classes true"
+            emit_all true
             exit 0
           fi
           changed="$(git diff --no-renames --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}")"
           if [ -z "$changed" ]; then
-            echo "code=true" >> "$GITHUB_OUTPUT"
-            echo "empty diff -> code=true (fail safe)"
+            echo "empty diff -> all classes true (fail safe)"
+            emit_all true
             exit 0
           fi
+          echo "changed files:"; printf '%s\n' "$changed"
           code=false
           if printf '%s\n' "$changed" | grep -qE '^\.github/'; then
             code=true        # any .github/** file (incl .github/*.md) => full CI
@@ -68,14 +112,57 @@ jobs:
             code=true        # anything not under docs/ and not a ROOT-LEVEL *.md
                              # (nested .md may be runtime assets/fixtures => code)
           fi
-          echo "code=$code" >> "$GITHUB_OUTPUT"
-          echo "changed files:"; printf '%s\n' "$changed"
-          echo "=> code=$code"
+          emit code "$code"
+          # Distributed path-classes (independent of `code`): true iff a changed
+          # file matches the class glob set. `match` is -e/-o pipefail safe (the
+          # `|| echo false` swallows grep's exit-1 on no-match).
+          match() { printf '%s\n' "$changed" | grep -qE "$1" && echo true || echo false; }
+          # protocol: the frozen worker wire protocol + its lifecycle/authority contract.
+          emit protocol "$(match '^packages/worker-protocol/|^scripts/[^/]*worker-protocol|^docs/architecture/distributed-execution-lifecycles\.|^docs/architecture/distributed-execution-authority\.')"
+          # schema: the golden-journey schema, distributed threat register, and DB schema.
+          emit schema "$(match '^tests/fixtures/distributed-execution/schema-v1\.json$|^docs/architecture/distributed-execution-threat-|^packages/db/src/schema/')"
+          # fixtures: the golden-journey + failure fixture corpus.
+          emit fixtures "$(match '^tests/fixtures/distributed-execution/')"
+          # provider: the sandbox fake + e2b providers, provider-neutral contract, and runtime seam.
+          emit provider "$(match '^packages/sandbox-fake-provider/|^packages/sandbox-e2b-provider/|^packages/sandbox-provider-contract/|^server/src/services/sandbox-provider-runtime|^server/src/services/sandbox-coding-|^docker/d1/fake-provider')"
+          # compose: the D1 topology (its static invariants run in the always-on policy job).
+          emit compose "$(match '^docker-compose\.d1\.yml$|^docker/d1/|^docker/control-plane/|^docker/worker/|^docker/images/')"
 
   policy:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
-    timeout-minutes: 5
+    # 5 → 12 (DEP-013, 2026-09-04) → 11 (this change, same day, same measurement re-derived).
+    #
+    # HISTORY, because the number moving DOWN after a raise looks like a revert and is not one.
+    # `policy` was cancelled at exactly 5:04 on run 33858466826 with NO guard having failed and
+    # most having never started. The cause was a step that used to cost nothing: `Setup pnpm`
+    # took 4m47s, leaving ~13s of the 300s budget for forty checks. That step had gone 4s, 4s,
+    # 5s … 135s, 195s, 149s across six runs — ~40× in a few days — and the job total moved with
+    # it, 74s → 265s against a 300s cap. DEP-013 raised the cap to 12 and filed the growth as
+    # E6-F014 rather than letting the raise stand in for a diagnosis.
+    #
+    # ★ WHY 12 BECAME 11. The 12 was work AND worst-observed infrastructure folded into one
+    # number, which is what makes a cap dishonest: it cannot tell a slow registry from a hung
+    # guard, and it hides a work regression by however much infrastructure allowance is baked
+    # into it. The two are now separated — `Setup pnpm` carries its own 8-minute cap below, and
+    # this cap covers only the 170s work budget on top of it. 11 is therefore MORE protective
+    # than 12, not less: the same total wall clock, with the infrastructure share named and
+    # failing under its own name. Both halves are derived in .github/ci-timeout-budgets.json
+    # from `policy` work measured at 59/71/88s over 13 runs, and
+    # scripts/check-ci-timeout-budgets.mjs refuses this line if it stops being their sum.
+    #
+    # Cap DERIVED: workBudgetSeconds 170 + setupAllowanceSeconds 480
+    # in .github/ci-timeout-budgets.json. Do not edit this number alone.
+    timeout-minutes: 11
+    # DEP-013 Slice C reads the verdict consumer's PUBLISHED artifact (an issue) and, only
+    # when no artifact exists, the reconciler's run count — the one query that can turn a pass
+    # into a fail and never the reverse. Both are READ-only and additive to the workflow-level
+    # `contents: read`; a job-level block REPLACES the workflow default, so `contents` is
+    # restated here rather than inherited.
+    permissions:
+      contents: read
+      issues: read
+      actions: read
 
     steps:
       - name: Checkout repository
@@ -98,6 +185,10 @@ jobs:
           fi
 
       - name: Setup pnpm
+        # This step's OWN cap, derived from setupAllowanceSeconds in
+        # .github/ci-timeout-budgets.json. Without it a slow registry spends the JOB
+        # budget and GitHub blames whichever step is at the wall (E6-F014 addendum).
+        timeout-minutes: 8
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9.15.4
@@ -107,6 +198,506 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+
+      - name: Distributed execution foundation contracts
+        run: |
+          node scripts/check-distributed-execution-foundation.mjs
+          node --test scripts/check-distributed-execution-foundation.test.mjs
+
+      - name: Evidence-ledger immutability (QA/handoff records are write-once)
+        # E0-F014 item 3. `checkEvidenceImmutability` shipped with FND-005, was fully unit
+        # tested, and had ZERO PRODUCTION CALLERS: nothing ever handed it a real base and
+        # candidate tree. Meanwhile the rule it enforces was already broken in this
+        # repository's history with CI green - 6fc46988a created the E5 exit-gate QA record
+        # and 4379a2c53 rewrote it in place, bypassing `Supersedes` entirely. This step is
+        # that function's first caller.
+        #
+        # PR-only, deliberately and narrowly: the guard needs a base revision, and
+        # `base.sha` is the only trustworthy one available. `github.event.before` on a push
+        # is all-zeros for a branch's first push, which would make the guard fail open on
+        # exactly the event it could not evaluate. main is protected, so every evidence
+        # record arrives through a pull request and is seen here.
+        #
+        # Both commands in ONE step, for the reason the step below gives: two steps are two
+        # chances to run only one of them, and the one skipped is the one that failed.
+        #
+        # The base arrives through `env:`, not `${{ }}` inside `run:`, for two reasons: the
+        # command is then byte-identical in CI and under scripts/ci-local.mjs (which replays
+        # these run: blocks verbatim and cannot expand an expression), and an expression is
+        # never spliced into a shell line.
+        if: github.event_name == 'pull_request'
+        env:
+          EVIDENCE_IMMUTABILITY_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          node --test scripts/check-evidence-immutability.test.mjs
+          node scripts/check-evidence-immutability.mjs
+
+      - name: Threat-control audit debt (an unaudited Critical control must not sit forever)
+        run: |
+          # The foundation checker above validates the SHAPE of deliveryStatus and imposes
+          # NO CAP, DEADLINE OR COUNT on `unaudited`, and check-finding-ownership.mjs globs
+          # only docs/replatform/epics/*/findings.md so the threat register is structurally
+          # invisible to it. Twenty-eight Critical/High controls sat unaudited with policy
+          # green, and DE-11 sat `unaudited` - literally "no delivery audit has been
+          # performed" - while a committed hand audit of that same crossing concluded all
+          # four of its controls were absent. Nothing anywhere could see the contradiction.
+          #
+          # Both commands in ONE step deliberately, for the reason the ownership step below
+          # gives: two steps are two chances to run only one of them, and the one skipped is
+          # the one that failed.
+          node --test scripts/check-threat-control-audit-debt.test.mjs
+          node scripts/check-threat-control-audit-debt.mjs
+
+      - name: Register citation integrity (source citations must not silently rot)
+        run: |
+          # The threat register cites source locations as path/to/file.ts:LINE. These rot
+          # whenever ANY PR shifts lines in a cited file — including sibling crossings a PR
+          # never touched. Codex reviews the diff, not the whole register, so it cannot catch
+          # whole-register drift; on PR #443 that cost TEN manual re-anchoring rounds. This
+          # guard verifies every explicit, repo-anchored citation against HEAD (exists,
+          # in-range, reaches a non-blank code line, and — where a backtick anchor is present —
+          # sits within ±3 lines of its construct). Bare/narrative refs are best-effort by
+          # measurement; a frozen block that cannot resolve is grandfathered with a reason.
+          #
+          # Both commands in ONE step, for the reason the ownership step below gives: two steps
+          # are two chances to run only one of them, and the one skipped is the one that failed.
+          node --test scripts/check-register-citation-integrity.test.mjs
+          node scripts/check-register-citation-integrity.mjs
+
+      - name: Worker protocol dependency boundary
+        run: |
+          node scripts/check-worker-protocol-boundary.mjs
+          node --test scripts/check-worker-protocol-boundary.test.mjs
+
+      - name: Worker daemon dependency boundary
+        run: |
+          node scripts/check-worker-daemon-boundary.mjs
+          node --test scripts/check-worker-daemon-boundary.test.mjs
+
+      - name: Sandbox fake provider dependency boundary
+        run: |
+          node scripts/check-sandbox-fake-provider-boundary.mjs
+          node --test scripts/check-sandbox-fake-provider-boundary.test.mjs
+
+      - name: Sandbox e2b provider dependency boundary
+        run: |
+          node scripts/check-sandbox-e2b-provider-boundary.mjs
+          node --test scripts/check-sandbox-e2b-provider-boundary.test.mjs
+          node scripts/check-worker-keystore-boundary.mjs
+          node --test scripts/check-worker-keystore-boundary.test.mjs
+          node scripts/check-adapter-manager-boundary.mjs
+          node --test scripts/check-adapter-manager-boundary.test.mjs
+
+      - name: Sandbox coding adapter disposition coverage (CLI-002)
+        run: |
+          node scripts/check-sandbox-coding-disposition.mjs
+          node --test scripts/check-sandbox-coding-disposition.test.mjs
+
+      - name: Shared device-proof canonicalization vectors
+        run: |
+          node scripts/check-device-proof-vectors.mjs
+          node --test scripts/check-device-proof-vectors.test.mjs
+
+      - name: Workspace-snapshot hash vectors (DAT-001)
+        run: |
+          node scripts/check-workspace-snapshot-vectors.mjs
+          node --test scripts/check-workspace-snapshot-vectors.test.mjs
+
+      - name: Artifact-commit verification vectors (DAT-002)
+        run: |
+          node scripts/check-artifact-commit-vectors.mjs
+          node --test scripts/check-artifact-commit-vectors.test.mjs
+
+      - name: Workspace-patch diff + apply vectors (DAT-003)
+        run: |
+          node scripts/check-workspace-patch-vectors.mjs
+          node --test scripts/check-workspace-patch-vectors.test.mjs
+
+      # DSK-003 Lane D, clause (1) "no credential is embedded".
+      #
+      # This runs the SELF-TEST only, deliberately. The scanner's value is that planted
+      # CI test identities ARE found for every pattern class — a scanner that finds
+      # nothing looks exactly like a scanner that looks for nothing — and that half is
+      # what runs here.
+      #
+      # It does NOT scan the source tree. Pointing it at packages/worker-daemon/src was
+      # tried and correctly reported three findings, all of them deliberate redaction-test
+      # fixtures. That is the design reason the gate targets a PACKAGED ARTIFACT rather
+      # than source: source says nothing about what packaging swept in, and it is full of
+      # fixtures that must keep looking like credentials. The artifact scan is wired in
+      # DSK-003 Lane C, where an artifact first exists; the entry point is already
+      # `node scripts/check-embedded-secrets.mjs <dir>`.
+      # INCIDENT REMEDIATION (2026-08-22). On 2026-08-21 the desktop staging assembler
+      # deleted 154 test files from this repository — its prune walked with statSync,
+      # followed pnpm-deploy symlinks out of the staging root, and removed the real
+      # suites in packages/*. CI then reported success on FOUR consecutive commits,
+      # because deleting a test subtracts a failure rather than causing one.
+      #
+      # The assembler's lstat fix stops that assembler. This guard stops the next
+      # script that walks a tree with rmSync, by making the suite's size a committed
+      # fact a machine re-checks. It sits in `policy`, which runs even on docs-only
+      # PRs: a change that touches no code has even less business shrinking the suite.
+      # REL-004 Lane A — the release promotion gate, and the reason it exists. The
+      # three admission verifiers (image/DEP-001, installer/DSK-003, update/DSK-004)
+      # had NO CALLER outside their own unit suites, so "an unapproved digest cannot
+      # run" could not refuse anything. This runs the gate's own unit suite, its
+      # end-to-end CLI suite (a real invocation that must exit non-zero on a tampered,
+      # incomplete or unpromoted release), and the anti-orphan test that fails if a
+      # verifier exists which the gate does not dispatch to.
+      # A CHECK THAT NOTHING RUNS IS NOT A CHECK. Two guards below had never executed
+      # in CI, found by the sweep that followed REL-004:
+      #
+      #   - the FROZEN worker-protocol v1 consumer check existed only as an npm script
+      #     nothing invoked, and that script omitted the required --source-sha, so it
+      #     would have exited 1 even if someone had run it. Its two self-tests were in
+      #     no workflow either. The guard passes; it had simply never been asked.
+      #   - guard-inventory itself now records, for every check-*/verify-* script,
+      #     whether anything runs it — default-deny, so a new check must be classified.
+      - name: Frozen worker-protocol v1 consumer (E1)
+        run: |
+          pnpm check:frozen-worker-protocol-v1
+          node --test scripts/check-frozen-worker-protocol-consumer.test.mjs
+          node --test scripts/check-frozen-worker-protocol-consumer-isolation.test.mjs
+
+      - name: Programme dependency graph (the plan may not schedule work behind an unscheduled blocker)
+        run: |
+          node --test scripts/lib/__tests__/dependency-graph.test.mjs
+          node scripts/check-dependency-graph.mjs
+          # TRACK-001 — the graph above is only as good as its authority, and that
+          # authority is hand-maintained. It had drifted: DAT-008, WRK-008 and WRK-009
+          # appeared in program-design.md ZERO times while carrying landed code, so every
+          # reachability answer the checker gave was unsound. This runs in the SAME step
+          # deliberately — a separate step is a second chance to run only one of the two,
+          # and the one skipped would be the one that failed.
+          node --test scripts/lib/__tests__/ticket-graph-coverage.test.mjs
+          node scripts/check-ticket-graph-coverage.mjs
+
+      - name: Worker route-path parity (WRK-008)
+        run: |
+          # The device proof is signed OVER the request path, so a drift between the
+          # daemon's vendored constant and the server route is not a 404 - it is a
+          # signature that can never verify, on a request that reached the right handler.
+          # Neither package can import the other (E4-D01 one way, no dependency the
+          # other), so a repo-level guard is the only side that can see both.
+          node scripts/check-worker-path-parity.mjs
+
+      - name: Gate-clause wiring (an epic may not claim a capability nothing calls)
+        run: |
+          # The 2026-08-25 exit-gate audit verdicted ~70 clauses across E0..E11 and found 17
+          # whose named production path has ZERO callers - inside epics reported `complete`.
+          # Every ticket doc was honest; the aggregation was not. This gives "epic complete"
+          # a mechanical meaning. Both commands in ONE step: two steps are two chances to run
+          # only the one that passed.
+          # W5U1 adds the WALK-level half: `countProductionCallers` stripped comments but not
+          # STRING LITERALS, so a diagnostic sentence saying a symbol "has zero production
+          # callers" was itself counted as that symbol's production caller. All three commands
+          # in ONE step, for the reason above.
+          node --test scripts/lib/__tests__/gate-clause-wiring.test.mjs
+          node --test scripts/check-gate-clause-wiring.test.mjs
+          node scripts/check-gate-clause-wiring.mjs
+
+      - name: Finding ownership (an open finding must name an owner, or say it has none)
+        run: |
+          # Four blockers have reached the top of this programme's critical path
+          # unscheduled, and THREE were already written down - E4-F007 sat in findings.md
+          # at severity HIGH with Status: open while MIG-005/006/007 were being sequenced
+          # in front of it. Noticing had no consequence; this gives it one.
+          #
+          # Both commands in ONE step deliberately: two steps are two chances to run only
+          # one of them, and the one skipped is the one that failed.
+          node --test scripts/lib/__tests__/finding-ownership.test.mjs
+          node scripts/check-finding-ownership.mjs
+
+      - name: Register id uniqueness (an id must name one thing)
+        run: |
+          # On 2026-09-03 this repo had THREE live duplicate-id defects at once and nothing
+          # anywhere asked the question. `## Decision #104` appeared TWICE in the locked
+          # decisions register - two unrelated decisions one day apart, with CLAUDE.md citing
+          # #104 as load-bearing in four places. `## E1-F008` appeared TWICE in one findings
+          # register, both severity HIGH, and the ownership guard above keys by id, so one
+          # silently SHADOWED the other and stopped existing for every check.
+          #
+          # It cannot be a line in the ownership checker: that checker consumes findings
+          # through a map keyed by id, which is the very structure that hides a duplicate.
+          # Uniqueness has to be asked of the RAW headings, before anything keys on them.
+          #
+          # Both commands in ONE step deliberately: two steps are two chances to run only one
+          # of them, and the one skipped is the one that failed.
+          node --test scripts/lib/__tests__/register-id-uniqueness.test.mjs
+          node scripts/check-register-id-uniqueness.mjs
+
+      - name: SDK capability premise (a negative claim about a dependency is a claim)
+        run: |
+          # E8-F007. "Managed-E2B egress is not fully lockable" was recorded as settled fact
+          # in six tracked files for a year - including a production comment on the create
+          # call, and inside E8-F003's own reasoning, where it supplied the premise for
+          # "option (b) is unavailable" and so wrote off the ONE enforcement layer outside
+          # the guest for a Critical control that no layer enforces. The installed,
+          # lockfile-pinned e2b@2.30.5 contradicts it.
+          #
+          # Nothing could have caught it: every other guard here checks a claim about THIS
+          # repository. A sentence about what a THIRD-PARTY ARTIFACT cannot do had no checker.
+          #
+          # This lane has no `pnpm install`, so it runs WITHOUT --require-sdk: the lockfile
+          # pin and the stale-claim ban run here and the live surface is measured in `verify`,
+          # which does install. The guard REPORTS the half it could not measure rather than
+          # counting it green - see the --require-sdk step in `verify`.
+          #
+          # Both commands in ONE step deliberately: two steps are two chances to run only one
+          # of them, and the one skipped is the one that failed.
+          node --test scripts/check-w10a-sdk-capability-premise.test.mjs
+          node scripts/check-w10a-sdk-capability-premise.mjs
+
+      - name: Guard inventory (every check declares what runs it)
+        run: |
+          node --test scripts/lib/__tests__/guard-inventory.test.mjs
+          node scripts/check-guard-inventory.mjs
+
+      - name: Invisible control characters (a shell must not write a regex escape)
+        run: |
+          # W19. Writing a file through a heredoc/echo/printf/sed turns the two characters
+          # backslash-b into ONE 0x08 byte, which renders invisibly in every terminal, editor
+          # and diff view. This repository shipped that three times, twice AFTER writing its own
+          # post-mortem about it, including into `scripts/ci-local.mjs`, where it silently
+          # disabled the guard that was supposed to stop CI's `pnpm install` steps from running
+          # locally: eight ran, one of them lockfile-mutating, for the life of the file.
+          #
+          # The ban is on the raw BYTE only; every escape that DENOTES the same character stays
+          # legal, so the repair for a legitimate use is a rewrite, never a deletion. That
+          # matters: the previous attempt at this class was a substring scan that demanded
+          # someone delete the comments explaining a bug, and a checker like that gets deleted
+          # itself. The tree reached zero hits with no allowlist and no explanation removed.
+          #
+          # Both commands in ONE step deliberately, as above: two steps are two chances to run
+          # only one of them, and the one skipped is the one that failed.
+          node --test scripts/lib/__tests__/invisible-control-chars.test.mjs
+          node scripts/check-invisible-control-chars.mjs
+          # The consequence half of the same defect: ci-local.mjs's install guard, pinned by
+          # count (8 -> 0) rather than by byte, because the byte fix alone left seven running.
+          node --test scripts/lib/__tests__/ci-local-install-guard.test.mjs
+
+      - name: W7U1 output-probe decision logic (proven WITHOUT the key)
+        run: |
+          # The keyed lane `keyed-e2b-w7u1-output-probe.yml` runs ONCE, on an operator's
+          # authorisation, against a real E2B sandbox and a real model key. Every
+          # decision it makes - which arm wrote, whether a control held, whether the
+          # verdict is yes/no/inconclusive, and the secret redactor that keeps the key
+          # out of a public log - is a pure function here, exercised on every PR. Without
+          # this step the keyed run would be the FIRST execution of the code that reads
+          # it, which is exactly how the first keyed conformance run produced 8 failures
+          # out of 18 (CLI-realE2B-hardening-result.md).
+          #
+          # It also pins W7U1's PREMISE: that none of the four production script literals
+          # in task-run-sandbox-invocation.ts carries a permission posture. If that ever
+          # stops being true, this step reds and says so - no key required.
+          node --test scripts/lib/__tests__/w7u1-agent-output-probe.test.mjs
+
+      - name: W10B egress-enforcement decision logic (proven WITHOUT the key)
+        run: |
+          # The keyed lane `keyed-e2b-w10b-egress-enforcement-probe.yml` runs on an
+          # operator's authorisation against real E2B. Every decision it makes - the CIDR
+          # containment behind the ABANDON question, the four mandatory control rows, each
+          # of the five three-state verdicts, the computed stop condition, and the secret
+          # redactor that keeps the key out of a public log - is a pure function here,
+          # exercised on every PR. Without this step the keyed run would be the FIRST
+          # execution of the code that reads it, which is how the first keyed conformance
+          # run produced 8 failures out of 18 (CLI-realE2B-hardening-result.md).
+          #
+          # It also asserts the lane's own YAML still carries its `always()` record guards,
+          # its fallback writer, its template default and its keyless positive control.
+          #
+          # It does NOT pin the stale-premise correction in sandbox-provider-runtime.ts, and
+          # an earlier version of this comment claimed it did. The check behind that claim
+          # read the file WHOLE, so one marked quotation anywhere in it satisfied the check
+          # while an unqualified restatement elsewhere in the same file passed unseen - a
+          # false claim of enforcement, made in a step comment. It is deleted rather than
+          # duplicated. The per-occurrence enforcement is the 'SDK capability premise' step
+          # above (plus its --require-sdk half in `verify`), which matches the stale sentence
+          # line by line in every tracked file and demands the E8-F007 correction marker
+          # within six lines of EACH match.
+          node --test scripts/lib/__tests__/w10b-egress-enforcement-probe.test.mjs
+
+      - name: Release admission gate (REL-004)
+        run: |
+          node --test scripts/lib/__tests__/release-manifest.test.mjs
+          node --test scripts/lib/__tests__/vulnerability-policy.test.mjs
+          node --test scripts/check-release-admission.test.mjs
+
+      - name: Test-suite inventory (may not silently shrink)
+        run: |
+          node --test scripts/lib/__tests__/test-inventory.test.mjs
+          node --test scripts/check-test-inventory.test.mjs
+          node scripts/check-test-inventory.mjs
+
+      - name: Execution census (a test file that nothing runs is not coverage)
+        run: |
+          # TRACK-002. The inventory step above asks whether the suite SHRANK. It never
+          # asks whether anything RUNS what it counted — and nine test files carrying 222
+          # tests were invoked by nothing at all, one of them (141 tests) RED on a mutation
+          # test whose mutation is a no-op. Existence was credited; execution was never asked.
+          node --test scripts/lib/__tests__/execution-census.test.mjs
+          node scripts/check-execution-census.mjs
+
+      - name: Dispatch-composition declaration guards (WRK-008 slice 2b)
+        run: |
+          # 9a: the D1 workers cannot enable dispatch on ANY of the four landable gates without an
+          # attributable compose diff. 9b: no boot root constructs a provider unconditionally, and
+          # a quietly-added third root cannot slip past. Self-test + checker in ONE step: two steps
+          # are two chances to run only the one that passed.
+          node --test scripts/lib/__tests__/d1-dispatch-declared.test.mjs
+          node scripts/check-d1-dispatch-declared.mjs
+          node --test scripts/lib/__tests__/boot-roots-provider-free.test.mjs
+          node scripts/check-boot-roots-provider-free.mjs
+
+      - name: Browser-spawn boot-root guard (BRW-hostspawn-gate)
+        run: |
+          # No host-side browser spawn may be reachable from a boot root except the single
+          # declared, BRW-008-owned deferral (the current cli-mode.ts @playwright/mcp spawn,
+          # signatureOccurrences 3). A new undeclared spawn, a SECOND spawn injected into the
+          # declared file (count deviation), a stale deferral, a malformed entry, or an
+          # unreadable source fails this step. Self-test + checker in ONE step.
+          node --test scripts/lib/__tests__/boot-roots-browser-spawn-free.test.mjs
+          node scripts/check-boot-roots-browser-spawn-free.mjs
+
+      - name: Previously-unrun guard self-tests (TRACK-002)
+        run: |
+          # These five were invoked by NOTHING until TRACK-002. Each is the self-test for a
+          # guard that already runs in this job or in the D1 lane, and each passes today —
+          # so the only thing standing between them and CI was that no line named them.
+          node --test scripts/check-d1-compose.test.mjs
+          node --test scripts/lib/__tests__/d1-compose-invariants.test.mjs
+          node --test scripts/lib/__tests__/collect-d1-evidence.test.mjs
+          node --test scripts/check-bundled-snapshot-inputs.test.mjs
+          node --test docker/d1/__tests__/ctl-allowlist.test.mjs
+          # WRK-017. The live half of "a real container enrols on d1" runs only in the D1
+          # merge-train lane, which fires on PUSH to the integration branch — i.e. after
+          # merge. This is the half a PR can prove: the committed enrolment ticket decodes,
+          # names the same target as the shipped worker profile, matches the SERVER's own
+          # code regex, and the control-plane seed's mirror of the daemon's ticket codec has
+          # not drifted from the daemon's source.
+          node --test docker/d1/__tests__/enrolment-seed.test.mjs
+
+      # BRW-002. The browser lane's execution guard must itself be proven: it replaced a
+      # grep that failed an all-green run, so its non-vacuousness is a self-test, not a
+      # claim. Runs in `policy` because it is pure and needs no browser.
+      - name: Browser-lane execution guard self-test (BRW-002)
+        run: node --test scripts/check-browser-suite-executed.test.mjs
+
+      - name: Embedded-secret scan self-test (DSK-003)
+        run: node --test scripts/lib/__tests__/embedded-secret-scan.test.mjs
+
+      # DSK-003 Lane D, I9 — packaging/signature tamper. Signed with a TEST trust root,
+      # exactly as DEP-001's image verifier is; REL-004 replaces test roots with release
+      # roots and this logic does not change. That is why DSK-003 needs no certificate to
+      # reach green: the certificate gates beta-gate EVIDENCE, not this code.
+      - name: Desktop installer admission (DSK-003)
+        run: node --test scripts/lib/__tests__/installer-admission.test.mjs
+
+      # DSK-004 Lane A — update admission. The binding that matters is from→to: a
+      # signature authorizes ONE transition, so it cannot be replayed onto a different
+      # target version or used to push a device backward onto a known-bad build.
+      - name: Desktop update admission (DSK-004)
+        run: node --test scripts/lib/__tests__/update-admission.test.mjs
+
+      # DSK-003 — the installer staging manifest. The property it exists for is that a
+      # STRAY file fails: "everything I declared is present" is not "nothing else is
+      # here", and only the second is worth anything for an artifact about to be signed.
+      - name: Desktop staging manifest (DSK-003)
+        run: |
+          node --test scripts/lib/__tests__/staging-manifest.test.mjs
+          node --test scripts/lib/__tests__/build-desktop-staging.test.mjs
+
+      - name: Secret-resolve authorization vectors (DAT-004)
+        run: |
+          node scripts/check-secret-resolve-vectors.mjs
+          node --test scripts/check-secret-resolve-vectors.test.mjs
+
+      - name: Desktop surface stays disabled (DSK-00 / I22 clauses 6+7)
+        run: |
+          node scripts/check-desktop-surface-disabled.mjs
+          node --test scripts/check-desktop-surface-disabled.test.mjs
+
+      - name: Egress-policy destination vectors (DAT-005)
+        run: |
+          node scripts/check-egress-policy-vectors.mjs
+          node --test scripts/check-egress-policy-vectors.test.mjs
+
+      - name: Egress-policy destination-BYPASS vectors (DEP-008)
+        run: |
+          node scripts/check-egress-bypass-vectors.mjs
+          node --test scripts/check-egress-bypass-vectors.test.mjs
+
+      - name: Staging manifest config contract (DEP-006)
+        run: |
+          node scripts/check-staging-manifest.mjs
+          node --test scripts/check-staging-manifest.test.mjs
+
+      - name: CI lane routing invariants (DEP-004)
+        run: |
+          node scripts/check-ci-lanes.mjs
+          node --test scripts/lib/__tests__/ci-lanes.test.mjs scripts/lib/__tests__/d1-evidence-bundle.test.mjs
+
+      # E3-F036 class / E6-F014. Every required-lane cap in this file — including this job's
+      # own — must be the sum of a declared work budget and a declared infrastructure
+      # allowance, both declared in .github/ci-timeout-budgets.json beside a dated measurement.
+      # It refuses a cap edited on its own, a work budget above 2x — or below 1x — the
+      # measurement DECLARED BESIDE IT, an allowance outside 1x-1.5x the declared worst setup,
+      # a pnpm setup step with no cap of its own, and a new required-lane job that arrives with
+      # a number nobody justified.
+      #
+      # It does NOT compare any number to the value PREVIOUSLY COMMITTED, so a raise that stays
+      # inside a ceiling passes silently: shipped, that is +484s of work budget on verify, +592s
+      # on e2e and +166.5s of allowance on all eight at once — 142 to 187 minutes of derived cap
+      # in total, with no measured* field edited. `--explain` prints the room. See (c) in
+      # scripts/lib/ci-timeout-budgets.mjs; closing it needs a diff-aware instrument that does
+      # not exist.
+      #
+      # A second miss, same shape: a required-lane job with NO timeout-minutes at all is skipped by
+      # the coverage clause, so it is neither budgeted nor exempt nor flagged, and it inherits
+      # GitHub's 360-minute default. All eleven required-lane jobs carry a cap today; see (d) in
+      # scripts/lib/ci-timeout-budgets.mjs.
+      - name: CI timeout caps derive from budgets bounded by declared measurements (E3-F036 class)
+        run: |
+          node scripts/check-ci-timeout-budgets.mjs
+          node --test scripts/check-ci-timeout-budgets.test.mjs
+
+      # DEP-013 Slice A — INERT. It queries no live verdict and blocks nothing new: it asserts
+      # only that the declaration still matches the tree (every workflow file has an entry,
+      # every `push` branch has its own, every not-watched entry says what would have to change,
+      # and the sweep is non-vacuous).
+      - name: Workflow-verdict manifest completeness (DEP-013)
+        run: |
+          node --test scripts/lib/__tests__/workflow-verdict.test.mjs
+          node --test scripts/check-workflow-verdict-manifest.test.mjs
+          node scripts/check-workflow-verdict-manifest.mjs
+
+      # DEP-013 Slice C — THE TERMINATING READER, and the only thing in this ticket that
+      # BLOCKS. `d1-merge-train` was red for five days and three merges, produced a complete
+      # evidence bundle every time, and reached nobody. Making it a required check is not the
+      # fix (it never runs on `pull_request`, and the branch where that happened has NO branch
+      # protection at all), and failing this job on a red lane would red every unrelated PR in
+      # the repo — during the 08-29→08-31 window, all of them.
+      #
+      # ★★ SO THE GATE IS ON THE VERDICT HAVING BEEN READ, NEVER ON THE VERDICT ITSELF. A red
+      # watched lane updates the tracking issue and blocks nothing. A SILENT consumer — no
+      # published reconciliation within the tolerated window — fails this step, and therefore
+      # `ci-required`. The recursion stops here because this is the one check branch protection
+      # already requires and it runs on every non-draft PR by construction.
+      #
+      # ★★★ IT MEASURES THE PUBLISH, NOT THE RUN. A reconciler that starts and dies still
+      # records a recent COMPLETED run; a reader that trusted the run list would stay green
+      # while nothing was read. See scripts/lib/workflow-verdict.mjs §5.3.
+      #
+      # ★ IT FAILS THE JOB. It is a plain `run:` whose non-zero exit fails `policy` — no
+      # `continue-on-error`, no `|| true`. A step that echoes a warning and exits 0 is a
+      # verdict computed with the next thing running anyway, which is the failure class this
+      # whole ticket is about.
+      - name: Verdict consumer is alive (DEP-013)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node --test scripts/check-verdict-consumer-freshness.test.mjs
+          node scripts/check-verdict-consumer-freshness.mjs
 
       - name: Validate Dockerfile deps stage
         run: |
@@ -148,6 +739,40 @@ jobs:
             exit 1
           fi
 
+      - name: Validate split-image deps stages (DEP-001)
+        run: |
+          # Extends the deps-stage check to the two split images: each of
+          # docker/control-plane/Dockerfile and docker/worker/Dockerfile must COPY
+          # EXACTLY its own workspace runtime closure (no fewer, no more). The
+          # combined-Dockerfile check above is unchanged and still runs.
+          node scripts/check-image-deps-stages.mjs
+          node --test scripts/check-image-deps-stages.test.mjs
+
+      - name: Image admission verifier (DEP-001)
+        run: |
+          # Fail-closed image-admission logic: admit only allowlisted, signed,
+          # provenance-matched digests; reject tampered/unsigned/forged.
+          node --test scripts/lib/__tests__/image-admission.test.mjs
+
+      - name: Split-image Dockerfile static checks (DEP-001)
+        run: |
+          # STATIC (no-build) least-privilege assertions on the split Dockerfiles.
+          #
+          # CORRECTED (WRK-009 follow-up). This previously read "the built-image lane
+          # … is wired by DEP-004's image lane". THAT LANE DOES NOT EXIST, and the claim
+          # is how `image-contents.test.mjs` went un-invoked for its whole life: a reader
+          # checking "are the built images asserted on?" found a delegation and stopped.
+          #
+          # Where they actually run, as of now:
+          #   - image-contents.test.mjs   -> d1-merge-train.yml, after build.sh (WRK-009).
+          #   - image-startup-smoke.test.mjs -> NOWHERE. Deliberately un-wired: its worker
+          #     case mounts a root-owned `--tmpfs /worker` OVER the Dockerfile's
+          #     `chown node:node`, so the non-root daemon cannot start. That is a defect in
+          #     the TEST, not the image (D1 uses a named volume, which inherits ownership).
+          #     Tracked separately; stated here rather than delegated to a lane that does
+          #     not exist.
+          node --test docker/images/__tests__/dockerfile-static.test.mjs
+
       - name: Validate dependency resolution when manifests change
         if: github.event_name == 'pull_request'
         run: |
@@ -161,54 +786,176 @@ jobs:
     needs: [policy]
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
-    timeout-minutes: 10
+    # No pnpm and no node_modules: this job is a grep pass plus one builtins-only node script.
+    # It is `exempt` in .github/ci-timeout-budgets.json for that reason, and its cap matches the
+    # workflow's two other dependency-free jobs. Measured work 7/10/16 s over 13 runs.
+    timeout-minutes: 5
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-        with:
-          version: 9.15.4
-          run_install: false
-
+      # ★ The `Setup pnpm` step that used to sit here was DELETED, not capped. This job never
+      # ran `pnpm install`, so its lone `pnpm exec node scripts/check-forbidden-tokens.mjs` was
+      # already equivalent to plain `node` — that script imports only `node:` builtins. The step
+      # existed to make `pnpm exec` resolvable and bought nothing, while exposing a required
+      # check to registry latency (measured here at 3 s median, 234 s worst). Removing an
+      # exposure beats capping one.
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
-      - name: Check tracked content and paths for former-brand tokens
+      - name: Check for stale Paperclip references in user-facing surfaces
         run: |
-          python3 <<'PYEOF'
-          import os
-          import re
-          import subprocess
-          import sys
+          # Guard against regressions of the AoA rebrand (Sprint 3 polish, rc.4).
+          # Only the highest-signal user-facing patterns are enforced.
+          # Intentional wire-compat/backward-compat residuals are documented
+          # in docs/telemetry.md and CLAUDE.md and explicitly allowed here:
+          #   - PAPERCLIP_* env vars (mirrored to AOA_*)
+          #   - paperclipai CLI bin alias
+          #   - paperclipPlugin / __paperclipPluginBridge__ (plugin wire protocol)
+          #   - paperclip-feedback-envelope-v2 / paperclip-feedback-bundle-v2
+          #   - hermes-paperclip-adapter (external npm package)
+          #   - PaperclipPluginManifest / paperclipConfigSchema (type aliases)
+          # Guards 5-7 have their own allow-list:
+          #   Guard 5: paperclip:/. localStorage legacy reads allowed only in
+          #            lib/storage-migrations.ts, __tests__/storage-migration,
+          #            and ui/index.html (FOUC bootstrap legacy fallback read).
+          #   Guard 6: [paperclip] allowed only in normalize-transcript.ts
+          #            (matches upstream CLI binary's stderr output, not our
+          #            own log prefix — see brand-check-ignore comment there).
+          #   Guard 7: no allow-list; paperclip-* CSS classes are fully renamed.
+          #   Guard 8: quoted "Paperclip <Word>" prose strings; allow-listed for
+          #            wire-compat field-name prose ("paperclipApiUrl ..."),
+          #            test fixtures using "Paperclip" as a literal name
+          #            ("Paperclip Hook", "Paperclip Test", "Paperclip runtime
+          #            note:" assertions in cursor-local-execute.test.ts which
+          #            mirror the renamed AoA prompt text — these are now
+          #            "AoA runtime note:" so they no longer trip), and the
+          #            historical changelog title in cli/CHANGELOG.md.
+          #
+          # Guards (1-9): pcp_ tokens, paperclip plugin keys, PAPERCLIP banner,
+          #               user-visible Paperclip strings, paperclip:/. localStorage
+          #               keys, [paperclip] log prefix, paperclip-* CSS classes,
+          #               quoted "Paperclip <Word>" prose in shipping code,
+          #               AOA_* env-var doc completeness (catches docs drift).
+          failed=0
 
-          token = re.compile(rb"p[a]per[\s_-]*clip", re.IGNORECASE)
-          paths = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
-          hits = []
-          for path in filter(None, paths):
-              display = os.fsdecode(path)
-              if token.search(path):
-                  hits.append(f"path: {display}")
-              try:
-                  data = open(path, "rb").read()
-              except FileNotFoundError:
-                  continue
-              for match in token.finditer(data):
-                  number = data.count(b"\n", 0, match.start()) + 1
-                  hits.append(f"content: {display}:{number}")
-          if hits:
-              print("::error::Former-brand token found in tracked tree")
-              print("\n".join(hits))
-              sys.exit(1)
-          print("Tracked content and path scan passed")
-          PYEOF
+          # 1. No pcp_ token prefixes in source (all renamed to aoa_).
+          pcp_hits=$(grep -rnE '"pcp_(invite|mcp|claim)_|'\''pcp_(invite|mcp|claim)_' \
+            --include='*.ts' --include='*.tsx' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            server/src ui/src cli/src packages/plugins/examples 2>/dev/null || true)
+          if [ -n "$pcp_hits" ]; then
+            echo "::error::Found pcp_ token prefixes in source (should be aoa_):"
+            printf '%s\n' "$pcp_hits"
+            failed=1
+          fi
 
-      - name: Check AoA environment variable documentation
-        run: |
+          # 2. No "paperclip.*-example" plugin keys in source (renamed to aoa.*).
+          plugin_hits=$(grep -rnE '"paperclip[.-](hello-world|file-browser|kitchen-sink)' \
+            --include='*.ts' --include='*.tsx' --include='*.md' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            server/src ui/src cli/src packages/plugins/examples 2>/dev/null \
+            | grep -v 'mapLegacyPaperclipKey' || true)
+          if [ -n "$plugin_hits" ]; then
+            echo "::error::Found paperclip.* plugin keys in source (should be aoa.*):"
+            printf '%s\n' "$plugin_hits"
+            failed=1
+          fi
+
+          # 3. No "PAPERCLIP" ASCII art blocks (renamed to AOA).
+          banner_hits=$(grep -rnE '"██████╗.*PAPERCLIP|PAPERCLIP.*██████╗' \
+            --include='*.ts' --include='*.tsx' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            server/src ui/src cli/src packages/plugins/examples 2>/dev/null || true)
+          if [ -n "$banner_hits" ]; then
+            echo "::error::Found PAPERCLIP ASCII banner in source (rename to AOA):"
+            printf '%s\n' "$banner_hits"
+            failed=1
+          fi
+
+          # 4. No "Start Paperclip" or "Paperclip dashboard" user-visible strings.
+          ui_hits=$(grep -rnE '"Start Paperclip|Paperclip dashboard|Paperclip plugin API|Paperclip setup' \
+            --include='*.ts' --include='*.tsx' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            server/src ui/src cli/src packages/plugins/examples 2>/dev/null || true)
+          if [ -n "$ui_hits" ]; then
+            echo "::error::Found user-visible Paperclip strings in source (should say AoA):"
+            printf '%s\n' "$ui_hits"
+            failed=1
+          fi
+
+          # 5. No paperclip:/. localStorage keys outside the migration registry.
+          # ui/index.html FOUC bootstrap has one intentional legacy fallback read
+          # (paperclip.theme → aoa.theme) and is excluded from this guard.
+          ls_hits=$(grep -rnE 'localStorage\.(set|get|remove)Item\([^)]*paperclip|paperclip[:.][a-zA-Z]' \
+            --include='*.ts' --include='*.tsx' --include='*.html' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            ui/src ui/index.html 2>/dev/null \
+            | grep -v 'lib/storage-migrations\|__tests__/storage-migration\|ui/index\.html' || true)
+          if [ -n "$ls_hits" ]; then
+            echo "::error::Found paperclip:/. localStorage keys in ui/ outside the migration registry (use aoa: prefix; legacy reads only allowed in lib/storage-migrations.ts and ui/index.html FOUC bootstrap):"
+            printf '%s\n' "$ls_hits"
+            failed=1
+          fi
+
+          # 6. No [paperclip] log prefix outside docs (renamed to [aoa]).
+          # Three files are excluded:
+          #   - normalize-transcript.ts — matches the upstream Claude CLI
+          #     binary's stderr output, not an AoA-emitted prefix.
+          #   - stderr-classification.ts - classifies legacy/upstream stderr,
+          #     not an AoA-emitted prefix.
+          #   - find-dead-paperclip-filters.mjs — the audit script that LOOKS
+          #     FOR this exact pattern; the literal occurrences are the
+          #     script's search target and documentation, not log emissions.
+          log_hits=$(grep -rnE '\[paperclip\]' \
+            --include='*.ts' --include='*.tsx' --include='*.mjs' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            server/src ui/src cli/src packages/adapters scripts 2>/dev/null \
+            | grep -v 'normalize-transcript\|stderr-classification\|find-dead-paperclip-filters' || true)
+          if [ -n "$log_hits" ]; then
+            echo "::error::Found [paperclip] log prefix (rename to [aoa]):"
+            printf '%s\n' "$log_hits"
+            failed=1
+          fi
+
+          # 7. No paperclip-* CSS classes (renamed to aoa-*).
+          css_hits=$(grep -rnE 'paperclip-(mdxeditor|project-mention-chip)' \
+            --include='*.css' --include='*.tsx' --include='*.ts' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            ui/src 2>/dev/null || true)
+          if [ -n "$css_hits" ]; then
+            echo "::error::Found paperclip-* CSS classes (rename to aoa-*):"
+            printf '%s\n' "$css_hits"
+            failed=1
+          fi
+
+          # 8. No quoted "Paperclip <Word>" prose in shipping code (renamed to "AoA <Word>").
+          # Catches the OpenClaw onboarding prose class ("Paperclip is bound to...",
+          # "Paperclip callback requests...", "Suggested Paperclip base URLs to try",
+          # "# Paperclip OpenClaw Onboarding", etc.). Allow-listed:
+          #   - paperclipApiUrl wire-compat field references (the regex matches a
+          #     literal SPACE after "Paperclip", so identifiers like
+          #     "paperclipApiUrl" don't trip)
+          #   - test fixtures using "Paperclip" as a literal name (Hook, Test, etc.)
+          #     — those now read "AoA <Word>" after the OpenClaw prose sweep
+          #   - historical entries in cli/CHANGELOG.md (excluded by path)
+          prose_hits=$(grep -rnE '"Paperclip [A-Za-z]|`Paperclip [A-Za-z]|# Paperclip [A-Za-z]' \
+            --include='*.ts' --include='*.tsx' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            server/src ui/src cli/src packages/plugins/examples 2>/dev/null \
+            | grep -v 'Paperclip Hook\|Paperclip Test' || true)
+          if [ -n "$prose_hits" ]; then
+            echo "::error::Found quoted \"Paperclip <Word>\" prose in shipping code (rename to AoA):"
+            printf '%s\n' "$prose_hits"
+            failed=1
+          fi
+
+          # 9. env-var doc completeness — every AOA_* env var read by code must
+          #    appear in docs/deploy/environment-variables.md. Catches silent
+          #    drift when a feature lands a new env var without doc update.
           declared_env=$(grep -rhoE 'process\.env\.AOA_[A-Z_]+' \
             --include='*.ts' \
             --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
@@ -217,10 +964,51 @@ jobs:
           documented_env=$(grep -oE 'AOA_[A-Z_]+' docs/deploy/environment-variables.md 2>/dev/null | sort -u)
           missing_env=$(comm -23 <(printf '%s\n' "$declared_env") <(printf '%s\n' "$documented_env") || true)
           if [ -n "$missing_env" ]; then
-            echo "::error::AoA environment variables used by code are missing from docs/deploy/environment-variables.md:"
+            echo "::error::AOA_* env vars read by code but not documented in docs/deploy/environment-variables.md:"
             printf '%s\n' "$missing_env"
+            echo "::error::Add these to docs/deploy/environment-variables.md or remove them from code."
+            failed=1
+          fi
+
+          if [ "$failed" -eq 1 ]; then
             exit 1
           fi
+          echo "Brand check passed: no user-facing Paperclip regressions."
+
+      - name: Forbidden tokens scan (.forbidden-tokens.json)
+        run: node scripts/check-forbidden-tokens.mjs
+
+  # Deterministic worker-protocol contract bytes (PRT-006). A dependency-free
+  # matrix (no pnpm install) that runs the generator's mutation corpus and the
+  # `--check` mode against the COMMITTED bytes on BOTH Linux and Windows. The
+  # whole point is byte-for-byte determinism across OSes, so both legs are
+  # required (routed through ci-required, never an independently-required
+  # branch-protection check). No generated bytes are committed from CI. Always
+  # runs (only draft-guarded), independent of the docs-only `changes` gate, so a
+  # contract-byte edit that forgets to regenerate the manifest cannot slip
+  # through as a docs-only PR.
+  worker-protocol-contract-bytes:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Verify contract manifest bytes (mutation corpus + committed --check)
+        shell: bash
+        run: |
+          node --test scripts/update-worker-protocol-contract-manifest.test.mjs
+          node scripts/update-worker-protocol-contract-manifest.mjs --check
 
   # verify and e2e run independently of policy. Failing policy (e.g.,
   # contributor accidentally committed pnpm-lock.yaml) should not mask
@@ -232,16 +1020,46 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
-    # Full server + ui + embedded-PG integration suites now run ~37 min (test
-    # phase alone), and the build step needs ~8 more — 45 left no margin (a green
-    # 17.4k-test run was canceled mid-build at 45m18s). 60 adds durable headroom.
-    timeout-minutes: 60
+    # Sharded into a parallel matrix — see docs/replatform/CI-VERIFY-PARALLELIZATION.md.
+    # The `Run tests` step ran the whole monorepo suite (vitest over all 25
+    # projects[]) in ONE lane: ~56 min at vitest maxForks=2, which capped out at 60
+    # on 5+ consecutive runs (GO-BOOK §2.0) — a VOLUME problem (156+ embedded-PG
+    # integration files, one lane), not a hang (the suite runs to completion).
+    # `vitest run --shard=i/4` splits the file set across 4 runners so each shard
+    # lands ~28 min. fail-fast:false so a red shard does NOT cancel its siblings —
+    # we want the full picture. Aggregation stays correct: ci-required's
+    # R_VERIFY = needs.verify.result is `success` ONLY if EVERY leg succeeds, so a
+    # single shard failure still fails the required gate (no pass-by-skip) — the
+    # same matrix-into-ci-required pattern worker-protocol-contract-bytes already
+    # relies on. Do NOT add continue-on-error (it would let a failed leg report
+    # success).
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    # A PER-SHARD cap. Do NOT raise: a shard that still can't finish under it is a signal
+    # to shard finer or to investigate a slow test, never to raise the cap (GO-BOOK §2.0).
+    #
+    # ★ 60 → 37 (2026-09-04). The 60 predates sharding and was never re-derived after it:
+    # measured across 52 shard runs, a shard's WORK is 703/902/1092s, so the old cap carried
+    # ~42 minutes of undeclared slack above the worst observed shard. That is the same shape
+    # as the hang this cap once masked for weeks — a number large enough that nothing short of
+    # a total stall could reach it, which is a cap that has stopped being a check. 37 is
+    # 1700s of work budget (1.56× the worst measured shard) plus the 480s pnpm allowance the
+    # step below now carries under its own name.
+    # Cap DERIVED: workBudgetSeconds 1700 + setupAllowanceSeconds 480
+    # in .github/ci-timeout-budgets.json. Do not edit this number alone.
+    timeout-minutes: 37
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup pnpm
+        # This step's OWN cap, derived from setupAllowanceSeconds in
+        # .github/ci-timeout-budgets.json. Without it a slow registry spends the JOB
+        # budget and GitHub blames whichever step is at the wall (E6-F014 addendum).
+        timeout-minutes: 8
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9.15.4
@@ -255,14 +1073,65 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # worker-protocol + sandbox-fake-provider are dist-only leaves (package.json
+      # exports resolve to ./dist), and Typecheck/Run tests run BEFORE Build — so
+      # their consumers (server, worker-daemon, sandbox-provider-contract) cannot
+      # resolve them on a fresh checkout until they are built. Build the leaves
+      # first (topo order); the later Build step is unchanged.
+      - name: Build dist-only leaves (required by typecheck + tests)
+        run: |
+          pnpm --filter @armyofagents/worker-protocol build
+          pnpm --filter @armyofagents/sandbox-fake-provider build
+          # worker-daemon + sandbox-provider-contract are dist-only leaves the
+          # CLI-001 @armyofagents/sandbox-e2b-provider imports BY NAME (its tests +
+          # typecheck resolve them via package exports → ./dist); build them here.
+          pnpm --filter @armyofagents/worker-daemon build
+          pnpm --filter @armyofagents/sandbox-provider-contract build
+          # DEP-010: worker-keystore now depends on @armyofagents/sandbox-e2b-provider
+          # (a dist-only leaf) via a LITERAL DYNAMIC import in bin/sandbox-provider.ts.
+          # worker-keystore's tsc --noEmit needs the .d.ts and its vitest project needs the
+          # .js, and Typecheck/Run tests run BEFORE Build — so build it here (after its own
+          # worker-daemon + sandbox-provider-contract deps, above).
+          pnpm --filter @armyofagents/sandbox-e2b-provider build
+
       - name: Typecheck
         run: pnpm -r typecheck
 
       - name: Run tests
-        run: pnpm test:run
+        # Invoke vitest DIRECTLY via `pnpm exec` (the same form the browser lane
+        # uses), NOT `pnpm test:run -- --shard=…`: pnpm 9.15.4 forwards the `--`
+        # literally, so `pnpm test:run -- --shard=1/4` runs `vitest run -- --shard=1/4`
+        # and vitest's cac parser treats everything after the bare `--` as non-option
+        # passthrough — the shard flag is SILENTLY IGNORED and every shard runs the
+        # whole suite (proven on run 33012727670: 4 shards each ~52 min, no split).
+        # `pnpm exec vitest run --shard=…` passes the flag cleanly.
+        #
+        # The --shard denominator MUST equal the matrix length above (4). vitest
+        # 3.2.6 hashes each spec's project-relative path and slices a disjoint
+        # partition, so the 4 shards' union is exactly the full file set — no spec
+        # dropped, none run twice (verified on the PR: Σ per-shard Test Files =
+        # single-lane count; check-test-inventory unchanged).
+        run: pnpm exec vitest run --shard=${{ matrix.shard }}/4
 
       - name: Build
         run: pnpm build
+
+      # Packs the just-built @armyofagents/worker-protocol, enforces the tarball
+      # allow-list, and import-smokes it (with its declared `zod` dep provisioned
+      # offline) from minimal server + worker consumers. Lives here — after the
+      # workspace build (`pnpm -r build` builds this leaf package) — because it
+      # needs the built `dist`; the dependency-free `policy` job cannot run it.
+      - name: Worker protocol package import smoke
+        run: node scripts/check-worker-protocol-package.mjs
+
+      # The half of scripts/check-w10a-sdk-capability-premise.mjs that needs an installed
+      # dependency. Lives HERE, after `pnpm install`, for the same reason the worker-protocol
+      # import smoke does: the dependency-free `policy` job cannot resolve `e2b` and runs the
+      # same guard without --require-sdk. Under the flag, an unresolvable SDK is a FAILURE
+      # rather than a note, so the surface behind E8-F007 is measured somewhere on every PR
+      # and never merely asserted.
+      - name: SDK capability premise (live surface - E8-F007)
+        run: node scripts/check-w10a-sdk-capability-premise.mjs --require-sdk
 
       - name: Tool contract freshness
         run: |
@@ -280,13 +1149,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
-    timeout-minutes: 15
+    # Cap DERIVED: workBudgetSeconds 120 + setupAllowanceSeconds 480
+    # in .github/ci-timeout-budgets.json. Do not edit this number alone.
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup pnpm
+        # This step's OWN cap, derived from setupAllowanceSeconds in
+        # .github/ci-timeout-budgets.json. Without it a slow registry spends the JOB
+        # budget and GitHub blames whichever step is at the wall (E6-F014 addendum).
+        timeout-minutes: 8
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9.15.4
@@ -307,13 +1182,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
-    timeout-minutes: 30
+    # Cap DERIVED: workBudgetSeconds 1500 + setupAllowanceSeconds 480
+    # in .github/ci-timeout-budgets.json. Do not edit this number alone.
+    timeout-minutes: 33
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup pnpm
+        # This step's OWN cap, derived from setupAllowanceSeconds in
+        # .github/ci-timeout-budgets.json. Without it a slow registry spends the JOB
+        # budget and GitHub blames whichever step is at the wall (E6-F014 addendum).
+        timeout-minutes: 8
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9.15.4
@@ -331,17 +1212,30 @@ jobs:
         run: pnpm build
 
       - name: Pin marketplace catalog fixture for stable e2e
-        # `pnpm build` ran prebuild → fetched the live CDN catalog, which
-        # evolves independently of this repo. Override with a frozen fixture
-        # so e2e assertions don't depend on whichever items are currently on
-        # the CDN. Server reads the snapshot lazily on first /api/marketplace
-        # request, so overwriting before `Run e2e tests` is sufficient.
+        # Authoritative `pnpm build` is network-free (FND-005): prebuild verifies
+        # the pinned checked-in snapshots instead of fetching the live CDN. Pin
+        # the frozen fixture so e2e assertions don't depend on whichever items are
+        # currently checked in. Server reads the snapshot lazily on first
+        # /api/marketplace request, so overwriting before `Run e2e tests` is
+        # sufficient.
         run: cp tests/e2e/fixtures/marketplace-catalog.json ui/src/aoa-marketplace-snapshot.json
 
       - name: Install Playwright
         run: |
-          # OS libraries for chromium (apt). Always works on the runner.
-          npx playwright install-deps chromium
+          # OS libraries for chromium (apt). BOUNDED. This is apt, and apt stalls: observed twice in a row on
+          # run 32291821396, hanging ~20 min on archive.ubuntu.com after
+          # `Get:5 noble-security InRelease` until the job timeout killed it
+          # (`Terminate orphan process: npm exec playwright install-deps chromium`).
+          # The CI-4 hardening below bounds the BROWSER download and falls back to
+          # Google storage, but it never covered this line — so an apt stall burned
+          # the whole job and turned `ci-required` red with every other lane green.
+          # The runner image already ships chromium's OS libraries, so a failure
+          # here is usually a no-op; if the libs really are absent the browser
+          # launch fails later with a clear error, which beats a silent 20-minute
+          # hang. Warn and continue.
+          if ! timeout 300 npx playwright install-deps chromium; then
+            echo "::warning::playwright install-deps (apt) stalled or failed; continuing — the runner image normally already carries chromium's OS libraries"
+          fi
           # Browser binaries. cdn.playwright.dev intermittently stalls on the
           # Chrome-for-Testing archives (multi-minute hangs that exhaust this
           # job's timeout before any test runs). Try the normal install with a
@@ -353,7 +1247,7 @@ jobs:
             bash tests/e2e/scripts/install-chromium-from-google.sh
           fi
 
-      - name: Generate AoA config
+      - name: Generate Paperclip config
         run: |
           mkdir -p ~/.aoa/instances/default
           cat > ~/.aoa/instances/default/config.json << 'CONF'
@@ -393,7 +1287,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
-    timeout-minutes: 15
+    # Cap DERIVED: workBudgetSeconds 170 + setupAllowanceSeconds 480
+    # in .github/ci-timeout-budgets.json. Do not edit this number alone.
+    timeout-minutes: 11
 
     services:
       postgres:
@@ -415,6 +1311,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup pnpm
+        # This step's OWN cap, derived from setupAllowanceSeconds in
+        # .github/ci-timeout-budgets.json. Without it a slow registry spends the JOB
+        # budget and GitHub blames whichever step is at the wall (E6-F014 addendum).
+        timeout-minutes: 8
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9.15.4
@@ -430,6 +1330,17 @@ jobs:
 
       - name: Build packages/db (drizzle config reads from dist/)
         run: pnpm --filter @armyofagents/db build
+
+      # E8-F005: the schema and the migrations are two statements of the same truth, and
+      # nothing here compared them — reverting a `.notNull()` while leaving its migration in
+      # place shipped CI-green. This DB-free step regenerates into a scratch dir and fails on
+      # any non-empty schema-vs-snapshot delta. C14-safe: hand-authored idempotency guards and
+      # `--custom` cluster/security DDL do not change the snapshot, so they produce no delta.
+      - name: Schema↔migration drift gate (E8-F005)
+        run: node scripts/check-schema-migration-drift.mjs
+
+      - name: Schema↔migration drift gate self-test (E8-F005 decision logic + wiring)
+        run: node --test scripts/check-schema-migration-drift.test.mjs
 
       - name: Apply all migrations from scratch
         env:
@@ -521,7 +1432,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
-    timeout-minutes: 25
+    # Cap DERIVED: workBudgetSeconds 600 + setupAllowanceSeconds 480
+    # in .github/ci-timeout-budgets.json. Do not edit this number alone.
+    timeout-minutes: 18
 
     services:
       postgres:
@@ -543,6 +1456,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup pnpm
+        # This step's OWN cap, derived from setupAllowanceSeconds in
+        # .github/ci-timeout-budgets.json. Without it a slow registry spends the JOB
+        # budget and GitHub blames whichever step is at the wall (E6-F014 addendum).
+        timeout-minutes: 8
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9.15.4
@@ -564,7 +1481,20 @@ jobs:
 
       - name: Install Playwright
         run: |
-          npx playwright install-deps chromium
+          # BOUNDED. This is apt, and apt stalls: observed twice in a row on
+          # run 32291821396, hanging ~20 min on archive.ubuntu.com after
+          # `Get:5 noble-security InRelease` until the job timeout killed it
+          # (`Terminate orphan process: npm exec playwright install-deps chromium`).
+          # The CI-4 hardening below bounds the BROWSER download and falls back to
+          # Google storage, but it never covered this line — so an apt stall burned
+          # the whole job and turned `ci-required` red with every other lane green.
+          # The runner image already ships chromium's OS libraries, so a failure
+          # here is usually a no-op; if the libs really are absent the browser
+          # launch fails later with a clear error, which beats a silent 20-minute
+          # hang. Warn and continue.
+          if ! timeout 300 npx playwright install-deps chromium; then
+            echo "::warning::playwright install-deps (apt) stalled or failed; continuing — the runner image normally already carries chromium's OS libraries"
+          fi
           if ! timeout 150 npx playwright install chromium; then
             echo "::warning::playwright browser install via cdn.playwright.dev stalled or failed; falling back to Google Chrome-for-Testing storage"
             bash tests/e2e/scripts/install-chromium-from-google.sh
@@ -596,14 +1526,191 @@ jobs:
             tests/e2e/test-results/
           retention-days: 14
 
+  # DEP-004 MANDATORY CONSUMER: the focused distributed-execution contract lane.
+  # Runs ONLY when a protocol/schema/fixtures/provider path-class changed (the
+  # `changes` detector); its verdict is folded into ci-required — required for a
+  # PR that touched those classes, skipped-allowed otherwise, EXACTLY like the
+  # `code`-gated docs-only pattern. It is NEVER an independently-required
+  # branch-protection check, and there is NEVER a trigger-level `paths:` filter
+  # (both would let a skipped required check pass silently). Bundles: the DEP-000
+  # fake-provider + provider-neutral contract suites, the fixture-determinism +
+  # foundation structural checker, and the DEP-003 readiness/0188-preflight pure
+  # suites. Draft-guarded like the rest. (Live docker/compose lanes are the
+  # separate d1-merge-train.yml, not this fast unit/contract lane.)
+  distributed-contract:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ (needs.changes.outputs.protocol == 'true' || needs.changes.outputs.schema == 'true' || needs.changes.outputs.fixtures == 'true' || needs.changes.outputs.provider == 'true') && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    # Cap DERIVED: workBudgetSeconds 120 + setupAllowanceSeconds 480
+    # in .github/ci-timeout-budgets.json. Do not edit this number alone.
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        # This step's OWN cap, derived from setupAllowanceSeconds in
+        # .github/ci-timeout-budgets.json. Without it a slow registry spends the JOB
+        # budget and GitHub blames whichever step is at the wall (E6-F014 addendum).
+        timeout-minutes: 8
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The contract suites import @armyofagents/worker-protocol AND
+      # @armyofagents/sandbox-fake-provider; both are dist-only leaves. The CLI-001
+      # @armyofagents/sandbox-e2b-provider additionally imports @armyofagents/
+      # worker-daemon + @armyofagents/sandbox-provider-contract BY NAME (its tests
+      # resolve them via package exports → ./dist).
+      - name: Build dist-only leaves (required by the contract suites)
+        run: |
+          pnpm --filter @armyofagents/worker-protocol build
+          pnpm --filter @armyofagents/sandbox-fake-provider build
+          pnpm --filter @armyofagents/worker-daemon build
+          pnpm --filter @armyofagents/sandbox-provider-contract build
+          # DEP-010: mirrored from the `verify` pre-build list to keep the two lists
+          # identical (they have been kept in step since CLI-001). Symmetry, not necessity:
+          # this job resolves nothing named @armyofagents/sandbox-e2b-provider through
+          # worker-keystore, so the line is a future-drift guard rather than a fix.
+          pnpm --filter @armyofagents/sandbox-e2b-provider build
+
+      - name: Distributed-execution foundation + fixture-determinism contracts
+        run: node scripts/check-distributed-execution-foundation.mjs
+
+      - name: DEP-000 fake sandbox provider + provider-neutral contract suites
+        run: |
+          pnpm --filter @armyofagents/sandbox-fake-provider test:run
+          pnpm --filter @armyofagents/sandbox-provider-contract test:run
+
+      - name: CLI-001 E2B provider driver + E6-F008 adapter suites (no-key core)
+        run: pnpm --filter @armyofagents/sandbox-e2b-provider test:run
+
+      - name: DEP-003 readiness + 0188 cutover preflight (pure) suites
+        run: >-
+          pnpm --filter @armyofagents/server exec vitest run
+          src/__tests__/cutover-0188-preflight.test.ts
+          src/__tests__/readiness-liveness.test.ts
+
   # Single required status check. Branch protection requires ONLY this job.
   # Runs ALWAYS (`!cancelled()`), even when upstream jobs fail or skip, and
   # computes the verdict explicitly so a `skipped` job cannot silently pass —
   # closing the Phase 1 skip-success class. On a draft PR `changes` is skipped,
   # so this gate goes RED (drafts are unmergeable; a passing required check
   # there would be the footgun). Marking ready re-runs everything for real.
+  # BRW-002 — the browser lane. Runs the sandbox-local browser runtime's clauses against a
+  # REAL Chromium. It exists because plan review established there was no environment in which
+  # any BRW-002 acceptance clause could FAIL: the vitest project list had no browser entry and
+  # `verify` installs no browsers, so every containment/download/teardown assertion would have
+  # been unfalsifiable — this programme's signature defect.
+  #
+  # Deliberately NOT the D1 topology (that is BRW-005's, by three separate documents). It is
+  # the minimum that makes this ticket's own clauses provable: one Linux runner, one browser,
+  # one in-process fixture site.
+  #
+  # Linux specifically: the containment proof reads /proc/net/tcp{,6} to measure the listening
+  # sockets the browser adds, and those files do not exist on Windows or macOS.
+  browser:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    # Cap DERIVED: workBudgetSeconds 200 + setupAllowanceSeconds 480
+    # in .github/ci-timeout-budgets.json. Do not edit this number alone.
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        # This step's OWN cap, derived from setupAllowanceSeconds in
+        # .github/ci-timeout-budgets.json. Without it a slow registry spends the JOB
+        # budget and GitHub blames whichever step is at the wall (E6-F014 addendum).
+        timeout-minutes: 8
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `--with-deps` installs the system libraries headless Chromium needs on a bare runner.
+      # Only chromium is fetched: the runtime pins `engine: "chromium"` in the frozen browser
+      # workload, so firefox/webkit would be minutes of download proving nothing.
+      - name: Install Chromium
+        run: pnpm --filter @armyofagents/browser-runtime exec playwright install --with-deps chromium
+
+      # CONFIGURE THE ENVIRONMENT TO SUPPORT SANDBOXING — do NOT disable the sandbox.
+      #
+      # Ubuntu 23.10+ (which GitHub runners are) restricts unprivileged user namespaces with
+      # AppArmor, and Chromium's zygote needs them: without this the launch dies with
+      # "No usable sandbox!". Chromium's own message offers two ways out and names this one
+      # as preferred; the alternative it suggests is `chromiumSandbox: false`, which would
+      # silently downgrade the containment property this whole ticket is about. The design
+      # said a refusal here is a finding to escalate, never a flag to quietly drop — so the
+      # lane fixes the environment and keeps `chromiumSandbox: true`.
+      #
+      # Safe on an ephemeral runner: the VM is destroyed after the job.
+      # Deliberately NON-FATAL. On a runner image without the AppArmor restriction the sysctl
+      # key does not exist, and a hard failure here would fail the job for the wrong reason
+      # and MASK the browser verdict. The browser step below is the source of truth: if the
+      # sandbox still cannot start, its assertion fails with Chromium's own diagnostic.
+      - name: Allow Chromium's OS sandbox (unprivileged user namespaces)
+        run: |
+          before=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null || echo "absent")
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 >/dev/null 2>&1 \
+            || echo "::warning::could not set kernel.apparmor_restrict_unprivileged_userns (was: $before)"
+          after=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null || echo "absent")
+          echo "apparmor_restrict_unprivileged_userns: $before -> $after"
+          echo "kernel: $(uname -r) | $(. /etc/os-release && echo "$PRETTY_NAME")"
+
+      # The teardown tests spawn `dist/runner.js` as a real process, so the package must be
+      # COMPILED before they run. Without this they fail in ~30ms with a missing module, which
+      # is exactly how they failed on the first CI run of this lane.
+      - name: Build the runtime (the teardown tests spawn dist/runner.js)
+        run: pnpm --filter @armyofagents/browser-runtime build
+
+      # AOA_RUN_BROWSER_TESTS is what un-skips the *.browser.test.ts suites. Without it they
+      # skip everywhere, which would make this lane a check that runs nothing.
+      #
+      # The output is captured ONCE and asserted below, rather than re-running the suite: a
+      # second full run would double the lane's cost to prove something the first run's own
+      # output already shows.
+      - name: Run the browser clauses
+        env:
+          AOA_RUN_BROWSER_TESTS: "1"
+        run: |
+          set -o pipefail
+          # Emit BOTH reporters: `basic` for a human-readable log, `json` for the
+          # execution guard. The guard used to grep this log and was defeated by the
+          # ANSI colour codes vitest wraps the count in, failing a run in which all 94
+          # browser tests passed. Structured counts cannot be defeated by formatting.
+          pnpm --filter @armyofagents/browser-runtime exec vitest run \
+            --reporter=basic --reporter=json --outputFile.json=/tmp/browser-suite.json
+
+      # Fail loudly if the browser suite did not actually EXECUTE. A green lane that ran zero
+      # browser tests is exactly the shape this lane was created to eliminate — and the
+      # clauses would be unproven while the gate showed green.
+      - name: Prove the browser suite was not skipped
+        run: node scripts/check-browser-suite-executed.mjs /tmp/browser-suite.json
+
   ci-required:
-    needs: [changes, policy, brand-check, verify, lint, e2e, e2e-pgvector, migrations]
+    needs: [changes, policy, brand-check, worker-protocol-contract-bytes, verify, lint, e2e, e2e-pgvector, migrations, distributed-contract, browser]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -614,21 +1721,32 @@ jobs:
           R_CHANGES: ${{ needs.changes.result }}
           R_POLICY: ${{ needs.policy.result }}
           R_BRAND: ${{ needs['brand-check'].result }}
+          R_WP_BYTES: ${{ needs['worker-protocol-contract-bytes'].result }}
           R_VERIFY: ${{ needs.verify.result }}
           R_LINT: ${{ needs.lint.result }}
           R_E2E: ${{ needs.e2e.result }}
           R_E2E_PGVECTOR: ${{ needs['e2e-pgvector'].result }}
           R_MIGRATIONS: ${{ needs.migrations.result }}
+          # BRW-002: the browser lane, required on the same terms as the other heavy jobs.
+          R_BROWSER: ${{ needs.browser.result }}
+          # DEP-004: the distributed-contract consumer + its four gating classes.
+          R_DC: ${{ needs['distributed-contract'].result }}
+          R_PROTOCOL: ${{ needs.changes.outputs.protocol }}
+          R_SCHEMA: ${{ needs.changes.outputs.schema }}
+          R_FIXTURES: ${{ needs.changes.outputs.fixtures }}
+          R_PROVIDER: ${{ needs.changes.outputs.provider }}
         run: |
-          echo "code=$R_CODE | changes=$R_CHANGES policy=$R_POLICY brand-check=$R_BRAND verify=$R_VERIFY lint=$R_LINT e2e=$R_E2E e2e-pgvector=$R_E2E_PGVECTOR migrations=$R_MIGRATIONS"
+          echo "code=$R_CODE | changes=$R_CHANGES policy=$R_POLICY brand-check=$R_BRAND worker-protocol-contract-bytes=$R_WP_BYTES verify=$R_VERIFY lint=$R_LINT e2e=$R_E2E e2e-pgvector=$R_E2E_PGVECTOR migrations=$R_MIGRATIONS browser=$R_BROWSER"
+          echo "distributed-contract=$R_DC | protocol=$R_PROTOCOL schema=$R_SCHEMA fixtures=$R_FIXTURES provider=$R_PROVIDER"
           fail=0
           # Detector must have succeeded. Skipped (draft) => red, by design.
           if [ "$R_CHANGES" != "success" ]; then
             echo "::error::changes detector not success ($R_CHANGES) — draft or detector failure"
             fail=1
           fi
-          # Always-on cheap gates must pass.
-          for kv in "policy=$R_POLICY" "brand-check=$R_BRAND"; do
+          # Always-on cheap gates must pass (the contract-bytes matrix is
+          # dependency-free and byte-deterministic on both Linux and Windows).
+          for kv in "policy=$R_POLICY" "brand-check=$R_BRAND" "worker-protocol-contract-bytes=$R_WP_BYTES"; do
             name="${kv%%=*}"; res="${kv#*=}"
             [ "$res" = "success" ] || { echo "::error::$name=$res (required)"; fail=1; }
           done
@@ -641,10 +1759,22 @@ jobs:
           # Heavy jobs required to pass ONLY when code changed. On a docs-only
           # PR (code=false) they are skipped, which is allowed.
           if [ "$R_CODE" = "true" ]; then
-            for kv in "verify=$R_VERIFY" "lint=$R_LINT" "e2e=$R_E2E" "e2e-pgvector=$R_E2E_PGVECTOR" "migrations=$R_MIGRATIONS"; do
+            for kv in "verify=$R_VERIFY" "lint=$R_LINT" "e2e=$R_E2E" "e2e-pgvector=$R_E2E_PGVECTOR" "migrations=$R_MIGRATIONS" "browser=$R_BROWSER"; do
               name="${kv%%=*}"; res="${kv#*=}"
               [ "$res" = "success" ] || { echo "::error::$name=$res (required for code changes)"; fail=1; }
             done
+          fi
+          # DEP-004: the distributed-contract consumer is required ONLY when a
+          # protocol/schema/fixtures/provider path-class changed. On any other PR
+          # it is skipped, which is allowed — EXACTLY the code-gated docs-only
+          # pattern above (a skipped consumer is a PASS only when its class did not
+          # change). This is why there is no trigger-level paths: filter.
+          contract_changed=false
+          for c in "$R_PROTOCOL" "$R_SCHEMA" "$R_FIXTURES" "$R_PROVIDER"; do
+            [ "$c" = "true" ] && contract_changed=true
+          done
+          if [ "$contract_changed" = "true" ]; then
+            [ "$R_DC" = "success" ] || { echo "::error::distributed-contract=$R_DC (required for protocol/schema/fixtures/provider changes)"; fail=1; }
           fi
           [ "$fail" = "0" ] && echo "ci-required: PASS"
           exit $fail

@@ -209,7 +209,7 @@ export function buildJoinDefaultsPayloadForAccept(input: {
   responsesWebhookUrl?: unknown;
   responsesWebhookMethod?: unknown;
   responsesWebhookHeaders?: unknown;
-  aoaApiUrl?: unknown;
+  paperclipApiUrl?: unknown;
   webhookAuthHeader?: unknown;
   inboundOpenClawAuthHeader?: string | null;
   inboundOpenClawTokenHeader?: string | null;
@@ -232,9 +232,9 @@ export function buildJoinDefaultsPayloadForAccept(input: {
     if (legacyMethod) merged.method = legacyMethod.toUpperCase();
   }
 
-  if (!nonEmptyTrimmedString(merged.aoaApiUrl)) {
-    const providedAoaApiUrl = nonEmptyTrimmedString(input.aoaApiUrl);
-    if (providedAoaApiUrl) merged.aoaApiUrl = providedAoaApiUrl;
+  if (!nonEmptyTrimmedString(merged.paperclipApiUrl)) {
+    const legacyAoaApiUrl = nonEmptyTrimmedString(input.paperclipApiUrl);
+    if (legacyAoaApiUrl) merged.paperclipApiUrl = legacyAoaApiUrl;
   }
 
   if (!nonEmptyTrimmedString(merged.webhookAuthHeader)) {
@@ -565,7 +565,7 @@ export function buildInviteOnboardingTextDocument(
     "",
     "## Step 2: Wait for approval, then claim API key",
     "/api/join-requests/{requestId}/claim-api-key",
-    "~/.openclaw/workspace/aoa-claimed-api-key.json",
+    "~/.openclaw/workspace/paperclip-claimed-api-key.json",
     "AOA_API_KEY",
     "saved token field",
     "",
@@ -575,8 +575,8 @@ export function buildInviteOnboardingTextDocument(
     "Suggested AoA base URLs to try",
     ...candidates,
     "",
-    "set the first reachable candidate as agentDefaultsPayload.aoaApiUrl",
-    "aoaApiUrl",
+    "set the first reachable candidate as agentDefaultsPayload.paperclipApiUrl",
+    "paperclipApiUrl",
     "If none are reachable, stop and fix AoA hostname exposure before retrying.",
   );
 

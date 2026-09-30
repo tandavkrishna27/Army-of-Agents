@@ -1,4 +1,4 @@
-# @armyofagents/adapter-opencode-local
+# @paperclipai/adapter-opencode-local
 
 ## 0.2.7
 

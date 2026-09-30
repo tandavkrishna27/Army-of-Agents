@@ -1,13 +1,16 @@
 /// <reference path="./types/express.d.ts" />
+import "./env-compat.js"; // side-effect: mirror PAPERCLIP_* env to AOA_* for migration
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import type { Request as ExpressRequest, RequestHandler } from "express";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, exists, gt, ne, sql } from "drizzle-orm";
 import {
   createDb,
+  assertPrimaryDbBypassesRls,
+  loadRequiredMigrationIdentity,
   ensurePostgresDatabase,
   inspectMigrations,
   applyPendingMigrations,
@@ -18,12 +21,37 @@ import {
   companies,
   companyMemberships,
   instanceUserRoles,
+  organizations,
 } from "@armyofagents/db";
 import detectPort from "detect-port";
+import postgres from "postgres";
 import { createApp } from "./app.js";
+import { buildReadinessProbe } from "./routes/readiness.js";
+import { loadSchemaCompatibility } from "./services/schema-compatibility.js";
+import { setDistributedRolloutPort } from "./services/distributed-rollout-port.js";
+import { setProviderCredentialBrokerDb } from "./services/provider-resolution-deps.js";
+import {
+  OPERATOR_ROLE,
+  TENANT_APP_ROLE,
+  provisionTenantAppRoleLoginSql,
+} from "./db/rls-tenant.js";
+import {
+  assertManifestedSecurityDefinerFunctions,
+  openDistributedExecutionDatabases,
+} from "./db/distributed-execution-databases.js";
+import { tenantIsolationEnforced } from "./config/deployment-mode.js";
+import { reconcileCloudBlockedPlugins } from "./services/plugin-lifecycle.js";
 import { loadConfig } from "./config.js";
+import { loadConfigWithStartupSafetyAudit } from "./config/hosted-execution-startup-audit.js";
+import { loadControlPlaneSigningKey } from "./config/control-plane-signing-key.js";
 import { logger } from "./middleware/logger.js";
 import { setupLiveEventsWebSocketServer } from "./realtime/live-events-ws.js";
+import { setLiveEventLogStore, wasLocallyPublished } from "./services/live-events.js";
+import { createLiveEventLogStore } from "./services/live-event-log-store.js";
+import {
+  createBrokerDrainer,
+  attachLiveEventBrokerListener,
+} from "./services/live-event-broker-listener.js";
 import {
   heartbeatService,
   agentRuntimeDecisionService,
@@ -56,6 +84,7 @@ import { scheduleWarmSandboxReaper } from "./services/warm-sandbox-reaper.js";
 import { scheduleCleanupRetrySweeper } from "./services/workspace-cleanup-retry-sweeper.js";
 import { scheduleClaudeConfigDirSweeper } from "./services/claude-config-dir-sweeper.js";
 import { registerHeartbeatWatchdogSweeper } from "./services/heartbeat-watchdog.js";
+import { createCrewAttemptTerminalProjection } from "./services/internal-agent/aoa-agents/crew-terminal-projection.js";
 import { startEmbeddingWorker } from "./services/embeddings-worker.js";
 import { startMentionOutboxWorker } from "./services/mention-outbox-worker.js";
 import { startCommentWakeupOutboxWorker } from "./services/comment-wakeup-outbox-worker.js";
@@ -67,11 +96,18 @@ import { buildCommanderLoginService } from "./services/commander-login-runtime.j
 import { initThreadEventListener } from "./services/thread-events.js";
 import { onBudgetExhausted } from "./services/budget-hooks.js";
 import { createStorageServiceFromConfig } from "./storage/index.js";
+import { universeIntakeService } from "./services/universe-intake.js";
 import { printStartupBanner } from "./startup-banner.js";
 import { getBoardClaimWarningUrl, initializeBoardClaimChallenge } from "./board-claim.js";
 import { tryRecoverOrphanPostgres } from "./postgres/embedded-orphan-recovery.js";
 import { assertTestSupportFlagSafe } from "./services/test-support-safety.js";
 import { createProcessShutdownHandler } from "./services/server-shutdown.js";
+// NOTE: JobReadyScheduler / JobControlMetrics are referenced ONLY as types below
+// (see the `import(...)`-type annotations at their `let` sites). They are kept out
+// of the static import list on purpose: a top-level `import`/`import type` here is
+// caught by the flag-off import-graph guard (tenant-app-db-startup.test.ts), which
+// forbids the E3 job-control runtime from entering the bootstrap import graph. The
+// real runtime load is the lazy `await import(...)` inside the flag-on branch.
 import { DEFAULT_BACKUP_RETENTION } from "@armyofagents/shared";
 import { runChroniclerSweep, CHRONICLER_SWEEP_INTERVAL_MS } from "./services/internal-agent/aoa-agents/sweep-chronicler.js";
 import { ensureCrewAgents, ensureInfrastructureAgents, isCrewMarketplaceManaged } from "./services/internal-agent/aoa-agents/crew-seeding.js";
@@ -130,7 +166,13 @@ type EmbeddedPostgresCtor = new (opts: {
   onError?: (message: unknown) => void;
 }) => EmbeddedPostgresInstance;
 
-const config = loadConfig();
+// DE-14 — "the startup safety-assertion outcome is logged". This is the one
+// production call site that records it, in BOTH directions: a pass logs what
+// `assertHostedExecutionStartupSafe` returned, and a refusal logs its reason and
+// is rethrown unchanged so the process still dies before serving. The logger is
+// injected because `config.ts` and `config/distributed-execution.ts` are
+// deliberately logger-free; this module already imports the logger statically.
+const config = loadConfigWithStartupSafetyAudit({ load: loadConfig, log: logger });
 
 // Dev/sandbox affordance (opt-in via AOA_STRIP_CC_ENV=1): when AoA is launched
 // from inside a Claude Code session — especially a staging session — the inherited
@@ -260,6 +302,34 @@ async function ensureMigrations(
     deploymentMode: config.deploymentMode,
   });
   return "applied (pending migrations)";
+}
+
+/**
+ * Corrective successor to E2-D03: flag-gated privileged provisioning of optional
+ * `aoa_app` / `aoa_operator` LOGIN credentials. DORMANT BY DEFAULT and a strict
+ * no-op while distributed execution is off. Runs after migrations under the
+ * bootstrap owner; the committed migration creates both roles NOLOGIN. Flag-on
+ * startup opens and verifies the separate non-owner pools immediately afterward.
+ */
+async function maybeProvisionDistributedExecutionRoles(connectionString: string): Promise<void> {
+  if (!config.distributedExecutionEnabled) return;
+  const credentials = [
+    [TENANT_APP_ROLE, process.env.AOA_APP_DB_PASSWORD],
+    [OPERATOR_ROLE, process.env.AOA_OPERATOR_DB_PASSWORD],
+  ] as const;
+  if (!credentials.some(([, password]) => password?.trim())) return;
+  const sql = postgres(connectionString, { max: 1 });
+  try {
+    for (const [role, password] of credentials) {
+      if (!password?.trim()) continue;
+      // ALTER ROLE PASSWORD cannot be parameter-bound; the builder validates the
+      // role and escapes the secret. Neither the credential nor URL is logged.
+      await sql.unsafe(provisionTenantAppRoleLoginSql(role, password));
+      logger.info(`Provisioned ${role} non-owner login credential (distributed execution enabled)`);
+    }
+  } finally {
+    await sql.end();
+  }
 }
 
 function isLoopbackHost(host: string): boolean {
@@ -431,8 +501,8 @@ if (config.databaseUrl) {
     logger.info(`Using embedded PostgreSQL because no DATABASE_URL set (dataDir=${dataDir}, port=${port})`);
     embeddedPostgres = new EmbeddedPostgres({
       databaseDir: dataDir,
-      user: "aoa",
-      password: "aoa",
+      user: "paperclip",
+      password: "paperclip",
       port,
       persistent: true,
       // Force UTF-8 encoding + locale=C at cluster creation. Without this,
@@ -477,13 +547,13 @@ if (config.databaseUrl) {
     embeddedPostgresStartedByThisProcess = true;
   }
 
-  const embeddedAdminConnectionString = `postgres://aoa:aoa@127.0.0.1:${port}/postgres`;
-  const dbStatus = await ensurePostgresDatabase(embeddedAdminConnectionString, "aoa");
+  const embeddedAdminConnectionString = `postgres://paperclip:paperclip@127.0.0.1:${port}/postgres`;
+  const dbStatus = await ensurePostgresDatabase(embeddedAdminConnectionString, "paperclip");
   if (dbStatus === "created") {
-    logger.info("Created embedded PostgreSQL database: aoa");
+    logger.info("Created embedded PostgreSQL database: paperclip");
   }
 
-  const embeddedConnectionString = `postgres://aoa:aoa@127.0.0.1:${port}/aoa`;
+  const embeddedConnectionString = `postgres://paperclip:paperclip@127.0.0.1:${port}/paperclip`;
   const shouldAutoApplyFirstRunMigrations = !clusterAlreadyInitialized || dbStatus === "created";
   if (shouldAutoApplyFirstRunMigrations) {
     logger.info("Detected first-run embedded PostgreSQL setup; applying pending migrations automatically");
@@ -496,6 +566,151 @@ if (config.databaseUrl) {
   logger.info("Embedded PostgreSQL ready");
   activeDatabaseConnectionString = embeddedConnectionString;
   startupDbInfo = { mode: "embedded-postgres", dataDir, port };
+}
+
+// Optional boot-only credential provisioning remains dormant by default. External
+// secret managers may instead provision the URLs' credentials ahead of startup.
+await maybeProvisionDistributedExecutionRoles(activeDatabaseConnectionString);
+
+// The SECURITY DEFINER certificate's POSITIVE arm, on EVERY boot — flag on or off.
+// Migration 0266 creates the two `public.canary_preflight_evidence_*` functions on every deployment and grants
+// `aoa_app` EXECUTE on it regardless of the flag; a box that was once flag-on also keeps the
+// LOGIN credential, because `maybeProvisionDistributedExecutionRoles` is a strict no-op when
+// the flag is off and never restores NOLOGIN. So the owner-authority surface exists on
+// flag-off deployments too, and certifying it only under the flag would leave it unwatched
+// exactly where nothing else is watching. Drift here is fatal, per Decision #122's
+// 2026-09-01 amendment.
+//
+// Only the POSITIVE arm (every manifested function pinned to its owner, ACL, execution
+// config and body). The exhaustive "nothing unmanifested exists" arm stays on the flag-on
+// path: it asserts a property of the whole database, and AoA supports `external-postgres`
+// against an operator-owned database where a vendor or extension definer function in another
+// schema is legitimate.
+// ★ REGRESSION GUARD (found by a pre-merge claim audit, not by review). Making this arm
+// unconditional broke a SUPPORTED deployment: `AOA_MIGRATION_PROMPT=never` is documented
+// (docs/deploy/environment-variables.md) and plumbed through docker-compose, and an operator
+// at a TTY who declines the prompt takes the same path. Both log "continuing without
+// applying" and boot ON — at which point the manifested functions genuinely do not exist yet,
+// and an unguarded assertion turns a working box into a hard boot failure.
+//
+// Skipping here is correct rather than merely convenient: when migrations are known pending
+// the schema is known to be behind, so "this function is absent" carries no information about
+// DRIFT, which is the only thing this arm exists to detect. The operator has already been
+// warned about the pending migrations by ensureMigrations. Anything other than a skipped run
+// still asserts, so the drift guarantee is unchanged on every box that is actually migrated.
+if (migrationSummary === "pending migrations skipped") {
+  logger.warn(
+    "Pending migrations were skipped, so the SECURITY DEFINER certificate cannot distinguish " +
+      "drift from not-yet-created. Skipping it for this boot; run `pnpm db:migrate` and restart " +
+      "to re-arm it.",
+  );
+} else {
+  await assertManifestedSecurityDefinerFunctions(db, "startup");
+}
+
+// Corrective E2 successor to E2-D03: flag-on boot must prove both bounded roles
+// before any E3 route/work could start. There is deliberately no owner fallback.
+// Flag-off skips migration identity loading, URL reads, and pool allocation.
+const distributedExecutionDatabases = config.distributedExecutionEnabled
+  ? await openDistributedExecutionDatabases({
+      enabled: true,
+      ownerDb: db,
+      requiredMigrationIdentity: await loadRequiredMigrationIdentity(),
+      appDatabaseUrl: process.env.AOA_APP_DATABASE_URL,
+      operatorDatabaseUrl: process.env.AOA_OPERATOR_DATABASE_URL,
+    })
+  : null;
+if (distributedExecutionDatabases) {
+  logger.info("Verified aoa_app and aoa_operator bounded database pools");
+  // E7-1: register the operator pool for the provider-credential broker (migration 0281). The
+  // multi_tenant credential resolution routes through the SECURITY DEFINER functions over this
+  // pool; read lazily in buildResolveDeps so registration order is irrelevant.
+  setProviderCredentialBrokerDb(distributedExecutionDatabases.operatorDb);
+}
+
+let jobControlRuntime: { stop(): Promise<void> } | null = null;
+let scheduler: import("./services/job-ready-scheduler.js").JobReadyScheduler | undefined;
+let jobControlMetrics: import("./services/job-control-metrics.js").JobControlMetrics | undefined;
+// MIG-002: hoisted out of the job-control block below so the CONVERGENCE sweeper (registered
+// with the canary projection, further down) can share the one org enumerator instead of a
+// second copy. Same shape as `onAttemptTerminal`: present only when the pools exist, because
+// flag-off allocates no `aoa_app` pool at all.
+const listAdmittedOrganizationIds = distributedExecutionDatabases
+  ? async (input: {
+  afterOrganizationId: string | null;
+  limit: number;
+  statementTimeoutMs: number;
+}): Promise<string[]> => {
+  const boundedLimit = Math.max(1, Math.min(32, Math.floor(input.limit)));
+  const boundedTimeout = Math.max(1, Math.min(750, Math.floor(input.statementTimeoutMs)));
+  return distributedExecutionDatabases.appDb.transaction(async (tx) => {
+    await tx.execute(sql`SELECT set_config('statement_timeout', ${String(boundedTimeout)}, true)`);
+    const rows = await tx.select({ id: organizations.id })
+      .from(organizations)
+      .where(and(
+        eq(organizations.status, "active"),
+        ne(organizations.id, "00000000-0000-0000-0000-000000000001"),
+        input.afterOrganizationId
+          ? gt(organizations.id, input.afterOrganizationId)
+          : undefined,
+        exists(
+          tx.select({ id: companies.id })
+            .from(companies)
+            .where(eq(companies.organizationId, organizations.id)),
+        ),
+      ))
+      .orderBy(asc(organizations.id))
+      .limit(boundedLimit);
+    return rows.map((row) => row.id);
+  });
+    }
+  : undefined;
+
+if (config.distributedExecutionEnabled && distributedExecutionDatabases) {
+  // DAT-007 item #1 precondition: the /mcp run-JWT currency resolver reads FORCE-RLS'd
+  // leases/job_attempts on this primary owner pool. Refuse to arm distributed execution unless
+  // the primary role bypasses RLS, or the resolver would read zero rows and deny every
+  // distributed run (fail-closed). Loud boot failure beats a silent, oracle-less 403 storm.
+  await assertPrimaryDbBypassesRls(db);
+  const { createJobReadyScheduler } = await import("./services/job-ready-scheduler.js");
+  const { createJobOutboxWorker } = await import("./services/job-outbox-worker.js");
+  const { createPinoJobControlMetrics } = await import("./services/job-control-metrics.js");
+  // One payload-free metrics surface, built at the composition root and shared by the scheduler,
+  // the outbox worker, and (via createApp -> worker-control) the leasing service.
+  jobControlMetrics = createPinoJobControlMetrics(logger);
+  scheduler = createJobReadyScheduler({ metrics: jobControlMetrics });
+  const outbox = createJobOutboxWorker({
+    appDb: distributedExecutionDatabases.appDb,
+    scheduler,
+    // Non-null inside this block by the same guard that builds the pools.
+    listAdmittedOrganizationIds: listAdmittedOrganizationIds!,
+    maxOrganizationShards: 32,
+    metrics: jobControlMetrics,
+  });
+  let stopped = false;
+  let inFlight: Promise<void> | null = null;
+  const tick = () => {
+    if (stopped || inFlight) return;
+    inFlight = outbox.tick()
+      .then(() => {})
+      .catch((err) => logger.warn({ err }, "job-control outbox tick failed"))
+      .finally(() => { inFlight = null; });
+  };
+  const timer = setInterval(tick, 750);
+  timer.unref();
+  tick();
+  jobControlRuntime = {
+    async stop() {
+      stopped = true;
+      clearInterval(timer);
+      if (!inFlight) return;
+      const completed = await Promise.race([
+        inFlight.then(() => true),
+        new Promise<false>((resolve) => setTimeout(() => resolve(false), 5_000)),
+      ]);
+      if (!completed) logger.error({ err: new Error("job-control runtime stop timeout") }, "job-control runtime stop failed");
+    },
+  };
 }
 
 // Expose the active DB URL in process.env so MCP bridge child processes
@@ -658,12 +873,141 @@ if (config.devLocalIdentity) {
 
 const uiMode = config.uiDevMiddleware ? "vite-dev" : config.serveUi ? "static" : "none";
 const storageService = createStorageServiceFromConfig(config);
+const intakeReconciler = universeIntakeService(db, storageService);
+const reconcileUniverseIntakes = () => void intakeReconciler.reconcileExpired()
+  .then((count) => { if (count > 0) logger.info({ count }, "expired Universe intakes reconciled"); })
+  .catch((err: unknown) => logger.warn({ err }, "Universe intake reconciliation failed"));
+reconcileUniverseIntakes();
+const universeIntakeReconcileTimer = setInterval(reconcileUniverseIntakes, 15 * 60 * 1000);
+universeIntakeReconcileTimer.unref();
 const workQuestionSnapshotBackfill = await backfillWorkQuestionSnapshots(db as any);
 if (workQuestionSnapshotBackfill.updated > 0) {
   logger.info(workQuestionSnapshotBackfill, "work-question identity snapshot backfill complete");
 }
 const { ensureControlPlaneExecutionTarget } = await import("./services/execution-targets.js");
 await ensureControlPlaneExecutionTarget(db as any);
+
+// DEP-003 (E6 deployment harness): compose the readiness probe from the checks the
+// readiness module defines — schema-compatibility (applied vs. required migration
+// identity for the app DB) plus a PostgreSQL ping. The 503 readiness GATE engages
+// ONLY in distributed/split mode (`config.distributedExecutionEnabled`), where a
+// separate privileged migrate job — not this process — applies migrations, so the
+// control plane must 503 tenant/app routes until the DB schema is compatible.
+// Single-binary startup applies migrations BEFORE listen (`ensureMigrations` above),
+// so the gate stays fully DORMANT (gateEnabled false) and startup behavior is
+// unchanged. The probe closures are lazy — invoked only on `/api/ready` or when the
+// gate fires — so building them adds no startup cost.
+//
+// MinIO/object-store health is NOT wired here: StorageService exposes no reachability
+// ping and object storage is a hard dependency only on cloud_auth. Leaving
+// `checkMinio` undefined makes the probe report it `not_checked` (excluded from the
+// readiness verdict) rather than faking a healthy result.
+// TODO(DEP-003 follow-up): add a real MinIO reachability check (e.g. a bucket HEAD)
+// for cloud_auth deployments once StorageService exposes a health method.
+const readinessProbe = buildReadinessProbe({
+  schemaCompatibility: () => loadSchemaCompatibility(activeDatabaseConnectionString),
+  checkPostgres: async () => {
+    const probeSql = postgres(activeDatabaseConnectionString, { max: 1 });
+    try {
+      await probeSql`SELECT 1`;
+      return true;
+    } catch {
+      return false;
+    } finally {
+      await probeSql.end();
+    }
+  },
+  // checkMinio intentionally omitted — see the TODO above.
+});
+// ── CLI-006 (2b) — the after-commit terminal projection callback ─────────────
+//
+// 2b-D1: composed HERE, eagerly, and self-contained. It must precede `createApp`
+// because `createApp` -> `workerControlRoutes` is what builds the JOB-005 ingest
+// service this hook lands on — and BOTH the distributed rollout block (~:1055)
+// and the heartbeat scheduler block (~:1146) run AFTER `createApp`. A lazy holder
+// resolved at call time would be observably safe (nothing can reach the ingest
+// route before `server.listen`), but it would rest correctness on a startup
+// ordering invariant that nothing enforces and no test can see.
+//
+// Instead the callback owns its whole dependency graph: `db` and the tenant
+// `appDb` are both already in scope. `heartbeatService` is a plain factory whose
+// `projectDistributedAttemptTerminal` closes over `db` alone — it needs neither
+// the scheduler nor the rollout hook. So there is no "distributed on, scheduler
+// off" degraded mode to fail closed against: it is unreachable by construction.
+//
+// Construction is lazy + memoized because the factory registers a module-global
+// secret resolver; a deployment that never canaries should not pay for that at
+// startup. Inert until a run actually carries the `execution_owner` marker.
+let canaryProjectionHeartbeat: ReturnType<typeof heartbeatService> | undefined;
+// MIG-006 slice 2 — the crew analogue, composed alongside the heartbeat projection. Each no-ops
+// (its findRunForAttempt returns null) for any attempt the OTHER owns — heartbeat_runs and
+// internal_agent_runs are disjoint per attempt — so both run safely on every terminal.
+let crewProjection: ReturnType<typeof createCrewAttemptTerminalProjection> | undefined;
+const onAttemptTerminal =
+  config.distributedExecutionEnabled && distributedExecutionDatabases
+    ? async (signal: import("./services/job-events.js").AttemptTerminalSignal) => {
+        const tenantAppDb = distributedExecutionDatabases.appDb;
+        const { runInTenant } = await import("./db/tenant-context.js");
+        const { jobEvents } = await import("@armyofagents/db");
+        const { and: andOp, eq: eqOp } = await import("drizzle-orm");
+        // The ONE thing the projection services cannot do for themselves: `job_events` is
+        // tenant-scoped behind RLS and reachable only through `runInTenant` over the `aoa_app`
+        // pool. Defined ONCE and shared by both projections so they can never read different rows.
+        const listAttemptEvents = async ({
+          organizationId,
+          companyId,
+          jobId,
+          attemptId,
+        }: {
+          organizationId: string;
+          companyId: string;
+          jobId: string;
+          attemptId: string;
+        }) =>
+          runInTenant(tenantAppDb, organizationId, async (_repos, tx: typeof tenantAppDb) =>
+            tx
+              .select({
+                eventId: jobEvents.eventId,
+                sequence: jobEvents.sequence,
+                eventType: jobEvents.eventType,
+                event: jobEvents.event,
+                occurredAt: jobEvents.occurredAt,
+              })
+              .from(jobEvents)
+              .where(
+                andOp(
+                  eqOp(jobEvents.organizationId, organizationId),
+                  eqOp(jobEvents.companyId, companyId),
+                  eqOp(jobEvents.jobId, jobId),
+                  eqOp(jobEvents.attemptId, attemptId),
+                ),
+              ),
+          );
+        canaryProjectionHeartbeat ??= heartbeatService(db as any);
+        await canaryProjectionHeartbeat.projectDistributedAttemptTerminal({ signal, listAttemptEvents });
+        crewProjection ??= createCrewAttemptTerminalProjection(db as any);
+        await crewProjection.projectCrewAttemptTerminal({ signal, listAttemptEvents });
+      }
+    : undefined;
+
+// DEP-012 Slice 4+5 — load the control-plane ed25519 PRIVATE key that MINTS the
+// owned-labels capability (services/owned-labels-mint.ts), threaded through createApp ->
+// workerControlRoutes -> the secret broker. `loadControlPlaneSigningKey` mirrors the
+// adapter-manager bin's try/catch → refuse structure and is FAIL-CLOSED asymmetrically
+// (see config/control-plane-signing-key.ts): env unset ⇒ inert; env set but bad AND
+// distributed execution ON ⇒ a LOUD FATAL (never a silent inert = the dead path); env set
+// but bad AND distributed execution OFF ⇒ inert. This is the ONE site that reads the
+// AOA_CONTROL_PLANE_SIGNING_KEY_FILE env literal (documented for brand-check step 9).
+const controlPlaneSigningKey = loadControlPlaneSigningKey(
+  process.env.AOA_CONTROL_PLANE_SIGNING_KEY_FILE,
+  config.distributedExecutionEnabled === true,
+  undefined,
+  // [H3] the ABSENT-key report goes to the structured log, not stderr, so it is visible in a
+  // log aggregator alongside every other boot line. It is an ERROR, not a refusal — see the
+  // module header for why "flag on + no mint key" is a legitimate (D1) deployment shape.
+  (message) => logger.error({ configKey: "AOA_CONTROL_PLANE_SIGNING_KEY_FILE" }, message),
+);
+
 const app = await createApp(db as any, {
   uiMode,
   storageService,
@@ -678,6 +1022,21 @@ const app = await createApp(db as any, {
   betterAuthHandler,
   resolveSession,
   devLocalIdentity: config.devLocalIdentity,
+  distributedExecutionEnabled: config.distributedExecutionEnabled,
+  tenantAppDb: distributedExecutionDatabases?.appDb,
+  operatorDb: distributedExecutionDatabases?.operatorDb,
+  jobReadyScheduler: scheduler,
+  jobControlMetrics,
+  workerSessionSigningKey: process.env.AOA_WORKER_SESSION_SIGNING_KEY,
+  // DEP-012 Slice 4+5 — the pre-resolved mint key (loaded above; a LOCAL, never an inline
+  // process.env read at the workerControlRoutes mount — the rollout-rollback source-shape test).
+  controlPlaneSigningKey,
+  onAttemptTerminal,
+  // DEP-003: the readiness contract. The gate is dormant unless distributed mode is on.
+  readiness: {
+    probe: readinessProbe,
+    gateEnabled: config.distributedExecutionEnabled === true,
+  },
 });
 const server = createServer(app as unknown as Parameters<typeof createServer>[0]);
 
@@ -712,11 +1071,72 @@ server.on("upgrade", (req, socket, head) => {
   });
 });
 
-setupLiveEventsWebSocketServer(server, db as any, {
+// MIG-003: durable realtime broker. The log store is wired at the publish
+// chokepoint (best-effort appends + data-free NOTIFY); the WS server exposes the
+// per-replica durable fan-out entry point + its active-company set; the broker
+// listener LISTENs `live_events` + safety-polls to pull the tail cross-replica.
+// Serve the durable store through the enforcing aoa_app pool when distributed
+// execution is on (the store opens its own withTenantTx setting aoa.organization_id,
+// so FORCE-RLS is satisfied and the tenant-isolation policy is actually exercised);
+// embedded/self-host stays on the owner `db`. Mirrors how job_events is served.
+const liveEventLogStore = createLiveEventLogStore(
+  (distributedExecutionDatabases?.appDb ?? db) as any
+);
+setLiveEventLogStore(liveEventLogStore);
+const liveEventsWss = setupLiveEventsWebSocketServer(server, db as any, {
   deploymentMode: config.deploymentMode,
   resolveSessionFromHeaders,
   trustedOrigins: effectiveTrustedOrigins,
-});
+  // Resolve the WS denial source key from the trusted-proxy client IP exactly as
+  // the REST paths resolve `req.ip` — same `trust proxy` setting app.ts installs.
+  trustProxy: config.trustProxy,
+}) as ReturnType<typeof setupLiveEventsWebSocketServer> & {
+  deliverDurableEvent?: (companyId: string, event: import("@armyofagents/shared").LiveEvent) => void;
+  activeCompanies?: () => Iterable<string>;
+};
+{
+  const deliverDurableEvent = liveEventsWss.deliverDurableEvent;
+  const activeCompanies = liveEventsWss.activeCompanies;
+  if (deliverDurableEvent && activeCompanies) {
+    const drainer = createBrokerDrainer({
+      store: liveEventLogStore,
+      fanout: (companyId, event) => deliverDurableEvent(companyId, event),
+      // Robust-model same-replica dedup: never re-fan an event THIS replica
+      // published (it was already delivered seq-less by the local emit).
+      isLocallyPublished: wasLocallyPublished,
+    });
+    void attachLiveEventBrokerListener({
+      db: db as any,
+      drainer,
+      activeCompanies: () => activeCompanies(),
+    }).catch((err) => {
+      logger.warn({ err }, "failed to attach live event broker listener");
+    });
+
+    // Defect #8: bounded-retention trim. A low-frequency sweeper deletes log rows
+    // older than the retained window per company so the durable log cannot grow
+    // unbounded. Runs over the active-company set (and, on an owner/superuser
+    // deployment, every retained company — see store.trimRetention). Best-effort;
+    // a trim failure never affects realtime delivery.
+    const LIVE_EVENT_RETENTION_WINDOW = 5_000;
+    const LIVE_EVENT_TRIM_INTERVAL_MS = 5 * 60_000;
+    let liveEventTrimInFlight = false;
+    const liveEventTrimTimer = setInterval(() => {
+      if (liveEventTrimInFlight) return;
+      if (typeof liveEventLogStore.trimRetention !== "function") return;
+      liveEventTrimInFlight = true;
+      void liveEventLogStore
+        .trimRetention(LIVE_EVENT_RETENTION_WINDOW, activeCompanies())
+        .catch((err) => {
+          logger.warn({ err }, "live event retention trim failed");
+        })
+        .finally(() => {
+          liveEventTrimInFlight = false;
+        });
+    }, LIVE_EVENT_TRIM_INTERVAL_MS);
+    (liveEventTrimTimer as unknown as { unref?: () => void }).unref?.();
+  }
+}
 
 // Work-question continuation and SLA processing are durable workflow workers,
 // not heartbeat workers. They must keep running when heartbeat execution is
@@ -798,8 +1218,439 @@ if (
   );
 }
 
+// CLI-005 — compose the distributed-execution rollout hook ONLY when distributed
+// execution is enabled (default-off). When absent, the org-heartbeat seam runs the
+// legacy path unchanged (byte-identical). Dynamic imports keep the modules dormant.
+let distributedRolloutHook:
+  | import("./services/heartbeat-distributed-rollout.js").HeartbeatDistributedRolloutHook
+  | undefined;
+if (config.distributedExecutionEnabled && distributedExecutionDatabases) {
+  const appDb = distributedExecutionDatabases.appDb;
+  const [
+    { createHeartbeatDistributedRolloutHook },
+    { createDistributedExecutionRolloutSource },
+    { resolveCompanyOrganizationId },
+    { jobAdmissionBridge },
+    { createJobConvertOrchestrator },
+    { createJobShadowComparator },
+    { createDistributedShadowRecorder, setDistributedShadowPort },
+    { probeDistributedAdmissibility },
+    { createRunExecutionOwnerResolver, toRunExecutionPlacement },
+    { createCanaryPreflight },
+    { createDrizzleCanaryPreflightStore },
+    { resolveCanaryCredentialBinding },
+    { createJobPlacementService },
+  ] = await Promise.all([
+    import("./services/heartbeat-distributed-rollout.js"),
+    import("./config/distributed-execution-rollout-source.js"),
+    import("./services/org-concurrency.js"),
+    import("./services/job-admission-bridge.js"),
+    import("./services/job-convert-orchestrator.js"),
+    import("./services/job-shadow-comparator.js"),
+    import("./services/distributed-shadow-port.js"),
+    import("./services/job-shadow-admissibility.js"),
+    import("./services/run-execution-owner.js"),
+    import("./services/canary-preflight.js"),
+    import("./services/canary-preflight-store.js"),
+    import("./services/canary-credential-binding.js"),
+    import("./services/job-placement.js"),
+  ]);
+  const bridge = jobAdmissionBridge(appDb);
+  const convertOrchestrator = createJobConvertOrchestrator({ bridge });
+  // MIG-002: the source now re-reads per call, so a rollback needs no restart. `onParseError`
+  // is a callback rather than a logger import inside `config/` — that module's static graph is
+  // deliberately logger-free. It fires once per distinct bad value, not once per call.
+  const rolloutSource = createDistributedExecutionRolloutSource(process.env, {
+    onParseError: (message, rawValue) =>
+      logger.error(
+        { message, rawValueLength: rawValue.length },
+        "[mig-002] AOA_DISTRIBUTED_EXECUTION_ROLLOUT is malformed — every Organization resolves " +
+          "to `off` (legacy) until it is corrected. No restart is needed once it is.",
+      ),
+  });
+
+  // ── CLI-006: the canary execution-ownership path ────────────────────────────
+  // Placement is what makes an attempt lease-eligible, so composing it is what
+  // arms the canary. Everything here stays inert until an Organization is set to
+  // `mode: "canary"` in AOA_DISTRIBUTED_EXECUTION_ROLLOUT.
+  const placementService = createJobPlacementService({
+    appDb,
+    operatorDb: distributedExecutionDatabases.operatorDb,
+    deploymentMode: config.deploymentMode,
+    // The already-resolved config flag, NOT a second read of process.env — two
+    // reads of the deployment gate can disagree after a config reload.
+    deploymentEnabled: config.distributedExecutionEnabled,
+    // The SAME default-off source the run seam uses, so placement and the seam
+    // cannot disagree about which Organizations are enabled. Never a
+    // permissive test closure.
+    resolveOrganizationPolicy: rolloutSource.resolveOrganizationPolicy,
+    resolveWorkloadPolicy: rolloutSource.resolveWorkloadPolicy,
+    resolveCredentialBinding: resolveCanaryCredentialBinding,
+  });
+  const ownerResolver = createRunExecutionOwnerResolver({
+    resolveRunRolloutState: ({ organizationId, workloadType }) =>
+      rolloutSource.resolveRunRolloutState({
+        deploymentMode: config.deploymentMode,
+        organizationId,
+        workloadType,
+      }),
+    preflight: createCanaryPreflight({
+      // ROUND 7 — the operator pool, not the tenant-facing app pool. The definer functions'
+      // EXECUTE grant moved with it; aoa_app can no longer reach owner authority here.
+      store: createDrizzleCanaryPreflightStore(distributedExecutionDatabases.operatorDb),
+    }),
+    convert: convertOrchestrator,
+    placement: toRunExecutionPlacement(placementService),
+    // ── CLI-008 Unit B — the control-plane staging write, given its caller ──────
+    // `stageJobInputFiles` is the production consumer of `jobArtifacts.insert`, which
+    // sat with ZERO callers (production or test) until this line. The storage provider
+    // is the RAW one (full object keys, no company prefixing), exactly as
+    // `worker-control.ts` composes it for the transfer-grant service — the download
+    // branch presigns the same key this write records.
+    stageJobInput: async ({ organizationId, companyId, jobId, attemptId, files }) => {
+      const { stageJobInputFiles } = await import("./services/job-input-staging.js");
+      const { createStorageProviderFromConfig } = await import("./storage/provider-registry.js");
+      const result = await stageJobInputFiles({
+        appDb,
+        storage: createStorageProviderFromConfig(config),
+        organizationId,
+        companyId,
+        jobId,
+        attemptId,
+        files,
+      });
+      // ★ KEEP THIS, AND KEEP IT AT DEBUG. Since refusals throw (`StagedInputRefusedError`),
+      // the only reason that can reach here is `no_files` — "nothing was asked for, correctly".
+      // A warn for that trains operators to ignore the channel, which is the state in which a
+      // real one goes unread. It stays as the POSITIVE CONTROL: it fires only if the caller's
+      // own `files.length > 0` guard is ever tidied away, and it is the one line that would
+      // then say so.
+      if (!result.staged) {
+        logger.debug(
+          { organizationId, companyId, jobId, attemptId, reason: result.reason },
+          "[cli-008] nothing to stage",
+        );
+      }
+      return { staged: result.staged };
+    },
+    // Hand back the org concurrency slot the convert claimed when the run ends up legacy.
+    // `job_attempts` is RLS-protected, so the update must run inside the Organization's tenant
+    // transaction on the non-owner pool — the same shape `releaseAttemptCapacity`'s only other
+    // caller uses.
+    releaseCapacity: async ({ attemptId, organizationId }) => {
+      const { runInTenant } = await import("./db/tenant-context.js");
+      const { releaseAttemptCapacity } = await import("./services/org-concurrency.js");
+      return runInTenant(appDb, organizationId, async (_repos, tx) =>
+        releaseAttemptCapacity(tx, { attemptId, organizationId }),
+      );
+    },
+  });
+  // ── CLI-006 (Task 4) — register the fence-revoking cancel port ──────────────
+  // Module-level registration, NOT an option on heartbeatService: every real
+  // `cancelRun` caller holds a bare `heartbeatService(db)` (agents.ts:198,
+  // issues.ts:99, index.ts:1828), so a constructor option would be `undefined`
+  // at every actual cancel — wired-looking and inert.
+  //
+  // The Organization is resolved HERE rather than on the port's interface,
+  // because a `heartbeat_runs` row does not carry one and heartbeat cannot reach
+  // the mapping. A company with no Organization throws: with `onError:"propagate"`
+  // the operator is told the cancel failed, and with `"skip"` the batch continues
+  // and the run stays `running` — both honest, and neither writes a terminal for
+  // a worker that is still live (4-D1).
+  const [
+    { createJobReconciliationService },
+    { createJobControlSweeper },
+    { createExecutionTargetRevocationFanout },
+  ] = await Promise.all([
+    import("./services/job-reconciliation.js"),
+    import("./services/job-control-sweeper.js"),
+    import("./services/execution-target-revocation-fanout.js"),
+  ]);
+  const jobReconciliationForCancel = createJobReconciliationService({ appDb });
+
+  // ── DE-18 — the execution-target revocation fanout, on the SAME running timer ────────────
+  // `createExecutionTargetRevocationFanout` (JOB-007) shipped complete-but-unwired: the real
+  // `POST .../workers/:workerId/revoke` route already writes durable `status:'pending'`
+  // `execution_target_revocations` rows via `revokeExecutionTarget`, and the committed
+  // generation cutoff already DENIES old-generation governed effects immediately — but the
+  // convergence half (mark stale leases `revoked`, release their capacity, cancel the pinned
+  // job) never ran, because nothing ticked it. It drains the same durable records the live
+  // producer writes, so this is honest wiring, not a count-flip.
+  //
+  // Reuses the MIG-002 timer rather than adding a second one, and lives INSIDE this flag block
+  // for MIG-002's reason below: flag-off allocates no `aoa_app` pool, so `runInTenant`
+  // (which the fanout's per-tenant convergence needs) would have nothing to open — unconditional
+  // registration would be a throw, not a safety net. Constructed BEFORE the sweeper so the
+  // sweeper's composition-root guard region stays contiguous; the fanout's own tick stays on
+  // the shared convergence timer below.
+  //
+  // The fanout wants a page-free `() => Promise<string[]>`; the shared enumerator is paginated
+  // (bounded 32/page, asc by id), so drain every page here into one deduped, ascending list.
+  const revocationFanout = createExecutionTargetRevocationFanout({
+    appDb,
+    operatorDb: distributedExecutionDatabases.operatorDb,
+    reconciliation: jobReconciliationForCancel,
+    listAdmittedOrganizationIds: async (): Promise<string[]> => {
+      const all: string[] = [];
+      let after: string | null = null;
+      // Bounded drain: the enumerator caps the page at 32, so a page shorter than that is the
+      // last one. The org set is finite; this terminates when a short (or empty) page returns.
+      for (;;) {
+        const page = await listAdmittedOrganizationIds!({
+          afterOrganizationId: after,
+          limit: 32,
+          statementTimeoutMs: 750,
+        });
+        all.push(...page);
+        if (page.length < 32) break;
+        after = page[page.length - 1]!;
+      }
+      return [...new Set(all)];
+    },
+  });
+
+  // ── MIG-002 convergence — START the lease reaper ────────────────────────────────────────
+  // Inherited deferral #2: JOB-006's reaper had NO live trigger, so an attempt whose lease
+  // expired without a worker terminal never converged and its run stayed `running` forever.
+  // Everything was built (bounded batches, fair rotating cursor, tick budget, backoff,
+  // flag-off no-op); nothing started it.
+  //
+  // `projectRunTerminal` is THE SAME `onAttemptTerminal` the worker event-ingest path uses —
+  // one projection, two triggers. The ownership predicate (project only onto a run whose
+  // execution_owner is distributed) therefore stays in `canary-terminal-projection`, and the
+  // projector never becomes a second authority for run state.
+  //
+  // REGISTERED INSIDE THIS BLOCK, and that is a correction to the design's D5. D5 argued for
+  // unconditional registration on the REL-004 warm-reaper precedent (a safety net must not be
+  // disabled by an unrelated operator knob). That precedent does not transfer: flag-off
+  // allocates no `aoa_app` pool at all (see `distributedExecutionDatabases`), so the sweeper
+  // CANNOT run there — `runInTenant` has nothing to open. Convergence flag-off is structurally
+  // impossible, not a policy choice, which is exactly why the rollback runbook says to keep
+  // AOA_DISTRIBUTED_EXECUTION_ENABLED set across a restart.
+  const convergenceSweeper = createJobControlSweeper({
+    reconciliation: jobReconciliationForCancel,
+    listAdmittedOrganizationIds: (page) =>
+      listAdmittedOrganizationIds!({ ...page, statementTimeoutMs: 750 }),
+    projectRunTerminal: onAttemptTerminal
+      ? (signal) => onAttemptTerminal(signal as Parameters<typeof onAttemptTerminal>[0])
+      : undefined,
+  });
+
+  let convergenceStopped = false;
+  let convergenceTimer: NodeJS.Timeout | undefined;
+  const convergenceTick = async (): Promise<void> => {
+    if (convergenceStopped) return;
+    let delay = 15_000;
+    try {
+      const result = await convergenceSweeper.tick();
+      // `nextDelayMs` had zero callers anywhere before this — half the sweeper's public
+      // interface was unexercised. Using it is what makes the backoff real.
+      delay = convergenceSweeper.nextDelayMs(result);
+      if (result.revoked > 0 || result.projected > 0) {
+        logger.info(
+          {
+            organizations: result.organizations, scanned: result.scanned,
+            revoked: result.revoked, retried: result.retried,
+            deadLettered: result.deadLettered, cancelled: result.cancelled,
+            finalized: result.finalized, projected: result.projected,
+          },
+          "[mig-002] lease reaper converged expired distributed work",
+        );
+      }
+      // DE-18 — converge target revocations on the same tick/timer; drains durable rows.
+      await revocationFanout.tick();
+    } catch (err) {
+      logger.warn({ err }, "[mig-002] lease reaper tick failed");
+    }
+    if (convergenceStopped) return;
+    convergenceTimer = setTimeout(() => { void convergenceTick(); }, delay);
+    convergenceTimer.unref();
+  };
+  void convergenceTick();
+  // Mirrors the sibling timers in this file (mcp-oauth sweep, reconcile, embedding worker):
+  // stop on SIGTERM/SIGINT. The timer is unref'd, so it never holds the process open either.
+  const stopConvergence = () => {
+    convergenceStopped = true;
+    if (convergenceTimer) clearTimeout(convergenceTimer);
+  };
+  process.once("SIGTERM", stopConvergence);
+  process.once("SIGINT", stopConvergence);
+
+  // ── SVC-002 service reconciliation — START the desired-state reconciler ─────────────────
+  //
+  // ★★★ THIS BLOCK IS THE POINT OF THE TICKET. `createServiceReconciler` is exactly the
+  // shape that ships wired to nothing and reads as delivered — this register already carries
+  // `createStartupReconciler` as a symbol with ZERO production callers — so the arming path
+  // is composed in the SAME commit as the reconciler, and the gate clause
+  // `E9-1-service-reconciler` is enrolled against the measured caller count rather than
+  // against an intention.
+  //
+  // REGISTERED INSIDE THIS BLOCK, for MIG-002's reason at :1334-1339 rather than by copying
+  // it: flag-off allocates no `aoa_app` pool at all, so `runInTenant` would have nothing to
+  // open. Unconditional registration would be a throw, not a safety net.
+  //
+  // ★ WHAT THIS TICK ACTUALLY DOES TODAY, stated so nobody reads a running timer as a
+  // running service. `listReconcilableServices` scans `services`, whose create path shipped with
+  // SVC-007 — the org-admin-gated `POST .../companies/:company/services` -> `createService`
+  // (routes/job-control.ts) is now a production caller that inserts a row. So a deployment where
+  // an org-admin has created services converges them; one with none converges nothing. The moment a `services`
+  // row exists with `desired_state='running'` and a `service_generations` definition, exactly
+  // one instance and one job appear for it, and never two.
+  const { createServiceReconciler } = await import("./services/service-reconciler.js");
+  const serviceReconciler = createServiceReconciler({
+    appDb,
+    listAdmittedOrganizationIds: (page) =>
+      listAdmittedOrganizationIds!({ ...page, statementTimeoutMs: 750 }),
+    onPassFailure: (err, context) => {
+      logger.warn({ err, ...context }, "[svc-002] service reconcile pass failed");
+    },
+    // SVC-003b — the liveness deadline runs inside this same tick, ahead of the convergence
+    // pages. Its failures are logged separately from a reconcile pass's so a deadline that
+    // stops running is visible as itself rather than as a quieter reconciler.
+    onLivenessFailure: (err, context) => {
+      logger.warn({ err, ...context }, "[svc-003b] service liveness sweep failed");
+    },
+    // SVC-003b — one line PER INSTANCE the deadline condemned, naming the row and the status it
+    // was driven out of, so an operator can tell a deadline kill from a worker-reported one. A
+    // log line is not a durable record; the durable half is E9-F009 and is not built.
+    onTerminalized: (entry) => {
+      logger.warn(entry, "[svc-003b] liveness deadline terminalized a service instance");
+    },
+  });
+  let serviceReconcileStopped = false;
+  let serviceReconcileTimer: NodeJS.Timeout | undefined;
+  const serviceReconcileTick = async (): Promise<void> => {
+    if (serviceReconcileStopped) return;
+    let delay = 30_000;
+    try {
+      const result = await serviceReconciler.tick();
+      // Same discipline as the convergence sweeper above: the backoff is only real if the
+      // composition root reads it.
+      delay = serviceReconciler.nextDelayMs(result);
+      if (
+        result.created > 0 || result.failed > 0
+        || result.livenessTerminalized > 0 || result.livenessFailed > 0
+      ) {
+        logger.info(
+          {
+            organizations: result.organizations, services: result.services,
+            created: result.created, unchanged: result.unchanged, failed: result.failed,
+            // SVC-003b — a terminalized instance is the OTHER half of convergence, and it is
+            // reported on the same line so an operator reading "created 1" can see whether it
+            // was a first start or a replacement of something the deadline condemned.
+            livenessScanned: result.livenessScanned,
+            livenessTerminalized: result.livenessTerminalized,
+            livenessFailed: result.livenessFailed,
+          },
+          "[svc-002] service reconciler converged desired state",
+        );
+      }
+    } catch (err) {
+      logger.warn({ err }, "[svc-002] service reconciler tick failed");
+    }
+    if (serviceReconcileStopped) return;
+    serviceReconcileTimer = setTimeout(() => { void serviceReconcileTick(); }, delay);
+    serviceReconcileTimer.unref();
+  };
+  void serviceReconcileTick();
+  const stopServiceReconcile = () => {
+    serviceReconcileStopped = true;
+    if (serviceReconcileTimer) clearTimeout(serviceReconcileTimer);
+  };
+  process.once("SIGTERM", stopServiceReconcile);
+  process.once("SIGINT", stopServiceReconcile);
+
+  const { setDistributedCancellationPort } = await import(
+    "./services/distributed-cancellation-port.js"
+  );
+  setDistributedCancellationPort({
+    requestCancellation: async ({ jobId, companyId, reason, graceful }) => {
+      const organizationId = await resolveCompanyOrganizationId(appDb, companyId);
+      if (!organizationId) {
+        throw new Error(
+          `cannot revoke the fence for job ${jobId}: company ${companyId} resolves to no Organization`,
+        );
+      }
+      // H1 — the OUTCOME is load-bearing, not fire-and-forget. Only `queued` /
+      // `already_requested` mean a fenced worker will emit a terminal event; the
+      // rest mean nothing ever will, and the caller must write the legacy
+      // terminal instead of leaving the run pinned at `running` forever.
+      return jobReconciliationForCancel.requestCancellation({
+        organizationId,
+        companyId,
+        jobId,
+        reason,
+        graceful,
+      });
+    },
+  });
+
+  const shadowComparator = createJobShadowComparator({
+      sink: {
+        record: (result) =>
+          logger.info(
+            {
+              sourceKind: result.sourceKind,
+              sourceId: result.sourceId,
+              organizationId: result.organizationId,
+              companyId: result.companyId,
+              mode: result.mode,
+              // Three-state. `not_compared` is NOT agreement: it means no field had an
+              // independently derived value to check against, so this record must not be
+              // counted in a divergence rate. `comparedFields` is that rate's denominator.
+              match: result.match,
+              comparedFields: result.comparedFields,
+              uncomparedFields: result.uncomparedFields,
+              mismatchedFields: result.mismatchedFields,
+              admissible: result.admissible,
+              admissibilityReason: result.admissibilityReason,
+              admissibilityAuthorities: result.admissibilityAuthorities,
+              placementLeaseEligible: result.placementLeaseEligible,
+              placementReasonCode: result.placementReasonCode,
+              workloadValid: result.workloadValid,
+              errored: result.errored,
+            },
+            "[cli-005] distributed-execution shadow comparison",
+          ),
+    },
+  });
+
+  distributedRolloutHook = createHeartbeatDistributedRolloutHook({
+    env: process.env,
+    deploymentMode: config.deploymentMode,
+    rolloutSource,
+    resolveOrganizationId: (companyId: string) => resolveCompanyOrganizationId(appDb, companyId),
+    convertOrchestrator,
+    ownerResolver,
+    comparator: shadowComparator,
+  });
+
+  // ── MIG-005/006/007 (Lane C) — the shadow recorder the three non-heartbeat sinks use.
+  // Registered HERE, beside the comparator it shares, because both are meaningful only
+  // when distributed execution is composed at all. Unregistered is a no-op, so every
+  // other deployment is byte-identical. The heartbeat keeps its own seam (it resolves
+  // rollout once per run and reuses that decision); this port serves Commander turns,
+  // crew dispatch and one-shot operations, which each hold only a bare `db`.
+  setDistributedShadowPort(
+    createDistributedShadowRecorder({
+      resolveRolloutState: (input) => distributedRolloutHook!.resolveRunRolloutState(input),
+      probe: (probeInput) => probeDistributedAdmissibility(appDb, probeInput),
+      comparator: shadowComparator,
+    }),
+  );
+
+  // ── Unit 1.5 — the SAME instance-independence problem, for the rollout hook itself.
+  // Registered beside the shadow port and for the identical reason: the instances that
+  // actually execute a task run (routes/issues.ts, issue-assignee-wakeup.ts, ...) each hold
+  // only a bare `heartbeatService(db)`, so an options-only hook is `undefined` exactly where
+  // it matters. Deliberately OUTSIDE the scheduler conditional below — those route instances
+  // exist whether or not the scheduler does. Measured before this line existed: an eligible
+  // canary task produced a run with `execution_owner = NULL` and NO `[CLI-006]` line at all.
+  setDistributedRolloutPort(distributedRolloutHook);
+}
+
 if (config.heartbeatSchedulerEnabled) {
-  const heartbeat = heartbeatService(db as any);
+  const heartbeat = heartbeatService(db as any, { distributedRollout: distributedRolloutHook });
   const productivityReviews = productivityReviewService(db as any);
   const monitorScheduler = issueMonitorSchedulerService(db as any);
   const PRODUCTIVITY_REVIEW_RECONCILIATION_INTERVAL_MS = 60 * 60 * 1000;
@@ -841,11 +1692,6 @@ if (config.heartbeatSchedulerEnabled) {
   // Periodic sweep: mark stale workspaces as cleanup-eligible based on project TTL.
   // Sweeper no-ops when the instance-level experimental flag is off.
   scheduleTtlSweeper(db as any);
-
-  // Periodic reap: destroy warm (reuse_by_agent) E2B snapshots left idle past
-  // the instance TTL (~30 min). No-ops when `enableWarmSandboxReaper` is off,
-  // exactly like the TTL sweeper above.
-  scheduleWarmSandboxReaper(db as any);
 
   // Retry filesystem cleanup for workspaces stuck in `cleanup_failed` (Windows
   // file-handle races). Runs every 60s; promotes to `archived` once rm succeeds.
@@ -909,6 +1755,22 @@ if (config.heartbeatSchedulerEnabled) {
   runProductivityReviewReconciliation();
   setInterval(runProductivityReviewReconciliation, PRODUCTIVITY_REVIEW_RECONCILIATION_INTERVAL_MS);
 }
+
+// Periodic reap: destroy warm (reuse_by_agent) E2B snapshots left idle past the instance TTL
+// (~30 min), and reclaim STRANDED leases — terminal rows that still hold an unreleased provider
+// handle. No-ops when `enableWarmSandboxReaper` is off.
+//
+// REGISTERED HERE, AT MODULE SCOPE — deliberately NOT inside the
+// `config.heartbeatSchedulerEnabled` block above (REL-004 Lane D / D1). That knob is
+// operator-facing and documents itself as governing SCHEDULE TICKS, but what MINTS these
+// sandboxes is not gated on it: a Commander turn acquires a warm lease on the HTTP path, and org
+// wakeups dispatch in-process from routes. Gated, the system kept creating E2B sandboxes and
+// stopped reclaiming them — and now that this sweep is the reclaim path for a killed provider,
+// an operator who turned off routines would also have turned off the kill switch's teeth.
+//
+// Same argument and same placement as `scheduleClaudeConfigDirSweeper()` below; pinned by
+// `warm-sandbox-reaper-registration.test.ts`.
+scheduleWarmSandboxReaper(db as any);
 
 // Idempotent backfill: ensure Commander and the appropriate crew roster exist
 // for all companies. Safe to run on every startup — the seeders use
@@ -1563,6 +2425,24 @@ server.listen(listenPort, config.host, () => {
       logger.error({ err }, "Plugin loadAll failed at startup");
     });
     logger.info("Plugin subsystem initialized");
+  } else if (tenantIsolationEnforced()) {
+    // FND-006 / Decision #103: on cloud_auth the hosted control plane composes
+    // NO plugin worker subsystem (see app.ts), so no loadAll() runs. Reconcile
+    // any stale non-uninstalled plugin rows to the blocked, metadata-only state
+    // so a stale `ready` row can never appear runnable during boot. Idempotent
+    // and safe to run on every replica during a rolling upgrade.
+    void reconcileCloudBlockedPlugins(db as any)
+      .then((reconciled) => {
+        if (reconciled > 0) {
+          logger.info(
+            { reconciled },
+            "Cloud plugin rows reconciled to blocked at startup"
+          );
+        }
+      })
+      .catch((err: unknown) => {
+        logger.error({ err }, "Cloud plugin reconciliation failed at startup");
+      });
   }
 
   const boardClaimUrl = getBoardClaimWarningUrl(config.host, listenPort);
@@ -1584,6 +2464,10 @@ server.listen(listenPort, config.host, () => {
 
 const shutdown = createProcessShutdownHandler({
   getPluginSubsystem: () => (app as any).__pluginSubsystem,
+  jobControlRuntime: jobControlRuntime
+    ? { stop: () => jobControlRuntime.stop() }
+    : null,
+  boundedDatabases: distributedExecutionDatabases,
   ownedEmbeddedPostgres:
     embeddedPostgres && embeddedPostgresStartedByThisProcess
       ? embeddedPostgres

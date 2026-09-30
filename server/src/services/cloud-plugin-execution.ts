@@ -8,26 +8,22 @@ import { logger } from "../middleware/logger.js";
 export const PLUGIN_WORKER_BLOCKED_IN_CLOUD =
   PLUGIN_WORKER_BLOCKED_IN_CLOUD_REASON satisfies PluginStatusReasonCode;
 
-// RW5a (Wave 5 review, fixes U10-a's regression): U10 correctly lifted the
-// cloud block for the WORKER FORK sink (a host-resident child process that
-// never enters the tenant VM). But `isCloudPluginExecutionBlocked` is a
-// single shared predicate gating SEVEN call sites that are not equivalent —
-// U10-a made it unconditionally `false`, which also lifted the block on:
-//   (1) `plugin-loader.ts`'s `loadManifestFromPath` — a direct in-process
-//       `import()` of a tenant-authored manifest MODULE, executed in the
-//       CONTROL PLANE (the multi-tenant Express process), with no
-//       child-process isolation at all; and
-//   (2) `plugin-ui-static.ts` — same-origin plugin UI JavaScript served to
-//       the browser, a browser-trust boundary unrelated to VM/process
-//       isolation.
-// Both remain live cross-tenant/XSS-class risks on shared cloud infra and
-// stay blocked below. This message text is preserved — past tense — because
-// it is ALSO still surfaced for historical rows/records that captured a live
-// block before the host-resident-worker model shipped (see
-// `projectCloudPluginPolicyState`'s recoverable-row branch and the persisted
-// `errorCode` envelope in `routes/marketplace-installs.ts`); it remains
-// accurate for a *future* live block too, since the underlying reason code
-// (`PLUGIN_WORKER_BLOCKED_IN_CLOUD`) is unchanged.
+// FND-006 (Decision #103 cloud-enforcement amendment, 2026-08-03): the plugin
+// worker model is NOT a tenant boundary, so `cloud_auth` must not construct,
+// fork, start, resume, or dispatch ANY host-process plugin worker — including a
+// plugin whose mutable trust tier is `core`. Every one of the six typed sinks
+// (`worker-manager`, `worker-fork`, `lifecycle`, `loader`, `loader-import`,
+// `ui-static`) FAILS CLOSED in the hosted parent, and there is no operator
+// override. An earlier Wave-5 iteration (U10/U10-a) allowlisted the first four
+// sinks on the "host-resident worker" theory; that allowlist is REMOVED here.
+// The worker-child marker (`AOA_PLUGIN_WORKER_PROCESS`) is never consulted by
+// the gate, so it can never grant the parent authority; `stripHostedPluginWorkerMarker`
+// additionally strips a spoofed value from the hosted parent before composition.
+// Self-hosted (`local_trusted` / single-tenant `authenticated`) is unchanged.
+//
+// The message text is contractual (persisted on reconciled rows, surfaced in the
+// HTTP `errorCode` envelope, and matched by `projectCloudPluginPolicyState`'s
+// recoverable-row branch); it is preserved verbatim across this change.
 export const CLOUD_PLUGIN_BLOCK_MESSAGE =
   "Plugin execution was blocked on AoA Cloud until a host-resident worker was available";
 
@@ -130,69 +126,61 @@ let bootReconciledCount = 0;
  * Set to `"1"` ONLY inside a forked plugin worker CHILD process's own
  * environment — see `spawnProcess()` in `plugin-worker-manager.ts`, which
  * builds the child's env from scratch (it does NOT spread the parent's
- * `process.env`) and sets this marker there. It is never present in the
- * control-plane (host) process's own env, so reading it back is a reliable
- * signal that the CURRENT process IS the isolated worker child rather than
- * the multi-tenant control plane. Documented in
+ * `process.env`) and sets this marker there. It is a CHILD-IDENTITY signal
+ * for diagnostics/logging only; since FND-006 it is NEVER consulted by
+ * `isCloudPluginExecutionBlocked`, so it can never grant the hosted parent
+ * authority. On cloud (`tenantIsolationEnforced()`), no worker child is ever
+ * launched, and `stripHostedPluginWorkerMarker()` removes any spoofed value
+ * from the hosted parent's env before composition. Documented in
  * `docs/deploy/environment-variables.md`.
  */
 export const PLUGIN_WORKER_PROCESS_ENV_VAR = "AOA_PLUGIN_WORKER_PROCESS";
 
-function isRunningInsidePluginWorkerChild(): boolean {
-  return process.env[PLUGIN_WORKER_PROCESS_ENV_VAR] === "1";
+/**
+ * Cloud plugin execution gate (FND-006 / Decision #103 amendment).
+ *
+ * FAILS CLOSED for every typed sink and for the bare/legacy no-sink form
+ * whenever tenant isolation is enforced (`cloud_auth`): the hosted parent may
+ * not construct, fork, start, resume, or dispatch any plugin worker at any
+ * sink or trust tier. The worker-child marker is deliberately NOT consulted,
+ * so `AOA_PLUGIN_WORKER_PROCESS=1` can never bypass this in the parent. Off
+ * cloud (`local_trusted` / single-tenant `authenticated`) nothing is blocked
+ * — self-hosted worker lifecycle is unchanged.
+ *
+ * `sink` is retained for call-site clarity and metrics; the decision does not
+ * depend on it (all sinks share one fail-closed answer). The bare form is used
+ * by read projections (`projectCloudPluginPolicyState`) and now reports the
+ * live block on cloud so stale `ready`/`installed` rows never appear runnable.
+ */
+export function isCloudPluginExecutionBlocked(
+  _sink?: PluginCloudExecutionSink
+): boolean {
+  return tenantIsolationEnforced();
 }
 
 /**
- * Sinks that never execute tenant-authored code in the CONTROL-PLANE
- * process, so they stay allowed on cloud even though
- * `tenantIsolationEnforced()` is true. See the `PluginCloudExecutionSink`
- * doc comment above for what each one guards.
- */
-const CLOUD_SAFE_CONTROL_PLANE_SINKS: ReadonlySet<PluginCloudExecutionSink> =
-  new Set(["worker-fork", "worker-manager", "lifecycle", "loader"]);
-
-/**
- * Sink-aware, process-aware cloud plugin execution gate (RW5a).
+ * Hosted-parent hardening (FND-006): a `cloud_auth` control-plane process must
+ * never carry the worker-child marker. If a spoofed `AOA_PLUGIN_WORKER_PROCESS`
+ * is present in the hosted parent's environment, strip it BEFORE any plugin
+ * composition so no downstream reader can mistake the parent for an isolated
+ * worker child. No-op off cloud, where the self-hosted worker manager
+ * legitimately sets the marker in each child's own explicit minimal env.
  *
- * `sink` is optional for backward compatibility with general/legacy callers
- * (e.g. `projectCloudPluginPolicyState`'s read-projection) that ask "is cloud
- * plugin execution blocked" without reference to a specific call site — that
- * bare form preserves U10's "not blocked" answer so existing read paths and
- * metrics stay byte-identical. Every enforcement call site (every
- * `assertCloudPluginExecutionAllowed` caller and every direct
- * `isCloudPluginExecutionBlocked` gate) MUST pass its sink explicitly.
+ * @returns `true` if a marker was stripped from the hosted parent, else `false`.
  */
-export function isCloudPluginExecutionBlocked(
-  sink?: PluginCloudExecutionSink
-): boolean {
+export function stripHostedPluginWorkerMarker(): boolean {
   if (!tenantIsolationEnforced()) return false;
-
-  // Same-origin plugin UI JS served to the browser is a browser-trust
-  // boundary, not a process-isolation one. It never runs inside the worker
-  // child (it's an Express static-file route in the control plane) — but
-  // even so, this check is unconditional and NOT overridable by the
-  // worker-child marker below, so it can never be bypassed by that escape
-  // hatch even if the call graph changes in the future.
-  if (sink === "ui-static") return true;
-
-  // Anything genuinely executing inside the isolated worker child is safe by
-  // construction: minimal, explicitly-built env (no DATABASE_URL or other
-  // host/control-plane secrets), never enters the tenant VM, and is only
-  // reached through the broker's authz-gated, company-scoped dispatch.
-  if (isRunningInsidePluginWorkerChild()) return false;
-
-  // No sink (general/legacy callers) or a sink that never runs tenant code
-  // in-process in the control plane: not blocked.
-  if (sink === undefined || CLOUD_SAFE_CONTROL_PLANE_SINKS.has(sink)) {
-    return false;
-  }
-
-  // Remaining case: "loader-import" — `plugin-loader.ts`'s
-  // `loadManifestFromPath()` `import()` of the tenant-authored manifest
-  // module, running in the CONTROL PLANE with no child-process isolation.
-  // Fail closed. Any future/unrecognized sink also fails closed here by
-  // construction (this function only ALLOWS a sink it explicitly recognizes
-  // as safe above).
+  if (process.env[PLUGIN_WORKER_PROCESS_ENV_VAR] === undefined) return false;
+  delete process.env[PLUGIN_WORKER_PROCESS_ENV_VAR];
+  logger.warn(
+    {
+      service: "cloud-plugin-execution",
+      event: "plugin.worker.parent_marker_stripped",
+      envVar: PLUGIN_WORKER_PROCESS_ENV_VAR,
+      reasonCode: PLUGIN_WORKER_BLOCKED_IN_CLOUD,
+    },
+    "stripped spoofed plugin worker-child marker from the hosted parent"
+  );
   return true;
 }
 

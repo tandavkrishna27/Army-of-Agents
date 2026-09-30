@@ -23,8 +23,29 @@ import {
   threadPresence,
   PRESENCE_TTL_MS,
   broadcastThreadPresence,
+  getLiveEventLogStore,
 } from "../services/live-events.js";
+import {
+  SocketSeqCursor,
+  filterAuthorizedReplay,
+  needsSnapshotFallback,
+  resolveBackpressure,
+  orderReplayBuffer,
+  replayTruncatedBeyondPage,
+  parseSinceSeq,
+  buildSnapshotResumeFrame,
+  DEFAULT_REPLAY_LIMIT,
+  DEFAULT_REPLAY_BUFFER_CAP,
+} from "./live-event-catchup.js";
 import { threadService } from "../services/threads.js";
+import {
+  recordUpgradeDenial,
+  type LiveEventsUpgradeDenialReason,
+} from "./live-events-denial-audit.js";
+import {
+  recordTenantlessUpgradeDenial,
+  type LiveEventsUpgradeUnattributedReason,
+} from "./live-events-tenantless-denial-audit.js";
 import { permissionService } from "../services/permissions.js";
 import { hubItemsService } from "../services/hub-items.js";
 import {
@@ -37,6 +58,8 @@ export { hasActiveCloudMembership } from "../services/upgrade-socket-authorizati
 
 interface WsSocket {
   readyState: number;
+  /** ws-native outbound buffer depth (bytes) — MIG-003 backpressure high-water-mark. */
+  bufferedAmount?: number;
   ping(): void;
   send(data: string): void;
   terminate(): void;
@@ -68,6 +91,80 @@ const { WebSocket, WebSocketServer } = require("ws") as {
   WebSocket: { OPEN: number };
   WebSocketServer: new (opts: { noServer: boolean }) => WsServer;
 };
+// proxy-addr is the exact resolver Express uses for `req.ip`. The WS upgrade
+// handler runs on the raw Node `req` (it never passes through the Express
+// request pipeline, so there is no `req.ip`), so we resolve the client IP here
+// with the SAME library + the SAME `trust proxy` setting the REST paths use.
+const proxyAddr = require("proxy-addr") as {
+  (
+    req: IncomingMessage,
+    trust: (addr: string, i: number) => boolean,
+  ): string | undefined;
+  compile(val: string | string[]): (addr: string, i: number) => boolean;
+};
+
+/**
+ * AoA's `trust proxy` setting (`config.trustProxy`: boolean | number | CIDR
+ * list) is the value `app.set("trust proxy", …)` installs in app.ts. This
+ * mirrors Express's own `compileTrust` (express/lib/utils.js) EXACTLY so the
+ * client IP derived on the WS upgrade equals the `req.ip` the REST denial paths
+ * use:
+ *   - a function → used as-is
+ *   - `true`            → trust every hop (the forwarded chain's original client)
+ *   - a hop count `N`   → trust the first N hops from the socket
+ *   - a string / CIDR[] → proxy-addr subnet trust
+ *   - anything falsy (`false` / `0` / `[]` / unset) → trust NOTHING, i.e. the
+ *     socket address with X-Forwarded-For IGNORED. This is the security-critical
+ *     default: with no configured trusted proxy an attacker MUST NOT be able to
+ *     forge the source key via a spoofed X-Forwarded-For.
+ */
+function compileTrustProxy(
+  trustProxy: unknown,
+): (addr: string, i: number) => boolean {
+  if (typeof trustProxy === "function") {
+    return trustProxy as (addr: string, i: number) => boolean;
+  }
+  if (trustProxy === true) return () => true;
+  if (typeof trustProxy === "number") {
+    const hops = trustProxy;
+    return (_addr, i) => i < hops;
+  }
+  const list =
+    typeof trustProxy === "string"
+      ? trustProxy.split(/ *, */)
+      : Array.isArray(trustProxy)
+        ? (trustProxy as string[])
+        : [];
+  return proxyAddr.compile(list);
+}
+
+/**
+ * Resolve a request's client IP under the configured trust-proxy policy, exactly
+ * as Express `req.ip` does. Compiled trust functions are memoized per setting
+ * value (the process's `config.trustProxy` is stable) so a denial flood does not
+ * re-parse the CIDR list on every hit.
+ */
+let cachedTrust: {
+  key: unknown;
+  fn: (addr: string, i: number) => boolean;
+} | null = null;
+function resolveClientIp(
+  req: IncomingMessage,
+  trustProxy: unknown,
+): string | null {
+  try {
+    if (!cachedTrust || cachedTrust.key !== trustProxy) {
+      cachedTrust = { key: trustProxy, fn: compileTrustProxy(trustProxy) };
+    }
+    const addr = proxyAddr(req, cachedTrust.fn);
+    if (typeof addr === "string" && addr.length > 0) return addr;
+  } catch {
+    // A malformed X-Forwarded-For (or any resolver hiccup) must not defeat the
+    // deny path or its bound — fall back to the raw socket address.
+  }
+  const raw = req.socket?.remoteAddress;
+  return typeof raw === "string" && raw.length > 0 ? raw : null;
+}
 
 export type UpgradeContext = UpgradeSocketActorContext;
 
@@ -105,6 +202,28 @@ function parseCompanyId(pathname: string) {
   } catch {
     return null;
   }
+}
+
+/**
+ * The COARSE source key for the tenant-less upgrade denial bound: the refused
+ * upgrade's CLIENT IP, resolved under the configured trust-proxy policy exactly
+ * as Express `req.ip` does. Behind Cloudflare/ALB/nginx the socket's
+ * `remoteAddress` is the PROXY's address — so keying on it would collapse every
+ * WS denial (from every client) into ONE per-surface bucket, letting a single
+ * caller consume the whole per-source allowance for everyone. We therefore
+ * resolve the trusted-proxy client IP (`X-Forwarded-For`) — but ONLY when a
+ * trusted proxy is configured; with none, we key on the socket address and
+ * IGNORE `X-Forwarded-For` so an attacker cannot forge the source key to evade
+ * the per-source cap. It remains the one identifier on a refused upgrade an
+ * attacker cannot cheaply rotate (unlike the caller-supplied company path
+ * segment). `null` when the transport exposes nothing — those hits share a
+ * single bucket per surface, the strongest bound.
+ */
+export function upgradeSourceKey(
+  req: IncomingMessage,
+  trustProxy: unknown,
+): string | null {
+  return resolveClientIp(req, trustProxy);
 }
 
 function parseBearerToken(rawAuth: string | string[] | undefined) {
@@ -249,11 +368,39 @@ export async function authorizeUpgrade(
      * for the CSWSH Origin check below.
      */
     trustedOrigins?: string[];
+    /**
+     * The app's `trust proxy` setting (`config.trustProxy`), used to resolve the
+     * client IP for the tenant-less denial source key exactly as Express
+     * `req.ip` does. Absent/falsy ⇒ trust nothing ⇒ the socket address.
+     */
+    trustProxy?: boolean | number | string[];
   }
 ): Promise<UpgradeContext | null> {
   const queryToken = url.searchParams.get("token")?.trim() ?? "";
   const authToken = parseBearerToken(req.headers.authorization);
   const token = authToken ?? (queryToken.length > 0 ? queryToken : null);
+
+  // ★ DE-21 / E0-F013 Decision 3.2 — the operator-only sink for the SIX branches
+  // below that resolve no actor tenant. `companyId` is the caller-supplied path
+  // segment (evidence in `entity_id`, never attribution — the row is `company_id
+  // NULL`). Bounded per (surface, remote-address) so a flood cannot grow the
+  // operator's evidence table; never throws. The agent-key branches further down
+  // are Class 1 and keep `recordUpgradeDenial` — do NOT route them here.
+  const denyTenantless = (
+    reason: LiveEventsUpgradeUnattributedReason,
+    actorType: "user" | "agent",
+    actorId: string,
+    details?: Record<string, unknown>,
+  ): Promise<void> =>
+    recordTenantlessUpgradeDenial(db, {
+      reason,
+      requestedCompanyId: companyId,
+      actorType,
+      actorId,
+      sourceKey: upgradeSourceKey(req, opts.trustProxy),
+      control: "server/src/realtime/live-events-ws.ts:authorizeUpgrade",
+      details,
+    });
 
   // Browser board context has no bearer token in local_trusted and authenticated modes.
   if (!token) {
@@ -275,6 +422,10 @@ export async function authorizeUpgrade(
         opts.deploymentMode !== "cloud_auth") ||
       !opts.resolveSessionFromHeaders
     ) {
+      await denyTenantless("board_no_session_resolver", "user", "anonymous", {
+        deploymentMode: opts.deploymentMode,
+        hasSessionResolver: Boolean(opts.resolveSessionFromHeaders),
+      });
       return null;
     }
 
@@ -286,6 +437,9 @@ export async function authorizeUpgrade(
     // already trusts the board origin.
     const origin = req.headers.origin;
     if (!origin || !(opts.trustedOrigins ?? []).includes(origin)) {
+      await denyTenantless("board_untrusted_origin", "user", "anonymous", {
+        origin: origin ?? null,
+      });
       return null;
     }
 
@@ -293,7 +447,10 @@ export async function authorizeUpgrade(
       headersFromIncomingMessage(req)
     );
     const userId = session?.user?.id;
-    if (!userId) return null;
+    if (!userId) {
+      await denyTenantless("board_no_user", "user", "anonymous");
+      return null;
+    }
 
     if (opts.deploymentMode === "cloud_auth") {
       // Mirror authorizeCompanyUpgrade (services/upgrade-auth.ts) tenant-isolation
@@ -304,7 +461,10 @@ export async function authorizeUpgrade(
       // authenticated branch below keeps its own instance_admin rule. Extracted
       // into hasActiveCloudMembership so the connection membership-sweep can
       // re-run the exact same predicate against already-open sockets.
-      if (!(await hasActiveCloudMembership(db, companyId, userId))) return null;
+      if (!(await hasActiveCloudMembership(db, companyId, userId))) {
+        await denyTenantless("board_no_cloud_membership", "user", userId);
+        return null;
+      }
 
       return {
         companyId,
@@ -340,7 +500,24 @@ export async function authorizeUpgrade(
     const hasCompanyMembership = memberships.some(
       (row) => row.companyId === companyId
     );
-    if (!roleRow && !hasCompanyMembership) return null;
+    // ★ DE-21 — MEASURED FOR THE DENIAL-AUDIT UNIT AND DELIBERATELY NOT RECORDED.
+    // `memberships` holds FK-valid company ids (the actor's own active
+    // memberships, SELECTed just above for the authorization decision itself), so
+    // this branch LOOKS attributable. It is not, for two independent reasons:
+    // (a) the array is EMPTY in the shape a probe actually takes — a session
+    // holder with no memberships at all — so there is often no FK-valid company
+    // here whatsoever; and (b) when it is non-empty the ids are the actor's OTHER
+    // tenants, none of which was asked for anything or refused anything, so
+    // picking one is an attribution rule, not a wiring gap. E0-F013's Decision 3.2
+    // (slice 2) closes it by recording to the OPERATOR-ONLY sink (`company_id
+    // NULL`) instead of attributing to one of the actor's other memberships. See
+    // `live-events-tenantless-denial-audit.ts`.
+    if (!roleRow && !hasCompanyMembership) {
+      await denyTenantless("board_no_membership", "user", userId, {
+        membershipCount: memberships.length,
+      });
+      return null;
+    }
 
     return {
       companyId,
@@ -358,7 +535,34 @@ export async function authorizeUpgrade(
     )
     .then((rows) => rows[0] ?? null);
 
-  if (!key || key.companyId !== companyId) {
+  // ★ DE-21 — THE UNIT OF CORRECTION IS THE DISJUNCT, NOT THE BRANCH. This was
+  // one two-arm `||`; the arms differ on exactly the axis the audit turns on and
+  // are now separate. Behaviour on the wire is unchanged: both still `return
+  // null` and the caller still answers an opaque `403 Forbidden`.
+  if (!key) {
+    // NO DB-RESOLVED COMPANY EXISTS HERE. An unknown, revoked or malformed token
+    // matched no `agent_api_keys` row, so the only company in hand is the
+    // caller-supplied path segment — the dominant probe case. E0-F013's Decision
+    // 3.2 (slice 2) records it to the OPERATOR-ONLY sink (`company_id NULL`,
+    // requested company in `entity_id`), bounded so an unknown-token flood cannot
+    // grow the operator's evidence table. The raw token is NEVER stored.
+    await denyTenantless("agent_key_unknown", "agent", "unknown", {
+      tokenPresented: true,
+    });
+    return null;
+  }
+  if (key.companyId !== companyId) {
+    // A LIVE key, aimed at a company it does not own. `agent_api_keys.company_id`
+    // is NOT NULL with an FK to `companies`, so the refusal is attributable — to
+    // the KEY's own tenant, never to the one it reached for.
+    await recordUpgradeDenial(db, {
+      companyId: key.companyId,
+      reason: "agent_key_tenant_mismatch",
+      agentId: key.agentId,
+      keyId: key.id,
+      requestedCompanyId: companyId,
+      control: "server/src/realtime/live-events-ws.ts:authorizeUpgrade",
+    });
     return null;
   }
 
@@ -371,12 +575,35 @@ export async function authorizeUpgrade(
     .where(eq(agents.id, key.agentId))
     .then((rows) => rows[0] ?? null);
 
-  if (
-    !agent ||
-    agent.companyId !== key.companyId ||
-    agent.status === "terminated" ||
-    agent.status === "pending_approval"
-  ) {
+  // ★ DE-21 — four disjuncts, four machine codes, ONE unchanged 403. Control only
+  // reaches here when `key` is non-null, so `key.companyId` is DB-resolved and
+  // FK-valid on every one of them; that is what makes this whole branch
+  // recordable while the `!key` arm above is not.
+  const agentRefusal: LiveEventsUpgradeDenialReason | null = !agent
+    ? "agent_missing"
+    : agent.companyId !== key.companyId
+      ? "agent_key_company_drift"
+      : agent.status === "terminated"
+        ? "agent_terminated"
+        : agent.status === "pending_approval"
+          ? "agent_pending_approval"
+          : null;
+  if (agentRefusal) {
+    await recordUpgradeDenial(db, {
+      companyId: key.companyId,
+      reason: agentRefusal,
+      agentId: key.agentId,
+      keyId: key.id,
+      requestedCompanyId: companyId,
+      control: "server/src/realtime/live-events-ws.ts:authorizeUpgrade",
+      details: {
+        // Present only when there IS an agent row; both are inside the key's own
+        // tenant on every arm but `agent_key_company_drift`, where naming the
+        // drift is the whole evidence.
+        agentCompanyId: agent?.companyId ?? null,
+        agentStatus: agent?.status ?? null,
+      },
+    });
     return null;
   }
 
@@ -420,6 +647,13 @@ export function setupLiveEventsWebSocketServer(
       headers: Headers
     ) => Promise<BetterAuthSessionResult | null>;
     trustedOrigins?: string[];
+    /**
+     * The app's `trust proxy` setting (`config.trustProxy`). Threaded to
+     * `authorizeUpgrade` so the tenant-less denial source key is the
+     * trusted-proxy-resolved client IP (Express `req.ip` parity), not the proxy
+     * socket address.
+     */
+    trustProxy?: boolean | number | string[];
   }
 ) {
   const wss = new WebSocketServer({ noServer: true });
@@ -429,6 +663,22 @@ export function setupLiveEventsWebSocketServer(
   // re-validate each board socket's tenant membership after the handshake.
   const contextByClient = new Map<WsSocket, UpgradeContext>();
   const authorizationCheckInFlight = new Set<WsSocket>();
+
+  // MIG-003: per-company socket index + per-socket monotonic delivery cursor, so
+  // the durable-log reader (cross-replica NOTIFY/poll fan-out + `?sinceSeq=N`
+  // catch-up) can reach this replica's sockets and suppress duplicate seqs.
+  const companySockets = new Map<string, Set<WsSocket>>();
+  const cursorByClient = new Map<WsSocket, SocketSeqCursor>();
+  // Defect #2: while a `?sinceSeq=N` replay is in flight for a socket, live
+  // durable events are BUFFERED here instead of sent inline (so they cannot
+  // advance the client cursor past the replayed range and hide lower-seq replay
+  // events). Drained in ascending seq after the replay completes. Overflow →
+  // bounded snapshot fallback.
+  const replayBufferByClient = new Map<WsSocket, { buffer: LiveEvent[]; overflow: boolean }>();
+  // Defect #6: per-socket backpressure hysteresis latch — true while the socket's
+  // outbound buffer is congested, so we emit exactly ONE `__resume` (not one per
+  // dropped event) until it drains below the low-water mark.
+  const backpressureLatched = new Set<WsSocket>();
 
   // Plan 7: per-thread subscription registry. A connection only receives
   // thread.* events for threads it has explicitly subscribed to (via a
@@ -561,6 +811,204 @@ export function setupLiveEventsWebSocketServer(
     return Boolean(item);
   }
 
+  // ── MIG-003: durable cross-replica fan-out + sinceSeq catch-up ───────────────
+  //
+  // A durable event (carrying a per-company `seq`) reaches a socket through this
+  // path — NOT the raw emitter — whenever a log store is wired, so delivery is
+  // uniform (one seq-carrying, deduped, RBAC-re-run path) and gap/dup-free across
+  // replicas. Per-event RBAC is the SAME live company/thread/hub visibility as
+  // the emitter path (hide-don't-403); thread events are visibility-gated (a
+  // viewer who can SEE the thread gets the hint — the client drops pokes it isn't
+  // rendering). Without a store, durable events fall back to the emitter path
+  // (today's single-node behavior).
+
+  async function authorizeDurableEvent(
+    context: UpgradeContext,
+    event: LiveEvent
+  ): Promise<boolean> {
+    if (isHubEvent(event)) return mayReceiveHubEvent(context, event);
+    if (isThreadEvent(event)) {
+      const threadId = threadIdOf(event);
+      if (!threadId) return false; // malformed thread event — fail closed
+      return mayContextAccessThread(context, threadId);
+    }
+    return true; // company-wide invalidation hint
+  }
+
+  /**
+   * Deliver ONE durable event to ONE socket. Order of concerns:
+   *  1. Replay latch (defect #2): while a `?sinceSeq=N` replay is in flight for
+   *     this socket, BUFFER the event (do NOT advance the cursor) — the buffer is
+   *     drained in ascending seq once the replay finishes, so a live event can't
+   *     hide the replayed range.
+   *  2. Dedup: suppress duplicate seqs via the per-socket cursor (this ADVANCES
+   *     the cursor, keeping catch-up consistent even when a payload is skipped).
+   *  3. Backpressure (defect #6): a hysteresis latch bounds a slow socket — emit
+   *     ONE `__resume` on the latching edge, then skip payloads (cursor already
+   *     advanced) until the buffer drains below the low-water mark.
+   *  4. Re-run per-event RBAC (hide-don't-403) before sending.
+   */
+  async function deliverDurableEventToSocket(
+    socket: WsSocket,
+    context: UpgradeContext,
+    event: LiveEvent
+  ): Promise<void> {
+    if (socket.readyState !== WebSocket.OPEN) return;
+
+    // (1) Replay latch — buffer live events until the replay drains (defect #2).
+    const replay = replayBufferByClient.get(socket);
+    if (replay) {
+      if (replay.overflow) return; // already destined for snapshot fallback
+      if (replay.buffer.length >= DEFAULT_REPLAY_BUFFER_CAP) {
+        replay.overflow = true;
+        replay.buffer.length = 0;
+        return;
+      }
+      replay.buffer.push(event);
+      return;
+    }
+
+    // (2) Dedup — advances the cursor even when the send is later skipped.
+    const cursor = cursorByClient.get(socket);
+    if (cursor && !cursor.accept(event.seq)) return;
+
+    // (3) Backpressure hysteresis latch (defect #6).
+    const decision = resolveBackpressure(
+      backpressureLatched.has(socket),
+      socket.bufferedAmount ?? 0
+    );
+    if (decision.latched) backpressureLatched.add(socket);
+    else backpressureLatched.delete(socket);
+    if (decision.signalResume) {
+      try {
+        socket.send(buildSnapshotResumeFrame());
+      } catch {
+        /* socket is going away */
+      }
+    }
+    if (!decision.deliver) return;
+
+    // (4) Per-event RBAC.
+    const authorized = await authorizeDurableEvent(context, event);
+    if (authorized && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(event));
+    }
+  }
+
+  /**
+   * Cross-replica + same-replica durable fan-out entry point. The per-replica
+   * broker listener calls this for each row it pulls on NOTIFY/safety-poll.
+   */
+  function deliverDurableEvent(companyId: string, event: LiveEvent): void {
+    const sockets = companySockets.get(companyId);
+    if (!sockets) return;
+    for (const socket of sockets) {
+      const context = contextByClient.get(socket);
+      if (!context) continue;
+      void deliverDurableEventToSocket(socket, context, event).catch((err) => {
+        logger.warn(
+          { err, companyId },
+          "durable live event fan-out failed"
+        );
+      });
+    }
+  }
+
+  /**
+   * On (re)connect with `?sinceSeq=N`, replay `seq > N` (re-running per-event
+   * RBAC, hide-don't-403) then hand off to live keyed on the same cursor. A cursor
+   * older than the retained window floor → a bounded snapshot-refetch signal.
+   */
+  function sendResume(socket: WsSocket): void {
+    if (socket.readyState === WebSocket.OPEN) {
+      try {
+        socket.send(buildSnapshotResumeFrame());
+      } catch {
+        /* socket going away */
+      }
+    }
+  }
+
+  /**
+   * Finish a replay: tear down the latch and either fall back to a bounded
+   * snapshot (on overflow) or drain the buffered live events in ascending seq
+   * (dropping any `seq <= replayMaxSeq` already covered by the replay). Draining
+   * runs each event back through deliverDurableEventToSocket (now un-latched), so
+   * the per-socket cursor dedups the overlap.
+   */
+  async function finishReplay(
+    socket: WsSocket,
+    context: UpgradeContext,
+    replayMaxSeq: number,
+    snapshot: boolean
+  ): Promise<void> {
+    const replay = replayBufferByClient.get(socket);
+    replayBufferByClient.delete(socket);
+    if (snapshot || replay?.overflow) {
+      // The client will blanket-refetch; buffered live events are covered by it.
+      sendResume(socket);
+      return;
+    }
+    if (!replay || replay.buffer.length === 0) return;
+    const ordered = orderReplayBuffer(replay.buffer, replayMaxSeq);
+    for (const event of ordered) {
+      if (socket.readyState !== WebSocket.OPEN) break;
+      await deliverDurableEventToSocket(socket, context, event);
+    }
+  }
+
+  async function replaySinceSeq(
+    socket: WsSocket,
+    context: UpgradeContext,
+    sinceSeq: number
+  ): Promise<void> {
+    const store = getLiveEventLogStore();
+    if (!store) return;
+    const cursor = cursorByClient.get(socket);
+    // Latch the socket into replay mode so live durable events are buffered, not
+    // sent inline, for the whole async replay window (defect #2).
+    replayBufferByClient.set(socket, { buffer: [], overflow: false });
+    let replayMaxSeq = sinceSeq;
+    let snapshot = false;
+    try {
+      const floor = await store.retentionFloor(context.companyId);
+      if (needsSnapshotFallback(sinceSeq, floor)) {
+        snapshot = true;
+        return;
+      }
+      const tail = await store.since(context.companyId, sinceSeq, DEFAULT_REPLAY_LIMIT);
+      // Defect #3: a full page whose last seq is still behind the company's
+      // high-water means events past the page were never replayed. Do NOT advance
+      // the cursor past the hole — fall back to a bounded snapshot refetch.
+      if (tail.length > 0) {
+        const pageMaxSeq = tail[tail.length - 1]!.seq;
+        const currentSeq = await store.currentSeq(context.companyId);
+        if (replayTruncatedBeyondPage(tail.length, pageMaxSeq, currentSeq, DEFAULT_REPLAY_LIMIT)) {
+          snapshot = true;
+          return;
+        }
+      }
+      const authorized = await filterAuthorizedReplay(tail, (event) =>
+        authorizeDurableEvent(context, event)
+      );
+      for (const event of authorized) {
+        if (socket.readyState !== WebSocket.OPEN) break;
+        socket.send(JSON.stringify(event));
+      }
+      // Advance the cursor past the whole replayed window (authorized or not) so
+      // an overlapping live redelivery of any replayed seq is suppressed.
+      replayMaxSeq = tail.length > 0 ? tail[tail.length - 1]!.seq : sinceSeq;
+      cursor?.advanceTo(replayMaxSeq);
+    } catch (err) {
+      logger.warn(
+        { err, companyId: context.companyId },
+        "live event sinceSeq replay failed"
+      );
+    } finally {
+      await finishReplay(socket, context, replayMaxSeq, snapshot);
+    }
+  }
+
   const pingInterval = setInterval(() => {
     for (const socket of wss.clients) {
       if (!aliveByClient.get(socket)) {
@@ -626,10 +1074,29 @@ export function setupLiveEventsWebSocketServer(
       return;
     }
 
+    // MIG-003: index this socket for durable cross-replica fan-out + give it a
+    // per-socket dedup cursor seeded at the client's `?sinceSeq=N` (0 = fresh).
+    const sinceSeq = parseSinceSeq(req.url);
+    let companyBucket = companySockets.get(context.companyId);
+    if (!companyBucket) {
+      companyBucket = new Set();
+      companySockets.set(context.companyId, companyBucket);
+    }
+    companyBucket.add(socket);
+    cursorByClient.set(socket, new SocketSeqCursor(sinceSeq ?? 0));
+
     const unsubscribe = subscribeCompanyLiveEvents(
       context.companyId,
       (event) => {
         if (socket.readyState !== WebSocket.OPEN) return;
+        // ROBUST MODEL: the same-replica emitter ALWAYS delivers this copy —
+        // seq-less, immediate, never dropped, never gated on a health flag. The
+        // seq-carrying durable copy the drainer pulls back for THIS event is
+        // suppressed cross-path by the drainer (it skips eventIds this replica
+        // published), so there is no same-replica double and an append that later
+        // fails cannot silently drop an already-delivered event. Peer-replica
+        // events never reach this emitter — they arrive only via the durable
+        // reader (deliverDurableEvent).
         if (isHubEvent(event)) {
           void mayReceiveHubEvent(context, event)
             .then((ok) => {
@@ -669,6 +1136,13 @@ export function setupLiveEventsWebSocketServer(
     cleanupByClient.set(socket, unsubscribe);
     aliveByClient.set(socket, true);
     contextByClient.set(socket, context);
+
+    // MIG-003: the socket is now subscribed (emitter) AND indexed (durable) BEFORE
+    // the replay read, so a durable event that lands during catch-up is delivered
+    // live through the cursor (no gap) and the replay's advanceTo won't re-send it.
+    if (sinceSeq !== null) {
+      void replaySinceSeq(socket, context, sinceSeq);
+    }
 
     socket.on("pong", () => {
       aliveByClient.set(socket, true);
@@ -758,6 +1232,16 @@ export function setupLiveEventsWebSocketServer(
       contextByClient.delete(socket);
       authorizationCheckInFlight.delete(socket);
       threadRegistry.removeConnection(socket);
+      // MIG-003: drop this socket from the durable fan-out index + cursor map +
+      // the replay/backpressure per-socket state.
+      cursorByClient.delete(socket);
+      replayBufferByClient.delete(socket);
+      backpressureLatched.delete(socket);
+      const bucket = companySockets.get(context.companyId);
+      if (bucket) {
+        bucket.delete(socket);
+        if (bucket.size === 0) companySockets.delete(context.companyId);
+      }
 
       // Plan 7: drop this connection's presence and notify the affected threads
       // so other viewers see them leave promptly (rather than waiting for TTL).
@@ -807,6 +1291,7 @@ export function setupLiveEventsWebSocketServer(
       deploymentMode: opts.deploymentMode,
       resolveSessionFromHeaders: opts.resolveSessionFromHeaders,
       trustedOrigins: opts.trustedOrigins,
+      trustProxy: opts.trustProxy,
     })
       .then((context) => {
         if (!context) {
@@ -829,6 +1314,17 @@ export function setupLiveEventsWebSocketServer(
         rejectUpgrade(socket, "500 Internal Server Error", "upgrade failed");
       });
   });
+
+  // MIG-003: expose the durable fan-out entry point + the active-company set so
+  // the per-replica broker listener (index.ts) can push NOTIFY/poll-pulled log
+  // rows into this replica's sockets through the same per-event RBAC + dedup +
+  // backpressure path, and safety-poll every company this replica serves.
+  const durableFanoutApi = wss as WsServer & {
+    deliverDurableEvent?: typeof deliverDurableEvent;
+    activeCompanies?: () => Iterable<string>;
+  };
+  durableFanoutApi.deliverDurableEvent = deliverDurableEvent;
+  durableFanoutApi.activeCompanies = () => companySockets.keys();
 
   return wss;
 }

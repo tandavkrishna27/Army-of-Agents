@@ -295,15 +295,18 @@ function createSequenceDb(config: {
     return chain;
   }
 
-  return {
-    db: {
+  const db = {
       select: (_fields?: unknown) =>
         makeSelectChain(() => config.selects?.[selectIdx++] ?? []),
       insert: (table: unknown) =>
         makeInsertChain(extractTableName(table), () => config.inserts?.[insertIdx++] ?? []),
       update: (table: unknown) =>
         makeUpdateChain(extractTableName(table), () => config.updates?.[updateIdx++] ?? []),
-    },
+      execute: vi.fn(async () => ({ rows: [{ id: TGT_CO_ID }] })),
+      transaction: async <T>(fn: (tx: unknown) => Promise<T>) => fn(db),
+  };
+  return {
+    db,
     captured,
   };
 }

@@ -1,5 +1,11 @@
 node_modules/
 dist/
+# The frozen worker-protocol v1 consumer baseline (PRT-007) is a hash-pinned
+# fixture: its bundled dist + declaration tree ARE the checked-in artifact and
+# must be tracked despite the global dist/ ignore above. Re-include the directory
+# then its contents (git cannot re-include files whose parent dir stays excluded).
+!tests/fixtures/worker-protocol-consumers/v1/dist/
+!tests/fixtures/worker-protocol-consumers/v1/dist/**
 server/.aoa/
 build/
 .env
@@ -9,7 +15,7 @@ drizzle/meta/
 coverage/
 .DS_Store
 data/
-.aoa/
+.paperclip/
 .pnpm-store/
 tmp-*
 cli/tmp/
@@ -21,6 +27,13 @@ check-*.mjs
 new-agent*.json
 newcompany.json
 seed-*.mjs
+# WRK-017: `seed-*.mjs` above is UNANCHORED, so it silently swallows a real, shipped file
+# anywhere in the tree — it ate docker/control-plane/seed-d1-worker-enrolment.mjs, which the
+# image COPYs and the migrate job runs. Nothing local noticed: the Docker build context obeys
+# .dockerignore, not .gitignore, so it built and ran fine while CI got a repo without it. The
+# guard self-test caught it (ERR_MODULE_NOT_FOUND on the first CI run). Un-ignore the whole
+# docker/ tree rather than one path, so the next such file is not caught by the same trap.
+!docker/**/seed-*.mjs
 server/check-*.mjs
 server/seed-*.mjs
 packages/db/seed-*.mjs
@@ -41,7 +54,7 @@ tmp/
 .vscode/
 .claude/settings.local.json
 .claude/worktrees/
-.aoa-local/
+.paperclip-local/
 .worktrees/
 docs/superpowers/
 plans/
@@ -90,6 +103,17 @@ server/diagnose-*.ts
 # transient local CI/watch logs (not for commit)
 _*.log
 
+# scratch dir + config written by scripts/check-schema-migration-drift.mjs (E8-F005);
+# always cleaned in its finally, but ignored so an interrupted run leaves nothing committable
+packages/db/.schema-drift-scratch/
+packages/db/.schema-drift.config.ts
+
 # stray onboarding e2e artifacts (were committed by accident)
 test-results/
 local-connectors.json
+
+# Local outputs of docker/images/build.sh (digests + provenance metadata). CI
+# regenerates these per run; committing one developer machine's digests would
+# pin an image nobody else built.
+docker/images/digests.env
+docker/images/*.metadata.json

@@ -154,7 +154,7 @@ async function probeGateway(input: {
               maxProtocol: 3,
               client: {
                 id: "gateway-client",
-                version: "aoa-probe",
+                version: "paperclip-probe",
                 platform: process.platform,
                 mode: "probe",
               },
@@ -319,7 +319,7 @@ export async function testEnvironment(
           code: "openclaw_gateway_probe_failed",
           level: "warn",
           message: "Gateway probe failed.",
-          hint: "Verify network reachability and gateway URL from the Aoa server host.",
+          hint: "Verify network reachability and gateway URL from the Paperclip server host.",
         });
       }
     } catch (err) {

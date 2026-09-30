@@ -76,8 +76,8 @@ beforeAll(async () => {
     db = createDb(connectionString);
 
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Turn Claim Co', 'TCC')
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Turn Claim Co', 'TCC')
     `);
     await db.execute(sql`
       INSERT INTO internal_agent_conversations (id, company_id, user_id, status)

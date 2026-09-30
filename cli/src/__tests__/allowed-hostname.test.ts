@@ -6,7 +6,7 @@ import type { AoaConfig } from "../config/schema.js";
 import { addAllowedHostname } from "../commands/allowed-hostname.js";
 
 function createTempConfigPath() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aoa-allowed-hostname-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-allowed-hostname-"));
   return path.join(dir, "config.json");
 }
 
@@ -19,18 +19,18 @@ function writeBaseConfig(configPath: string) {
     },
     database: {
       mode: "embedded-postgres",
-      embeddedPostgresDataDir: "/tmp/aoa-db",
+      embeddedPostgresDataDir: "/tmp/paperclip-db",
       embeddedPostgresPort: 54329,
       backup: {
         enabled: true,
         intervalMinutes: 60,
         retentionDays: 30,
-        dir: "/tmp/aoa-backups",
+        dir: "/tmp/paperclip-backups",
       },
     },
     logging: {
       mode: "file",
-      logDir: "/tmp/aoa-logs",
+      logDir: "/tmp/paperclip-logs",
     },
     server: {
       deploymentMode: "authenticated",
@@ -45,9 +45,9 @@ function writeBaseConfig(configPath: string) {
     },
     storage: {
       provider: "local_disk",
-      localDisk: { baseDir: "/tmp/aoa-storage" },
+      localDisk: { baseDir: "/tmp/paperclip-storage" },
       s3: {
-        bucket: "aoa",
+        bucket: "paperclip",
         region: "us-east-1",
         prefix: "",
         forcePathStyle: false,
@@ -56,7 +56,7 @@ function writeBaseConfig(configPath: string) {
     secrets: {
       provider: "local_encrypted",
       strictMode: false,
-      localEncrypted: { keyFilePath: "/tmp/aoa-secrets/master.key" },
+      localEncrypted: { keyFilePath: "/tmp/paperclip-secrets/master.key" },
     },
   };
   fs.writeFileSync(configPath, JSON.stringify(base, null, 2));

@@ -397,5 +397,5 @@ else
   echo "To push:"
   echo "  git push && git push origin v$NEW_VERSION"
   echo ""
-  echo "GitHub Release: https://github.com/MeteoriteLabs/AoA/releases/tag/v$NEW_VERSION"
+  echo "GitHub Release: https://github.com/cryppadotta/paperclip/releases/tag/v$NEW_VERSION"
 fi

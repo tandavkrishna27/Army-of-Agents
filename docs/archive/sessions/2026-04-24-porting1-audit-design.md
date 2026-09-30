@@ -7,7 +7,7 @@
 
 ## Overview
 
-Conduct a comprehensive code review audit of the `Porting1.1` branch covering five dimensions simultaneously: pre-merge regression gate (A), post-release runtime readiness (B), port completeness vs upstream `upstream-master` (C), security and hardening (D), and combined quality (E). Audit is read-only (F1 policy) — findings only, no fixes. Depth is L4 (static + test execution + runtime smoke + cross-platform).
+Conduct a comprehensive code review audit of the `Porting1.1` branch covering five dimensions simultaneously: pre-merge regression gate (A), post-release runtime readiness (B), port completeness vs upstream `paperclip-master` (C), security and hardening (D), and combined quality (E). Audit is read-only (F1 policy) — findings only, no fixes. Depth is L4 (static + test execution + runtime smoke + cross-platform).
 
 The audit produces **one master findings document** that maps every finding back to dimensions A–E, plus a `.changeset` mirror matching existing convention.
 
@@ -39,8 +39,8 @@ Eight parallel Phase 1 agents plus two serial runtime phases.
 
 | Agent | Scope | Dimensions | Model | Letter range |
 |---|---|---|---|---|
-| **X1 Rebrand/Identity** | Whole branch. Grep for `upstream`, `Upstream`, `PCP_`, `pcp_*`, `upstream-*`; validate `aoa_*` / `aoa.*` replacements; verify `legacy-key alias` path. | C, D | sonnet | AD-FA … AD-FZ |
-| **X2 Port parity** | Diff `AoA-2.5/` ↔ `upstream-master/` to catalog dropped/stubbed features. Cross-check against memory's "deferred to 1.1" list. | C | opus | AD-GA … AD-GZ |
+| **X1 Rebrand/Identity** | Whole branch. Grep for `paperclip`, `Paperclip`, `PCP_`, `pcp_*`, `paperclip-*`; validate `aoa_*` / `aoa.*` replacements; verify `legacy-key alias` path. | C, D | sonnet | AD-FA … AD-FZ |
+| **X2 Port parity** | Diff `AoA-2.5/` ↔ `paperclip-master/` to catalog dropped/stubbed features. Cross-check against memory's "deferred to 1.1" list. | C | opus | AD-GA … AD-GZ |
 
 ### Dispatch mechanics
 
@@ -152,12 +152,12 @@ Every Phase 1 / 1b agent receives a prompt from this skeleton. Per-agent scope b
 
 ```
 You are auditing branch `Porting1.1` of the AoA repo at
-C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-2.5.
+C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5.
 Base branch is `main`. 141 commits diverge.
 
 CONTEXT:
-- This is a port of the upstream `upstream-master` project. Reference copy is at
-  C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\upstream-master\.
+- This is a port of the upstream `paperclip-master` project. Reference copy is at
+  C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\paperclip-master\.
 - `v1.0.0` was tagged from this branch. Sprints 1–4 closed 23 findings (A–X, some
   letters skipped). See `.changeset/v1-0-0-*.md` — do not re-file them unless you
   see a regression.
@@ -225,8 +225,8 @@ When finished, respond with ONLY the path to your report file.
 | **S4** | `packages/db` + `packages/adapters`. Schema, migrations, pgvector guards, adapter parity vs upstream, credential handling |
 | **S5** | `packages/{plugins,shared,adapter-utils}`. Plugin namespace `aoa.*|aoa-*` + legacy-alias, sandboxing, shared rebrand churn |
 | **S6** | `tests/`, `evals/`, `scripts/`, `docker/`, `.github/`, top-level `docs/`. CI gates, release-smoke wiring, Dockerfile hardening, eval baseline drift |
-| **X1** | Whole branch. Grep `upstream`, `Upstream`, `PCP_`, `pcp_*`, `upstream-*`; validate `aoa_*` / `aoa.*`; verify legacy-key alias by reading code |
-| **X2** | Compare `AoA-2.5/` ↔ `upstream-master/`. Catalog features upstream but missing/stubbed. Cross-check against memory's "deferred to 1.1" list |
+| **X1** | Whole branch. Grep `paperclip`, `Paperclip`, `PCP_`, `pcp_*`, `paperclip-*`; validate `aoa_*` / `aoa.*`; verify legacy-key alias by reading code |
+| **X2** | Compare `AoA-2.5/` ↔ `paperclip-master/`. Catalog features upstream but missing/stubbed. Cross-check against memory's "deferred to 1.1" list |
 
 ## 5. Consolidation & Traceability
 
@@ -337,7 +337,7 @@ On successful completion:
 ## 8. Out of scope
 
 - Fixing anything found (F1 policy — report only)
-- Re-running upstream project's tests against `upstream-master` for comparison
+- Re-running upstream Paperclip's tests against `paperclip-master` for comparison
 - Deep performance profiling or load testing
 - Third-party dependency CVE audit (npm audit is separate)
 - Publishing findings externally (internal doc only)

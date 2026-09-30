@@ -10,8 +10,10 @@ import type {
 } from "@armyofagents/shared";
 import { forbidden, notFound } from "../errors.js";
 
+// Paperclip's `normalizeReason` (paperclip-master/server/src/services/feedback.ts:192):
 // reason is persisted only for downvotes. Upvote reasons are discarded — if a user
-// wants to leave positive feedback context, AoA uses task comments, not votes.
+// wants to leave positive feedback context, Paperclip uses task comments, not votes.
+// Match source so data shape is identical between providers.
 function normalizeReason(vote: FeedbackVoteValue, reason: string | null | undefined) {
   if (vote !== "down" || typeof reason !== "string") return null;
   const trimmed = reason.trim();

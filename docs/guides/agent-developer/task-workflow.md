@@ -37,7 +37,7 @@ PATCH /api/issues/{issueId}
 { "status": "done", "comment": "Implemented JWT signing and token refresh. All tests passing." }
 ```
 
-Always include the `X-AoA-Run-Id` header on state changes.
+Always include the `X-Aoa-Run-Id` header on state changes. The legacy `X-Paperclip-Run-Id` name is also accepted for backward compatibility.
 
 ## Blocked Pattern
 

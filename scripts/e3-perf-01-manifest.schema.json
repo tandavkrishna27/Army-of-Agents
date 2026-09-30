@@ -1,0 +1,351 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://armyofagents.invalid/schemas/e3-perf-01-manifest-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "gate",
+    "attempt",
+    "implementationRevision",
+    "evidenceParentRevision",
+    "evidenceParentTree",
+    "manifestPath",
+    "reviewedEvidence",
+    "owners",
+    "runnerImage",
+    "environment",
+    "dataset",
+    "productionQueryFingerprints",
+    "thresholds",
+    "structuralRequirements",
+    "sourceInputs",
+    "dependencyClosure",
+    "referencedEvidence",
+    "output"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "gate": { "const": "E3-PERF-01" },
+    "attempt": { "$ref": "#/$defs/attempt" },
+    "implementationRevision": { "$ref": "#/$defs/sha40" },
+    "evidenceParentRevision": { "$ref": "#/$defs/sha40" },
+    "evidenceParentTree": { "$ref": "#/$defs/sha40" },
+    "manifestPath": {
+      "type": "string",
+      "pattern": "^docs/replatform/epics/E3-job-control/qa/[A-Za-z0-9._-]+-e3-perf-01-[0-9a-f]{12}-a[1-9][0-9]*\\.json$"
+    },
+    "reviewedEvidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/reviewedEvidenceFact" }
+    },
+    "owners": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["integration", "security"],
+      "properties": {
+        "integration": { "$ref": "#/$defs/ownerApproval" },
+        "security": { "$ref": "#/$defs/ownerApproval" }
+      }
+    },
+    "runnerImage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uri",
+        "digest",
+        "attestationUri",
+        "attestationSha256",
+        "policyUri",
+        "policySha256",
+        "trustRootUri",
+        "trustRootSha256",
+        "e6f06QaBlob",
+        "e6f06HandoffBlob"
+      ],
+      "properties": {
+        "uri": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/prefixedSha256" },
+        "attestationUri": { "type": "string", "minLength": 1 },
+        "attestationSha256": { "$ref": "#/$defs/sha256" },
+        "policyUri": { "type": "string", "minLength": 1 },
+        "policySha256": { "$ref": "#/$defs/sha256" },
+        "trustRootUri": { "type": "string", "minLength": 1 },
+        "trustRootSha256": { "$ref": "#/$defs/sha256" },
+        "e6f06QaBlob": { "$ref": "#/$defs/sha40" },
+        "e6f06HandoffBlob": { "$ref": "#/$defs/sha40" }
+      }
+    },
+    "environment": { "$ref": "#/$defs/environment" },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed",
+        "candidateRows",
+        "certificateRows",
+        "shapes",
+        "claimScenarios",
+        "warmups",
+        "claimSamples",
+        "mutationSamples"
+      ],
+      "properties": {
+        "seed": { "const": 3003 },
+        "candidateRows": { "const": 1000000 },
+        "certificateRows": { "const": 1000000 },
+        "shapes": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            { "const": "hot_worker_fully_certified_then_head_saturated" },
+            { "const": "ten_thousand_workers_by_one_hundred" },
+            { "const": "ninety_percent_stale_version_or_context" },
+            { "const": "cleanup_sparse_then_tail" }
+          ],
+          "items": false
+        },
+        "claimScenarios": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            { "const": "hot_worker_fully_certified_no_work" },
+            { "const": "hot_worker_head_saturated_999744_prefix" },
+            { "const": "ten_thousand_workers_by_one_hundred" },
+            { "const": "ninety_percent_stale_version_or_context" }
+          ],
+          "items": false
+        },
+        "warmups": { "const": 5 },
+        "claimSamples": { "const": 30 },
+        "mutationSamples": { "const": 20 }
+      }
+    },
+    "productionQueryFingerprints": { "$ref": "#/$defs/queryFingerprints" },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shapesTwoThreeP95Ms",
+        "shapesTwoThreeMaxMs",
+        "saturatedP95Ms",
+        "saturatedMaxMs",
+        "bulkUpsertP95Ms",
+        "cleanupP95Ms",
+        "combinedTableIndexBytesMax"
+      ],
+      "properties": {
+        "shapesTwoThreeP95Ms": { "const": 250 },
+        "shapesTwoThreeMaxMs": { "const": 1500 },
+        "saturatedP95Ms": { "const": 2000 },
+        "saturatedMaxMs": { "const": 5000 },
+        "bulkUpsertP95Ms": { "const": 500 },
+        "cleanupP95Ms": { "const": 750 },
+        "combinedTableIndexBytesMax": { "const": 2147483648 }
+      }
+    },
+    "structuralRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exactRows", "requiredIndexes", "noUnboundedSort", "noHotSequentialScan"],
+      "properties": {
+        "exactRows": { "const": true },
+        "requiredIndexes": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            { "const": "jobs_claim_idx" },
+            { "const": "job_attempts_lease_candidate_idx" },
+            { "const": "worker_lease_rejections_pkey" },
+            { "const": "worker_lease_rejections_cleanup_idx" }
+          ],
+          "items": false
+        },
+        "noUnboundedSort": { "const": true },
+        "noHotSequentialScan": { "const": true }
+      }
+    },
+    "sourceInputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/inputFact" }
+    },
+    "dependencyClosure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frozenInstallInventorySha256", "packageStoreIntegritySha256", "criticalInputs"],
+      "properties": {
+        "frozenInstallInventorySha256": { "$ref": "#/$defs/sha256" },
+        "packageStoreIntegritySha256": { "$ref": "#/$defs/sha256" },
+        "criticalInputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/inputFact" }
+        }
+      }
+    },
+    "referencedEvidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["uri", "sha256"],
+        "properties": {
+          "uri": { "type": "string", "minLength": 1 },
+          "sha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "namespace", "retentionUntil"],
+      "properties": {
+        "origin": { "const": "s3://aoa-e3-perf" },
+        "namespace": {
+          "type": "string",
+          "pattern": "^s3://aoa-e3-perf/e3-perf-01/[0-9a-f]{40}/a[1-9][0-9]*$"
+        },
+        "retentionUntil": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "gitExecutable": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "gitSha256": { "$ref": "#/$defs/sha256" },
+    "nodeExecutable": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "nodeSha256": { "$ref": "#/$defs/sha256" },
+    "pnpmExecutable": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "pnpmSha256": { "$ref": "#/$defs/sha256" },
+    "containerRuntimeExecutable": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "containerRuntimeSha256": { "$ref": "#/$defs/sha256" },
+    "provenanceVerifierExecutable": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "provenanceVerifierSha256": { "$ref": "#/$defs/sha256" },
+    "policyDigest": { "$ref": "#/$defs/sha256" },
+    "trustRootDigest": { "$ref": "#/$defs/sha256" },
+    "loadRunnerPath": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "loadRunnerSha256": { "$ref": "#/$defs/sha256" },
+    "argv": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 4096 }
+    },
+    "childEnvironment": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z_][A-Za-z0-9_]*$": { "type": "string", "minLength": 1, "maxLength": 8192 }
+      }
+    }
+  },
+  "$defs": {
+    "sha40": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "prefixedSha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "attempt": { "type": "string", "pattern": "^a[1-9][0-9]*$" },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{3})?Z$"
+    },
+    "mode": { "enum": ["100644", "100755"] },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*[\\\\\\u0000]).+$"
+    },
+    "ownerApproval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "approvedAt"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "approvedAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "inputFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "mode", "blob", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "mode": { "$ref": "#/$defs/mode" },
+        "blob": { "$ref": "#/$defs/sha40" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "reviewedEvidenceFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "status", "mode", "oldBlob", "newBlob", "sha256", "reviewEvidenceBlob"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "status": { "enum": ["A", "M"] },
+        "mode": { "$ref": "#/$defs/mode" },
+        "oldBlob": { "$ref": "#/$defs/sha40" },
+        "newBlob": { "$ref": "#/$defs/sha40" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "reviewEvidenceBlob": { "$ref": "#/$defs/sha40" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cpuModel",
+        "vcpus",
+        "ramMiB",
+        "storageClass",
+        "filesystem",
+        "mountFlags",
+        "tmpfsMiB",
+        "nodeVersion",
+        "nodeSha256",
+        "pnpmVersion",
+        "pnpmSha256",
+        "postgresVersion",
+        "postgresBinarySha256",
+        "postgresSettings",
+        "competingWorkloadPolicy"
+      ],
+      "properties": {
+        "cpuModel": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "vcpus": { "type": "integer", "minimum": 1, "maximum": 4096 },
+        "ramMiB": { "type": "integer", "minimum": 1 },
+        "storageClass": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "filesystem": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "mountFlags": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+          "uniqueItems": true
+        },
+        "tmpfsMiB": { "type": "integer", "minimum": 0 },
+        "nodeVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$" },
+        "nodeSha256": { "$ref": "#/$defs/sha256" },
+        "pnpmVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$" },
+        "pnpmSha256": { "$ref": "#/$defs/sha256" },
+        "postgresVersion": { "type": "string", "pattern": "^[0-9]+(?:\\.[0-9]+){0,2}$" },
+        "postgresBinarySha256": { "$ref": "#/$defs/sha256" },
+        "postgresSettings": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{0,62}$": { "type": "string", "minLength": 1, "maxLength": 200 }
+          }
+        },
+        "competingWorkloadPolicy": { "const": "exclusive" }
+      }
+    },
+    "queryFingerprints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimSha256", "bulkUpsertSha256", "cleanupSha256"],
+      "properties": {
+        "claimSha256": { "$ref": "#/$defs/sha256" },
+        "bulkUpsertSha256": { "$ref": "#/$defs/sha256" },
+        "cleanupSha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

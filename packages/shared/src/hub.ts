@@ -181,7 +181,7 @@ export function isSourceMirroredType(type: HubSemanticType): boolean {
 }
 
 // Internal-only semantic types (Task 10, 2026-07-04): the sink stays functional
-// for legacy/imported AoA-era notification rows (mapPersistedNotificationType
+// for legacy/imported Paperclip-era notification rows (mapPersistedNotificationType
 // falls back to legacy_other), but a founder configuring notifications must NOT
 // see a toggle for a type that can never fire in a fresh AoA install. It stays a
 // full member of HUB_SEMANTIC_TYPES (parse stability, zod enum) — it is only

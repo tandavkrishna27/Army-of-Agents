@@ -37,7 +37,7 @@ Three fixes are live (via HMR) but uncommitted: the default filter now shows git
 - [ ] **Step 1: Confirm the working tree matches expectations**
 
 ```bash
-cd "/path/to/AoA-2.5"
+cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5"
 git status --short
 ```
 Expected: modified `ui/src/components/workspace/git-arc-layout.ts`, `ui/src/components/workspace/GitGraphCanvas.tsx`, `ui/src/__tests__/GitArcLayout.test.ts`.
@@ -395,7 +395,7 @@ Expected: 0 errors. (`drawFlowPulse`/`hitTestArc` still use old geometry — fix
 - [ ] **Step 4: Rebuild the harness and visually verify dots-on-line**
 
 ```bash
-cd "/path/to/AoA-2.5"
+cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5"
 npx esbuild ui/dev-harness/arc-harness.ts --bundle --format=iife --outfile=ui/dev-harness/arc-harness.bundle.js
 ```
 Then open `file://./ui/dev-harness/arc-harness.html` in the browser (`/browse` skill), screenshot scenarios 1–4, and confirm: every commit dot sits exactly on its arc line; open branches end with a short dashed stub (not a rail to the edge).
@@ -476,7 +476,7 @@ Expected: 0 errors.
 - [ ] **Step 4: Rebuild harness; verify pulse rides the line**
 
 ```bash
-cd "/path/to/AoA-2.5"
+cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5"
 npx esbuild ui/dev-harness/arc-harness.ts --bundle --format=iife --outfile=ui/dev-harness/arc-harness.bundle.js
 ```
 Open the harness; on a running branch (scenario 8) confirm the pulse dot travels along the arc line itself. In the live app, hover an arc and confirm the hover card still triggers.
@@ -629,7 +629,7 @@ Expected: 0 errors. (If `hasActiveNodes` becomes unused, leave it — it may sti
 - [ ] **Step 6: Rebuild harness + live verify**
 
 ```bash
-cd "/path/to/AoA-2.5"
+cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5"
 npx esbuild ui/dev-harness/arc-harness.ts --bundle --format=iife --outfile=ui/dev-harness/arc-harness.bundle.js
 ```
 In the harness the trunk should read as a thick glowing line labeled `main`. In the live app (SeaMaster on Engineering), confirm a white dot continuously sweeps left→right along the trunk and the trunk is clearly distinct from branch lines.
@@ -1240,7 +1240,7 @@ Expected: both "OK"; full UI suite green (no new failures).
 - [ ] **Step 2: Rebuild harness, screenshot all 8 scenarios**
 
 ```bash
-cd "/path/to/AoA-2.5"
+cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5"
 npx esbuild ui/dev-harness/arc-harness.ts --bundle --format=iife --outfile=ui/dev-harness/arc-harness.bundle.js
 ```
 Open the harness; confirm dots-on-line and clean open stubs across scenarios 1–8.

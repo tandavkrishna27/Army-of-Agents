@@ -6,8 +6,8 @@ import type {
   AdapterSkillSnapshot,
 } from "@armyofagents/adapter-utils";
 import {
-  readAoaRuntimeSkillEntries,
-  resolveAoaDesiredSkillNames,
+  readPaperclipRuntimeSkillEntries,
+  resolvePaperclipDesiredSkillNames,
 } from "@armyofagents/adapter-utils/server-utils";
 
 const __moduleDir = path.dirname(fileURLToPath(import.meta.url));
@@ -29,20 +29,20 @@ function configuredDetail(agent: AcpxSkillAgent): string {
 }
 
 function unsupportedDetail(): string {
-  return "Desired state is stored in AoA only; custom ACP commands need an explicit skill integration contract before runtime sync is available.";
+  return "Desired state is stored in Paperclip only; custom ACP commands need an explicit skill integration contract before runtime sync is available.";
 }
 
 async function buildAcpxSkillSnapshot(config: Record<string, unknown>): Promise<AdapterSkillSnapshot> {
   const acpxAgent = normalizeAcpxSkillAgent(config);
-  const availableEntries = await readAoaRuntimeSkillEntries(config, __moduleDir);
+  const availableEntries = await readPaperclipRuntimeSkillEntries(config, __moduleDir);
   const availableByKey = new Map(availableEntries.map((entry) => [entry.key, entry]));
-  const desiredSkills = resolveAoaDesiredSkillNames(config, availableEntries);
+  const desiredSkills = resolvePaperclipDesiredSkillNames(config, availableEntries);
   const desiredSet = new Set(desiredSkills);
   const supported = acpxAgent !== "custom";
   const warnings: string[] = supported
     ? []
     : [
-        "Custom ACP commands do not expose a AoA skill integration contract yet; selected skills are tracked only.",
+        "Custom ACP commands do not expose a Paperclip skill integration contract yet; selected skills are tracked only.",
       ];
 
   const entries: AdapterSkillEntry[] = availableEntries.map((entry) => {
@@ -54,7 +54,7 @@ async function buildAcpxSkillSnapshot(config: Record<string, unknown>): Promise<
       managed: true,
       state: desired ? "configured" : "available",
       origin: entry.required ? "aoa_required" : "company_managed",
-      originLabel: entry.required ? "Required by AoA" : "Managed by AoA",
+      originLabel: entry.required ? "Required by Paperclip" : "Managed by Paperclip",
       readOnly: false,
       sourcePath: entry.source,
       targetPath: null,
@@ -66,7 +66,7 @@ async function buildAcpxSkillSnapshot(config: Record<string, unknown>): Promise<
 
   for (const desiredSkill of desiredSkills) {
     if (availableByKey.has(desiredSkill)) continue;
-    warnings.push(`Desired skill "${desiredSkill}" is not available from the AoA skills directory.`);
+    warnings.push(`Desired skill "${desiredSkill}" is not available from the Paperclip skills directory.`);
     entries.push({
       key: desiredSkill,
       runtimeName: null,
@@ -78,7 +78,7 @@ async function buildAcpxSkillSnapshot(config: Record<string, unknown>): Promise<
       readOnly: false,
       sourcePath: null,
       targetPath: null,
-      detail: "AoA cannot find this skill in the local runtime skills directory.",
+      detail: "Paperclip cannot find this skill in the local runtime skills directory.",
     });
   }
 

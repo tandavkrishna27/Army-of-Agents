@@ -5,7 +5,9 @@
  * returns their ServerAdapterModule instances. The caller (adapters route) is
  * responsible for registering them into the registry.
  *
- * The loader imports adapter modules and validates their server exports.
+ * Ported from Paperclip (2026-04-20, Phase 0 Task 0.3). Mostly verbatim; the
+ * only AoA-specific tweak is the logger import path (middleware/logger.js)
+ * and the ServerAdapterModule type, which is AoA's widened shim.
  */
 
 import fs from "node:fs";
@@ -148,7 +150,7 @@ function extractUiParserSource(
   } else {
     logger.info(
       { packageName },
-      "Adapter has ./ui-parser export but no aoa.adapterUiParser version — loading anyway (future versions may require it)"
+      "Adapter has ./ui-parser export but no paperclip.adapterUiParser version — loading anyway (future versions may require it)"
     );
   }
 

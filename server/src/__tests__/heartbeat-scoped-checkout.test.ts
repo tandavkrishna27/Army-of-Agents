@@ -1,6 +1,6 @@
 /**
  * Unit tests for the auto-checkout helpers introduced in Task 22 of the
- * upstream AoA resync (2026-04-26).
+ * upstream Paperclip resync (2026-04-26).
  *
  * isCheckoutConflictError is a pure predicate exported from heartbeat.ts.
  * It can be imported directly after mocking out DB/drizzle side-effects.

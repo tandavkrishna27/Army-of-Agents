@@ -27,6 +27,7 @@ import { and, eq, gte, lt, sql } from "drizzle-orm";
 import { budgetPolicies, companies, costEvents } from "@armyofagents/db";
 import type { Db } from "@armyofagents/db";
 import { computeCostCents } from "./internal-agent/cost-model.js";
+import { lockBudgetAuthority } from "./budget-capacity.js";
 
 export interface OneShotBudgetPreflightParams {
   companyId: string;
@@ -131,9 +132,30 @@ export interface RecordOneShotCliCostParams {
   model: string;
   inputTokens: number;
   outputTokens: number;
-  source: OneShotCliCostSource;
+  /** One-shot CLI source label; stored as `billing_type` unless `billingType`
+   * overrides it. Optional so the JOB-012 authoritative-cost bridge can reuse this
+   * agent-less writer for distributed charges (which supply `billingType` directly). */
+  source?: OneShotCliCostSource;
   /** Defaults to now() — override only for tests/backfills. */
   occurredAt?: Date;
+  // ── JOB-012 additive (all optional; legacy callers omit → unchanged behavior) ──
+  /** Attribute the charge to a department/project so department budget policies
+   * observe it (cost_events.project_id). */
+  projectId?: string | null;
+  /** Cached input tokens (defaults to 0). */
+  cachedInputTokens?: number;
+  /** Pre-resolved fail-closed cost in cents. When set, BYPASSES `computeCostCents`
+   * (which fails OPEN to Sonnet) — the bridge resolves a KNOWN rate or throws first. */
+  costCents?: number;
+  /** Overrides the stored `billing_type` (defaults to `source`). */
+  billingType?: string;
+  /** Overrides the stored `biller` (defaults to `provider`). */
+  biller?: string;
+  /** Server-owned authoritative-cost provenance (JOB-012). */
+  sourceIdempotencyKey?: string | null;
+  rateId?: string | null;
+  rateVersion?: number | null;
+  roundingMode?: string | null;
 }
 
 /**
@@ -149,22 +171,33 @@ export async function recordOneShotCliCost(
   db: Db,
   params: RecordOneShotCliCostParams,
 ): Promise<typeof costEvents.$inferSelect> {
-  const costCents = computeCostCents(params.provider, params.model, params.inputTokens, params.outputTokens);
+  // JOB-012: when the bridge supplies a pre-resolved fail-closed cost, use it; the
+  // legacy one-shot callers keep the fail-open computeCostCents default.
+  const costCents = params.costCents
+    ?? computeCostCents(params.provider, params.model, params.inputTokens, params.outputTokens);
   const occurredAt = params.occurredAt ?? new Date();
+  const billingType = params.billingType ?? params.source ?? "unknown";
 
   return db.transaction(async (tx) => {
+    await lockBudgetAuthority(tx as unknown as Db, params.companyId);
     const [event] = await tx
       .insert(costEvents)
       .values({
         companyId: params.companyId,
         agentId: null,
+        projectId: params.projectId ?? null,
         provider: params.provider,
-        biller: params.provider,
-        billingType: params.source,
+        biller: params.biller ?? params.provider,
+        billingType,
         model: params.model,
         inputTokens: params.inputTokens,
+        cachedInputTokens: params.cachedInputTokens ?? 0,
         outputTokens: params.outputTokens,
         costCents,
+        sourceIdempotencyKey: params.sourceIdempotencyKey ?? null,
+        rateId: params.rateId ?? null,
+        rateVersion: params.rateVersion ?? null,
+        roundingMode: params.roundingMode ?? null,
         occurredAt,
       })
       .returning();

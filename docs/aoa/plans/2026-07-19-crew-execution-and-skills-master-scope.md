@@ -75,7 +75,7 @@ Every row below was re-checked against source on 2026-07-23. Anchors are exact.
 | **P5** | **Crew runs fail to complete** — the agent finishes without calling `set_task_status`; the run is marked failed and a failure card posted. A clean config alone did not fix it. **Undiagnosable until P1 lands.** | `runner.ts:644` |
 | **P6** | Dispatch/re-run is fragile — crew wakeups enqueue only on specific transitions; re-running a failed task required unassign→reassign. | `dispatcher.ts:277` |
 | **P7** | **The crew Skills tab is a no-op.** The UI says *"Skills injected into this agent's context on every run"*, but nothing is delivered (P3) and nothing is enforced (P4). | `AgentSkillsTab.tsx:273-275` |
-| **P7b** | **Crew agents have no workspace.** The crew runner never sets `context.upstreamWorkspace`; heartbeat resolves it. A scratch cwd also breaks Claude session resume, which requires an identical cwd. | `heartbeat.ts:1549→3628`, `execute.ts:450` |
+| **P7b** | **Crew agents have no workspace.** The crew runner never sets `context.paperclipWorkspace`; heartbeat resolves it. A scratch cwd also breaks Claude session resume, which requires an identical cwd. | `heartbeat.ts:1549→3628`, `execute.ts:450` |
 | **P7c** | **`skillKeys` defaults `[]` and crew seeding never sets it** — so P3's delivery *and* P4's enforcement are both dead on arrival. `listRuntimeSkillEntries` early-returns on empty. | `agents.ts:43`, `seed-crew-agent.ts` (no mention), `company-skills.ts:2213` |
 
 ### Group B — Marketplace provisioning

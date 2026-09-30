@@ -11,7 +11,7 @@ describe("resolveSessionKey", () => {
         runId: "run-123",
         issueId: null,
       }),
-    ).toBe("agent:meridian:aoa:run:run-123");
+    ).toBe("agent:meridian:paperclip:run:run-123");
   });
 
   it("prefixes issue-scoped session keys with the configured agent", () => {
@@ -23,31 +23,31 @@ describe("resolveSessionKey", () => {
         runId: "run-123",
         issueId: "issue-456",
       }),
-    ).toBe("agent:meridian:aoa:issue:issue-456");
+    ).toBe("agent:meridian:paperclip:issue:issue-456");
   });
 
   it("prefixes fixed session keys with the configured agent", () => {
     expect(
       resolveSessionKey({
         strategy: "fixed",
-        configuredSessionKey: "aoa",
+        configuredSessionKey: "paperclip",
         agentId: "meridian",
         runId: "run-123",
         issueId: null,
       }),
-    ).toBe("agent:meridian:aoa");
+    ).toBe("agent:meridian:paperclip");
   });
 
   it("does not double-prefix an already-routed session key", () => {
     expect(
       resolveSessionKey({
         strategy: "fixed",
-        configuredSessionKey: "agent:meridian:aoa",
+        configuredSessionKey: "agent:meridian:paperclip",
         agentId: "meridian",
         runId: "run-123",
         issueId: null,
       }),
-    ).toBe("agent:meridian:aoa");
+    ).toBe("agent:meridian:paperclip");
   });
 });
 

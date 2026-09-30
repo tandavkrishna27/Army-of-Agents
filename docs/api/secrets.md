@@ -93,6 +93,43 @@ DELETE /api/secrets/{secretId}
 
 Permanently deletes the secret and all its versions. Returns `{ "ok": true }` on success.
 
+## Runtime Provider Keys (Sandbox)
+
+Company-level credentials for sandbox execution runtimes (e.g. E2B). A runtime provider key is a pointer to a company secret plus a `provider` and an `isDefault` flag; the managed-execution path resolves the company's **default** provider key for a run, falling back to the platform key only when none is set. All routes require a board session and company access; the raw key value is stored encrypted and is never returned.
+
+```
+GET  /api/companies/{companyId}/runtime-provider-keys
+POST /api/companies/{companyId}/runtime-provider-keys
+{
+  "provider": "e2b",
+  "displayName": "Prod E2B",
+  "secretId": "{existingSecretId}",
+  "isDefault": true
+}
+```
+
+The `POST` above registers a provider key that references an **existing** company secret (the two-step flow: create the secret first, then point a key at it).
+
+```
+POST /api/companies/{companyId}/runtime-provider-keys/with-secret
+{
+  "provider": "e2b",
+  "displayName": "Prod E2B",
+  "value": "e2b_live_...",
+  "isDefault": true,
+  "secretName": "E2B_PROD_KEY"
+}
+```
+
+The `with-secret` route is the **one-step** flow: it creates the encrypted company secret from `value` **and** the default provider key atomically in a single transaction (a failure rolls back both — no orphan secret). `secretName` is optional and defaults to `displayName`. The raw `value` is stored encrypted, never logged, and never echoed; only the created provider-key row is returned. Both a `secret.created` and a `runtime_provider_key.created` activity event are recorded.
+
+```
+PATCH  /api/runtime-provider-keys/{id}
+DELETE /api/runtime-provider-keys/{id}
+```
+
+`PATCH` updates `displayName`, `secretId`, `status`, `isDefault`, or `metadata`. `DELETE` removes a key; the current default cannot be deleted until another default is chosen.
+
 ## Bind Secret to a Consumer
 
 ```

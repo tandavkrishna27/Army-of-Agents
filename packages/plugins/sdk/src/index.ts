@@ -1,5 +1,5 @@
 /**
- * `@armyofagents/plugin-sdk` — AoA plugin worker-side SDK.
+ * `@armyofagents/plugin-sdk` — Paperclip plugin worker-side SDK.
  *
  * This is the main entrypoint for plugin worker code.  For plugin UI bundles,
  * import from `@armyofagents/plugin-sdk/ui` instead.
@@ -91,7 +91,7 @@ export {
 // Plugin definition and lifecycle types
 export type {
   PluginDefinition,
-  AoAPlugin,
+  PaperclipPlugin,
   PluginHealthDiagnostics,
   PluginConfigValidationResult,
   PluginWebhookInput,
@@ -211,7 +211,7 @@ export type {
 // Plugin authors import manifest types from here so they have a single
 // dependency (@armyofagents/plugin-sdk) for all plugin authoring needs.
 export type {
-  AoAPluginManifestV1,
+  PaperclipPluginManifestV1,
   PluginJobDeclaration,
   PluginWebhookDeclaration,
   PluginToolDeclaration,

@@ -119,7 +119,7 @@ async function newCompany(name: string): Promise<string> {
   const prefix = `P2${(companySeq++).toString().padStart(1, "0")}`;
   return firstId(
     db.execute(
-      sql`INSERT INTO companies (name, issue_prefix) VALUES (${name}, ${prefix}) RETURNING id`,
+      sql`INSERT INTO companies (organization_id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', ${name}, ${prefix}) RETURNING id`,
     ),
   );
 }

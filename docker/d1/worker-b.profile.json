@@ -1,0 +1,20 @@
+{
+  "protocolVersion": 1,
+  "targetId": "22222222-2222-4222-8222-222222222222",
+  "targetClass": "organization_dedicated",
+  "scope": "organization",
+  "organizationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "ownerPrincipalId": null,
+  "trustCeiling": "organization_isolated",
+  "credentialCeiling": "organization_brokered",
+  "dataLocalityCeiling": "organization_target_only",
+  "providerConstraints": {
+    "profileId": "d1-fake-org-dedicated",
+    "version": 1,
+    "digest": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "capabilityCeiling": ["workload.batch", "workload.service", "provider.lifecycle_v1", "provider.cleanup_v1", "provider.health_v1"],
+  "deviceGeneration": 1,
+  "revokedAt": null,
+  "policyHash": "bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222"
+}

@@ -34,7 +34,7 @@ Replace the raw `<pre>` dump in RunBlock with structured, department-aware rende
 
 | What | Source file | How used |
 |------|-----------|----------|
-| normalizeTranscript() | `upstream/ui/src/components/transcript/RunTranscriptView.tsx:390-579` | Port the aggregation logic (tool_call + tool_result matching, message merging, stderr grouping, command grouping, tool grouping) |
+| normalizeTranscript() | `paperclip/ui/src/components/transcript/RunTranscriptView.tsx:390-579` | Port the aggregation logic (tool_call + tool_result matching, message merging, stderr grouping, command grouping, tool grouping) |
 | TranscriptBlock type | Same file, lines 30-107 | Port the type definition as-is |
 | Helper functions | Same file, lines 109-250 | Port: isCommandTool, extractToolUseId, summarizeToolInput, stripWrappedShell, displayToolName, formatToolPayload, summarizeRecord, parseStructuredToolResult |
 | groupCommandBlocks() | Same file | Port as-is |
@@ -512,8 +512,8 @@ Not just run ID — includes which task this run is executing.
 
 Copy to `aoa-2.5/reference/` (reference only, not imported directly):
 
-1. `upstream/ui/src/components/transcript/RunTranscriptView.tsx` — contains normalizeTranscript(), TranscriptBlock type, all helper functions, rendering components
-2. `upstream/ui/src/components/transcript/useLiveRunTranscripts.ts` — live transcript streaming hook (reference for future LiveRunWidget upgrade)
+1. `paperclip/ui/src/components/transcript/RunTranscriptView.tsx` — contains normalizeTranscript(), TranscriptBlock type, all helper functions, rendering components
+2. `paperclip/ui/src/components/transcript/useLiveRunTranscripts.ts` — live transcript streaming hook (reference for future LiveRunWidget upgrade)
 
 Port into new AoA files (adapted, not copied verbatim):
 - normalizeTranscript() → `ui/src/components/workspace/transcript/normalize-transcript.ts`

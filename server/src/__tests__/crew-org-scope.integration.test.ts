@@ -90,7 +90,7 @@ describe.skipIf(process.platform === "win32")(
         );
       }
       companyId = firstId(await db.execute<{ id: string }>(sql`
-        INSERT INTO companies (id, name) VALUES (gen_random_uuid(), 'Crew Scope Co') RETURNING id
+        INSERT INTO companies (organization_id, id, name) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Crew Scope Co') RETURNING id
       `));
       expect(companyId).toBeTruthy();
 

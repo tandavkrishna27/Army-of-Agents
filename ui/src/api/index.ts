@@ -21,6 +21,7 @@ export { hubItemsApi } from "./hub-items";
 export { artifactsApi } from "./artifacts";
 export { taskOutputsApi } from "./task-outputs";
 export { mcpApi } from "./mcp";
+export { jobControlApi } from "./job-control";
 export { discussionsApi } from "./discussions";
 export { internalAgentApi, streamAgentChat } from "./internal-agent";
 export { companySkillsApi } from "./companySkills";

@@ -115,7 +115,7 @@ describe("internal-agent-routes-contract", () => {
     expect(Array.isArray(router.stack)).toBe(true);
   });
 
-  it("registers exactly 26 route handlers", () => {
+  it("registers exactly 27 route handlers", () => {
     const db = {} as any;
     const router = internalAgentRoutes(db);
 
@@ -125,8 +125,9 @@ describe("internal-agent-routes-contract", () => {
     );
 
     // 22 existing routes + 2 durable tool-trust rule routes + 1 runtime settings
-    // route + 1 test-connection route (QA-BUG-010, 2026-05-29).
-    expect(routeLayers).toHaveLength(26);
+    // route + 1 test-connection route (QA-BUG-010, 2026-05-29) + 1 read-only
+    // submission outcome route.
+    expect(routeLayers).toHaveLength(27);
   });
 
   it("registers all expected paths and methods", () => {
@@ -162,8 +163,9 @@ describe("internal-agent-routes-contract", () => {
       // durable runtime approval trust rules
       { path: "/companies/:companyId/internal-agent/tool-trust-rules", method: "get" },
       { path: "/companies/:companyId/internal-agent/tool-trust-rules/:ruleId", method: "delete" },
-      // conversation messages route (Task 8)
+      // conversation messages and read-only submission outcome routes
       { path: "/companies/:companyId/internal-agent/conversations/:convId/messages", method: "get" },
+      { path: "/companies/:companyId/internal-agent/conversations/:convId/submissions/:clientSubmissionId", method: "get" },
       // pin + rename routes (Task 1)
       { path: "/companies/:companyId/internal-agent/conversations/:convId/pin", method: "patch" },
       { path: "/companies/:companyId/internal-agent/conversations/:convId/rename", method: "patch" },

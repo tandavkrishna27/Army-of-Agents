@@ -1,0 +1,100 @@
+name: Keyed E2B egress-constraint probe (BRW-004 slice a)
+
+# BRW-004 slice (a). Answers ONE question that BRW-004-terrain §12 recorded as unestablished
+# and that source analysis cannot settle:
+#
+#   Can the sandbox provider constrain a sandbox's OUTBOUND egress at all?
+#
+# BRW-004 design §D3 option (b) rests entirely on the answer, and §7 Q2 says so. If the answer
+# is no, the in-sandbox enforcement point of §D3(c) is the ONLY layer rather than defence in
+# depth, and the result doc must state that instead of implying a boundary that does not exist.
+#
+# The probe runs its targets from INSIDE the guest — the opposite of BRW-002's port-exposure
+# probe, which ran from the runner because inbound exposure is an external-observer question.
+# Outbound constraint is a guest-observer question, so the vantage point is inverted on purpose.
+#
+# It is DIFFERENTIAL: two sandboxes, identical except that one declares
+# `metadata.egressAllowlist` and the other does not. A single sandbox cannot tell "the
+# allowlist blocked this" from "this host is unreachable for an unrelated reason".
+#
+# Deliberately SEPARATE from the other keyed lanes so a probe result is never buried inside
+# another epic's suite and a re-trigger never re-runs theirs.
+#
+# OPERATOR ACTION (never the controller): `E2B_API_KEY` must exist as a repo secret — it does.
+# Without it the probe SKIPS cleanly and claims no result; it never fakes one.
+#
+# ★★ MEASURED, and it corrects TWO standing claims at once — the older keyed workflows' own
+# comments AND the assumption that a `--ref` dispatch is available to a new lane:
+#
+#   * CLI-008 Unit D measured that `workflow_dispatch` DOES fire from a NON-DEFAULT branch
+#     (commit c48259358, run 33788025048). So the two older keyed workflows' "workflow_dispatch
+#     only registers from the DEFAULT branch" comments are wrong as stated.
+#   * But that is only true of a workflow GitHub has already INDEXED. This file was dispatched
+#     by name on the branch that introduced it and the API answered
+#     `HTTP 404: workflow ... not found on the default branch`. Every workflow that IS
+#     dispatchable here (`keyed-e2b-cdp-probe`, `keyed-e2b-conformance`, `keyed-e2b-unit-d`)
+#     lives on `docs/replatform-program` and has RUN there; none is on `main`.
+#
+# The accurate rule is therefore: a workflow becomes dispatchable once it has RUN at least
+# once, and a brand-new lane cannot bootstrap itself with `workflow_dispatch`. Its first run
+# has to come from a `push` trigger on the branch that introduces it — which is why the build
+# branch glob is listed below beside the program branch. It is not decoration; without it this
+# probe could not be run before its own PR merged, and an unrun probe measures nothing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      e2b_template:
+        description: E2B sandbox template alias. Empty = bare "base".
+        required: false
+        default: ""
+        type: string
+  push:
+    branches:
+      - docs/replatform-program
+      # The bootstrap path — see the note above. Harmless after merge: no such branch is
+      # pushed once the ticket lands, and the `paths` filter below still gates every run.
+      - "claude/brw-004-**"
+    paths:
+      - ".github/keyed-e2b-egress-constraint-trigger"
+      - ".github/workflows/keyed-e2b-egress-constraint-probe.yml"
+      - "packages/sandbox-e2b-provider/scripts/probe-e2b-egress-constraint.mjs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keyed-e2b-egress-constraint-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Probe outbound egress constraint from INSIDE the sandbox
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          E2B_TEMPLATE: ${{ inputs.e2b_template }}
+        # The script lives INSIDE the package that depends on the `e2b` SDK. Node resolves ESM
+        # bare imports from the SCRIPT's location, not the CWD, so a repo-root script cannot
+        # see a workspace package's node_modules however the working directory is set. That is
+        # the exact defect that made BRW-002's probe run #1 produce nothing.
+        run: node packages/sandbox-e2b-provider/scripts/probe-e2b-egress-constraint.mjs

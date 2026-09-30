@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 
-describe.each(["docs/deploy/database.md"])("migration snapshot runbook in %s", (relativePath) => {
+describe.each([
+  "docs/deploy/database.md",
+  "docs/deploy/upgrade-guide.md",
+])("migration snapshot runbook in %s", (relativePath) => {
   const source = readFileSync(resolve(repoRoot, relativePath), "utf8");
 
   it("upserts the lazy canonical row and verifies its marker", () => {

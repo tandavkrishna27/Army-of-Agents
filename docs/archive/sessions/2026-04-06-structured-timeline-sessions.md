@@ -2,7 +2,7 @@
 
 **Plan:** `docs/superpowers/plans/2026-04-06-structured-timeline.md`
 **Spec:** `docs/superpowers/specs/2026-04-06-structured-timeline-design.md`
-**Reference files:** `reference/upstream-RunTranscriptView.tsx`, `reference/upstream-RunTranscriptView.test.tsx`
+**Reference files:** `reference/paperclip-RunTranscriptView.tsx`, `reference/paperclip-RunTranscriptView.test.tsx`
 
 **Prerequisites:** Reference files from AoA already copied to `aoa-2.5/reference/`.
 
@@ -20,8 +20,8 @@
 Read the following files before starting:
 1. docs/superpowers/plans/2026-04-06-structured-timeline.md (the implementation plan — read the CRITICAL PORT NOTES in the header)
 2. docs/superpowers/specs/2026-04-06-structured-timeline-design.md (the design spec)
-3. reference/upstream-RunTranscriptView.tsx (AoA's transcript rendering — source for the port)
-4. reference/upstream-RunTranscriptView.test.tsx (AoA's tests — reference for our tests)
+3. reference/paperclip-RunTranscriptView.tsx (AoA's transcript rendering — source for the port)
+4. reference/paperclip-RunTranscriptView.test.tsx (AoA's tests — reference for our tests)
 
 Execute Task 1 (Types) and Task 2 (Port normalizeTranscript from AoA) from the implementation plan.
 

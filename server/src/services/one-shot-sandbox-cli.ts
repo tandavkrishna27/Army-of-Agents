@@ -62,6 +62,7 @@ import {
   recordOneShotCliCost as defaultRecordOneShotCliCost,
   type OneShotCliCostSource,
 } from "./one-shot-cli-budget.js";
+import { recordDistributedShadow } from "./distributed-shadow-port.js";
 import { logger } from "../middleware/logger.js";
 
 export type OneShotSandboxErrorKind = "sandbox_unavailable" | "timeout" | "nonzero_exit";
@@ -114,6 +115,21 @@ const DEFAULT_DEPS: OneShotDeps = {
   preflightOneShotCliSpend: defaultPreflightOneShotCliSpend,
   recordOneShotCliCost: defaultRecordOneShotCliCost,
   environmentRuntimeService: defaultEnvironmentRuntimeService,
+};
+
+/**
+ * MIG-007: the cost-source label this helper already carries, mapped to the FROZEN
+ * one-shot operation kinds. `readiness` → `readiness_probe` is the only rename; the map
+ * is exhaustive so a new cost source is a compile error rather than a silently
+ * mis-labelled shadow record.
+ */
+const ONE_SHOT_SHADOW_OPERATION_KIND: Record<
+  OneShotCliCostSource,
+  "extraction" | "compaction" | "readiness_probe"
+> = {
+  extraction: "extraction",
+  compaction: "compaction",
+  readiness: "readiness_probe",
 };
 
 export interface RunOneShotCliInput {
@@ -250,6 +266,44 @@ export async function runOneShotCliInSandbox(input: RunOneShotCliInput): Promise
         issueId: null,
         heartbeatRunId: null,
       }));
+
+    // ── MIG-007 shadow observation ────────────────────────────────────────
+    // ONE seam covers all three one-shot operation kinds (extraction, compaction,
+    // readiness probe) because all three route through this helper. Placed after the
+    // provider is resolved so `routing.executionTargetType` is the REAL target, and
+    // before `execute` so the record describes the intent rather than the outcome.
+    //
+    // Inert unless this Organization's rollout is `shadow`: unregistered port → immediate
+    // return; wrong rollout → the recorder returns before touching anything. It cannot
+    // throw, and its probe is deadline-bounded, so a wedged database costs this call at
+    // most SHADOW_PROBE_DEADLINE_MS and never its result.
+    //
+    // `operationId` is minted here because a one-shot operation has no durable id today.
+    // That is the operation's OWN identity, not a fabricated run/issue — the thing CM-007
+    // forbids and the FROZEN `.strict()` variants refuse.
+    await recordDistributedShadow({
+      companyId: input.companyId,
+      source: {
+        kind: "one_shot",
+        operationId: randomUUID(),
+        operationKind: ONE_SHOT_SHADOW_OPERATION_KIND[input.source],
+      },
+      // System-initiated: there is no user on this path, and `one_shot` admits
+      // agent/system/commander only.
+      principal: { kind: "system", id: input.companyId },
+      routing: { executionTargetType: provider },
+      policy: {
+        model: readString(credential.model ?? null),
+        budgetPolicyId: null,
+        effectiveCompletionPolicy: "not_applicable",
+      },
+      workloadCharacterization: {
+        command: input.command,
+        args: input.args,
+        maxRuntimeSeconds: Math.max(1, Math.ceil(input.timeoutMs / 1000)),
+        stdinArtifactId: null,
+      },
+    });
 
     // S2: build the overlay FIRST (only the company's own resolved credential —
     // no AOA_RUN_ID / AOA_API_URL, this is not an MCP-loopback-capable run),

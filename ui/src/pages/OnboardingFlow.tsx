@@ -160,6 +160,7 @@ export function OnboardingFlowPage({ journey }: { journey: OnboardingJourney }) 
       companyId={journey === "invited" ? null : (selectedCompanyId ?? null)}
       journey={journey}
       deploymentMode={healthQuery.data?.deploymentMode}
+      distributedExecutionEnabled={healthQuery.data?.distributedExecutionEnabled}
       api={onboardingApi}
       registry={ONBOARDING_STEPS}
       onBack={() => navigate("/", { replace: true })}

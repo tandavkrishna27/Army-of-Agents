@@ -1,0 +1,2 @@
+ALTER TABLE "job_projection_receipts" DROP CONSTRAINT "job_projection_receipts_projection_kind_check";--> statement-breakpoint
+ALTER TABLE "job_projection_receipts" ADD CONSTRAINT "job_projection_receipts_projection_kind_check" CHECK (projection_kind IN ('attempt_started', 'attempt_terminal', 'product_approval', 'runtime_decision', 'completion_policy', 'authoritative_cost', 'activity_audit', 'output_projection', 'task_terminal', 'service_instance_status'));

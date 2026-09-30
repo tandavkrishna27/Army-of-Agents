@@ -53,9 +53,9 @@ function CloudDeferredStep({
       <Reveal delay={0.09}>
         <StepCard>
           <p className="text-sm text-dim">
-            Local host access stays disabled on AoA Cloud. E2B can be configured
-            in company Settings for supported heartbeat-agent runs; the gVisor
-            worker pool and full workspace lifecycle remain deferred.
+            {ctx.distributedExecutionEnabled
+              ? "Distributed staging runs through the E2B worker path; local Commander verification is not part of this deployment."
+              : "Local host access stays disabled on AoA Cloud. E2B can be configured in company Settings for supported heartbeat-agent runs; the gVisor worker pool and full workspace lifecycle remain deferred."}
           </p>
           {supportingContent && <div className="mt-3">{supportingContent}</div>}
           {error && <p className="mt-3 text-xs text-destructive">{error}</p>}
@@ -83,7 +83,8 @@ export function CloudAwareEnvironmentStep(props: StepProps) {
 }
 
 export function CloudAwareVerifyStep(props: StepProps) {
-  if (props.ctx.deploymentMode !== "cloud_auth") return <VerifyStep {...props} />;
+  const deferred = props.ctx.deploymentMode === "cloud_auth" || props.ctx.distributedExecutionEnabled === true;
+  if (!deferred) return <VerifyStep {...props} />;
   return (
     <CloudDeferredStep
       {...props}

@@ -110,7 +110,7 @@ export async function testEnvironment(
             code: "http_endpoint_probe_unexpected_status",
             level: "warn",
             message: `Endpoint probe returned HTTP ${response.status}.`,
-            hint: "Verify the endpoint is reachable from the AoA server host.",
+            hint: "Verify the endpoint is reachable from the Paperclip server host.",
           });
         } else {
           checks.push({

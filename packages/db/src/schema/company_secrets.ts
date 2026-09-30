@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, uuid, text, timestamp, integer, index, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, integer, index, uniqueIndex, jsonb, check } from "drizzle-orm/pg-core";
 import { companies } from "./companies.js";
 import { agents } from "./agents.js";
 import { companySecretProviderConfigs } from "./company_secret_provider_configs.js";
@@ -15,6 +15,7 @@ export const companySecrets = pgTable(
     name: text("name").notNull(),
     key: text("key"),
     status: text("status").notNull().default("active"),
+    resolutionScope: text("resolution_scope").notNull().default("general"),
     managedMode: text("managed_mode").notNull().default("aoa_managed"),
     provider: text("provider").notNull().default("local_encrypted"),
     providerConfigId: uuid("provider_config_id").references(() => companySecretProviderConfigs.id, { onDelete: "set null" }),
@@ -36,5 +37,9 @@ export const companySecrets = pgTable(
     companyNameUq: uniqueIndex("company_secrets_company_name_uq")
       .on(table.companyId, table.name)
       .where(sql`${table.deletedAt} IS NULL`),
+    resolutionScopeCheck: check(
+      "company_secrets_resolution_scope_check",
+      sql`${table.resolutionScope} IN ('general','voice_media')`,
+    ),
   }),
 );

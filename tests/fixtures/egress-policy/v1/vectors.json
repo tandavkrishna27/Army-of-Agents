@@ -1,0 +1,232 @@
+{
+  "version": "1",
+  "schema": "aoa-egress-policy-vectors/v1",
+  "context": {
+    "note": "DAT-005 D1/D5 default-deny egress destination vectors. `allow` is the network policy allowlist (https host+port); `controlPlaneCidrs` is the config-sourced control-plane deny set (deliberately PUBLIC ranges isPrivateIP would NOT catch, plus one reserved-overlap range to prove precedence). Both the independent reference verifier (scripts/check-egress-policy-vectors.mjs) and the REAL server classifier (classifyEgressDestination) are bound to this one fixture so neither can silently diverge on which destinations are admitted vs which class refuses them.",
+    "allow": [
+      { "host": "api.notion.com", "port": 443 },
+      { "host": "api.github.com", "port": 443 },
+      { "host": "hooks.example.com", "port": 8443 }
+    ],
+    "controlPlaneCidrs": ["45.55.0.0/16", "198.51.100.0/24", "2606:1234::/32"]
+  },
+  "allowVectors": [
+    {
+      "name": "allowlisted_public_default_port",
+      "requestedUrl": "https://api.notion.com/v1/pages",
+      "resolvedAddrs": ["104.18.32.7"]
+    },
+    {
+      "name": "allowlisted_public_second_host",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["140.82.112.3", "140.82.113.3"]
+    },
+    {
+      "name": "allowlisted_explicit_nonstandard_port",
+      "requestedUrl": "https://hooks.example.com:8443/incoming",
+      "resolvedAddrs": ["93.184.216.34"]
+    },
+    {
+      "name": "allowlisted_ipv6_public",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["2606:4700::6812:2007"]
+    }
+  ],
+  "denyVectors": [
+    {
+      "name": "non_allowlisted_host_public_ip",
+      "requestedUrl": "https://evil.example/exfil",
+      "resolvedAddrs": ["93.184.216.34"],
+      "class": "not_allowlisted"
+    },
+    {
+      "name": "non_https_scheme",
+      "requestedUrl": "http://api.notion.com/v1",
+      "resolvedAddrs": ["104.18.32.7"],
+      "class": "not_allowlisted"
+    },
+    {
+      "name": "allowlisted_host_wrong_port",
+      "requestedUrl": "https://api.notion.com:8443/v1",
+      "resolvedAddrs": ["104.18.32.7"],
+      "class": "not_allowlisted"
+    },
+    {
+      "name": "unparseable_url",
+      "requestedUrl": "@@not-a-url@@",
+      "resolvedAddrs": ["104.18.32.7"],
+      "class": "not_allowlisted"
+    },
+    {
+      "name": "rebind_to_rfc1918",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["10.1.2.3"],
+      "class": "private"
+    },
+    {
+      "name": "rebind_to_loopback",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["127.0.0.1"],
+      "class": "private"
+    },
+    {
+      "name": "multi_homed_one_private",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["104.18.32.7", "192.168.5.5"],
+      "class": "private"
+    },
+    {
+      "name": "empty_resolution_fail_closed",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": [],
+      "class": "private"
+    },
+    {
+      "name": "cloud_metadata_imds",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["169.254.169.254"],
+      "class": "metadata"
+    },
+    {
+      "name": "ecs_task_metadata",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["169.254.170.2"],
+      "class": "metadata"
+    },
+    {
+      "name": "metadata_ipv4_mapped_ipv6",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["::ffff:169.254.169.254"],
+      "class": "metadata"
+    },
+    {
+      "name": "metadata_ipv4_mapped_ipv6_hex",
+      "note": "The HEX spelling of ::ffff:169.254.169.254. parseIp must canonicalize it to family-4 or the mapped-form family asymmetry lets it evade the family-4 metadata gate.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["::ffff:a9fe:a9fe"],
+      "class": "metadata"
+    },
+    {
+      "name": "control_plane_ipv4_mapped_ipv6_hex",
+      "note": "Hex-mapped form of the PUBLIC control-plane IP 45.55.12.34 (in 45.55.0.0/16). isPrivateIP does NOT catch a public IP, so the ONLY gate is the family-4 control_plane CIDR — which the hex-mapped form evades unless parseIp canonicalizes it. Defense-in-depth for the ssrf-rebind-ipblock finding.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["::ffff:2d37:0c22"],
+      "class": "control_plane"
+    },
+    {
+      "name": "loopback_ipv4_mapped_ipv6_hex",
+      "note": "Hex-mapped form of 127.0.0.1.",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["::ffff:7f00:0001"],
+      "class": "private"
+    },
+    {
+      "name": "ipv4_compatible_first_word_zero",
+      "note": "::10 — an IPv4-compatible/first-word-zero IPv6 address (::/16). The reference isPrivateIp missed this class before the fix.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["::10"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_nat64_well_known_prefix_carrying_imds",
+      "note": "W17. 64:ff9b::/96 (RFC6052). A NAT64 translator turns this into 169.254.169.254, so leaving it open re-opens every IPv4 range. The class is `private`, not `metadata`: METADATA_DENY_CIDRS is a family-4 host-route list and this address is family 6 — the deny still fires, one class less specific.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["64:ff9b::169.254.169.254"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_nat64_local_use_prefix",
+      "note": "W17. 64:ff9b:1::/48 (RFC8215), Globally Reachable = False.",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["64:ff9b:1::1"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_discard_only_prefix",
+      "note": "W17. 100::/64 (RFC6666) discard-only sink route.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["100::1"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_dummy_prefix_rfc9780",
+      "note": "W17 — ONE OF THE TWO RANGES THIS UNIT ADDED. 100:0:0:1::/64, Dummy IPv6 Prefix (RFC9780, allocated 2025-04, Globally Reachable = False). isPrivateIP's discard-only clause required the fourth word to be 0, so this ADJACENT /64 fell through to `return false` while 100::/64 was blocked.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["100:0:0:1::1"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_teredo_tunnel",
+      "note": "W17. 2001::/32 (RFC4380) — IPv6-over-UDP tunnelling, another v4 bypass.",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["2001::1"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_benchmarking_prefix",
+      "note": "W17. 2001:2::/48 (RFC5180), Globally Reachable = False.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["2001:2::1"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_orchid_deprecated",
+      "note": "W17. 2001:10::/28 (RFC4843, deprecated) — non-routable identifier space.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["2001:10::1"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_orchidv2",
+      "note": "W17. 2001:20::/28 (RFC7343) — cryptographic identifiers, not locators.",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["2001:20::1"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_6to4_carrying_imds",
+      "note": "W17. 2002::/16 (RFC3056). 2002:a9fe:a9fe::/48 is the 6to4 encoding of 169.254.169.254 — the v6 end of the tunnel whose v4 end is 192.88.99.0/24.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["2002:a9fe:a9fe::1"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_documentation_rfc9637",
+      "note": "W17. 3fff::/20 (RFC9637) additional documentation space.",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["3fff::1"],
+      "class": "private"
+    },
+    {
+      "name": "ipv6_srv6_sids_rfc9602",
+      "note": "W17 — THE OTHER RANGE THIS UNIT ADDED. 5f00::/16, Segment Routing (SRv6) SIDs (RFC9602, allocated 2024-04, Globally Reachable = False). Nothing in isPrivateIP matched the leading word 0x5f00; the whole /16 returned false.",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["5f00::1"],
+      "class": "private"
+    },
+    {
+      "name": "control_plane_public_ipv4",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["45.55.12.34"],
+      "class": "control_plane"
+    },
+    {
+      "name": "control_plane_public_ipv6",
+      "requestedUrl": "https://api.github.com/repos",
+      "resolvedAddrs": ["2606:1234:5::10"],
+      "class": "control_plane"
+    },
+    {
+      "name": "control_plane_precedence_over_private",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["198.51.100.9"],
+      "class": "control_plane"
+    },
+    {
+      "name": "metadata_precedence_over_control_plane",
+      "requestedUrl": "https://api.notion.com/v1",
+      "resolvedAddrs": ["169.254.169.254", "45.55.1.1"],
+      "class": "metadata"
+    }
+  ]
+}

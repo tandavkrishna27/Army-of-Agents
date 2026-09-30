@@ -214,7 +214,7 @@ function buildPluginUiUrl(contribution: PluginUiContribution): string {
  * fighting import map timing constraints, we:
  * 1. Fetch the module source text
  * 2. Rewrite bare specifier imports to use blob URLs that re-export from the
- *    host's global bridge registry (`globalThis.__aoaPluginBridge__`)
+ *    host's global bridge registry (`globalThis.__paperclipPluginBridge__`)
  * 3. Import the rewritten module via a blob URL
  *
  * This approach is compatible with all modern browsers and avoids import map
@@ -244,7 +244,7 @@ function getShimBlobUrl(
   switch (specifier) {
     case "react":
       source = `
-        const R = globalThis.__aoaPluginBridge__?.react;
+        const R = globalThis.__paperclipPluginBridge__?.react;
         export default R;
         const { useState, useEffect, useCallback, useMemo, useRef, useContext,
           createContext, createElement, Fragment, Component, forwardRef,
@@ -258,7 +258,7 @@ function getShimBlobUrl(
       break;
     case "react/jsx-runtime":
       source = `
-        const R = globalThis.__aoaPluginBridge__?.react;
+        const R = globalThis.__paperclipPluginBridge__?.react;
         const withKey = ${applyJsxRuntimeKey.toString()};
         export const jsx = (type, props, key) => R.createElement(type, withKey(props, key));
         export const jsxs = (type, props, key) => R.createElement(type, withKey(props, key));
@@ -268,7 +268,7 @@ function getShimBlobUrl(
     case "react-dom":
     case "react-dom/client":
       source = `
-        const RD = globalThis.__aoaPluginBridge__?.reactDom;
+        const RD = globalThis.__paperclipPluginBridge__?.reactDom;
         export default RD;
         const { createRoot, hydrateRoot, createPortal, flushSync } = RD ?? {};
         export { createRoot, hydrateRoot, createPortal, flushSync };
@@ -276,7 +276,7 @@ function getShimBlobUrl(
       break;
     case "sdk-ui":
       source = `
-        const SDK = globalThis.__aoaPluginBridge__?.sdkUi ?? {};
+        const SDK = globalThis.__paperclipPluginBridge__?.sdkUi ?? {};
         const { usePluginData, usePluginAction, useHostContext, usePluginStream, usePluginToast } = SDK;
         export { usePluginData, usePluginAction, useHostContext, usePluginStream, usePluginToast };
       `;
@@ -341,7 +341,7 @@ async function importPluginModule(
 ): Promise<Record<string, unknown>> {
   // Check if the bridge registry is available. If not, fall back to direct
   // import (which will fail on bare specifiers but won't crash the loader).
-  if (!globalThis.__aoaPluginBridge__) {
+  if (!globalThis.__paperclipPluginBridge__) {
     console.warn(
       "[plugin-loader] Bridge registry not initialized, falling back to direct import"
     );
@@ -380,7 +380,7 @@ async function importPluginModule(
  * component registry.
  *
  * This replaces the previous approach where plugin bundles had to
- * self-register via `window.aoaPlugins.registerReactComponent()`.
+ * self-register via `window.paperclipPlugins.registerReactComponent()`.
  * Now the host is responsible for importing the module and binding
  * exports to the correct `pluginId:exportName` registry keys.
  *

@@ -75,8 +75,8 @@ afterAll(async () => {
 async function seedCompanyWithFounder(): Promise<{ companyId: string; founderId: string }> {
   const companyId = firstId(
     await db.execute(
-      sql`INSERT INTO companies (id, name, issue_prefix)
-          VALUES (gen_random_uuid(), 'Hub W1b Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)))
+      sql`INSERT INTO companies (organization_id, id, name, issue_prefix)
+          VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Hub W1b Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)))
           RETURNING id`,
     ),
   );

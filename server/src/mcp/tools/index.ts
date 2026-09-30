@@ -363,7 +363,7 @@ export const TOOL_DEFINITIONS = [
   {
     name: "upsert-task-document",
     description:
-      "Create or update the task's document (markdown). If the task already has a document artifact, appends a new immutable version; otherwise creates an artifact of type 'document' and links it to the task. Maps AoA's upsert-issue-document to AoA's artifact subsystem.",
+      "Create or update the task's document (markdown). If the task already has a document artifact, appends a new immutable version; otherwise creates an artifact of type 'document' and links it to the task. Maps Paperclip's upsert-issue-document to AoA's artifact subsystem.",
     inputSchema: {
       type: "object",
       properties: {

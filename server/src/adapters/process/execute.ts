@@ -16,7 +16,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   if (!command) throw new Error("Process adapter missing command");
 
   const args = asStringArray(config.args);
-  const workspaceContext = parseObject(ctx.context?.aoaWorkspace);
+  const workspaceContext = parseObject(ctx.context?.paperclipWorkspace);
   const workspaceCwd = asString(workspaceContext.cwd, "");
   const workspaceSource = asString(workspaceContext.source, "");
   const configuredCwd = asString(config.cwd, "");

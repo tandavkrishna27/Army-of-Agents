@@ -24,6 +24,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { VisionMission } from "./pages/VisionMission";
 import { Objectives } from "./pages/Objectives";
 import { Commander } from "./pages/Commander";
+import { UniverseRoute } from "./pages/UniverseRoute";
 import { TeamPage } from "./pages/TeamPage";
 import { TeamDetail } from "./pages/TeamDetail";
 import { HumanDetail } from "./pages/HumanDetail";
@@ -421,6 +422,7 @@ export function App() {
             <Route path="projects/:projectId/settings" element={<UnprefixedBoardRedirect />} />
             <Route path="skills/*" element={<UnprefixedBoardRedirect />} />
             <Route path="workspaces" element={<UnprefixedBoardRedirect />} />
+            <Route path=":companyPrefix/universe" element={<UniverseRoute />} />
             <Route path=":companyPrefix" element={<Layout />}>
               {boardRoutes()}
             </Route>

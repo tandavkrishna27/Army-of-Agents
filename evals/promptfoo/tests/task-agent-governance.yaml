@@ -1,4 +1,4 @@
-# Task agent governance and boundary tests (AoA port of the upstream project governance.yaml).
+# Task agent governance and boundary tests (AoA port of Paperclip governance.yaml).
 # Approval flow compliance and cross-company access denial.
 
 - description: "task-agent.governance.approval_required - requests approval for controlled actions"

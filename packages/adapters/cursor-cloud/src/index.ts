@@ -29,6 +29,6 @@ Core fields:
 Notes:
 - AoA reuses the durable Cursor agent across heartbeats when the repo/runtime identity still matches.
 - Each AoA heartbeat maps to a Cursor run on that durable agent.
-- AoA injects AOA_* compatibility runtime env vars into the cloud agent shell through Cursor SDK cloud envVars.
+- AoA injects PAPERCLIP_* compatibility runtime env vars into the cloud agent shell through Cursor SDK cloud envVars.
 - AoA remains the source of truth for issue/task state; Cursor provides the remote execution surface.
 `;

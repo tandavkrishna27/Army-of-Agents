@@ -67,7 +67,7 @@ afterAll(async () => {
 async function seedCompany(budgetMonthlyCents: number): Promise<{ companyId: string; agentId: string }> {
   const companyId = firstId(
     await db.execute(
-      sql`INSERT INTO companies (id, name, issue_prefix, budget_monthly_cents) VALUES (gen_random_uuid(), 'Budget Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)), ${budgetMonthlyCents}) RETURNING id`,
+      sql`INSERT INTO companies (organization_id, id, name, issue_prefix, budget_monthly_cents) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Budget Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)), ${budgetMonthlyCents}) RETURNING id`,
     ),
   );
   // The budget_alert item is board-pool owned → emit() resolves the board pool to

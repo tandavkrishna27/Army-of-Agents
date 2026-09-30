@@ -1,4 +1,4 @@
-# @armyofagents/adapter-cursor-local
+# @paperclipai/adapter-cursor-local
 
 ## 0.2.7
 

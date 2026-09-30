@@ -43,3 +43,17 @@ export const workerExecutionTargetHeartbeatSchema = z.object({
   capabilities: z.record(z.unknown()).optional(),
 }).strict();
 export type WorkerExecutionTargetHeartbeatInput = z.infer<typeof workerExecutionTargetHeartbeatSchema>;
+
+export const issueWorkerEnrollmentCodeSchema = z.object({
+  scope: z.enum(["organization", "owner"]).default("organization"),
+  ownerUserId: z.string().min(1).max(255).nullable().default(null),
+}).strict().superRefine((value, ctx) => {
+  if ((value.scope === "owner") !== (value.ownerUserId !== null)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["ownerUserId"],
+      message: "ownerUserId is required only for owner scope",
+    });
+  }
+});
+export type IssueWorkerEnrollmentCodeInput = z.infer<typeof issueWorkerEnrollmentCodeSchema>;

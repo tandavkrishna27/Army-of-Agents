@@ -116,7 +116,7 @@ Grouped into workstreams. Most of the "hard" machinery already exists and needs 
 - **W7 WAITS** for the unmerged inbox-hub branches (`feat/inbox-hub` ~50 commits ahead with divergent hub UI copies, `feat/inbox-hub-integration`, `codex/inbox-hub-next-roadmap`) to resolve — collision territory. **W9 last** (its Scribe-drain deletion is preconditioned on live-verified W3).
 
 ### W3 — Execution loop (compose existing machinery into `runAoaAgent`)
-- **Writable worktree:** compose `resolveThreadDeliverableWorkspace` / `realizeExecutionWorkspace` into the crew runner for `software_development` tasks, **per-discussion shared workspace (D19 — supersedes this section's earlier "one repo per task" phrasing)**. Populate `upstreamWorkspace.cwd` so the adapter runs in the worktree.
+- **Writable worktree:** compose `resolveThreadDeliverableWorkspace` / `realizeExecutionWorkspace` into the crew runner for `software_development` tasks, **per-discussion shared workspace (D19 — supersedes this section's earlier "one repo per task" phrasing)**. Populate `paperclipWorkspace.cwd` so the adapter runs in the worktree.
 - **Thread loopback:** call `relayCrewResult` from the crew runner's success/finally path (D11) so completion posts back to `sourceDiscussionId`.
 - **Crew run-summary:** emit a heartbeat-style run-summary `issue_comment` (duration/tokens/cost/files) on crew tasks.
 - **Known limitation:** the crew write-back tool bridge is `claude_local`-only today; generalizing it to codex/opencode is a **noted follow-up**, not a blocker (crew defaults to `claude_local`).

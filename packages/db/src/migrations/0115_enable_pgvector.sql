@@ -22,7 +22,7 @@
 --
 -- Wrapped in DO $$ ... EXCEPTION to match the established defensive
 -- pattern from migration 0038_marvelous_vapor.sql and the
--- 0083_memory_embedding_hnsw_index.sql HNSW guard. See AoA
+-- 0083_memory_embedding_hnsw_index.sql HNSW guard. See Paperclip
 -- Divergence notes / docs/architecture/decisions.md before changing.
 
 DO $$ BEGIN

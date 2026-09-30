@@ -34,6 +34,7 @@ import {
   projectCloudPluginPolicyState,
   recordCloudPluginBlock,
 } from "../services/cloud-plugin-execution.js";
+import { recordCloudPluginDenial } from "../services/cloud-plugin-denial-audit.js";
 
 export function companyPluginRoutes(
   db: Db,
@@ -324,16 +325,32 @@ export function companyPluginRoutes(
       pluginId: string;
     };
 
-    // RW5a: rollback's own "loader" gate is the ENTRY boundary — it delegates
-    // to `loader.upgradePlugin`, which stays allowed on cloud; the manifest
-    // re-import that upgrade performs internally is separately gated by
-    // "loader-import" and stays blocked in the control plane.
+    // FND-006/FND-008 (Decision #103 amendment): the rollback route delegates to
+    // `loader.upgradePlugin` (host package I/O + manifest re-import). The cloud
+    // gate now fails closed for the "loader" sink (as for every sink), so this
+    // entry check short-circuits to the canonical 503 in `cloud_auth` before any
+    // loader/lifecycle effect.
     if (isCloudPluginExecutionBlocked("loader")) {
       recordCloudPluginBlock({
         pluginId,
         companyId,
         source: "direct",
         sink: "loader",
+      });
+      // ★ DE-16 / E0-F013 Decision 3.2 (slice 2): `companyId` is the caller-supplied
+      // path segment and `assertCompanyAccess` runs AFTER this point, so it is
+      // untrusted — record a bounded operator-only denial (`company_id NULL`, the
+      // requested id in `entity_id`). Best-effort; never blocks or fails the 503.
+      void recordCloudPluginDenial(db, {
+        requestedCompanyId: companyId,
+        pluginId,
+        sink: "loader",
+        source: "direct",
+        actorId: req.actor?.userId ?? "board",
+        sourceKey: req.ip ?? req.socket?.remoteAddress ?? null,
+        control: "server/src/routes/company-plugins.ts:upgrade/rollback",
+      }).catch(() => {
+        // recordCloudPluginDenial never throws; guards against unhandled rejection.
       });
       res.status(503).json(cloudPluginExecutionBlockedEnvelope());
       return;

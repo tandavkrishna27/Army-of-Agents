@@ -1,0 +1,300 @@
+/* E1.5 Commander surfaces — blob, captions and the compact chat dock. Dark /
+ * luminous per U01/U07, sitting outside the transformed canvas (U05). Chat view,
+ * blob and captions are independent presentations of one conversation. */
+
+.universe-commander {
+  --uc-red: #d13a26;
+  --uc-text: #edeef2;
+  --uc-dim: rgba(237, 238, 242, 0.6);
+  --uc-surface: rgba(16, 17, 22, 0.92);
+  --uc-border: rgba(255, 255, 255, 0.1);
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* only the interactive children capture pointer */
+  display: flex;
+  flex-direction: column;
+  color: var(--uc-text);
+  font: 13px system-ui, sans-serif;
+}
+
+/* Centered blob presence -------------------------------------------------- */
+.universe-commander-center {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.universe-commander[data-chat="maximized"] .universe-commander-center {
+  display: none;
+}
+
+.universe-commander-blob-wrap {
+  --blob-size: 128px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+.universe-commander-blob {
+  position: relative;
+  width: var(--blob-size);
+  height: var(--blob-size);
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 36% 30%,
+    #ffd7c2 0%,
+    #f2795a 32%,
+    var(--uc-red) 60%,
+    #7d1e12 100%
+  );
+  box-shadow:
+    0 0 40px 8px rgba(209, 58, 38, 0.45),
+    inset 0 0 30px rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  animation: uc-breathe 6s ease-in-out infinite;
+}
+.universe-commander-blob-core {
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: radial-gradient(
+    circle at 40% 35%,
+    rgba(255, 255, 255, 0.35),
+    transparent 60%
+  );
+}
+.universe-commander-blob:hover {
+  box-shadow:
+    0 0 52px 12px rgba(209, 58, 38, 0.6),
+    inset 0 0 30px rgba(255, 255, 255, 0.3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .universe-commander-blob {
+    animation: none;
+  }
+}
+@keyframes uc-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+.universe-commander-blob-controls {
+  display: flex;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--uc-surface);
+  border: 1px solid var(--uc-border);
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+.universe-commander-blob-wrap:hover .universe-commander-blob-controls,
+.universe-commander-blob-wrap:focus-within .universe-commander-blob-controls {
+  opacity: 1;
+}
+.universe-commander-blob-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--uc-text);
+  cursor: pointer;
+}
+.universe-commander-blob-controls button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+.universe-commander-blob-controls button:disabled {
+  color: var(--uc-dim);
+  cursor: not-allowed;
+}
+
+/* Bottom dock: status, captions and the compact composer ------------------ */
+.universe-commander-dock {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+.universe-commander[data-chat="tucked"] .universe-commander-dock {
+  padding-bottom: 24px;
+}
+.universe-commander-status {
+  margin: 0;
+  color: var(--uc-dim);
+  text-align: center;
+}
+.universe-commander-captions {
+  margin: 0;
+  max-width: 680px;
+  text-align: center;
+  color: var(--uc-text);
+  user-select: text;
+}
+.universe-commander-captions[data-placement="bottom-center"] {
+  color: var(--uc-dim);
+}
+
+/* Compact chat bar (arrival). In the live app this hosts the real
+ * CommanderInput via the `composer` slot; the harness shows the shell. */
+.universe-commander-composer {
+  width: min(720px, 92vw);
+}
+.universe-commander-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 8px 8px 14px;
+  border-radius: 16px;
+  background: var(--uc-surface);
+  border: 1px solid var(--uc-border);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+.universe-commander-compact input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--uc-text);
+  font: inherit;
+  outline: none;
+}
+.universe-commander-compact input::placeholder {
+  color: var(--uc-dim);
+}
+.universe-commander-compact .uc-add,
+.universe-commander-compact .uc-voice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--uc-dim);
+  cursor: pointer;
+}
+.universe-commander-compact .uc-voice {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffd7c2, var(--uc-red) 60%, #7d1e12);
+}
+.universe-commander-compact .uc-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--uc-red);
+  color: #fff;
+  cursor: pointer;
+}
+.universe-commander-compact .uc-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--uc-dim);
+  cursor: pointer;
+}
+.universe-commander-compact button:focus-visible,
+.universe-commander-compact input:focus-visible {
+  outline: 2px solid var(--uc-red);
+  outline-offset: 2px;
+}
+
+/* Expanded / maximized chat panel ---------------------------------------- */
+.universe-commander-panel {
+  pointer-events: auto;
+  width: min(720px, 92vw);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: var(--uc-surface);
+  border: 1px solid var(--uc-border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+.universe-commander[data-chat="maximized"] .universe-commander-panel {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+.universe-commander-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--uc-border);
+}
+.universe-commander-panel-head .uc-controls {
+  display: flex;
+  gap: 4px;
+}
+.universe-commander-panel-head button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--uc-dim);
+  cursor: pointer;
+}
+.universe-commander-panel-head button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--uc-text);
+}
+.universe-commander-history {
+  flex: 1;
+  min-height: 120px;
+  max-height: 40vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+.universe-commander[data-chat="maximized"] .universe-commander-history {
+  max-height: none;
+}
+.universe-commander-msg {
+  max-width: 80%;
+  padding: 8px 11px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.universe-commander-msg[data-role="user"] {
+  align-self: flex-end;
+  background: rgba(209, 58, 38, 0.22);
+}
+.universe-commander-panel-composer {
+  border-top: 1px solid var(--uc-border);
+  padding: 8px;
+}

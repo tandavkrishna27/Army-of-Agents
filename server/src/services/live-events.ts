@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { randomUUID } from "node:crypto";
 import type { LiveEvent, LiveEventType, ThreadVisibility } from "@armyofagents/shared";
 import { canViewThread, type ThreadViewer } from "./threads.js";
 
@@ -33,13 +34,210 @@ function toLiveEvent(input: {
   };
 }
 
+// ── MIG-003: durable broker at the single publish chokepoint ──────────────────
+//
+// realtime is a HINT, the DB is truth. `publishLiveEvent` stays SYNCHRONOUS and
+// unchanged for the same-replica local-emit fast path (Commander, plugin host,
+// and each WS socket's per-company subscriber). For durable-eligible events it
+// ADDITIONALLY, best-effort + fire-and-forget, appends to `live_event_log`
+// (assigning a per-company contiguous seq under tenant context) and, after
+// commit, `pg_notify`s a DATA-FREE `{companyId, seq}` wake so peer replicas pull
+// the tail. A failed append/notify degrades to single-replica realtime (the
+// local emit already happened); it never throws into the caller and never
+// corrupts state.
+
+/**
+ * Event families that are EPHEMERAL by design (D6): presence + working-agents.
+ * They are NEVER written to the durable log and NEVER cross-replica-fanned — a
+ * viewer's "who's here right now" is per-replica in-memory TTL state. Every other
+ * family is an invalidation-bearing hint and is durable-eligible.
+ */
+export const EPHEMERAL_LIVE_EVENT_TYPES: ReadonlySet<LiveEventType> = new Set<LiveEventType>([
+  "thread.presence",
+]);
+
+/** Whether a live event is appended to `live_event_log` (durable) vs. local-only. */
+export function isDurableEligible(type: LiveEventType): boolean {
+  return !EPHEMERAL_LIVE_EVENT_TYPES.has(type);
+}
+
+/**
+ * The DATA-FREE cross-replica wake payload (D7 redaction): only `(companyId,
+ * seq)` — never the event payload. Kept well under the ~8KB NOTIFY cap.
+ */
+export function buildDurableNotifyPayload(companyId: string, seq: number): string {
+  return JSON.stringify({ companyId, seq });
+}
+
+/** Parse a `live_events` NOTIFY payload back to `{companyId, seq}` (fail-soft → null). */
+export function parseDurableNotifyPayload(
+  raw: string,
+): { companyId: string; seq: number } | null {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (
+      typeof parsed === "object" && parsed !== null &&
+      typeof (parsed as { companyId?: unknown }).companyId === "string" &&
+      Number.isFinite((parsed as { seq?: unknown }).seq)
+    ) {
+      return {
+        companyId: (parsed as { companyId: string }).companyId,
+        seq: (parsed as { seq: number }).seq,
+      };
+    }
+  } catch {
+    /* malformed wake — the safety poll covers the tail regardless */
+  }
+  return null;
+}
+
+/** A durable log row projected back to a LiveEvent (always carries `seq`). */
+export interface DurableLiveEvent extends LiveEvent {
+  seq: number;
+  /**
+   * The append idempotency key. Carried on the replay/fan-out path so the
+   * per-replica drainer can SUPPRESS events that ORIGINATED on this replica (they
+   * were already delivered seq-less by the synchronous local emit) and deliver
+   * only peer-replica events + catch-up replays — no same-replica double, no
+   * health-flag fragility. See {@link wasLocallyPublished}.
+   */
+  eventId?: string;
+}
+
+/** The record a durable append writes; `eventId` makes the append idempotent. */
+export interface DurableAppendRecord {
+  companyId: string;
+  type: LiveEventType;
+  payload: LiveEventPayload;
+  eventId: string;
+}
+
+/**
+ * The durable-log store seam. The DB-backed implementation lives in
+ * `live-event-log-store.ts` and is injected at boot via {@link setLiveEventLogStore};
+ * unit tests exercise the pure helpers above without a DB, and the broker no-ops
+ * cleanly when no store is wired (single-node local emit still works).
+ */
+export interface LiveEventLogStore {
+  /** Append under tenant context, assigning the next per-company seq. Returns the seq (or null if not persisted). */
+  append(record: DurableAppendRecord): Promise<number | null>;
+  /** After-commit data-free wake to peer replicas. */
+  notify(companyId: string, seq: number): Promise<void>;
+  /** Rows with `seq > sinceSeq`, ascending — the replay/catch-up read. */
+  since(companyId: string, sinceSeq: number, limit?: number): Promise<DurableLiveEvent[]>;
+  /**
+   * The lowest still-retained seq for a company (0 when nothing has been
+   * trimmed). A `sinceSeq` below this floor forces the bounded snapshot fallback.
+   */
+  retentionFloor(companyId: string): Promise<number>;
+  /**
+   * The highest assigned seq for a company (0 when none). Used to anchor the
+   * per-replica drainer on first sight so it fans only new events, never full
+   * history.
+   */
+  currentSeq(companyId: string): Promise<number>;
+  /**
+   * OPTIONAL bounded-retention trim (defect #8). Delete log rows below
+   * `currentSeq(company) − retainWindow` for every retained company (the concrete
+   * store also folds in `extraCompanies` — the replica's active set — so the trim
+   * is correct under FORCE-RLS on the distributed serving role). Returns the row
+   * count deleted. The in-memory test store omits it.
+   */
+  trimRetention?(retainWindow: number, extraCompanies?: Iterable<string>): Promise<number>;
+}
+
+let liveEventLogStore: LiveEventLogStore | null = null;
+
+// ── Robust pipeline model (no health flag) ────────────────────────────────────
+//
+// The synchronous same-replica `emitter.emit` ALWAYS delivers (seq-less,
+// immediate, never dropped, never gated) — so a durable append that later FAILS
+// (pool exhaustion, timeout, deadlock, failover, a non-superuser owner blocked by
+// FORCE RLS) can never silently drop the event on the emitting replica. To avoid
+// a same-replica DOUBLE (emitter copy + the seq-carrying durable copy the drainer
+// pulls back), the drainer SUPPRESSES events whose `eventId` this replica just
+// published — tracked in a bounded FIFO set below. Peer replicas never see these
+// ids, so they deliver the durable copy normally (cross-replica delivery intact).
+// If an id is evicted before the drainer processes it (extreme burst), the worst
+// case is the acceptable idempotent transition-double — never a drop, never a
+// stuck flag.
+
+const LOCAL_PUBLISH_TRACK_MAX = 8_192;
+const locallyPublishedIds = new Set<string>();
+const locallyPublishedOrder: string[] = [];
+
+function recordLocalPublish(eventId: string): void {
+  if (locallyPublishedIds.has(eventId)) return;
+  locallyPublishedIds.add(eventId);
+  locallyPublishedOrder.push(eventId);
+  if (locallyPublishedOrder.length > LOCAL_PUBLISH_TRACK_MAX) {
+    const evicted = locallyPublishedOrder.shift();
+    if (evicted !== undefined) locallyPublishedIds.delete(evicted);
+  }
+}
+
+/**
+ * Whether `eventId` was published by THIS replica (and already delivered seq-less
+ * by the local emit). The per-replica drainer uses this to suppress the durable
+ * copy of same-replica events. Per-process, so it is naturally per-replica.
+ */
+export function wasLocallyPublished(eventId: string | undefined): boolean {
+  return eventId !== undefined && locallyPublishedIds.has(eventId);
+}
+
+/** Test seam: clear the local-publish tracking set between cases. */
+export function __resetLocalPublishTrackingForTests(): void {
+  locallyPublishedIds.clear();
+  locallyPublishedOrder.length = 0;
+}
+
+/** Wire the durable-log store (boot). Passing null detaches it (tests/shutdown). */
+export function setLiveEventLogStore(store: LiveEventLogStore | null): void {
+  liveEventLogStore = store;
+}
+
+export function getLiveEventLogStore(): LiveEventLogStore | null {
+  return liveEventLogStore;
+}
+
+/** Best-effort durable append + data-free NOTIFY. Never throws into the caller. */
+async function persistDurableEvent(record: DurableAppendRecord): Promise<void> {
+  const store = liveEventLogStore;
+  if (!store) return;
+  try {
+    const seq = await store.append(record);
+    if (seq === null) return;
+    await store.notify(record.companyId, seq);
+  } catch {
+    // Degrade to single-replica realtime — the local emit already fired and the
+    // DB stays authoritative; the reconnect cursor + safety poll recover later.
+    // The event was NOT dropped anywhere it should have been delivered: the
+    // emitter already delivered it to this replica's sockets.
+  }
+}
+
 export function publishLiveEvent(input: {
   companyId: string;
   type: LiveEventType;
   payload?: LiveEventPayload;
 }) {
   const event = toLiveEvent(input);
+  // Same-replica fast path — unchanged, synchronous, no seq, ALWAYS delivered.
   emitter.emit(input.companyId, event);
+  // Durable, cross-replica pipeline — best-effort, fire-and-forget.
+  if (isDurableEligible(input.type) && liveEventLogStore) {
+    const eventId = randomUUID();
+    // Track BEFORE the async append so the drainer suppresses the same-replica
+    // durable copy the moment it is pulled back (no race window where the emitter
+    // copy and the durable copy both reach the socket).
+    recordLocalPublish(eventId);
+    void persistDurableEvent({
+      companyId: input.companyId,
+      type: input.type,
+      payload: event.payload,
+      eventId,
+    });
+  }
   return event;
 }
 

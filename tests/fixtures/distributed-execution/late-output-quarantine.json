@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "id": "late-output-quarantine",
+  "workloadType": "batch",
+  "purpose": "A fenced attempt's late output is quarantined to an orphan receipt for review.",
+  "source": {
+    "kind": "task_run",
+    "runId": "run_DYT2ZAZN1RN3CD7K7V933BPZ5T",
+    "issueId": "issue_W4V9ENYZNWSH21JMS8WQGB7FGA"
+  },
+  "organization": {
+    "id": "org_80PVY543BJ8Q5XH97NTPPN6JJW",
+    "name": "Soylent Data"
+  },
+  "company": {
+    "id": "company_825Z7XXNHVPAWAA3TXDGQGXVK0",
+    "name": "Soylent Data HQ",
+    "organizationId": "org_80PVY543BJ8Q5XH97NTPPN6JJW"
+  },
+  "requester": {
+    "type": "agent",
+    "id": "agent-builder-1",
+    "displayName": "Builder Agent"
+  },
+  "executor": {
+    "type": "worker",
+    "id": "cloud-worker-batch-3"
+  },
+  "placement": {
+    "targetPolicy": "pinned_generation",
+    "provider": "e2b",
+    "region": "us-east-1",
+    "generation": 1
+  },
+  "inputBase": {
+    "workspaceBaseId": "wsbase-5np2twr8w4ykg044tra52tf1wt",
+    "gitRemote": "https://git.example.com/soylent/app.git",
+    "gitRef": "refs/heads/main",
+    "baseDigest": "85d5d6823a9c58081c647e935020c424da586a25827acfc1dc3a0adb59f5dbb2",
+    "immutable": true
+  },
+  "identity": {
+    "jobId": "job_ZQB27KY3Z9614EPGFJB636XDF8",
+    "attempts": [
+      {
+        "attempt": 0,
+        "workerId": null,
+        "leaseId": null,
+        "fenceToken": null
+      },
+      {
+        "attempt": 1,
+        "workerId": "worker_CW61NS8HS0T0VCNR9DAT88JGJR",
+        "leaseId": "lease_JJDCCRH5ZY8EQPQQ4H2SAF7J3X",
+        "fenceToken": 100
+      },
+      {
+        "attempt": 2,
+        "workerId": "worker_4GCYKX97588910H87DAT4DEJMP",
+        "leaseId": "lease_238A584GQBEMJEJZF80425AMQ1",
+        "fenceToken": 200
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "lease_and_ack",
+      "emits": [
+        "attempt_started"
+      ]
+    },
+    {
+      "action": "execute_local_work",
+      "emits": [
+        "log"
+      ]
+    },
+    {
+      "action": "lose_lease",
+      "at": "running"
+    },
+    {
+      "action": "reject_ordinary_transfer",
+      "emits": [
+        "artifact_transfer_rejected"
+      ]
+    },
+    {
+      "action": "issue_quarantine_grant",
+      "emits": [
+        "quarantine_grant_issued"
+      ]
+    },
+    {
+      "action": "finalize_orphan_receipt",
+      "emits": [
+        "quarantine_receipt_finalized"
+      ]
+    },
+    {
+      "action": "activate_replacement_lease",
+      "emits": [
+        "replacement_lease_activated"
+      ]
+    }
+  ],
+  "failureInjection": {
+    "point": "running",
+    "effect": "lease_lost"
+  },
+  "expectedEvents": [
+    {
+      "protocolVersion": 1,
+      "eventId": "PS8RVM5QW1Q84CS896ME7YZQ21",
+      "eventType": "attempt_started",
+      "organizationId": "org_80PVY543BJ8Q5XH97NTPPN6JJW",
+      "companyId": "company_825Z7XXNHVPAWAA3TXDGQGXVK0",
+      "workerId": "worker_CW61NS8HS0T0VCNR9DAT88JGJR",
+      "jobId": "job_ZQB27KY3Z9614EPGFJB636XDF8",
+      "attempt": 1,
+      "leaseId": "lease_JJDCCRH5ZY8EQPQQ4H2SAF7J3X",
+      "fenceToken": 100,
+      "seq": 1,
+      "occurredAt": "2026-08-08T12:00:00.000Z",
+      "payload": {},
+      "eventDigest": "34c8dce4d3a6c9bc31cc085ec44181d9515beb733ffaaa518aa321e4916a68cc"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "4RRA3X20F9VD4X71V09VC6FH6J",
+      "eventType": "log",
+      "organizationId": "org_80PVY543BJ8Q5XH97NTPPN6JJW",
+      "companyId": "company_825Z7XXNHVPAWAA3TXDGQGXVK0",
+      "workerId": "worker_CW61NS8HS0T0VCNR9DAT88JGJR",
+      "jobId": "job_ZQB27KY3Z9614EPGFJB636XDF8",
+      "attempt": 1,
+      "leaseId": "lease_JJDCCRH5ZY8EQPQQ4H2SAF7J3X",
+      "fenceToken": 100,
+      "seq": 2,
+      "occurredAt": "2026-08-08T12:00:08.000Z",
+      "payload": {
+        "detail": "produced a local build output",
+        "stage": "execute"
+      },
+      "eventDigest": "1e34481ab03b9e9612754ceaca932c62aac333991d9c99e7b6f41d6de5432459"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "JV9ADQRFGEXFBMRB9V69YQYZVW",
+      "eventType": "lease_lost",
+      "organizationId": "org_80PVY543BJ8Q5XH97NTPPN6JJW",
+      "companyId": "company_825Z7XXNHVPAWAA3TXDGQGXVK0",
+      "workerId": "worker_CW61NS8HS0T0VCNR9DAT88JGJR",
+      "jobId": "job_ZQB27KY3Z9614EPGFJB636XDF8",
+      "attempt": 1,
+      "leaseId": "lease_JJDCCRH5ZY8EQPQQ4H2SAF7J3X",
+      "fenceToken": 100,
+      "seq": 3,
+      "occurredAt": "2026-08-08T12:00:20.000Z",
+      "payload": {
+        "reason": "lease_expired"
+      },
+      "eventDigest": "6295f6e9747e55d6193979f3c43214b9333259a7c593e2bc30dceb8354c9e6b1"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "01TXVHNSC9FR9RSNVE5G6S18ZW",
+      "eventType": "artifact_transfer_rejected",
+      "organizationId": "org_80PVY543BJ8Q5XH97NTPPN6JJW",
+      "companyId": "company_825Z7XXNHVPAWAA3TXDGQGXVK0",
+      "workerId": "worker_CW61NS8HS0T0VCNR9DAT88JGJR",
+      "jobId": "job_ZQB27KY3Z9614EPGFJB636XDF8",
+      "attempt": 1,
+      "leaseId": "lease_JJDCCRH5ZY8EQPQQ4H2SAF7J3X",
+      "fenceToken": 100,
+      "seq": 4,
+      "occurredAt": "2026-08-08T12:00:21.000Z",
+      "payload": {
+        "reason": "fence_lost_ordinary_transfer_denied",
+        "prefix": "artifacts/job/ordinary"
+      },
+      "eventDigest": "abf909830ccaeb7a1e86bd55e4363030de7c7c8c2f9d863dbe05e0ae8ed3d641"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "TVXEAFFPP8ZV963QWEGCDF6NZR",
+      "eventType": "quarantine_grant_issued",
+      "organizationId": "org_80PVY543BJ8Q5XH97NTPPN6JJW",
+      "companyId": "company_825Z7XXNHVPAWAA3TXDGQGXVK0",
+      "workerId": null,
+      "jobId": "job_ZQB27KY3Z9614EPGFJB636XDF8",
+      "attempt": 0,
+      "leaseId": null,
+      "fenceToken": null,
+      "seq": 5,
+      "occurredAt": "2026-08-08T12:00:25.000Z",
+      "payload": {
+        "prefix": "quarantine/gen-1/orphan",
+        "hash": "4401ca881cbe82047158c7eb3d3ebbab392d77c8bb07d3d6a76a0de02d8d1866",
+        "sizeBytes": 20480,
+        "generation": 1,
+        "code": "device_authenticated"
+      },
+      "eventDigest": "e5bf2d5f0907bea6c941e6a7c56fb4f5e1496f90d3ee2749816812f9fa5474e0"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "N3KHGY74VX6XFW3TNEJPXGEC01",
+      "eventType": "quarantine_receipt_finalized",
+      "organizationId": "org_80PVY543BJ8Q5XH97NTPPN6JJW",
+      "companyId": "company_825Z7XXNHVPAWAA3TXDGQGXVK0",
+      "workerId": null,
+      "jobId": "job_ZQB27KY3Z9614EPGFJB636XDF8",
+      "attempt": 0,
+      "leaseId": null,
+      "fenceToken": null,
+      "seq": 6,
+      "occurredAt": "2026-08-08T12:00:26.000Z",
+      "payload": {
+        "artifactRef": "orphan_quarantine_receipt",
+        "hash": "4401ca881cbe82047158c7eb3d3ebbab392d77c8bb07d3d6a76a0de02d8d1866",
+        "reason": "requires_explicit_review"
+      },
+      "eventDigest": "8c06ae70b676466643e1ccc90e984e90cb1ac9afbced48b38daea094c63491a2"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "HEWG0AJRQXSW8VMM2RW34NGPH1",
+      "eventType": "replacement_lease_activated",
+      "organizationId": "org_80PVY543BJ8Q5XH97NTPPN6JJW",
+      "companyId": "company_825Z7XXNHVPAWAA3TXDGQGXVK0",
+      "workerId": "worker_4GCYKX97588910H87DAT4DEJMP",
+      "jobId": "job_ZQB27KY3Z9614EPGFJB636XDF8",
+      "attempt": 2,
+      "leaseId": "lease_238A584GQBEMJEJZF80425AMQ1",
+      "fenceToken": 200,
+      "seq": 7,
+      "occurredAt": "2026-08-08T12:00:40.000Z",
+      "payload": {
+        "generation": 1
+      },
+      "eventDigest": "9bf41833c6e16516e67cc940f9130b40baeb9fa635e6318c7ab2c604cc380dd6"
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "maxTotalCents": 500,
+    "observedTotalCents": 30,
+    "tokenBudget": 200000,
+    "observedTokens": 6000
+  },
+  "timing": {
+    "queuedAt": "2026-08-08T11:59:55.000Z",
+    "startedAt": "2026-08-08T12:00:00.000Z",
+    "finishedAt": "2026-08-08T12:00:40.000Z",
+    "maxWallClockMs": 600000,
+    "observedWallClockMs": 40000
+  },
+  "cleanup": {
+    "authority": "resource_bound_cleanup",
+    "scope": "attempt:worker_CW61NS8HS0T0VCNR9DAT88JGJR",
+    "idempotent": true,
+    "deadlineMs": 60000,
+    "restoresEffectAuthority": false
+  },
+  "control": {
+    "cancellation": "none",
+    "productApproval": "none",
+    "runtimeDecision": "late_output_quarantine"
+  },
+  "expected": {
+    "terminalState": "expired",
+    "artifacts": [
+      "orphan_quarantine_receipt"
+    ],
+    "auditActions": [
+      "attempt.lease_lost",
+      "artifact.quarantined",
+      "review.required"
+    ],
+    "forbiddenEffects": [
+      "old_attempt_completion",
+      "ordinary_prefix_write",
+      "auto_apply_quarantine",
+      "selected_checkpoint",
+      "secret_refresh_after_fence_loss"
+    ]
+  }
+}

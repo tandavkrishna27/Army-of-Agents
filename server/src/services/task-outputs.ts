@@ -124,6 +124,66 @@ async function assertTaskOutputRefs(
   await assertCompanyOwnedRef(db, agents, input.createdByAgentId, companyId, "Agent");
 }
 
+/**
+ * Upsert a task output for an issue on a CALLER-SUPPLIED db/tx handle (no own
+ * transaction). `upsertForIssue` wraps this in its own `serviceDb.transaction(...)`
+ * for byte-for-byte identical existing behavior; a caller that already holds a tenant
+ * transaction (JOB-014's job-output-bridge) passes that `tx` directly so the output
+ * write and its projection receipt commit atomically in ONE transaction — nesting the
+ * old inner transaction would open a SAVEPOINT and break that single-tx atomicity.
+ */
+export async function upsertTaskOutputForIssue(
+  db: TaskOutputDb,
+  companyId: string,
+  issueId: string,
+  input: UpsertTaskOutput,
+): Promise<TaskOutputRow> {
+  const issue = await getIssueForCompany(db, companyId, issueId);
+  if (!issue) throw notFound("Task not found");
+
+  const values = normalizedInsert(companyId, issue.projectId, issueId, input);
+  await assertTaskOutputRefs(db, companyId, input);
+  if (values.isPrimary) {
+    await clearSiblingPrimaries(db, companyId, issueId);
+  }
+
+  if (values.externalId) {
+    const provider = values.provider ?? "aoa";
+    const existing = await db
+      .select()
+      .from(taskOutputs)
+      .where(
+        and(
+          eq(taskOutputs.companyId, companyId),
+          eq(taskOutputs.issueId, issueId),
+          eq(taskOutputs.provider, provider),
+          eq(taskOutputs.externalId, values.externalId),
+        ),
+      )
+      .then((rows) => rows[0] ?? null);
+
+    if (existing) {
+      const [updated] = await db
+        .update(taskOutputs)
+        // An upsert-by-(provider, externalId) updates CONTENT but is PROMOTE-ONLY for the
+        // primary flag: it never DEMOTES an existing primary. A stale / re-delivered output
+        // (e.g. the JOB-014 bridge, which always passes isPrimary:false, or a quarantine
+        // re-delivery of the same PR) must not silently clear a founder's primary election;
+        // a genuine promotion (isPrimary:true) still wins via the OR.
+        .set({ ...values, isPrimary: existing.isPrimary || values.isPrimary, updatedAt: new Date() })
+        .where(and(eq(taskOutputs.id, existing.id), eq(taskOutputs.companyId, companyId)))
+        .returning();
+      return updated;
+    }
+  }
+
+  const [created] = await db
+    .insert(taskOutputs)
+    .values(values)
+    .returning();
+  return created;
+}
+
 export function taskOutputService(db: Db) {
   const serviceDb = db as TaskOutputDb;
 
@@ -149,48 +209,9 @@ export function taskOutputService(db: Db) {
       issueId: string,
       input: UpsertTaskOutput,
     ): Promise<TaskOutputRow> => {
-      return serviceDb.transaction(async (tx) => {
-        const scopedDb = tx as TaskOutputDb;
-        const issue = await getIssueForCompany(scopedDb, companyId, issueId);
-        if (!issue) throw notFound("Task not found");
-
-        const values = normalizedInsert(companyId, issue.projectId, issueId, input);
-        await assertTaskOutputRefs(scopedDb, companyId, input);
-        if (values.isPrimary) {
-          await clearSiblingPrimaries(scopedDb, companyId, issueId);
-        }
-
-        if (values.externalId) {
-          const provider = values.provider ?? "aoa";
-          const existing = await scopedDb
-            .select()
-            .from(taskOutputs)
-            .where(
-              and(
-                eq(taskOutputs.companyId, companyId),
-                eq(taskOutputs.issueId, issueId),
-                eq(taskOutputs.provider, provider),
-                eq(taskOutputs.externalId, values.externalId),
-              ),
-            )
-            .then((rows) => rows[0] ?? null);
-
-          if (existing) {
-            const [updated] = await scopedDb
-              .update(taskOutputs)
-              .set({ ...values, updatedAt: new Date() })
-              .where(and(eq(taskOutputs.id, existing.id), eq(taskOutputs.companyId, companyId)))
-              .returning();
-            return updated;
-          }
-        }
-
-        const [created] = await scopedDb
-          .insert(taskOutputs)
-          .values(values)
-          .returning();
-        return created;
-      });
+      return serviceDb.transaction((tx) =>
+        upsertTaskOutputForIssue(tx as TaskOutputDb, companyId, issueId, input),
+      );
     },
 
     updateMutable: async (

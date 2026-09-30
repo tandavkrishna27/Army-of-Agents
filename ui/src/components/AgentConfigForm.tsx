@@ -345,7 +345,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
     }
 
     // Optimistic-concurrency token: guard this whole-row save against a concurrent
-    // edit. `agent.updatedAt` is the row version the user was editing. (Decision #104)
+    // edit. `agent.updatedAt` is the row version the user was editing. (Decision #125)
     if (agent.updatedAt) {
       patch.expectedUpdatedAt = new Date(agent.updatedAt).toISOString();
     }

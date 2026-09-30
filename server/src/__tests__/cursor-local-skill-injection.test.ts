@@ -20,7 +20,7 @@ describe("cursor local adapter skill injection", () => {
     cleanupDirs.clear();
   });
 
-  it("links missing AoA skills into Cursor skills home", async () => {
+  it("links missing Paperclip skills into Cursor skills home", async () => {
     const skillsDir = await makeTempDir("aoa-cursor-skills-src-");
     const skillsHome = await makeTempDir("aoa-cursor-skills-home-");
     cleanupDirs.add(skillsDir);

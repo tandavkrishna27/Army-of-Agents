@@ -744,7 +744,7 @@ const portabilityManifestSchema = z.object({
   financeEvents: z.array(financeEventEntrySchema).max(100_000, "financeEvents: cap 100000"),
   budgetPolicies: z.array(budgetPolicyEntrySchema).max(1000, "budgetPolicies: cap 1000"),
   quotaWindows: z.array(quotaWindowEntrySchema).max(10_000, "quotaWindows: cap 10000"),
-  // skills, routines, envInputs match the realistic Upstream-bundle sizes
+  // skills, routines, envInputs match the realistic Paperclip-bundle sizes
   skills: z.array(skillEntrySchema).max(1000, "skills: cap 1000"),
   routines: z.array(routineEntrySchema).max(1000, "routines: cap 1000"),
   envInputs: z.array(envInputEntrySchema).max(1000, "envInputs: cap 1000"),

@@ -2,7 +2,7 @@
 
 **Purpose:** verify *everything* built this session, end to end, across **every site** — the crew/org separation, the whole conversational pattern (per dial), the cards, and the chat UI. "For each thing that happened, we see it."
 
-**Instance under test:** server `:3200`, UI `:5273`, company **QA-Crew-Live** (`a58e1f16…`, 8 crew agents `kind='aoa'`, 0 org agents → every task is crew). DB `postgres://…@127.0.0.1:54330/upstream`. **Restart the server first** (loads the latest scope + lobby fixes).
+**Instance under test:** server `:3200`, UI `:5273`, company **QA-Crew-Live** (`a58e1f16…`, 8 crew agents `kind='aoa'`, 0 org agents → every task is crew). DB `postgres://…@127.0.0.1:54330/paperclip`. **Restart the server first** (loads the latest scope + lobby fixes).
 
 **How to run each check:** UI via `/browse` (screenshot evidence) · API via `curl /api/companies/:cid/issues?taskScope=…` · DB via the `packages/db` postgres probe · automated via `vitest` (server + ui) and the Linux-CI integration suites. Set the dial via the internal-agent config (`autonomyLevel` 0/1/2) or per-thread `discussions.autonomyLevel`.
 

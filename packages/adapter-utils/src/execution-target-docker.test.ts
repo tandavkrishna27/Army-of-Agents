@@ -39,8 +39,8 @@ describe("formatDockerBindSource", () => {
   });
 
   it("preserves spaces while normalizing repo-shaped Windows paths", () => {
-    expect(formatDockerBindSource("C:\\Users\\TK\\Claude Data\\AoA-AoA")).toBe(
-      "C:/Users/TK/Claude Data/AoA-AoA",
+    expect(formatDockerBindSource("C:\\Users\\TK\\Claude Data\\Paperclip-AoA")).toBe(
+      "C:/Users/TK/Claude Data/Paperclip-AoA",
     );
   });
 });

@@ -7,8 +7,6 @@
       "runtimeArgs": [
         "/c",
         "pnpm",
-        "-C",
-        ".worktrees\\universe-interface",
         "--filter",
         "@armyofagents/ui",
         "exec",
@@ -26,7 +24,7 @@
       "runtimeExecutable": "cmd",
       "runtimeArgs": [
         "/c",
-        "cd /d \"..\\AoA-threads\" && set PORT=3102 && set AOA_UI_DEV_MIDDLEWARE=true && set AOA_MIGRATION_AUTO_APPLY=true && pnpm dev"
+        "cd /d \"C:\\Users\\TK\\OneDrive\\Desktop\\Claude Data\\Paperclip-AoA\\AoA-threads\" && set PORT=3102 && set AOA_UI_DEV_MIDDLEWARE=true && set AOA_MIGRATION_AUTO_APPLY=true && pnpm dev"
       ],
       "port": 3102
     },

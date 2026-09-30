@@ -26,6 +26,7 @@ import {
   workQuestions,
   type Db,
 } from "@armyofagents/db";
+import { insertTestCompany } from "./helpers/insert-test-company.js";
 import { workQuestionContinuationService } from "../services/work-question-continuations.js";
 import { workQuestionService } from "../services/work-questions.js";
 import { workQuestionSlaService } from "../services/work-question-sla.js";
@@ -199,7 +200,7 @@ describe.skipIf(process.platform === "win32")("durable work questions (real Post
     await applyPendingMigrations(connectionString);
     db = createDb(connectionString);
     const now = new Date();
-    await db.insert(companies).values({
+    await insertTestCompany(db, {
       id: companyId,
       name: "Work Question Integration",
       issuePrefix: `WQ${Math.floor(Math.random() * 9000 + 1000)}`,

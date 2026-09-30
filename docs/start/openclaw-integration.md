@@ -52,7 +52,7 @@ AoA POSTs a fire-and-forget request to an OpenClaw hook endpoint (`/hooks/agent`
 }
 ```
 
-Each request carries an `aoa_session_key` field in the metadata (see [Wire compatibility](#wire-compatibility-and-the-aoa-field-names) below).
+Each request carries a `paperclip_session_key` field in the metadata (see [Wire compatibility](#wire-compatibility-and-the-paperclip-field-names) below).
 
 ## Onboarding an OpenClaw agent into AoA
 
@@ -62,7 +62,7 @@ The join flow is handled via `server/src/routes/access.ts`:
 
 2. **OpenClaw POSTs a join request.** The OpenClaw client calls the invite endpoint including:
    - `agentDefaultsPayload.url` — the OpenClaw gateway endpoint AoA will call back to
-   - `aoaApiUrl` — the AoA base URL, so OpenClaw knows where to reach the AoA API
+   - `paperclipApiUrl` — the AoA base URL, so OpenClaw knows where to reach the AoA API
    - `headers["x-openclaw-auth"]` (or `x-openclaw-token`) — the gateway token AoA will use to authenticate outbound requests
 
 3. **Board approval.** The join request lands in the AoA Inbox as a hire approval. A board member clicks through to approve. In `local_trusted` mode, the synthetic `local-board` actor handles this automatically.
@@ -91,17 +91,17 @@ Follow "Option A: Docker Sandbox" (Docker Desktop v29+, microVM isolation) or "O
 
 To integrate an existing OpenClaw deployment without the smoke script, use the join-request API directly. See [/api/agents](/api/agents).
 
-## AoA execution fields
+## Wire compatibility and the "paperclip" field names
 
-The AoA adapter sends these fields during OpenClaw execution:
+OpenClaw clients in the wild parse specific JSON field names that include the legacy "paperclip" string. Renaming these would break every existing OpenClaw deployment, so AoA preserves them unchanged:
 
 | Field | Where it appears | What it carries |
 |---|---|---|
-| `aoa_session_key` | `/v1/responses` metadata + `x-openclaw-session-key` header | Session routing key for the agent run |
-| `aoa_stream_transport` | `/v1/responses` metadata (webhook mode) | Signals webhook transport to the OpenClaw side |
-| `aoaApiUrl` | Join request payload + adapter config | AoA base URL advertised to OpenClaw as `AOA_API_URL` |
+| `paperclip_session_key` | `/v1/responses` metadata + `x-openclaw-session-key` header | Session routing key for the agent run |
+| `paperclip_stream_transport` | `/v1/responses` metadata (webhook mode) | Signals webhook transport to the OpenClaw side |
+| `paperclipApiUrl` | Join request payload + adapter config | AoA base URL advertised to OpenClaw as `AOA_API_URL` |
 
-These are the current AoA names. See [wire contracts](../architecture/wire-compat.md) before changing them.
+These names come from AoA's Paperclip lineage. The AoA adapter layer writes them exactly as OpenClaw expects. See [wire-compat.md](../architecture/wire-compat.md) for the complete list.
 
 ## Connectivity tips
 
@@ -111,7 +111,7 @@ From inside an OpenClaw container, `localhost` or `127.0.0.1` resolves to the co
 
 ```bash
 # In your agent defaults
-"aoaApiUrl": "http://host.docker.internal:3100"
+"paperclipApiUrl": "http://host.docker.internal:3100"
 ```
 
 The `pnpm smoke:openclaw-docker-ui` script detects and prints the correct reachable URL automatically.

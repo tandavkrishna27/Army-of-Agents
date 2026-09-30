@@ -74,3 +74,46 @@ export async function postRunSummaryComment(
     return { posted: false };
   }
 }
+
+export interface InsertRunSummaryCommentInput {
+  /** CLIENT-SIDE id (the caller generates it): aoa_app is INSERT-only on issue_comments,
+   * so INSERT…RETURNING is RLS-denied — the id cannot come back from the DB. */
+  id: string;
+  companyId: string;
+  issueId: string;
+  outcome: "succeeded" | "failed" | "cancelled" | "timed_out";
+  /** The already-formatted summary body (built via the pure `formatRunSummary`). */
+  body: string;
+}
+
+/**
+ * Insert ONE run-summary comment (+ touch issues.updatedAt) on a caller-supplied tenant
+ * transaction, for JOB-014's job-output-bridge terminal-winner projection. Distinct from
+ * `postRunSummaryComment` (which heartbeat/crew keep):
+ *   * THROWS on any failure — NO try/catch. A failed insert MUST roll back the whole
+ *     tenant tx so the terminal-winner receipt is never committed without its summary.
+ *   * uses a CLIENT-SIDE `id` and NO `.returning()` — aoa_app is INSERT-only on
+ *     issue_comments (mirror job-audit-bridge.ts hub_audit), so the id is caller-owned.
+ *   * the caller owns the `autoRunSummary` opt-out check and the pure body formatting.
+ */
+export async function insertRunSummaryComment(
+  tx: Db,
+  input: InsertRunSummaryCommentInput,
+): Promise<void> {
+  await tx.insert(issueComments).values({
+    id: input.id,
+    companyId: input.companyId,
+    issueId: input.issueId,
+    authorAgentId: null,
+    authorUserId: null,
+    authorType: "system",
+    presentation: {
+      kind: "system_notice",
+      tone: input.outcome === "succeeded" ? "success" : input.outcome === "cancelled" ? "info" : "danger",
+      title: "Run summary",
+      detailsDefaultOpen: false,
+    },
+    body: sanitizeForDb(input.body),
+  });
+  await tx.update(issues).set({ updatedAt: new Date() }).where(eq(issues.id, input.issueId));
+}

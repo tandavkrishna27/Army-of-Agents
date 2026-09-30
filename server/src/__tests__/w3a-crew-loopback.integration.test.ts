@@ -90,7 +90,7 @@ async function seedCompanyAndEngineer(label: string): Promise<{
   companyId: string;
   engineerId: string;
 }> {
-  const company = await companyService(db).create({ name: `W3a ${label} Co` } as never);
+  const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: `W3a ${label} Co` } as never);
   const companyId = company.id;
 
   const founderUserId = `founder-${randomUUID()}`;

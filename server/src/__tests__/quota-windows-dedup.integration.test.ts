@@ -145,8 +145,8 @@ describe.skipIf(process.platform === "win32")(
 
       const companyId = "77777777-7777-4777-8777-777777777777";
       await db.execute(sql`
-        INSERT INTO companies (id, name, issue_prefix)
-        VALUES (${companyId}, 'Quota Dedup Co', 'QDC')
+        INSERT INTO companies (organization_id, id, name, issue_prefix)
+        VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Quota Dedup Co', 'QDC')
       `);
 
       registerServerAdapter(makeFakeAdapter(10));
@@ -178,8 +178,8 @@ describe.skipIf(process.platform === "win32")(
 
       const companyId = "88888888-8888-4888-8888-888888888888";
       await db.execute(sql`
-        INSERT INTO companies (id, name, issue_prefix)
-        VALUES (${companyId}, 'Quota Dedup Co 2', 'QD2')
+        INSERT INTO companies (organization_id, id, name, issue_prefix)
+        VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Quota Dedup Co 2', 'QD2')
       `);
       await db.execute(sql`
         INSERT INTO provider_quota_windows (company_id, provider, model, window_kind)

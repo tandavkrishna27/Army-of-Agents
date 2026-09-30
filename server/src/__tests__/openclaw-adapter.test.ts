@@ -159,7 +159,7 @@ describe("openclaw ui stdout parser", () => {
 });
 
 describe("openclaw adapter execute", () => {
-  it("uses SSE transport and includes canonical AOA context in text payload", async () => {
+  it("uses SSE transport and includes canonical PAPERCLIP context in text payload", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       sseResponse([
         "event: response.completed\n",
@@ -181,10 +181,10 @@ describe("openclaw adapter execute", () => {
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? "{}")) as Record<string, unknown>;
     expect(body.foo).toBe("bar");
     expect(body.stream).toBe(true);
-    expect(body.sessionKey).toBe("aoa");
+    expect(body.sessionKey).toBe("paperclip");
     expect((body.aoa as Record<string, unknown>).streamTransport).toBe("sse");
     expect((body.aoa as Record<string, unknown>).runId).toBe("run-123");
-    expect((body.aoa as Record<string, unknown>).sessionKey).toBe("aoa");
+    expect((body.aoa as Record<string, unknown>).sessionKey).toBe("paperclip");
     expect(
       ((body.aoa as Record<string, unknown>).env as Record<string, unknown>).AOA_RUN_ID,
     ).toBe("run-123");
@@ -196,11 +196,11 @@ describe("openclaw adapter execute", () => {
     expect(text).toContain("AOA_TASK_ID=task-123");
     expect(text).toContain("AOA_WAKE_REASON=issue_assigned");
     expect(text).toContain("AOA_LINKED_ISSUE_IDS=issue-123");
-    expect(text).toContain("AOA_API_KEY=<token from ~/.openclaw/workspace/aoa-claimed-api-key.json>");
-    expect(text).toContain("Load AOA_API_KEY from ~/.openclaw/workspace/aoa-claimed-api-key.json");
+    expect(text).toContain("AOA_API_KEY=<token from ~/.openclaw/workspace/paperclip-claimed-api-key.json>");
+    expect(text).toContain("Load AOA_API_KEY from ~/.openclaw/workspace/paperclip-claimed-api-key.json");
   });
 
-  it("uses aoaApiUrl override when provided", async () => {
+  it("uses paperclipApiUrl override when provided", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       sseResponse([
         "event: response.completed\n",
@@ -213,14 +213,14 @@ describe("openclaw adapter execute", () => {
       buildContext({
         url: "https://agent.example/sse",
         method: "POST",
-        aoaApiUrl: "http://dotta-macbook-pro:3100",
+        paperclipApiUrl: "http://dotta-macbook-pro:3100",
       }),
     );
 
     expect(result.exitCode).toBe(0);
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? "{}")) as Record<string, unknown>;
-    const aoa = body.aoa as Record<string, unknown>;
-    const env = aoa.env as Record<string, unknown>;
+    const paperclip = body.aoa as Record<string, unknown>;
+    const env = paperclip.env as Record<string, unknown>;
     expect(env.AOA_API_URL).toBe("http://dotta-macbook-pro:3100/");
     expect(String(body.text ?? "")).toContain("AOA_API_URL=http://dotta-macbook-pro:3100/");
   });
@@ -376,8 +376,8 @@ describe("openclaw adapter execute", () => {
 
     expect(result.exitCode).toBe(0);
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? "{}")) as Record<string, unknown>;
-    expect(body.sessionKey).toBe("aoa:issue:issue-123");
-    expect((body.aoa as Record<string, unknown>).sessionKey).toBe("aoa:issue:issue-123");
+    expect(body.sessionKey).toBe("paperclip:issue:issue-123");
+    expect((body.aoa as Record<string, unknown>).sessionKey).toBe("paperclip:issue:issue-123");
   });
 
   it("maps requests to OpenResponses schema for /v1/responses endpoints", async () => {
@@ -395,7 +395,7 @@ describe("openclaw adapter execute", () => {
         method: "POST",
         payloadTemplate: {
           model: "openclaw",
-          user: "aoa",
+          user: "paperclip",
         },
       }),
     );
@@ -406,7 +406,7 @@ describe("openclaw adapter execute", () => {
     expect(body.model).toBe("openclaw");
     expect(typeof body.input).toBe("string");
     expect(String(body.input)).toContain("AOA_RUN_ID=run-123");
-    expect(String(body.input)).toContain("AOA_API_KEY=<token from ~/.openclaw/workspace/aoa-claimed-api-key.json>");
+    expect(String(body.input)).toContain("AOA_API_KEY=<token from ~/.openclaw/workspace/paperclip-claimed-api-key.json>");
     expect(body.metadata).toBeTypeOf("object");
     expect((body.metadata as Record<string, unknown>).AOA_RUN_ID).toBe("run-123");
     expect(body.text).toBeUndefined();
@@ -414,7 +414,7 @@ describe("openclaw adapter execute", () => {
     expect(body.sessionKey).toBeUndefined();
 
     const headers = (fetchMock.mock.calls[0]?.[1]?.headers ?? {}) as Record<string, string>;
-    expect(headers["x-openclaw-session-key"]).toBe("aoa");
+    expect(headers["x-openclaw-session-key"]).toBe("paperclip");
   });
 
   it("does not treat response.output_text.done as a terminal OpenResponses event", async () => {
@@ -559,7 +559,7 @@ describe("openclaw adapter execute", () => {
     expect(result.errorCode).toBe("openclaw_text_required");
   });
 
-  it("supports webhook transport and sends AoA webhook payloads", async () => {
+  it("supports webhook transport and sends Paperclip webhook payloads", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
@@ -584,7 +584,7 @@ describe("openclaw adapter execute", () => {
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? "{}")) as Record<string, unknown>;
     expect(body.foo).toBe("bar");
     expect(body.stream).toBe(false);
-    expect(body.sessionKey).toBe("aoa");
+    expect(body.sessionKey).toBe("paperclip");
     expect(String(body.text ?? "")).toContain("AOA_RUN_ID=run-123");
     expect((body.aoa as Record<string, unknown>).streamTransport).toBe("webhook");
   });
@@ -668,7 +668,7 @@ describe("openclaw adapter execute", () => {
     expect(String(secondBody.input ?? "")).toContain("AOA_RUN_ID=run-123");
 
     const secondHeaders = (fetchMock.mock.calls[1]?.[1]?.headers ?? {}) as Record<string, string>;
-    expect(secondHeaders["x-openclaw-session-key"]).toBe("aoa");
+    expect(secondHeaders["x-openclaw-session-key"]).toBe("paperclip");
     expect(result.resultJson).toEqual(
       expect.objectContaining({
         usedLegacyResponsesFallback: true,
@@ -719,7 +719,7 @@ describe("openclaw adapter execute", () => {
         url: "https://agent.example/hooks/agent",
         streamTransport: "webhook",
         payloadTemplate: {
-          name: "AoA Hook",
+          name: "Paperclip Hook",
           wakeMode: "next-heartbeat",
           deliver: true,
           channel: "last",
@@ -733,7 +733,7 @@ describe("openclaw adapter execute", () => {
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? "{}")) as Record<string, unknown>;
     expect(typeof body.message).toBe("string");
     expect(String(body.message)).toContain("AOA_RUN_ID=run-123");
-    expect(body.name).toBe("AoA Hook");
+    expect(body.name).toBe("Paperclip Hook");
     expect(body.wakeMode).toBe("next-heartbeat");
     expect(body.deliver).toBe(true);
     expect(body.channel).toBe("last");
@@ -766,7 +766,7 @@ describe("openclaw adapter execute", () => {
     expect(result.exitCode).toBe(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? "{}")) as Record<string, unknown>;
-    expect(body.sessionKey).toBe("aoa");
+    expect(body.sessionKey).toBe("paperclip");
   });
 
   it("retries webhook payloads with wake compatibility format on text-required errors", async () => {
@@ -917,8 +917,8 @@ describe("openclaw adapter environment checks", () => {
       deployment: {
         mode: "authenticated",
         exposure: "private",
-        bindHost: "aoa.internal",
-        allowedHostnames: ["aoa.internal"],
+        bindHost: "paperclip.internal",
+        allowedHostnames: ["paperclip.internal"],
       },
     });
 

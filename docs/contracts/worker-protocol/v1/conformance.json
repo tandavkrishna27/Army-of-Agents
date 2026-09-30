@@ -1,0 +1,2436 @@
+{
+  "contractVersion": "1.0.0",
+  "cases": [
+    {
+      "name": "valid task-run batch job",
+      "schema": "job",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "task_run",
+          "runId": "00000000-0000-4000-8000-000000000013",
+          "issueId": "00000000-0000-4000-8000-000000000014",
+          "requestedBy": {
+            "principalType": "user",
+            "principalId": "better-auth-user-17"
+          },
+          "executionPrincipal": {
+            "principalType": "agent",
+            "principalId": "00000000-0000-4000-8000-000000000017"
+          },
+          "assigneeAgentId": "00000000-0000-4000-8000-000000000017"
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.batch",
+          "provider.lifecycle_v1",
+          "sandbox.filesystem_isolated",
+          "sandbox.filtered_egress"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [],
+        "workloadType": "batch",
+        "workload": {
+          "command": "codex",
+          "args": [
+            "exec",
+            "--json"
+          ],
+          "stdinArtifactId": null,
+          "maxRuntimeSeconds": 3600
+        }
+      }
+    },
+    {
+      "name": "valid Commander-turn batch job",
+      "schema": "job",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "commander_turn",
+          "internalAgentRunId": "00000000-0000-4000-8000-000000000018",
+          "conversationId": "00000000-0000-4000-8000-000000000019",
+          "requestedBy": {
+            "principalType": "user",
+            "principalId": "better-auth-user-17"
+          },
+          "executionPrincipal": {
+            "principalType": "agent",
+            "principalId": "00000000-0000-4000-8000-000000000017"
+          }
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.batch",
+          "provider.lifecycle_v1",
+          "sandbox.filesystem_isolated",
+          "sandbox.filtered_egress"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [],
+        "workloadType": "batch",
+        "workload": {
+          "command": "codex",
+          "args": [
+            "exec",
+            "--json"
+          ],
+          "stdinArtifactId": null,
+          "maxRuntimeSeconds": 3600
+        }
+      }
+    },
+    {
+      "name": "valid crew-run batch job",
+      "schema": "job",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "crew_run",
+          "crewRunId": "00000000-0000-4000-8000-00000000001a",
+          "requestedBy": {
+            "principalType": "agent",
+            "principalId": "crew-lead-agent-1"
+          },
+          "executionPrincipal": {
+            "principalType": "agent",
+            "principalId": "00000000-0000-4000-8000-000000000017"
+          }
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.batch",
+          "provider.lifecycle_v1",
+          "sandbox.filesystem_isolated",
+          "sandbox.filtered_egress"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [],
+        "workloadType": "batch",
+        "workload": {
+          "command": "codex",
+          "args": [
+            "exec",
+            "--json"
+          ],
+          "stdinArtifactId": null,
+          "maxRuntimeSeconds": 3600
+        }
+      }
+    },
+    {
+      "name": "valid one-shot extraction job",
+      "schema": "job",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "one_shot",
+          "operationId": "00000000-0000-4000-8000-00000000001b",
+          "operationKind": "extraction",
+          "requestedBy": {
+            "principalType": "system",
+            "principalId": "system-extractor"
+          },
+          "executionPrincipal": {
+            "principalType": "service",
+            "principalId": "extraction-service-1"
+          }
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.batch",
+          "provider.lifecycle_v1",
+          "sandbox.filesystem_isolated",
+          "sandbox.filtered_egress"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [],
+        "workloadType": "batch",
+        "workload": {
+          "command": "codex",
+          "args": [
+            "exec",
+            "--json"
+          ],
+          "stdinArtifactId": null,
+          "maxRuntimeSeconds": 3600
+        }
+      }
+    },
+    {
+      "name": "valid browser-request job with safe optional extension",
+      "schema": "job",
+      "valid": true,
+      "preserveKeys": [
+        "extensions"
+      ],
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "browser_request",
+          "browserRequestId": "00000000-0000-4000-8000-00000000001c",
+          "parentJobId": null,
+          "requestedBy": {
+            "principalType": "user",
+            "principalId": "better-auth-user-17"
+          },
+          "executionPrincipal": {
+            "principalType": "agent",
+            "principalId": "00000000-0000-4000-8000-000000000017"
+          }
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.browser_session",
+          "sandbox.filtered_egress"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [
+          {
+            "namespace": "aoa.example",
+            "schemaVersion": 1,
+            "critical": false,
+            "value": {
+              "hint": "safe additive data"
+            }
+          }
+        ],
+        "workloadType": "browser_session",
+        "workload": {
+          "engine": "chromium",
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "locale": "en-US",
+          "timezone": "UTC",
+          "recordTrace": false,
+          "recordVideo": false,
+          "maxSessionSeconds": 1800
+        }
+      }
+    },
+    {
+      "name": "valid service-reconcile job",
+      "schema": "job",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "service_reconcile",
+          "serviceId": "00000000-0000-4000-8000-000000000040",
+          "generation": 1,
+          "reconciliationId": "00000000-0000-4000-8000-00000000001d",
+          "requestedBy": {
+            "principalType": "system",
+            "principalId": "reconciler"
+          },
+          "executionPrincipal": {
+            "principalType": "service",
+            "principalId": "service-runtime-1"
+          }
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.service",
+          "provider.lifecycle_v1"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [],
+        "workloadType": "service",
+        "workload": {
+          "serviceId": "00000000-0000-4000-8000-000000000040",
+          "serviceInstanceId": "00000000-0000-4000-8000-000000000041",
+          "generation": 1,
+          "command": "serve",
+          "args": [
+            "--port",
+            "8080"
+          ],
+          "checkpointArtifactId": null,
+          "gracefulStopSeconds": 30
+        }
+      }
+    },
+    {
+      "name": "reject fabricated non-task run and issue",
+      "schema": "job",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "commander_turn",
+          "internalAgentRunId": "00000000-0000-4000-8000-000000000018",
+          "conversationId": "00000000-0000-4000-8000-000000000019",
+          "requestedBy": {
+            "principalType": "user",
+            "principalId": "better-auth-user-17"
+          },
+          "executionPrincipal": {
+            "principalType": "agent",
+            "principalId": "00000000-0000-4000-8000-000000000017"
+          },
+          "runId": "00000000-0000-4000-8000-000000000013",
+          "issueId": "00000000-0000-4000-8000-000000000014"
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.batch",
+          "provider.lifecycle_v1",
+          "sandbox.filesystem_isolated",
+          "sandbox.filtered_egress"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [],
+        "workloadType": "batch",
+        "workload": {
+          "command": "codex",
+          "args": [
+            "exec",
+            "--json"
+          ],
+          "stdinArtifactId": null,
+          "maxRuntimeSeconds": 3600
+        }
+      }
+    },
+    {
+      "name": "reject task executor or assignee mismatch",
+      "schema": "job",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "task_run",
+          "runId": "00000000-0000-4000-8000-000000000013",
+          "issueId": "00000000-0000-4000-8000-000000000014",
+          "requestedBy": {
+            "principalType": "user",
+            "principalId": "better-auth-user-17"
+          },
+          "executionPrincipal": {
+            "principalType": "agent",
+            "principalId": "00000000-0000-4000-8000-000000000017"
+          },
+          "assigneeAgentId": "00000000-0000-4000-8000-000000000018"
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.batch",
+          "provider.lifecycle_v1",
+          "sandbox.filesystem_isolated",
+          "sandbox.filtered_egress"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [],
+        "workloadType": "batch",
+        "workload": {
+          "command": "codex",
+          "args": [
+            "exec",
+            "--json"
+          ],
+          "stdinArtifactId": null,
+          "maxRuntimeSeconds": 3600
+        }
+      }
+    },
+    {
+      "name": "reject unknown source or workload",
+      "schema": "job",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "task_run",
+          "runId": "00000000-0000-4000-8000-000000000013",
+          "issueId": "00000000-0000-4000-8000-000000000014",
+          "requestedBy": {
+            "principalType": "user",
+            "principalId": "better-auth-user-17"
+          },
+          "executionPrincipal": {
+            "principalType": "agent",
+            "principalId": "00000000-0000-4000-8000-000000000017"
+          },
+          "assigneeAgentId": "00000000-0000-4000-8000-000000000017"
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.batch",
+          "provider.lifecycle_v1",
+          "sandbox.filesystem_isolated",
+          "sandbox.filtered_egress"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [],
+        "workloadType": "gpu_batch",
+        "workload": {
+          "command": "codex",
+          "args": [
+            "exec",
+            "--json"
+          ],
+          "stdinArtifactId": null,
+          "maxRuntimeSeconds": 3600
+        }
+      }
+    },
+    {
+      "name": "reject nested plaintext api key and known secret canary",
+      "schema": "job",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "jobId": "00000000-0000-4000-8000-000000000010",
+        "attempt": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000011",
+        "companyId": "00000000-0000-4000-8000-000000000012",
+        "source": {
+          "kind": "task_run",
+          "runId": "00000000-0000-4000-8000-000000000013",
+          "issueId": "00000000-0000-4000-8000-000000000014",
+          "requestedBy": {
+            "principalType": "user",
+            "principalId": "better-auth-user-17"
+          },
+          "executionPrincipal": {
+            "principalType": "agent",
+            "principalId": "00000000-0000-4000-8000-000000000017"
+          },
+          "assigneeAgentId": "00000000-0000-4000-8000-000000000017"
+        },
+        "createdAt": "2026-08-07T00:00:00.000Z",
+        "notBefore": null,
+        "deadline": "2026-08-07T01:00:00.000Z",
+        "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "placement": {
+          "policyId": "owner-or-managed",
+          "version": 1,
+          "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "owner_desktop",
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "owner_local_trusted",
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "ordered_explicit",
+              "orderedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ]
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            }
+          }
+        },
+        "adapter": {
+          "type": "codex_local",
+          "version": "0.2.7",
+          "configArtifactId": null
+        },
+        "requiredCapabilities": [
+          "workload.batch",
+          "provider.lifecycle_v1",
+          "sandbox.filesystem_isolated",
+          "sandbox.filtered_egress"
+        ],
+        "workspace": {
+          "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+          "base": {
+            "kind": "git_commit",
+            "algorithm": "git_sha1",
+            "revision": "0123456789abcdef0123456789abcdef01234567"
+          },
+          "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "mode": "read_write"
+        },
+        "secretHandles": [
+          {
+            "handleId": "00000000-0000-4000-8000-000000000016",
+            "materialization": {
+              "kind": "proxy"
+            },
+            "usePolicy": "fence_proxy"
+          }
+        ],
+        "resourceLimits": {
+          "cpuMillis": 2000,
+          "memoryMiB": 4096,
+          "pids": 512,
+          "diskMiB": 10240
+        },
+        "networkPolicy": {
+          "policyId": "provider-only",
+          "version": 1,
+          "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        },
+        "offlinePolicy": "cancel",
+        "extensions": [
+          {
+            "namespace": "com.x.leak",
+            "schemaVersion": 1,
+            "critical": false,
+            "value": {
+              "apiKey": "leak"
+            }
+          }
+        ],
+        "workloadType": "batch",
+        "workload": {
+          "command": "codex",
+          "args": [
+            "exec",
+            "pre-CANARY-SECRET-9-post"
+          ],
+          "stdinArtifactId": null,
+          "maxRuntimeSeconds": 3600
+        }
+      }
+    },
+    {
+      "name": "valid lease offer",
+      "schema": "lease_offer",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "workerId": "00000000-0000-4000-8000-000000000050",
+        "leaseId": "00000000-0000-4000-8000-000000000051",
+        "fenceToken": "ggggggggggggggggggggggggggggggggggggggggggg",
+        "ackDeadline": "2026-08-07T00:05:00.000Z",
+        "expiresAt": "2026-08-07T00:10:00.000Z",
+        "job": {
+          "protocolVersion": 1,
+          "jobId": "00000000-0000-4000-8000-000000000010",
+          "attempt": 1,
+          "organizationId": "00000000-0000-4000-8000-000000000011",
+          "companyId": "00000000-0000-4000-8000-000000000012",
+          "source": {
+            "kind": "task_run",
+            "runId": "00000000-0000-4000-8000-000000000013",
+            "issueId": "00000000-0000-4000-8000-000000000014",
+            "requestedBy": {
+              "principalType": "user",
+              "principalId": "better-auth-user-17"
+            },
+            "executionPrincipal": {
+              "principalType": "agent",
+              "principalId": "00000000-0000-4000-8000-000000000017"
+            },
+            "assigneeAgentId": "00000000-0000-4000-8000-000000000017"
+          },
+          "createdAt": "2026-08-07T00:00:00.000Z",
+          "notBefore": null,
+          "deadline": "2026-08-07T01:00:00.000Z",
+          "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "placement": {
+            "policyId": "owner-or-managed",
+            "version": 1,
+            "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "targetRequirements": {
+              "allowedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ],
+              "allowedTrustClasses": [
+                "owner_local_trusted",
+                "shared_isolated"
+              ],
+              "requiredOwnerPrincipalId": null,
+              "credentialKind": "platform_brokered",
+              "dataLocality": "transfer_allowed",
+              "fallback": {
+                "mode": "ordered_explicit",
+                "orderedTargetClasses": [
+                  "owner_desktop",
+                  "managed_cloud"
+                ]
+              },
+              "providerConstraints": {
+                "profileId": "standard",
+                "version": 1,
+                "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+              }
+            }
+          },
+          "adapter": {
+            "type": "codex_local",
+            "version": "0.2.7",
+            "configArtifactId": null
+          },
+          "requiredCapabilities": [
+            "workload.batch",
+            "provider.lifecycle_v1",
+            "sandbox.filesystem_isolated",
+            "sandbox.filtered_egress"
+          ],
+          "workspace": {
+            "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+            "base": {
+              "kind": "git_commit",
+              "algorithm": "git_sha1",
+              "revision": "0123456789abcdef0123456789abcdef01234567"
+            },
+            "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "mode": "read_write"
+          },
+          "secretHandles": [
+            {
+              "handleId": "00000000-0000-4000-8000-000000000016",
+              "materialization": {
+                "kind": "proxy"
+              },
+              "usePolicy": "fence_proxy"
+            }
+          ],
+          "resourceLimits": {
+            "cpuMillis": 2000,
+            "memoryMiB": 4096,
+            "pids": 512,
+            "diskMiB": 10240
+          },
+          "networkPolicy": {
+            "policyId": "provider-only",
+            "version": 1,
+            "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "offlinePolicy": "cancel",
+          "extensions": [],
+          "workloadType": "batch",
+          "workload": {
+            "command": "codex",
+            "args": [
+              "exec",
+              "--json"
+            ],
+            "stdinArtifactId": null,
+            "maxRuntimeSeconds": 3600
+          }
+        },
+        "extensions": []
+      }
+    },
+    {
+      "name": "reject inverted lease times",
+      "schema": "lease_offer",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "workerId": "00000000-0000-4000-8000-000000000050",
+        "leaseId": "00000000-0000-4000-8000-000000000051",
+        "fenceToken": "ggggggggggggggggggggggggggggggggggggggggggg",
+        "ackDeadline": "2026-08-07T00:10:00.000Z",
+        "expiresAt": "2026-08-07T00:10:00.000Z",
+        "job": {
+          "protocolVersion": 1,
+          "jobId": "00000000-0000-4000-8000-000000000010",
+          "attempt": 1,
+          "organizationId": "00000000-0000-4000-8000-000000000011",
+          "companyId": "00000000-0000-4000-8000-000000000012",
+          "source": {
+            "kind": "task_run",
+            "runId": "00000000-0000-4000-8000-000000000013",
+            "issueId": "00000000-0000-4000-8000-000000000014",
+            "requestedBy": {
+              "principalType": "user",
+              "principalId": "better-auth-user-17"
+            },
+            "executionPrincipal": {
+              "principalType": "agent",
+              "principalId": "00000000-0000-4000-8000-000000000017"
+            },
+            "assigneeAgentId": "00000000-0000-4000-8000-000000000017"
+          },
+          "createdAt": "2026-08-07T00:00:00.000Z",
+          "notBefore": null,
+          "deadline": "2026-08-07T01:00:00.000Z",
+          "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "placement": {
+            "policyId": "owner-or-managed",
+            "version": 1,
+            "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "targetRequirements": {
+              "allowedTargetClasses": [
+                "owner_desktop",
+                "managed_cloud"
+              ],
+              "allowedTrustClasses": [
+                "owner_local_trusted",
+                "shared_isolated"
+              ],
+              "requiredOwnerPrincipalId": null,
+              "credentialKind": "platform_brokered",
+              "dataLocality": "transfer_allowed",
+              "fallback": {
+                "mode": "ordered_explicit",
+                "orderedTargetClasses": [
+                  "owner_desktop",
+                  "managed_cloud"
+                ]
+              },
+              "providerConstraints": {
+                "profileId": "standard",
+                "version": 1,
+                "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+              }
+            }
+          },
+          "adapter": {
+            "type": "codex_local",
+            "version": "0.2.7",
+            "configArtifactId": null
+          },
+          "requiredCapabilities": [
+            "workload.batch",
+            "provider.lifecycle_v1",
+            "sandbox.filesystem_isolated",
+            "sandbox.filtered_egress"
+          ],
+          "workspace": {
+            "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+            "base": {
+              "kind": "git_commit",
+              "algorithm": "git_sha1",
+              "revision": "0123456789abcdef0123456789abcdef01234567"
+            },
+            "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "mode": "read_write"
+          },
+          "secretHandles": [
+            {
+              "handleId": "00000000-0000-4000-8000-000000000016",
+              "materialization": {
+                "kind": "proxy"
+              },
+              "usePolicy": "fence_proxy"
+            }
+          ],
+          "resourceLimits": {
+            "cpuMillis": 2000,
+            "memoryMiB": 4096,
+            "pids": 512,
+            "diskMiB": 10240
+          },
+          "networkPolicy": {
+            "policyId": "provider-only",
+            "version": 1,
+            "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "offlinePolicy": "cancel",
+          "extensions": [],
+          "workloadType": "batch",
+          "workload": {
+            "command": "codex",
+            "args": [
+              "exec",
+              "--json"
+            ],
+            "stdinArtifactId": null,
+            "maxRuntimeSeconds": 3600
+          }
+        },
+        "extensions": []
+      }
+    },
+    {
+      "name": "valid contiguous event batch",
+      "schema": "event_batch",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000030",
+        "companyId": "00000000-0000-4000-8000-000000000031",
+        "workerId": "00000000-0000-4000-8000-000000000032",
+        "jobId": "00000000-0000-4000-8000-000000000022",
+        "attempt": 1,
+        "leaseId": "00000000-0000-4000-8000-000000000023",
+        "fenceToken": "ddddddddddddddddddddddddddddddddddddddddddd",
+        "events": [
+          {
+            "protocolVersion": 1,
+            "organizationId": "00000000-0000-4000-8000-000000000030",
+            "companyId": "00000000-0000-4000-8000-000000000031",
+            "workerId": "00000000-0000-4000-8000-000000000032",
+            "jobId": "00000000-0000-4000-8000-000000000022",
+            "attempt": 1,
+            "leaseId": "00000000-0000-4000-8000-000000000023",
+            "fenceToken": "ddddddddddddddddddddddddddddddddddddddddddd",
+            "eventId": "00000000-0000-4000-8000-000000000021",
+            "seq": 1,
+            "eventDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "occurredAt": "2026-08-07T00:00:01.000Z",
+            "extensions": [],
+            "eventType": "log",
+            "payload": {
+              "stream": "stdout",
+              "level": "info",
+              "message": "started the adapter"
+            }
+          },
+          {
+            "protocolVersion": 1,
+            "organizationId": "00000000-0000-4000-8000-000000000030",
+            "companyId": "00000000-0000-4000-8000-000000000031",
+            "workerId": "00000000-0000-4000-8000-000000000032",
+            "jobId": "00000000-0000-4000-8000-000000000022",
+            "attempt": 1,
+            "leaseId": "00000000-0000-4000-8000-000000000023",
+            "fenceToken": "ddddddddddddddddddddddddddddddddddddddddddd",
+            "eventId": "00000000-0000-4000-8000-000000000024",
+            "seq": 2,
+            "eventDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "occurredAt": "2026-08-07T00:00:01.000Z",
+            "extensions": [],
+            "eventType": "log",
+            "payload": {
+              "stream": "stdout",
+              "level": "info",
+              "message": "started the adapter"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "reject event sequence gap",
+      "schema": "event_batch",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000030",
+        "companyId": "00000000-0000-4000-8000-000000000031",
+        "workerId": "00000000-0000-4000-8000-000000000032",
+        "jobId": "00000000-0000-4000-8000-000000000022",
+        "attempt": 1,
+        "leaseId": "00000000-0000-4000-8000-000000000023",
+        "fenceToken": "ddddddddddddddddddddddddddddddddddddddddddd",
+        "events": [
+          {
+            "protocolVersion": 1,
+            "organizationId": "00000000-0000-4000-8000-000000000030",
+            "companyId": "00000000-0000-4000-8000-000000000031",
+            "workerId": "00000000-0000-4000-8000-000000000032",
+            "jobId": "00000000-0000-4000-8000-000000000022",
+            "attempt": 1,
+            "leaseId": "00000000-0000-4000-8000-000000000023",
+            "fenceToken": "ddddddddddddddddddddddddddddddddddddddddddd",
+            "eventId": "00000000-0000-4000-8000-000000000021",
+            "seq": 1,
+            "eventDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "occurredAt": "2026-08-07T00:00:01.000Z",
+            "extensions": [],
+            "eventType": "log",
+            "payload": {
+              "stream": "stdout",
+              "level": "info",
+              "message": "started the adapter"
+            }
+          },
+          {
+            "protocolVersion": 1,
+            "organizationId": "00000000-0000-4000-8000-000000000030",
+            "companyId": "00000000-0000-4000-8000-000000000031",
+            "workerId": "00000000-0000-4000-8000-000000000032",
+            "jobId": "00000000-0000-4000-8000-000000000022",
+            "attempt": 1,
+            "leaseId": "00000000-0000-4000-8000-000000000023",
+            "fenceToken": "ddddddddddddddddddddddddddddddddddddddddddd",
+            "eventId": "00000000-0000-4000-8000-000000000024",
+            "seq": 3,
+            "eventDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "occurredAt": "2026-08-07T00:00:01.000Z",
+            "extensions": [],
+            "eventType": "log",
+            "payload": {
+              "stream": "stdout",
+              "level": "info",
+              "message": "started the adapter"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "valid registered target plus worker hello intersection",
+      "schema": "target_worker_pair",
+      "valid": true,
+      "input": {
+        "registeredTarget": {
+          "protocolVersion": 1,
+          "targetId": "00000000-0000-4000-8000-000000000070",
+          "targetClass": "managed_cloud",
+          "scope": "platform",
+          "organizationId": null,
+          "ownerPrincipalId": null,
+          "trustCeiling": "shared_isolated",
+          "credentialCeiling": "platform_brokered",
+          "dataLocalityCeiling": "transfer_allowed",
+          "providerConstraints": {
+            "profileId": "standard",
+            "version": 1,
+            "digest": "fb00e722d10f46f235a5141d337029c241412e181eda2830e890dd2197b48479"
+          },
+          "capabilityCeiling": [
+            "workload.batch",
+            "provider.lifecycle_v1",
+            "sandbox.filesystem_isolated",
+            "sandbox.filtered_egress",
+            "artifact.direct_upload",
+            "secret.proxy"
+          ],
+          "deviceGeneration": 1,
+          "revokedAt": null,
+          "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "providerProfile": {
+          "profileId": "standard",
+          "version": 1,
+          "digest": "fb00e722d10f46f235a5141d337029c241412e181eda2830e890dd2197b48479",
+          "maxContinuousRuntimeSeconds": 3600,
+          "maxIdleSeconds": 300,
+          "resourceCeiling": {
+            "cpuMillis": 4000,
+            "memoryMiB": 8192,
+            "pids": 1024,
+            "diskMiB": 20480
+          },
+          "maxConcurrentOperations": 4,
+          "supportedOperations": [
+            "create",
+            "execute",
+            "cancel",
+            "kill",
+            "destroy",
+            "list",
+            "inspect",
+            "reconcile_cleanup"
+          ],
+          "localityTags": [
+            "transfer_allowed"
+          ],
+          "checkpointMode": "none",
+          "healthMode": "none"
+        },
+        "worker": {
+          "protocolVersion": 1,
+          "workerId": "00000000-0000-4000-8000-000000000071",
+          "targetId": "00000000-0000-4000-8000-000000000070",
+          "deviceGeneration": 1,
+          "agentVersion": "1.0.0",
+          "supportedProtocol": {
+            "min": 1,
+            "max": 1
+          },
+          "platform": {
+            "os": "linux",
+            "arch": "x64",
+            "runtime": "e2b-firecracker"
+          },
+          "reportedCapabilities": [
+            "workload.batch",
+            "provider.lifecycle_v1",
+            "sandbox.filesystem_isolated",
+            "sandbox.filtered_egress",
+            "artifact.direct_upload",
+            "secret.proxy"
+          ],
+          "capacity": {
+            "batchSlots": 1,
+            "browserSessionSlots": 0,
+            "serviceSlots": 0,
+            "freeCpuMillis": 4000,
+            "freeMemoryMiB": 8192,
+            "freeDiskMiB": 20480
+          },
+          "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "requirements": {
+          "protocol": {
+            "min": 1,
+            "max": 1
+          },
+          "capabilities": [
+            "workload.batch",
+            "provider.lifecycle_v1",
+            "sandbox.filesystem_isolated",
+            "sandbox.filtered_egress"
+          ],
+          "workloadType": "batch",
+          "targetRequirements": {
+            "allowedTargetClasses": [
+              "managed_cloud"
+            ],
+            "allowedTrustClasses": [
+              "shared_isolated"
+            ],
+            "requiredOwnerPrincipalId": null,
+            "credentialKind": "platform_brokered",
+            "dataLocality": "transfer_allowed",
+            "fallback": {
+              "mode": "forbidden",
+              "orderedTargetClasses": []
+            },
+            "providerConstraints": {
+              "profileId": "standard",
+              "version": 1,
+              "digest": "fb00e722d10f46f235a5141d337029c241412e181eda2830e890dd2197b48479"
+            }
+          },
+          "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "mustUnderstand": [
+            "provider.lifecycle_v1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "reject unknown job terminal state vector",
+      "schema": "event_batch",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "organizationId": "00000000-0000-4000-8000-000000000030",
+        "companyId": "00000000-0000-4000-8000-000000000031",
+        "workerId": "00000000-0000-4000-8000-000000000032",
+        "jobId": "00000000-0000-4000-8000-000000000022",
+        "attempt": 1,
+        "leaseId": "00000000-0000-4000-8000-000000000023",
+        "fenceToken": "ddddddddddddddddddddddddddddddddddddddddddd",
+        "events": [
+          {
+            "protocolVersion": 1,
+            "organizationId": "00000000-0000-4000-8000-000000000030",
+            "companyId": "00000000-0000-4000-8000-000000000031",
+            "workerId": "00000000-0000-4000-8000-000000000032",
+            "jobId": "00000000-0000-4000-8000-000000000022",
+            "attempt": 1,
+            "leaseId": "00000000-0000-4000-8000-000000000023",
+            "fenceToken": "ddddddddddddddddddddddddddddddddddddddddddd",
+            "eventId": "00000000-0000-4000-8000-000000000021",
+            "seq": 1,
+            "eventDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "occurredAt": "2026-08-07T00:00:01.000Z",
+            "extensions": [],
+            "eventType": "terminal",
+            "payload": {
+              "status": "done",
+              "exitCode": 0,
+              "errorCode": null,
+              "errorMessage": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "valid enrollment request nesting a worker hello",
+      "schema": "enrollment_request",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "issuedAt": "2026-08-09T00:00:00.000Z",
+        "nonce": "nonce-1",
+        "audience": "target_enrollment",
+        "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+        "hello": {
+          "protocolVersion": 1,
+          "workerId": "00000000-0000-4000-8000-000000000071",
+          "targetId": "00000000-0000-4000-8000-000000000070",
+          "deviceGeneration": 1,
+          "agentVersion": "1.0.0",
+          "supportedProtocol": {
+            "min": 1,
+            "max": 1
+          },
+          "platform": {
+            "os": "linux",
+            "arch": "x64",
+            "runtime": "e2b-firecracker"
+          },
+          "reportedCapabilities": [
+            "workload.batch",
+            "provider.lifecycle_v1",
+            "sandbox.filesystem_isolated",
+            "sandbox.filtered_egress",
+            "artifact.direct_upload",
+            "secret.proxy"
+          ],
+          "capacity": {
+            "batchSlots": 1,
+            "browserSessionSlots": 0,
+            "serviceSlots": 0,
+            "freeCpuMillis": 4000,
+            "freeMemoryMiB": 8192,
+            "freeDiskMiB": 20480
+          },
+          "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      }
+    },
+    {
+      "name": "reject enrollment request sent as a bare hello payload",
+      "schema": "enrollment_request",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "workerId": "00000000-0000-4000-8000-000000000071",
+        "targetId": "00000000-0000-4000-8000-000000000070",
+        "deviceGeneration": 1,
+        "agentVersion": "1.0.0",
+        "supportedProtocol": {
+          "min": 1,
+          "max": 1
+        },
+        "platform": {
+          "os": "linux",
+          "arch": "x64",
+          "runtime": "e2b-firecracker"
+        },
+        "reportedCapabilities": [
+          "workload.batch",
+          "provider.lifecycle_v1",
+          "sandbox.filesystem_isolated",
+          "sandbox.filtered_egress",
+          "artifact.direct_upload",
+          "secret.proxy"
+        ],
+        "capacity": {
+          "batchSlots": 1,
+          "browserSessionSlots": 0,
+          "serviceSlots": 0,
+          "freeCpuMillis": 4000,
+          "freeMemoryMiB": 8192,
+          "freeDiskMiB": 20480
+        },
+        "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "name": "valid enrolled enrollment response",
+      "schema": "enrollment_response",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "outcome": "enrolled",
+        "workerId": "00000000-0000-4000-8000-000000000203",
+        "targetId": "00000000-0000-4000-8000-000000000206",
+        "deviceGeneration": 1,
+        "providerConstraints": {
+          "profileId": "standard",
+          "version": 1,
+          "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      }
+    },
+    {
+      "name": "valid poll offer response nesting a lease offer",
+      "schema": "poll_response",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "outcome": "offer",
+        "body": {
+          "protocolVersion": 1,
+          "workerId": "00000000-0000-4000-8000-000000000050",
+          "leaseId": "00000000-0000-4000-8000-000000000051",
+          "fenceToken": "ggggggggggggggggggggggggggggggggggggggggggg",
+          "ackDeadline": "2026-08-07T00:05:00.000Z",
+          "expiresAt": "2026-08-07T00:10:00.000Z",
+          "job": {
+            "protocolVersion": 1,
+            "jobId": "00000000-0000-4000-8000-000000000010",
+            "attempt": 1,
+            "organizationId": "00000000-0000-4000-8000-000000000011",
+            "companyId": "00000000-0000-4000-8000-000000000012",
+            "source": {
+              "kind": "task_run",
+              "runId": "00000000-0000-4000-8000-000000000013",
+              "issueId": "00000000-0000-4000-8000-000000000014",
+              "requestedBy": {
+                "principalType": "user",
+                "principalId": "better-auth-user-17"
+              },
+              "executionPrincipal": {
+                "principalType": "agent",
+                "principalId": "00000000-0000-4000-8000-000000000017"
+              },
+              "assigneeAgentId": "00000000-0000-4000-8000-000000000017"
+            },
+            "createdAt": "2026-08-07T00:00:00.000Z",
+            "notBefore": null,
+            "deadline": "2026-08-07T01:00:00.000Z",
+            "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "policyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "placement": {
+              "policyId": "owner-or-managed",
+              "version": 1,
+              "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "targetRequirements": {
+                "allowedTargetClasses": [
+                  "owner_desktop",
+                  "managed_cloud"
+                ],
+                "allowedTrustClasses": [
+                  "owner_local_trusted",
+                  "shared_isolated"
+                ],
+                "requiredOwnerPrincipalId": null,
+                "credentialKind": "platform_brokered",
+                "dataLocality": "transfer_allowed",
+                "fallback": {
+                  "mode": "ordered_explicit",
+                  "orderedTargetClasses": [
+                    "owner_desktop",
+                    "managed_cloud"
+                  ]
+                },
+                "providerConstraints": {
+                  "profileId": "standard",
+                  "version": 1,
+                  "digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                }
+              }
+            },
+            "adapter": {
+              "type": "codex_local",
+              "version": "0.2.7",
+              "configArtifactId": null
+            },
+            "requiredCapabilities": [
+              "workload.batch",
+              "provider.lifecycle_v1",
+              "sandbox.filesystem_isolated",
+              "sandbox.filtered_egress"
+            ],
+            "workspace": {
+              "manifestArtifactId": "00000000-0000-4000-8000-000000000015",
+              "base": {
+                "kind": "git_commit",
+                "algorithm": "git_sha1",
+                "revision": "0123456789abcdef0123456789abcdef01234567"
+              },
+              "manifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+              "mode": "read_write"
+            },
+            "secretHandles": [
+              {
+                "handleId": "00000000-0000-4000-8000-000000000016",
+                "materialization": {
+                  "kind": "proxy"
+                },
+                "usePolicy": "fence_proxy"
+              }
+            ],
+            "resourceLimits": {
+              "cpuMillis": 2000,
+              "memoryMiB": 4096,
+              "pids": 512,
+              "diskMiB": 10240
+            },
+            "networkPolicy": {
+              "policyId": "provider-only",
+              "version": 1,
+              "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            },
+            "offlinePolicy": "cancel",
+            "extensions": [],
+            "workloadType": "batch",
+            "workload": {
+              "command": "codex",
+              "args": [
+                "exec",
+                "--json"
+              ],
+              "stdinArtifactId": null,
+              "maxRuntimeSeconds": 3600
+            }
+          },
+          "extensions": []
+        }
+      }
+    },
+    {
+      "name": "valid poll no_work response with retry hint",
+      "schema": "poll_response",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "outcome": "no_work",
+        "retryAfterMs": 3000
+      }
+    },
+    {
+      "name": "reject poll response unknown outcome",
+      "schema": "poll_response",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "outcome": "maybe_later",
+        "retryAfterMs": 1
+      }
+    },
+    {
+      "name": "valid lease-ack operation request nesting the lease ack payload",
+      "schema": "lease_ack_request",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "issuedAt": "2026-08-09T00:00:00.000Z",
+        "nonce": "nonce-1",
+        "audience": "worker_run",
+        "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+        "body": {
+          "protocolVersion": 1,
+          "workerId": "00000000-0000-4000-8000-000000000203",
+          "jobId": "00000000-0000-4000-8000-000000000204",
+          "attempt": 1,
+          "leaseId": "00000000-0000-4000-8000-000000000205",
+          "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "ackedAt": "2026-08-09T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "name": "reject lease-ack request missing the idempotency key",
+      "schema": "lease_ack_request",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "issuedAt": "2026-08-09T00:00:00.000Z",
+        "nonce": "nonce-1",
+        "audience": "worker_run",
+        "body": {
+          "protocolVersion": 1,
+          "workerId": "00000000-0000-4000-8000-000000000203",
+          "jobId": "00000000-0000-4000-8000-000000000204",
+          "attempt": 1,
+          "leaseId": "00000000-0000-4000-8000-000000000205",
+          "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "ackedAt": "2026-08-09T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "name": "valid lease-renew response echoing the renewal identity",
+      "schema": "lease_renew_response",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "outcome": "renewed",
+        "body": {
+          "protocolVersion": 1,
+          "workerId": "00000000-0000-4000-8000-000000000203",
+          "jobId": "00000000-0000-4000-8000-000000000204",
+          "attempt": 1,
+          "leaseId": "00000000-0000-4000-8000-000000000205",
+          "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "expiresAt": "2026-08-09T01:00:00.000Z",
+          "cancelRequested": false,
+          "cancelReason": null
+        }
+      }
+    },
+    {
+      "name": "valid event-upload response carrying the cumulative ack",
+      "schema": "event_upload_response",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "ack": {
+          "protocolVersion": 1,
+          "organizationId": "00000000-0000-4000-8000-000000000201",
+          "companyId": "00000000-0000-4000-8000-000000000202",
+          "workerId": "00000000-0000-4000-8000-000000000203",
+          "jobId": "00000000-0000-4000-8000-000000000204",
+          "attempt": 1,
+          "leaseId": "00000000-0000-4000-8000-000000000205",
+          "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "acceptedThroughSeq": 1,
+          "expectedNextSeq": 2,
+          "status": "accepted"
+        }
+      }
+    },
+    {
+      "name": "valid artifact upload_granted transfer response",
+      "schema": "artifact_transfer_grant_response",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "outcome": "upload_granted",
+        "grant": {
+          "protocolVersion": 1,
+          "operation": "upload",
+          "artifactId": "00000000-0000-4000-8000-000000000207",
+          "method": "PUT",
+          "url": "https://storage.example.com/put",
+          "headers": {},
+          "issuedAt": "2026-08-09T00:00:00.000Z",
+          "expiresAt": "2026-08-09T01:00:00.000Z",
+          "maxBytes": 4096,
+          "expectedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "objectKey": "organizations/00000000-0000-4000-8000-000000000201/jobs/00000000-0000-4000-8000-000000000204/attempts/1/out.txt",
+          "redaction": "secret"
+        }
+      }
+    },
+    {
+      "name": "valid artifact committed response",
+      "schema": "artifact_commit_response",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "outcome": "committed",
+        "artifactId": "00000000-0000-4000-8000-000000000207",
+        "versionNumber": 1,
+        "committedAt": "2026-08-09T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "reject ordinary commit auto-converting to a quarantine outcome",
+      "schema": "artifact_commit_response",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "outcome": "quarantined",
+        "receipt": {
+          "protocolVersion": 1,
+          "receiptId": "00000000-0000-4000-8000-00000000020c",
+          "quarantineObjectKey": "quarantine/organizations/00000000-0000-4000-8000-000000000201/jobs/00000000-0000-4000-8000-000000000204/attempts/1/orphan.txt",
+          "observed": {
+            "workerId": "00000000-0000-4000-8000-000000000203",
+            "targetId": "00000000-0000-4000-8000-000000000206",
+            "deviceGeneration": 1,
+            "jobId": "00000000-0000-4000-8000-000000000204",
+            "attempt": 1,
+            "leaseId": "00000000-0000-4000-8000-000000000205",
+            "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          },
+          "artifact": {
+            "artifactId": "00000000-0000-4000-8000-000000000207",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "sizeBytes": 10,
+            "sensitivity": "restricted",
+            "provenance": "generated"
+          },
+          "reason": "late_output",
+          "receivedAt": "2026-08-09T00:00:00.000Z",
+          "disposition": "quarantined"
+        }
+      }
+    },
+    {
+      "name": "valid quarantine finalize quarantined receipt response",
+      "schema": "quarantine_finalize_response",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "outcome": "quarantined",
+        "receipt": {
+          "protocolVersion": 1,
+          "receiptId": "00000000-0000-4000-8000-00000000020c",
+          "quarantineObjectKey": "quarantine/organizations/00000000-0000-4000-8000-000000000201/jobs/00000000-0000-4000-8000-000000000204/attempts/1/orphan.txt",
+          "observed": {
+            "workerId": "00000000-0000-4000-8000-000000000203",
+            "targetId": "00000000-0000-4000-8000-000000000206",
+            "deviceGeneration": 1,
+            "jobId": "00000000-0000-4000-8000-000000000204",
+            "attempt": 1,
+            "leaseId": "00000000-0000-4000-8000-000000000205",
+            "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          },
+          "artifact": {
+            "artifactId": "00000000-0000-4000-8000-000000000207",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "sizeBytes": 10,
+            "sensitivity": "restricted",
+            "provenance": "generated"
+          },
+          "reason": "late_output",
+          "receivedAt": "2026-08-09T00:00:00.000Z",
+          "disposition": "quarantined"
+        }
+      }
+    },
+    {
+      "name": "valid cancel control command",
+      "schema": "control_command",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "audience": "control_channel",
+        "commandId": "00000000-0000-4000-8000-000000000401",
+        "commandSeq": 1,
+        "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+        "issuedAt": "2026-08-09T00:00:00.000Z",
+        "nonce": "cmd-nonce",
+        "organizationId": "00000000-0000-4000-8000-000000000201",
+        "companyId": "00000000-0000-4000-8000-000000000202",
+        "workerId": "00000000-0000-4000-8000-000000000203",
+        "jobId": "00000000-0000-4000-8000-000000000204",
+        "attempt": 1,
+        "leaseId": "00000000-0000-4000-8000-000000000205",
+        "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "commandKind": "cancel",
+        "reason": "founder cancelled",
+        "graceful": true
+      }
+    },
+    {
+      "name": "valid product_approval_result control command",
+      "schema": "control_command",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "audience": "control_channel",
+        "commandId": "00000000-0000-4000-8000-000000000401",
+        "commandSeq": 1,
+        "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+        "issuedAt": "2026-08-09T00:00:00.000Z",
+        "nonce": "cmd-nonce",
+        "organizationId": "00000000-0000-4000-8000-000000000201",
+        "companyId": "00000000-0000-4000-8000-000000000202",
+        "workerId": "00000000-0000-4000-8000-000000000203",
+        "jobId": "00000000-0000-4000-8000-000000000204",
+        "attempt": 1,
+        "leaseId": "00000000-0000-4000-8000-000000000205",
+        "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "commandKind": "product_approval_result",
+        "result": {
+          "approvalId": "00000000-0000-4000-8000-00000000020b",
+          "approvalKind": "spend_over_threshold",
+          "approvalVersion": 3,
+          "decision": "approved",
+          "decidedBy": {
+            "principalType": "user",
+            "principalId": "founder-1"
+          },
+          "decidedAt": "2026-08-09T00:00:00.000Z",
+          "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+          "governedActionRef": {
+            "kind": "budget_release",
+            "id": "00000000-0000-4000-8000-000000000402"
+          }
+        }
+      }
+    },
+    {
+      "name": "valid runtime_decision_result permission control command",
+      "schema": "control_command",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "audience": "control_channel",
+        "commandId": "00000000-0000-4000-8000-000000000401",
+        "commandSeq": 1,
+        "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+        "issuedAt": "2026-08-09T00:00:00.000Z",
+        "nonce": "cmd-nonce",
+        "organizationId": "00000000-0000-4000-8000-000000000201",
+        "companyId": "00000000-0000-4000-8000-000000000202",
+        "workerId": "00000000-0000-4000-8000-000000000203",
+        "jobId": "00000000-0000-4000-8000-000000000204",
+        "attempt": 1,
+        "leaseId": "00000000-0000-4000-8000-000000000205",
+        "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "commandKind": "runtime_decision_result",
+        "result": {
+          "decisionKind": "permission",
+          "requestId": "00000000-0000-4000-8000-00000000020a",
+          "nonce": "rt-nonce",
+          "requestDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "schemaVersion": 1,
+          "sourceRevision": 0,
+          "expiresAt": "2026-08-09T01:00:00.000Z",
+          "decidedBy": {
+            "principalType": "user",
+            "principalId": "founder-1"
+          },
+          "decidedAt": "2026-08-09T00:00:00.000Z",
+          "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+          "timeoutPolicy": "deny",
+          "decision": "allow_once"
+        }
+      }
+    },
+    {
+      "name": "reject conflating a product approval into a runtime-decision command",
+      "schema": "control_command",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "audience": "control_channel",
+        "commandId": "00000000-0000-4000-8000-000000000401",
+        "commandSeq": 1,
+        "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+        "issuedAt": "2026-08-09T00:00:00.000Z",
+        "nonce": "cmd-nonce",
+        "organizationId": "00000000-0000-4000-8000-000000000201",
+        "companyId": "00000000-0000-4000-8000-000000000202",
+        "workerId": "00000000-0000-4000-8000-000000000203",
+        "jobId": "00000000-0000-4000-8000-000000000204",
+        "attempt": 1,
+        "leaseId": "00000000-0000-4000-8000-000000000205",
+        "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "commandKind": "runtime_decision_result",
+        "result": {
+          "approvalId": "00000000-0000-4000-8000-00000000020b",
+          "approvalKind": "spend_over_threshold",
+          "approvalVersion": 3,
+          "decision": "approved",
+          "decidedBy": {
+            "principalType": "user",
+            "principalId": "founder-1"
+          },
+          "decidedAt": "2026-08-09T00:00:00.000Z",
+          "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+          "governedActionRef": {
+            "kind": "budget_release",
+            "id": "00000000-0000-4000-8000-000000000402"
+          }
+        }
+      }
+    },
+    {
+      "name": "reject unknown control command kind",
+      "schema": "control_command",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "audience": "control_channel",
+        "commandId": "00000000-0000-4000-8000-000000000401",
+        "commandSeq": 1,
+        "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+        "issuedAt": "2026-08-09T00:00:00.000Z",
+        "nonce": "cmd-nonce",
+        "organizationId": "00000000-0000-4000-8000-000000000201",
+        "companyId": "00000000-0000-4000-8000-000000000202",
+        "workerId": "00000000-0000-4000-8000-000000000203",
+        "jobId": "00000000-0000-4000-8000-000000000204",
+        "attempt": 1,
+        "leaseId": "00000000-0000-4000-8000-000000000205",
+        "fenceToken": "fencePRT007AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "commandKind": "self_destruct",
+        "reason": "x"
+      }
+    },
+    {
+      "name": "valid control-command ack",
+      "schema": "control_ack",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "commandId": "00000000-0000-4000-8000-000000000401",
+        "commandSeq": 1,
+        "status": "completed",
+        "observedAt": "2026-08-09T00:00:00.000Z",
+        "detail": null
+      }
+    },
+    {
+      "name": "reject unknown control-ack status",
+      "schema": "control_ack",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "commandId": "00000000-0000-4000-8000-000000000401",
+        "commandSeq": 1,
+        "status": "in_progress",
+        "observedAt": "2026-08-09T00:00:00.000Z",
+        "detail": null
+      }
+    },
+    {
+      "name": "valid answered work-question runtime-decision result",
+      "schema": "runtime_decision_result",
+      "valid": true,
+      "input": {
+        "decisionKind": "work_question",
+        "requestId": "00000000-0000-4000-8000-00000000020a",
+        "nonce": "wq-nonce",
+        "requestDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "schemaVersion": 2,
+        "sourceRevision": 1,
+        "expiresAt": "2026-08-09T01:00:00.000Z",
+        "decidedBy": {
+          "principalType": "user",
+          "principalId": "founder-1"
+        },
+        "decidedAt": "2026-08-09T00:00:00.000Z",
+        "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+        "timeoutPolicy": "park_run",
+        "outcome": "answered",
+        "answer": {
+          "region": "staging"
+        }
+      }
+    },
+    {
+      "name": "reject answered work question without an answer",
+      "schema": "runtime_decision_result",
+      "valid": false,
+      "input": {
+        "decisionKind": "work_question",
+        "requestId": "00000000-0000-4000-8000-00000000020a",
+        "nonce": "wq-nonce",
+        "requestDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "schemaVersion": 2,
+        "sourceRevision": 1,
+        "expiresAt": "2026-08-09T01:00:00.000Z",
+        "decidedBy": {
+          "principalType": "user",
+          "principalId": "founder-1"
+        },
+        "decidedAt": "2026-08-09T00:00:00.000Z",
+        "idempotencyKey": "00000000-0000-4000-8000-000000000209",
+        "timeoutPolicy": "park_run",
+        "outcome": "answered",
+        "answer": null
+      }
+    },
+    {
+      "name": "valid throttled protocol error with retry hint",
+      "schema": "protocol_error",
+      "valid": true,
+      "input": {
+        "protocolVersion": 1,
+        "code": "throttled",
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "message": "schema validation failed",
+        "retryAfterMs": 2500,
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "redaction": "secret",
+        "detail": {}
+      }
+    },
+    {
+      "name": "reject unknown protocol error code",
+      "schema": "protocol_error",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "code": "kaboom",
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "message": "schema validation failed",
+        "retryAfterMs": null,
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "redaction": "secret",
+        "detail": {}
+      }
+    },
+    {
+      "name": "reject retryable protocol error missing retryAfterMs",
+      "schema": "protocol_error",
+      "valid": false,
+      "input": {
+        "protocolVersion": 1,
+        "code": "throttled",
+        "correlationId": "00000000-0000-4000-8000-000000000208",
+        "message": "schema validation failed",
+        "retryAfterMs": null,
+        "serverTime": "2026-08-09T00:00:00.000Z",
+        "redaction": "secret",
+        "detail": {}
+      }
+    }
+  ]
+}

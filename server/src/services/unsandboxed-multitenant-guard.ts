@@ -1,8 +1,15 @@
 import type { AdapterExecutionTarget } from "@armyofagents/adapter-utils";
 import { logger } from "../middleware/logger.js";
+import { UNSANDBOXED_MULTITENANT_OPT_IN_ENV } from "../config/distributed-execution.js";
 
-/** Documented opt-in env (see docs/deploy/environment-variables.md). */
-export const UNSANDBOXED_MULTITENANT_OPT_IN_ENV = "AOA_ALLOW_UNSANDBOXED_MULTITENANT";
+/**
+ * Documented opt-in env (see docs/deploy/environment-variables.md). Canonical
+ * declaration lives in `../config/distributed-execution.ts`; re-exported here so
+ * existing importers of this module keep the same symbol. `assertHostedExecution
+ * StartupSafe` (config.ts) rejects this override earlier for real `cloud_auth`
+ * startup, but this guard's runtime behavior is unchanged.
+ */
+export { UNSANDBOXED_MULTITENANT_OPT_IN_ENV } from "../config/distributed-execution.js";
 
 /** True when the resolved target executes directly on the unsandboxed host. */
 export function isUnsandboxedLocalTarget(

@@ -8,7 +8,7 @@
 
 **Tech Stack:** vitest, Drizzle ORM (`@armyofagents/db`), real `codex` CLI, `runAoaAgent`/`buildAoaRunResultFromAdapter`, gstack `/browse`, Postgres at `127.0.0.1:54440`.
 
-**Env constants:** DB `postgres://upstream:upstream@127.0.0.1:54440/upstream`; company `8d7569f2-43e9-4b57-8709-2a4687364e44`; thread `376592a2-91e6-4327-81fb-8fb7e498b6c4`; worktree `C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-mcp-fix`; branch `fix/codex-mcp-bridge`.
+**Env constants:** DB `postgres://paperclip:paperclip@127.0.0.1:54440/paperclip`; company `8d7569f2-43e9-4b57-8709-2a4687364e44`; thread `376592a2-91e6-4327-81fb-8fb7e498b6c4`; worktree `C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-mcp-fix`; branch `fix/codex-mcp-bridge`.
 
 **Constraints:** Drizzle ORM only (no raw SQL); NEVER `git add -A` (stage only listed files); commit trailer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`; do NOT commit to `feat/v1-combined`; gstack `/browse` for all browsing.
 
@@ -42,7 +42,7 @@
 - [ ] **Step 1: Merge A1+A2 findings** into one ledger (Critical / Important / Minor), de-duplicated.
 - [ ] **Step 2: For each Critical/Important** — dispatch a focused fix subagent (TDD: failing test → fix → green), one commit each with the trailer. Re-review the fix.
 - [ ] **Step 3: For each Minor** — document + defer with a one-line rationale (or fix if trivial).
-- [ ] **Step 4: Re-run the gate** after any fix: `AOA_TEST_DATABASE_URL='postgres://upstream:upstream@127.0.0.1:54440/upstream' pnpm -C "<worktree>/server" exec vitest run --exclude '**/*.live.test.ts'` → green; `pnpm -C "<worktree>" -r typecheck` → clean.
+- [ ] **Step 4: Re-run the gate** after any fix: `AOA_TEST_DATABASE_URL='postgres://paperclip:paperclip@127.0.0.1:54440/paperclip' pnpm -C "<worktree>/server" exec vitest run --exclude '**/*.live.test.ts'` → green; `pnpm -C "<worktree>" -r typecheck` → clean.
 - [ ] **Acceptance:** zero unresolved Critical/Important.
 
 ---
@@ -120,7 +120,7 @@
 
 **Files:** none (verification) + optional ledger update.
 
-- [ ] **Step 1: Full server suite** — `AOA_TEST_DATABASE_URL='postgres://upstream:upstream@127.0.0.1:54440/upstream' pnpm -C "<worktree>/server" exec vitest run --exclude '**/*.live.test.ts'` → green.
+- [ ] **Step 1: Full server suite** — `AOA_TEST_DATABASE_URL='postgres://paperclip:paperclip@127.0.0.1:54440/paperclip' pnpm -C "<worktree>/server" exec vitest run --exclude '**/*.live.test.ts'` → green.
 - [ ] **Step 2: Live E2E** — `AOA_TEST_DATABASE_URL='...' pnpm -C "<worktree>/server" exec vitest run src/services/internal-agent/__tests__/crew-post-e2e.live.test.ts` → codex cases PASS; opencode/gemini loud-skip.
 - [ ] **Step 3: Typecheck** — `pnpm -C "<worktree>" -r typecheck` → clean.
 - [ ] **Step 4: Update the known-gaps ledger** in the verification design doc (record review findings dispositions + the live-walkthrough result), commit.

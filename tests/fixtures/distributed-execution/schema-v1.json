@@ -1,0 +1,318 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aoa.dev/contracts/distributed-execution/golden-journey-v1.schema.json",
+  "title": "Distributed Golden Journey v1",
+  "description": "Strict, closed contract for a single distributed-execution golden-journey or failure fixture. Immutable behavioral input; may receive only additive fields within schemaVersion 1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "workloadType",
+    "purpose",
+    "source",
+    "organization",
+    "company",
+    "requester",
+    "executor",
+    "placement",
+    "inputBase",
+    "identity",
+    "steps",
+    "failureInjection",
+    "expectedEvents",
+    "cost",
+    "timing",
+    "cleanup",
+    "control",
+    "expected"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "minLength": 3, "maxLength": 64 },
+    "workloadType": { "enum": ["batch", "browser_session", "service"] },
+    "purpose": { "type": "string", "minLength": 8, "maxLength": 240, "$comment": "aoa:utf8-max-bytes=480" },
+    "source": { "$ref": "#/$defs/Source" },
+    "organization": { "$ref": "#/$defs/Organization" },
+    "company": { "$ref": "#/$defs/Company" },
+    "requester": { "$ref": "#/$defs/Requester" },
+    "executor": { "$ref": "#/$defs/Executor" },
+    "placement": { "$ref": "#/$defs/Placement" },
+    "inputBase": { "$ref": "#/$defs/InputBase" },
+    "identity": { "$ref": "#/$defs/Identity" },
+    "steps": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/Step" } },
+    "failureInjection": { "$ref": "#/$defs/FailureInjection" },
+    "expectedEvents": { "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/Event" } },
+    "cost": { "$ref": "#/$defs/Cost" },
+    "timing": { "$ref": "#/$defs/Timing" },
+    "cleanup": { "$ref": "#/$defs/Cleanup" },
+    "control": { "$ref": "#/$defs/Control" },
+    "canaries": { "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": { "$ref": "#/$defs/Canary" } },
+    "expected": { "$ref": "#/$defs/Expected" }
+  },
+  "$defs": {
+    "Organization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^org_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120, "$comment": "aoa:utf8-max-bytes=240" }
+      }
+    },
+    "Company": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "organizationId"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^company_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120, "$comment": "aoa:utf8-max-bytes=240" },
+        "organizationId": { "type": "string", "pattern": "^org_[0-9A-HJKMNP-TV-Z]{26}$" }
+      }
+    },
+    "Requester": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "displayName"],
+      "properties": {
+        "type": { "enum": ["founder", "team_lead", "team_member", "agent", "commander", "mcp_key", "system"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 120, "$comment": "aoa:utf8-max-bytes=240" }
+      }
+    },
+    "Executor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "enum": ["worker", "sandbox", "browser_worker", "service_instance"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 80 }
+      }
+    },
+    "Placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetPolicy", "provider", "region", "generation"],
+      "properties": {
+        "targetPolicy": { "enum": ["pinned_generation", "latest_generation", "single_region_pinned"] },
+        "provider": { "enum": ["e2b", "fake", "gvisor", "firecracker"] },
+        "region": { "type": "string", "pattern": "^[a-z0-9-]+$", "minLength": 2, "maxLength": 40 },
+        "generation": { "type": "integer", "minimum": 1, "maximum": 100000 }
+      }
+    },
+    "InputBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workspaceBaseId", "immutable"],
+      "properties": {
+        "workspaceBaseId": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "gitRemote": { "type": ["string", "null"], "maxLength": 300 },
+        "gitRef": { "type": ["string", "null"], "maxLength": 200 },
+        "baseDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "immutable": { "const": true }
+      }
+    },
+    "AttemptRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt", "workerId", "leaseId", "fenceToken"],
+      "properties": {
+        "attempt": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "workerId": { "type": ["string", "null"], "pattern": "^worker_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "leaseId": { "type": ["string", "null"], "pattern": "^lease_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "fenceToken": { "type": ["integer", "null"], "minimum": 1, "maximum": 9007199254740991 }
+      }
+    },
+    "Identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jobId", "attempts"],
+      "properties": {
+        "jobId": { "type": "string", "pattern": "^job_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "attempts": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/AttemptRef" } }
+      }
+    },
+    "Source": {
+      "type": "object",
+      "additionalProperties": false,
+      "unevaluatedProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["task_run", "commander_turn", "crew_run", "one_shot", "browser_request", "service_reconcile"] },
+        "runId": { "type": "string", "pattern": "^run_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "issueId": { "type": "string", "pattern": "^issue_[0-9A-HJKMNP-TV-Z]{26}$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "task_run" } } },
+          "then": { "required": ["runId", "issueId"] },
+          "else": { "not": { "anyOf": [{ "required": ["runId"] }, { "required": ["issueId"] }] } }
+        }
+      ]
+    },
+    "Step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action"],
+      "properties": {
+        "action": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 64 },
+        "at": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "emits": { "type": "array", "minItems": 1, "maxItems": 12, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 64 } }
+      }
+    },
+    "FailureInjection": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["point", "effect"],
+      "properties": {
+        "point": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "effect": { "type": "string", "minLength": 1, "maxLength": 80 }
+      }
+    },
+    "Metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tokensIn": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "tokensOut": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "costCents": { "type": "integer", "minimum": 0, "maximum": 100000000 },
+        "durationMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+      }
+    },
+    "EventPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "detail": { "type": "string", "maxLength": 240, "$comment": "aoa:utf8-max-bytes=480" },
+        "code": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 64 },
+        "stage": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 64 },
+        "location": { "enum": ["argv", "url", "header", "nested_array", "additive_extension"] },
+        "destination": { "type": "string", "maxLength": 300 },
+        "reason": { "type": "string", "maxLength": 200 },
+        "approved": { "type": "boolean" },
+        "artifactRef": { "type": "string", "maxLength": 120 },
+        "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "sizeBytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "prefix": { "type": "string", "maxLength": 200 },
+        "checkpointId": { "type": "string", "maxLength": 120 },
+        "generation": { "type": "integer", "minimum": 1, "maximum": 100000 },
+        "tags": { "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "maxLength": 64 } },
+        "metrics": { "$ref": "#/$defs/Metrics" }
+      }
+    },
+    "Event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocolVersion",
+        "eventId",
+        "eventType",
+        "organizationId",
+        "companyId",
+        "workerId",
+        "jobId",
+        "attempt",
+        "leaseId",
+        "fenceToken",
+        "seq",
+        "occurredAt",
+        "payload",
+        "eventDigest"
+      ],
+      "properties": {
+        "protocolVersion": { "const": 1 },
+        "eventId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+        "eventType": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 64 },
+        "organizationId": { "type": "string", "pattern": "^org_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "companyId": { "type": "string", "pattern": "^company_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "workerId": { "type": ["string", "null"], "pattern": "^worker_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "jobId": { "type": "string", "pattern": "^job_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "attempt": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "leaseId": { "type": ["string", "null"], "pattern": "^lease_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "fenceToken": { "type": ["integer", "null"], "minimum": 1, "maximum": 9007199254740991 },
+        "seq": { "type": "integer", "minimum": 1, "maximum": 100000 },
+        "occurredAt": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "payload": { "$ref": "#/$defs/EventPayload" },
+        "eventDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "Cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["currency", "maxTotalCents", "observedTotalCents"],
+      "properties": {
+        "currency": { "const": "USD" },
+        "maxTotalCents": { "type": "integer", "minimum": 0, "maximum": 100000000 },
+        "observedTotalCents": { "type": "integer", "minimum": 0, "maximum": 100000000 },
+        "tokenBudget": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "observedTokens": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+      }
+    },
+    "Timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["queuedAt", "startedAt", "finishedAt", "maxWallClockMs"],
+      "properties": {
+        "queuedAt": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "startedAt": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "finishedAt": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "maxWallClockMs": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "observedWallClockMs": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+      }
+    },
+    "Cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "scope", "idempotent", "deadlineMs", "restoresEffectAuthority"],
+      "properties": {
+        "authority": { "enum": ["resource_bound_cleanup", "lease_holder", "none"] },
+        "scope": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "idempotent": { "const": true },
+        "deadlineMs": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "restoresEffectAuthority": { "const": false }
+      }
+    },
+    "Control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cancellation", "productApproval", "runtimeDecision"],
+      "properties": {
+        "cancellation": { "enum": ["none", "requested_during_execution"] },
+        "productApproval": { "enum": ["none", "requested_granted", "requested_denied"] },
+        "runtimeDecision": {
+          "enum": [
+            "none",
+            "egress_denied",
+            "budget_stop",
+            "provider_pause_resume",
+            "late_output_quarantine",
+            "plaintext_secret_rejected",
+            "checkpoint_restore"
+          ]
+        }
+      }
+    },
+    "Canary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "location", "token", "rejectedAtStage"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$", "maxLength": 64 },
+        "location": { "enum": ["argv", "url", "header", "nested_array", "additive_extension"] },
+        "token": { "type": "string", "pattern": "^CANARY-[A-Z0-9-]+$", "maxLength": 80 },
+        "rejectedAtStage": { "enum": ["producer_safety_validation"] }
+      }
+    },
+    "Expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["terminalState", "artifacts", "auditActions", "forbiddenEffects"],
+      "properties": {
+        "terminalState": { "enum": ["succeeded", "failed", "cancelled", "stopped", "healthy", "expired"] },
+        "artifacts": { "type": "array", "minItems": 0, "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 64 } },
+        "auditActions": { "type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$", "maxLength": 80 } },
+        "forbiddenEffects": { "type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 80 } }
+      }
+    }
+  }
+}

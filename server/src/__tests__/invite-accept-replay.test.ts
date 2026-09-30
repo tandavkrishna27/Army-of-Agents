@@ -207,14 +207,14 @@ describe("mergeJoinDefaultsPayloadForReplay", () => {
       {
         url: "https://old.example/v1/responses",
         method: "POST",
-        aoaApiUrl: "http://host.docker.internal:3100",
+        paperclipApiUrl: "http://host.docker.internal:3100",
         headers: {
           "x-openclaw-auth": "old-token",
           "x-custom": "keep-me",
         },
       },
       {
-        aoaApiUrl: "https://aoa.example.com",
+        paperclipApiUrl: "https://paperclip.example.com",
         headers: {
           "x-openclaw-auth": "new-token",
         },
@@ -228,7 +228,7 @@ describe("mergeJoinDefaultsPayloadForReplay", () => {
     }) as Record<string, unknown>;
 
     expect(normalized.url).toBe("https://old.example/v1/responses");
-    expect(normalized.aoaApiUrl).toBe("https://aoa.example.com");
+    expect(normalized.paperclipApiUrl).toBe("https://paperclip.example.com");
     expect(normalized.webhookAuthHeader).toBe("Bearer new-token");
     expect(normalized.headers).toMatchObject({
       "x-openclaw-auth": "new-token",

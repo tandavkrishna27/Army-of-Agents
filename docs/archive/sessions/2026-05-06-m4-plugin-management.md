@@ -62,7 +62,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { companies } from "./companies.js";
-import type { PluginCategory, PluginStatus, UpstreamPluginManifestV1 } from "@armyofagents/shared";
+import type { PluginCategory, PluginStatus, PaperclipPluginManifestV1 } from "@armyofagents/shared";
 
 export const plugins = pgTable(
   "plugins",
@@ -75,7 +75,7 @@ export const plugins = pgTable(
     version: text("version").notNull(),
     apiVersion: integer("api_version").notNull().default(1),
     categories: jsonb("categories").$type<PluginCategory[]>().notNull().default([]),
-    manifestJson: jsonb("manifest_json").$type<UpstreamPluginManifestV1>().notNull(),
+    manifestJson: jsonb("manifest_json").$type<PaperclipPluginManifestV1>().notNull(),
     status: text("status").$type<PluginStatus>().notNull().default("installed"),
     installOrder: integer("install_order"),
     packagePath: text("package_path"),

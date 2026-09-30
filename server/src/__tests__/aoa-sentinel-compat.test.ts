@@ -1,4 +1,16 @@
-/** AoA repo-only workspace sentinel contract. */
+/**
+ * Phase 5a compatibility tests: dual-read of legacy paperclip-named
+ * DB sentinels alongside the new AoA-named ones.
+ *
+ * isRepoOnlySentinel is imported directly from heartbeat.ts (it is
+ * exported as a pure function with no DB dependencies).
+ *
+ * The DEFERRED_WAKE_CONTEXT_KEY dual-read pattern is tested via an
+ * inline lambda that replicates the read expression used in
+ * heartbeat.ts (`ctx[NEW] ?? ctx[LEGACY]`).  This avoids pulling in
+ * the full heartbeat service mock chain while still verifying the
+ * correctness of the dual-read logic.
+ */
 
 import { describe, expect, it } from "vitest";
 
@@ -82,15 +94,64 @@ vi.mock("../middleware/logger.js", () => ({
 import { vi } from "vitest";
 import { isRepoOnlySentinel } from "../services/heartbeat.js";
 
-describe("repo-only workspace sentinel", () => {
-  it("recognizes the AoA sentinel", () => {
-    expect(isRepoOnlySentinel("/__aoa_repo_only__")).toBe(true);
+// ────────────────────────────────────────────────────────────────────────────
+// Inline dual-read helper that mirrors the pattern used in heartbeat.ts:
+//   ctx?.[DEFERRED_WAKE_CONTEXT_KEY] ?? ctx?.[LEGACY_DEFERRED_WAKE_CONTEXT_KEY]
+// ────────────────────────────────────────────────────────────────────────────
+const NEW_KEY = "_aoaWakeContext";
+const LEGACY_KEY = "_paperclipWakeContext";
+
+function readDeferredWakeContext(ctx: Record<string, unknown> | null | undefined): unknown {
+  return ctx?.[NEW_KEY] ?? ctx?.[LEGACY_KEY];
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Tests
+// ────────────────────────────────────────────────────────────────────────────
+
+describe("aoa-sentinel-compat", () => {
+  describe("deferred wake context dual-read", () => {
+    it("reads legacy _paperclipWakeContext key", () => {
+      const payload = { data: "from-paperclip" };
+      const ctx = { [LEGACY_KEY]: payload };
+      expect(readDeferredWakeContext(ctx)).toBe(payload);
+    });
+
+    it("reads AoA _aoaWakeContext key", () => {
+      const payload = { data: "from-aoa" };
+      const ctx = { [NEW_KEY]: payload };
+      expect(readDeferredWakeContext(ctx)).toBe(payload);
+    });
+
+    it("prefers AoA key when both keys are present", () => {
+      const ctx = { [NEW_KEY]: "new", [LEGACY_KEY]: "old" };
+      expect(readDeferredWakeContext(ctx)).toBe("new");
+    });
   });
 
-  it("ignores ordinary and missing paths", () => {
-    expect(isRepoOnlySentinel("/some/other/path")).toBe(false);
-    expect(isRepoOnlySentinel(null)).toBe(false);
-    expect(isRepoOnlySentinel(undefined)).toBe(false);
-    expect(isRepoOnlySentinel("")).toBe(false);
+  describe("isRepoOnlySentinel", () => {
+    it("returns true for the legacy /__paperclip_repo_only__ sentinel", () => {
+      expect(isRepoOnlySentinel("/__paperclip_repo_only__")).toBe(true);
+    });
+
+    it("returns true for the new /__aoa_repo_only__ sentinel", () => {
+      expect(isRepoOnlySentinel("/__aoa_repo_only__")).toBe(true);
+    });
+
+    it("returns false for arbitrary paths", () => {
+      expect(isRepoOnlySentinel("/some/other/path")).toBe(false);
+    });
+
+    it("returns false for null", () => {
+      expect(isRepoOnlySentinel(null)).toBe(false);
+    });
+
+    it("returns false for undefined", () => {
+      expect(isRepoOnlySentinel(undefined)).toBe(false);
+    });
+
+    it("returns false for empty string", () => {
+      expect(isRepoOnlySentinel("")).toBe(false);
+    });
   });
 });

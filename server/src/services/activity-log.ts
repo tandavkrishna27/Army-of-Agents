@@ -18,17 +18,30 @@ export interface LogActivityInput {
 }
 
 export interface PersistedActivity extends Omit<LogActivityInput, "details"> {
+  /** The inserted activity_log row id (JOB-013 — the audit bridge links its
+   * projection receipt's targetAggregateId to this). Additive/back-compatible:
+   * existing callers simply ignore it. */
+  id: string;
   details: Record<string, unknown> | null;
 }
 
-/** Persist the mandatory audit row without publishing a pre-commit event. */
+/**
+ * Persist the mandatory audit row without publishing a pre-commit event.
+ *
+ * ★ THIS IS WHERE A CALLER-SUPPLIED `action` BELONGS. `activity_log` has no
+ * single write chokepoint — thirty-four direct `insert(activityLog)` sites, two
+ * of them guarded (see `activity-namespace.ts`) — so the reserved
+ * `security.denied.*` namespace holds only because every direct writer hard-codes
+ * its action. If your action comes from a caller, route it through here rather
+ * than adding a thirty-fifth direct insert.
+ */
 export async function insertActivityLog(
-  db: Db,
+  db: Pick<Db, "insert">,
   input: LogActivityInput
 ): Promise<PersistedActivity> {
   assertUnreservedActivityNamespace(input);
   const sanitizedDetails = input.details ? sanitizeRecord(input.details) : null;
-  await db.insert(activityLog).values({
+  const [row] = await db.insert(activityLog).values({
     companyId: input.companyId,
     actorType: input.actorType,
     actorId: input.actorId,
@@ -38,10 +51,11 @@ export async function insertActivityLog(
     agentId: input.agentId ?? null,
     runId: input.runId ?? null,
     details: sanitizedDetails,
-  });
+  }).returning({ id: activityLog.id });
 
   return {
     ...input,
+    id: row.id,
     agentId: input.agentId ?? null,
     runId: input.runId ?? null,
     details: sanitizedDetails,
@@ -72,6 +86,9 @@ export function publishActivityLogged(input: PersistedActivity): void {
 // insert path and redaction stays consistent (the live event carries sanitized details).
 
 export interface PreparedActivityEvent {
+  /** The inserted activity_log row id (JOB-013). Additive — existing consumers
+   * (mcp-connectors routes + token-refresh) ignore it. */
+  id: string;
   companyId: string;
   payload: {
     actorType: ActivityActorType;
@@ -89,6 +106,7 @@ export interface PreparedActivityEvent {
 export async function insertActivity(db: Db, input: LogActivityInput): Promise<PreparedActivityEvent> {
   const persisted = await insertActivityLog(db, input);
   return {
+    id: persisted.id,
     companyId: persisted.companyId,
     payload: {
       actorType: persisted.actorType,

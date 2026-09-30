@@ -55,11 +55,12 @@ export function InboxSettingsPanel({
 }: InboxSettingsPanelProps) {
   const updateNotificationRule = (
     semanticType: NotificationPreferences["rules"][number]["semanticType"],
-    patch: Partial<Pick<NotificationPreferences["rules"][number], "deliveryMode" | "toastEnabled">>,
+    patch: Partial<Pick<NotificationPreferences["rules"][number], "deliveryMode" | "toastEnabled" | "soundEnabled" | "voiceEnabled">>,
   ) => {
     onUpdateNotificationPreferences({
       rules: notificationPreferences.rules.map((rule) =>
-        rule.semanticType === semanticType ? { ...rule, ...patch } : rule,
+        ({ ...rule, soundEnabled: rule.soundEnabled ?? false, voiceEnabled: rule.voiceEnabled ?? false,
+          ...(rule.semanticType === semanticType ? patch : {}) }),
       ),
     });
   };
@@ -341,7 +342,7 @@ export function InboxSettingsPanel({
               return (
                 <div key={rule.semanticType} className="grid gap-2 border-t border-border pt-2 first:border-t-0 first:pt-0">
                   <div className="font-medium">{label}</div>
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid gap-2 sm:grid-cols-4">
                     <label className="grid gap-1">
                       <span className="text-muted-foreground">Delivery</span>
                       <select
@@ -373,6 +374,18 @@ export function InboxSettingsPanel({
                         }
                       />
                       <span>Toast</span>
+                    </label>
+                    <label className="flex items-center gap-2 self-end">
+                      <input type="checkbox" aria-label={`${label} sound`} checked={rule.soundEnabled === true}
+                        disabled={notificationPreferencesPending || rule.deliveryMode !== "realtime"}
+                        onChange={event=>updateNotificationRule(rule.semanticType,{soundEnabled:event.target.checked})}/>
+                      <span>Sound</span>
+                    </label>
+                    <label className="flex items-center gap-2 self-end">
+                      <input type="checkbox" aria-label={`${label} spoken announcement`} checked={rule.voiceEnabled === true}
+                        disabled={notificationPreferencesPending || rule.deliveryMode !== "realtime"}
+                        onChange={event=>updateNotificationRule(rule.semanticType,{voiceEnabled:event.target.checked})}/>
+                      <span>Spoken</span>
                     </label>
                   </div>
                 </div>

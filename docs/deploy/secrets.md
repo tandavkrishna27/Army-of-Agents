@@ -15,6 +15,7 @@ Secrets are encrypted with a local master key stored at:
 ~/.aoa/instances/default/secrets/master.key
 ```
 
+> Note: existing installs that still have `~/.paperclip/` are read via the legacy fallback in `cli/src/config/home.ts`. On a fresh install, AoA writes only to `~/.aoa/`.
 
 This key is auto-created during onboarding. The key never leaves your machine.
 

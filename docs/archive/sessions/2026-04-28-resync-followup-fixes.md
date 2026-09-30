@@ -966,13 +966,13 @@ Expected: A `readFileSync` call against a specific path (e.g. `.forbidden-tokens
 
 - [ ] **Step 2: Find existing rebrand allowlist exceptions**
 
-The Sprint 3 polish work tagged `Porting1.1` already worked through "where Upstream can stay" decisions. Run:
+The Sprint 3 polish work tagged `Porting1.1` already worked through "where Paperclip can stay" decisions. Run:
 
 ```sh
-git log --grep "rebrand\|brand-check\|upstream.*aoa" --oneline -10
+git log --grep "rebrand\|brand-check\|paperclip.*aoa" --oneline -10
 ```
 
-Read commit messages and any referenced files to understand which paths/strings keep `upstream` (e.g. external Hermes wire-protocol env vars `UPSTREAM_API_KEY`/`UPSTREAM_RUN_ID`, the `upstreamSkillSync` legacy field, archived spec docs).
+Read commit messages and any referenced files to understand which paths/strings keep `paperclip` (e.g. external Hermes wire-protocol env vars `PAPERCLIP_API_KEY`/`PAPERCLIP_RUN_ID`, the `paperclipSkillSync` legacy field, archived spec docs).
 
 - [ ] **Step 3: Create the config**
 
@@ -980,9 +980,9 @@ Create `.forbidden-tokens.json` (use whatever filename the script in Step 1 expe
 
 ```json
 {
-  "tokens": ["upstream", "Upstream", "UPSTREAM"],
+  "tokens": ["paperclip", "Paperclip", "PAPERCLIP"],
   "allowPaths": [
-    "docs/aoa/specs/upstream_spec.md",
+    "docs/aoa/specs/paperclip_spec.md",
     "docs/aoa/reference/product.md",
     "docs/aoa/reference/decisions.md",
     "server/src/env-compat.js",
@@ -1014,12 +1014,12 @@ scripts/check-forbidden-tokens.mjs is a no-op without its config file —
 it logs 'list not found' and exits 0. Commits the rebrand-aware token
 list so the gate has teeth.
 
-Allowlist preserves the 9 places where 'upstream' lives by design:
-external Hermes wire-protocol env vars (UPSTREAM_API_KEY/RUN_ID),
+Allowlist preserves the 9 places where 'paperclip' lives by design:
+external Hermes wire-protocol env vars (PAPERCLIP_API_KEY/RUN_ID),
 back-compat skill-sync legacy fields, env-compat mirror code, the
 sentinel-compat tests, the LocalStorage migration code, and the
 historical spec docs. See Sprint 3 polish commits for the full
-'where Upstream can stay' decision trail."
+'where Paperclip can stay' decision trail."
 ```
 
 ---
@@ -1031,7 +1031,7 @@ historical spec docs. See Sprint 3 polish commits for the full
 - [ ] **Step 1: Run all gates**
 
 ```sh
-cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-2.5"
+cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5"
 pnpm typecheck
 pnpm exec node scripts/check-forbidden-tokens.mjs
 pnpm test:run

@@ -76,7 +76,7 @@ async function createBootstrapInvite(
     ["aoa", "auth", "bootstrap-ceo", "--force", "--base-url", baseUrl],
     {
       ...env,
-      DATABASE_URL: `postgres://aoa:aoa@127.0.0.1:${dbPort}/aoa`,
+      DATABASE_URL: `postgres://paperclip:paperclip@127.0.0.1:${dbPort}/paperclip`,
     },
     "pipe",
   );

@@ -177,7 +177,7 @@ export function SkillLibrary({
               badge={skill.sourceBadge}
               sourceLabel={skill.sourceLabel}
               active={selectedSkillId === skill.id}
-              chip={skill.sourceBadge === "aoa" ? "AoA" : undefined}
+              chip={skill.sourceBadge === "paperclip" ? "AoA" : undefined}
             />
           ))}
         </>

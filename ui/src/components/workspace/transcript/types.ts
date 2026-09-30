@@ -15,7 +15,7 @@ export type DepartmentType =
   | "general"
   | "custom";
 
-// --- TranscriptBlock (ported from AoA RunTranscriptView.tsx:30-107) ---
+// --- TranscriptBlock (ported from Paperclip RunTranscriptView.tsx:30-107) ---
 
 export type TranscriptBlock =
   | {

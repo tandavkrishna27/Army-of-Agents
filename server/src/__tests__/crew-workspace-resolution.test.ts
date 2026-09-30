@@ -11,7 +11,7 @@
 // context. D16's tier two ("the workspace repo's own CLAUDE.md is allowed") was
 // satisfied by accident, by the wrong repo.
 //
-// The runner now mirrors heartbeat's resolution: `context.aoaWorkspace`
+// The runner now mirrors heartbeat's resolution: `context.paperclipWorkspace`
 // is ALWAYS populated, with the per-agent home
 // (<AOA_HOME>/instances/<id>/workspaces/<agentId>) as the floor. `process.cwd()`
 // must never again be reachable for a crew run — that is what test (b) asserts.
@@ -302,7 +302,7 @@ function executedContext(): Record<string, unknown> {
 }
 
 function executedWorkspace(): Record<string, unknown> {
-  const ws = executedContext().aoaWorkspace;
+  const ws = executedContext().paperclipWorkspace;
   expect(ws, "crew runs must always carry an execution workspace").toBeTruthy();
   return ws as Record<string, unknown>;
 }
@@ -380,8 +380,8 @@ describe("T5: crew execution-workspace resolution", () => {
     expect(ws.branchName).toBeNull();
     expect(ws.worktreePath).toBeNull();
     expect(ws.agentHome).toBe(AGENT_HOME);
-    // Hints mirror heartbeat's `context.aoaWorkspaces`.
-    expect(executedContext().aoaWorkspaces).toEqual([
+    // Hints mirror heartbeat's `context.paperclipWorkspaces`.
+    expect(executedContext().paperclipWorkspaces).toEqual([
       {
         workspaceId: "pw-1",
         cwd: "/repos/customer-app",

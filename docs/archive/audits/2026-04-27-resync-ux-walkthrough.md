@@ -1,7 +1,7 @@
 # Resync UX Walkthrough — 2026-04-27
 
-Interactive verification of the upstream project → AoA resync (Tier 1 + Tier 2,
-plan: `docs/superpowers/plans/2026-04-26-upstream-resync.md`,
+Interactive verification of the upstream Paperclip → AoA resync (Tier 1 + Tier 2,
+plan: `docs/superpowers/plans/2026-04-26-upstream-paperclip-resync.md`,
 verification plan: `docs/superpowers/plans/2026-04-27-resync-verification.md`).
 
 **Environment:** AoA dev server on port 3100, deployment mode `local_trusted`,
@@ -17,7 +17,7 @@ served bundle.
 - ✅ Migrations 0061/0062/0063 applied successfully on real PostgreSQL (visible
   from dev server boot logs)
 - ✅ Tiered retention active with the resync defaults (server log line)
-- ✅ AoA branding correct on company picker + instance settings (no Upstream
+- ✅ AoA branding correct on company picker + instance settings (no Paperclip
   references found in walkthrough)
 
 ---
@@ -25,7 +25,7 @@ served bundle.
 ## W1 Sign-out (T6) — ✅ pass
 - `/instance/settings` General tab renders dedicated Sign out section.
 - Description text: "Sign out of this AoA instance. You will be redirected to
-  the login page." (uses "AoA instance" — no stale Upstream wording).
+  the login page." (uses "AoA instance" — no stale Paperclip wording).
 - Sign out button rendered with correct copy.
 
 ## W2 Keyboard cheatsheet (T11) — ✅ pass
@@ -87,7 +87,7 @@ served bundle.
 
 ## W8 Hermes adapter UI (T14) — ✅ pass
 - Adapter type popover lists "Hermes (local)" alongside Claude/Codex/etc.
-  (rebrand verified — no Upstream ref).
+  (rebrand verified — no Paperclip ref).
 - Selected and saved via `PATCH /api/agents/:id` with `adapterType:
   "hermes_local"` and `adapterConfig.hermesCommand: "hermes-bin"` →
   200, GET round-trip returns same JSON.
@@ -175,9 +175,9 @@ Two follow-ups deferred to a future sprint (not blockers for this branch):
    masked by `.catch(() => {})` in `tests/e2e/helpers/seed-company.ts:46`.
    Real production bug — any company with read state cannot be deleted via API.
 
-2. **Prose-level Upstream leaks in `scripts/smoke/openclaw-docker-ui.sh`** —
+2. **Prose-level Paperclip leaks in `scripts/smoke/openclaw-docker-ui.sh`** —
    lines 259, 270, 272, 292, 303, 305 contain user-facing heredoc prose like
-   "If Upstream rejects the host..." and "Then restart Upstream and re-run
+   "If Paperclip rejects the host..." and "Then restart Paperclip and re-run
    this script." T9's brand-check uses leading-quote token prefixes (matches
    code literals) and intentionally doesn't catch unquoted prose. Either
    rebrand the 6 lines OR widen the gate. Out of T9 scope by design.
@@ -198,7 +198,7 @@ prior tasks. All landed:
 |--------|---|
 | `6e26362` | B1 Critical — comprehensive FK cascade sweep across 37 schema files (50 cascade + 31 set null = 81 FKs); 17 explicit deletes added to `companies.remove()`; new real-DB integration test; schema-source regex test; service ordering test extended from 3 → 21 cases. |
 | `53c249a` | I-1 + M-1/2/3/5 from review — constraint-truncation doc note in 0066; domain grouping comments in `companies.remove()`; drift-detection assertion (every imported table appears in deleteCalls); `INSERT ... RETURNING` refactor in integration test; regex-allowance rationale comment. |
-| `8ed7287` | Smoke script prose rebrand — 6 user-facing Upstream lines in `scripts/smoke/openclaw-docker-ui.sh` rebranded to AoA. Variable names (upstream_base_url etc.) intentionally left for a future rename pass. |
+| `8ed7287` | Smoke script prose rebrand — 6 user-facing Paperclip lines in `scripts/smoke/openclaw-docker-ui.sh` rebranded to AoA. Variable names (paperclip_base_url etc.) intentionally left for a future rename pass. |
 | `aff040a` | Drizzle snapshot backfill — `meta/0066_snapshot.json` added so future `pnpm db:generate` runs produce minimal migrations instead of sweeping drift sweeps that need hand-trimming. |
 | `523000e` | Brand-check elevated to PR-level CI gate — `.github/workflows/pr.yml` now runs `pnpm exec node scripts/check-forbidden-tokens.mjs` on every PR, not just at publish time. |
 

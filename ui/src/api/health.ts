@@ -8,6 +8,7 @@ export type HealthStatus = {
   deploymentExposure?: "private" | "public";
   authReady?: boolean;
   bootstrapStatus?: "ready" | "bootstrap_pending";
+  distributedExecutionEnabled?: boolean;
   features?: {
     companyDeletionEnabled?: boolean;
   };

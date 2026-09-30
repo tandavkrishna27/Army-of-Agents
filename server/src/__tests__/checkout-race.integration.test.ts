@@ -84,8 +84,8 @@ beforeAll(async () => {
     db = createDb(connectionString);
 
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Checkout Race Co', 'CRC')
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Checkout Race Co', 'CRC')
     `);
     // Two assignable agents (status defaults to 'idle' — neither pending nor
     // terminated, so assertAssignableAgent passes for both).

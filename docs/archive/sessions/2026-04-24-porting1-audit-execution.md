@@ -8,7 +8,7 @@
 
 **Tech Stack:** pnpm 9.15 monorepo, vitest, playwright, promptfoo, embedded-postgres + pgvector, Commander CLI, Drizzle, React/Vite UI. Review agents via `superpowers:code-reviewer` subagent type. UI verification via `preview_*` tools. Runtime commands via Bash.
 
-**Working directory for all commands:** `C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-2.5` (referred to below as `$AOA`).
+**Working directory for all commands:** `C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5` (referred to below as `$AOA`).
 
 ---
 
@@ -25,7 +25,7 @@
 | `docs/superpowers/specs/audit-raw/S5.md` | Phase 1 agent S5 | Plugins+Shared+AdapterUtils report |
 | `docs/superpowers/specs/audit-raw/S6.md` | Phase 1 agent S6 | Infra surface report |
 | `docs/superpowers/specs/audit-raw/X1.md` | Phase 1b agent X1 | Rebrand/identity sweep |
-| `docs/superpowers/specs/audit-raw/X2.md` | Phase 1b agent X2 | Port-parity vs upstream-master |
+| `docs/superpowers/specs/audit-raw/X2.md` | Phase 1b agent X2 | Port-parity vs paperclip-master |
 | `docs/superpowers/specs/audit-raw/logs/_summary.tsv` | Phase 2 runner | Per-step exit codes |
 | `docs/superpowers/specs/audit-raw/logs/<step>.log` | Phase 2 runner | Per-command stdout+stderr |
 | `docs/superpowers/specs/audit-raw/flow-<N>.md` | Phase 2b runner | One per UI golden-path flow |
@@ -36,7 +36,7 @@
 
 ### Read, never modified
 
-- `upstream-master/` — upstream reference for port-parity (X2 agent)
+- `paperclip-master/` — upstream reference for port-parity (X2 agent)
 - Any file under `AoA-2.5/` outside `docs/superpowers/specs/audit-raw/` — F1 policy is read-only
 
 ---
@@ -55,9 +55,9 @@ Expected: branch is `Porting1.1`, HEAD is `f5f00cf` (`release: v1.0.0 — 23 fin
 
 On fail: abort. If on wrong branch, have the user confirm before proceeding.
 
-- [ ] **Step 1.2: Verify upstream-master reference exists**
+- [ ] **Step 1.2: Verify paperclip-master reference exists**
 
-Run: `ls "/c/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/upstream-master" | head`
+Run: `ls "/c/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/paperclip-master" | head`
 
 Expected: directory exists with files. Required for X2 port-parity agent.
 
@@ -95,12 +95,12 @@ Use this exact text as the prefix of every agent's prompt (substitute `{SCOPE_BL
 
 ```
 You are auditing branch `Porting1.1` of the AoA repo at
-C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-2.5.
+C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5.
 Base branch is `main`. 141 commits diverge. Tag `v1.0.0` is on HEAD (f5f00cf).
 
 CONTEXT:
-- Port of upstream upstream; reference copy at
-  C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\upstream-master\.
+- Port of upstream paperclip; reference copy at
+  C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\paperclip-master\.
 - Sprints 1–4 closed 23 findings A–X (skipped letters). See
   .changeset/v1-0-0-*.md. Do NOT re-file closed findings unless you see a
   regression; if so, flag as "REGRESSION of Finding <X>".
@@ -159,8 +159,8 @@ Eight substitutions. Record each full prompt in memory for Step 2.3:
 | S4 | `S4` | `packages/db` + `packages/adapters`. Schema, migrations, pgvector guards, adapter parity vs upstream, credential handling | A, C, D, E | AD-CA..AD-CZ | 20 | sonnet |
 | S5 | `S5` | `packages/{plugins,shared,adapter-utils}`. Plugin namespace `aoa.*|aoa-*` + legacy-alias, sandboxing, shared rebrand churn | A, C, D, E | AD-DA..AD-DZ | 20 | sonnet |
 | S6 | `S6` | `tests/`, `evals/`, `scripts/`, `docker/`, `.github/`, top-level `docs/`. CI gates, release-smoke wiring, Dockerfile hardening, eval baseline drift | A, B, D | AD-EA..AD-EZ | 20 | sonnet |
-| X1 | `X1` | Whole branch. Grep `upstream`, `Upstream`, `PCP_`, `pcp_*`, `upstream-*`; validate `aoa_*` / `aoa.*` replacements; verify legacy-key alias path by reading code | C, D | AD-FA..AD-FZ | 20 | sonnet |
-| X2 | `X2` | Compare `AoA-2.5/` ↔ `upstream-master/`. Catalog features upstream but missing/stubbed here. Cross-check against memory's "deferred to 1.1" list | C | AD-GA..AD-GZ | 20 | opus |
+| X1 | `X1` | Whole branch. Grep `paperclip`, `Paperclip`, `PCP_`, `pcp_*`, `paperclip-*`; validate `aoa_*` / `aoa.*` replacements; verify legacy-key alias path by reading code | C, D | AD-FA..AD-FZ | 20 | sonnet |
+| X2 | `X2` | Compare `AoA-2.5/` ↔ `paperclip-master/`. Catalog features upstream but missing/stubbed here. Cross-check against memory's "deferred to 1.1" list | C | AD-GA..AD-GZ | 20 | opus |
 
 - [ ] **Step 2.3: Dispatch all 8 agents in a single message**
 
@@ -368,7 +368,7 @@ Any unexpected error or missing element → candidate finding.
 - [ ] **Step 4.5: Flow 4 — Plugin system**
 
 1. Navigate to plugins list
-2. Verify namespace appears as `aoa.*` or `aoa-*` (not `upstream.*`)
+2. Verify namespace appears as `aoa.*` or `aoa-*` (not `paperclip.*`)
 3. Install a test plugin
 4. Invoke one of its commands
 5. `preview_snapshot` of installed-plugins list

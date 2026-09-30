@@ -51,7 +51,7 @@ type PluginWatchTarget = {
 };
 
 type PluginPackageJson = {
-  aoaPlugin?: {
+  paperclipPlugin?: {
     manifest?: string;
     worker?: string;
     ui?: string;
@@ -127,9 +127,9 @@ export function resolvePluginWatchTargets(
   }
 
   const entrypointPaths = [
-    packageJson?.aoaPlugin?.manifest,
-    packageJson?.aoaPlugin?.worker,
-    packageJson?.aoaPlugin?.ui,
+    packageJson?.paperclipPlugin?.manifest,
+    packageJson?.paperclipPlugin?.worker,
+    packageJson?.paperclipPlugin?.ui,
   ].filter((value): value is string => typeof value === "string" && value.length > 0);
 
   if (entrypointPaths.length === 0) {

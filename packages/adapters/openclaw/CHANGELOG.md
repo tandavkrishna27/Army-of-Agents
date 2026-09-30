@@ -1,4 +1,4 @@
-# @armyofagents/adapter-openclaw
+# @paperclipai/adapter-openclaw
 
 ## 0.2.7
 
@@ -6,7 +6,7 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/adapter-utils@0.2.7
+  - @paperclipai/adapter-utils@0.2.7
 
 ## 0.2.6
 
@@ -14,7 +14,7 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/adapter-utils@0.2.6
+  - @paperclipai/adapter-utils@0.2.6
 
 ## 0.2.5
 
@@ -22,7 +22,7 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/adapter-utils@0.2.5
+  - @paperclipai/adapter-utils@0.2.5
 
 ## 0.2.4
 
@@ -30,7 +30,7 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/adapter-utils@0.2.4
+  - @paperclipai/adapter-utils@0.2.4
 
 ## 0.2.3
 
@@ -38,7 +38,7 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/adapter-utils@0.2.3
+  - @paperclipai/adapter-utils@0.2.3
 
 ## 0.2.2
 
@@ -46,7 +46,7 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/adapter-utils@0.2.2
+  - @paperclipai/adapter-utils@0.2.2
 
 ## 0.2.1
 
@@ -54,4 +54,4 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/adapter-utils@0.2.1
+  - @paperclipai/adapter-utils@0.2.1

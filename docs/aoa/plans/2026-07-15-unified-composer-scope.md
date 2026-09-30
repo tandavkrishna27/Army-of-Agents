@@ -61,7 +61,7 @@ Commander also has a lightweight Discussion reference preview inside its generic
 
 ### 4.1 Consistent does not mean identical
 
-Every composer should be immediately recognizable, but controls appear only when their behavior is real. A disabled upstream or mention button marked “coming soon” creates noise and false expectations.
+Every composer should be immediately recognizable, but controls appear only when their behavior is real. A disabled paperclip or mention button marked “coming soon” creates noise and false expectations.
 
 ### 4.2 A file is not complete when it uploads
 

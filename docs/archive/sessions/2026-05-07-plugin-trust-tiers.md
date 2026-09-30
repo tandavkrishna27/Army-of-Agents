@@ -100,7 +100,7 @@ export interface PluginRecord {
   version: string;
   apiVersion: number;
   categories: PluginCategory[];
-  manifestJson: UpstreamPluginManifestV1;
+  manifestJson: PaperclipPluginManifestV1;
   status: PluginStatus;
   installOrder: number | null;
   packagePath: string | null;
@@ -121,7 +121,7 @@ import type { PluginTrustTier } from "../constants.js";
 In `packages/db/src/schema/plugins.ts`, add the import and the column:
 
 ```ts
-import type { PluginCategory, PluginStatus, PluginTrustTier, UpstreamPluginManifestV1 } from "@armyofagents/shared";
+import type { PluginCategory, PluginStatus, PluginTrustTier, PaperclipPluginManifestV1 } from "@armyofagents/shared";
 ```
 
 Inside the `pgTable` columns object, add after `lastError`:

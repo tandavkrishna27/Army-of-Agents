@@ -63,6 +63,7 @@ describe.skipIf(isWin32 || !hasAcceptanceCli)(
 
         const company = await companyService(db).create({
           name: `Commander Skill Triggering Acceptance Co ${Date.now()}`,
+          organizationId: "00000000-0000-0000-0000-000000000001",
         } as any);
         companyId = company.id;
 

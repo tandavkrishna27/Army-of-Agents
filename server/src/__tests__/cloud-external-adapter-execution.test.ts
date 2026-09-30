@@ -60,6 +60,13 @@ afterEach(async () => {
 });
 
 describe("cloud external adapter execution boundary", () => {
+  // FND-008 (crosswalk CP-005): the external-adapter install/reinstall/uninstall,
+  // server import/reload, and UI-parser boundary already fails closed in
+  // `cloud_auth` (a SEPARATE boundary from the plugin-worker mismatch FND-006/008
+  // repair). FND-008 must PRESERVE — never weaken or conflate — it. These cases
+  // re-verify that boundary as a regression guard alongside the FND-008 plugin
+  // runtime denials; the block code/reason are the external-adapter contract, not
+  // the `PLUGIN_WORKER_BLOCKED_IN_CLOUD` plugin contract.
   it.each([
     ["post", "/api/adapters/install"],
     ["post", "/api/adapters/evil/reload"],

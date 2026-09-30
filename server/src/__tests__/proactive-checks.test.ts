@@ -15,6 +15,9 @@ vi.mock("drizzle-orm", () => ({
   isNotNull: vi.fn((a: any) => ({ isNotNull: a })),
   inArray: vi.fn((a: any, b: any) => ({ inArray: [a, b] })),
   notInArray: vi.fn((a: any, b: any) => ({ notInArray: [a, b] })),
+  // morningDigest now excludes the `security.denied.*` namespace via the shared
+  // notDenialNamespace() predicate (E0-F013 Decision 3 / Q3), which calls notLike.
+  notLike: vi.fn((a: any, b: any) => ({ notLike: [a, b] })),
   sql: Object.assign(
     vi.fn((strings: any, ...values: any[]) => ({
       sql: strings,

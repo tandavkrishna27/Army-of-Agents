@@ -8,10 +8,10 @@ import type {
 } from "@armyofagents/adapter-utils";
 import {
   buildPersistentSkillSnapshot,
-  ensureAoaSkillSymlink,
-  readAoaRuntimeSkillEntries,
+  ensurePaperclipSkillSymlink,
+  readPaperclipRuntimeSkillEntries,
   readInstalledSkillTargets,
-  resolveAoaDesiredSkillNames,
+  resolvePaperclipDesiredSkillNames,
 } from "@armyofagents/adapter-utils/server-utils";
 
 const __moduleDir = path.dirname(fileURLToPath(import.meta.url));
@@ -31,8 +31,8 @@ function resolvePiSkillsHome(config: Record<string, unknown>) {
 }
 
 async function buildPiSkillSnapshot(config: Record<string, unknown>): Promise<AdapterSkillSnapshot> {
-  const availableEntries = await readAoaRuntimeSkillEntries(config, __moduleDir);
-  const desiredSkills = resolveAoaDesiredSkillNames(config, availableEntries);
+  const availableEntries = await readPaperclipRuntimeSkillEntries(config, __moduleDir);
+  const desiredSkills = resolvePaperclipDesiredSkillNames(config, availableEntries);
   const skillsHome = resolvePiSkillsHome(config);
   const installed = await readInstalledSkillTargets(skillsHome);
   return buildPersistentSkillSnapshot({
@@ -56,7 +56,7 @@ export async function syncPiSkills(
   ctx: AdapterSkillContext,
   desiredSkills: string[],
 ): Promise<AdapterSkillSnapshot> {
-  const availableEntries = await readAoaRuntimeSkillEntries(ctx.config, __moduleDir);
+  const availableEntries = await readPaperclipRuntimeSkillEntries(ctx.config, __moduleDir);
   const desiredSet = new Set([
     ...desiredSkills,
     ...availableEntries.filter((entry) => entry.required).map((entry) => entry.key),
@@ -69,7 +69,7 @@ export async function syncPiSkills(
   for (const available of availableEntries) {
     if (!desiredSet.has(available.key)) continue;
     const target = path.join(skillsHome, available.runtimeName);
-    await ensureAoaSkillSymlink(available.source, target);
+    await ensurePaperclipSkillSymlink(available.source, target);
   }
 
   for (const [name, installedEntry] of installed.entries()) {
@@ -87,5 +87,5 @@ export function resolvePiDesiredSkillNames(
   config: Record<string, unknown>,
   availableEntries: Array<{ key: string; required?: boolean }>,
 ) {
-  return resolveAoaDesiredSkillNames(config, availableEntries);
+  return resolvePaperclipDesiredSkillNames(config, availableEntries);
 }

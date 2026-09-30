@@ -45,13 +45,14 @@ describe("loadDefaultAgentInstructionsBundle", () => {
     }
   });
 
-  it("CXO bundle has no aoaai repo references", async () => {
+  it("CXO bundle has no paperclipai repo references", async () => {
     const bundle = await loadDefaultAgentInstructionsBundle("cxo");
-    expect(bundle["AGENTS.md"]).not.toMatch(/\baoaai\b/);
+    expect(bundle["AGENTS.md"]).not.toMatch(/\bpaperclipai\b/);
   });
 
-  it("CXO HEARTBEAT.md uses AoA wake context variables", async () => {
+  it("CXO HEARTBEAT.md uses AOA_* env vars not PAPERCLIP_* env vars", async () => {
     const bundle = await loadDefaultAgentInstructionsBundle("cxo");
+    expect(bundle["HEARTBEAT.md"]).not.toMatch(/PAPERCLIP_(TASK_ID|WAKE_REASON|WAKE_COMMENT_ID|APPROVAL_ID)/);
     expect(bundle["HEARTBEAT.md"]).toMatch(/AOA_TASK_ID/);
     expect(bundle["HEARTBEAT.md"]).toMatch(/AOA_APPROVAL_ID/);
   });

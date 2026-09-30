@@ -1,5 +1,20 @@
 {
-  "_comment": "Additional pre-publish token guard. CI scans every tracked path and file content with zero exceptions.",
-  "tokens": ["pcp_invite_", "pcp_mcp_", "pcp_claim_"],
-  "allowPaths": []
+  "_comment": "Pre-publish brand-check token list. Read by scripts/check-forbidden-tokens.mjs (called from scripts/build-npm.sh). Tokens listed here must not appear in tracked source. Paths in allowPaths are git pathspecs (literal or glob) where tokens are intentionally allowed (release notes, the brand-check config itself, historical port plans, etc). The CI brand-check job in .github/workflows/pr.yml is the broader gate with 9 nuanced guards; this list is the narrower, last-line-of-defense pre-publish check for fully-renamed tokens that should never reappear in shipping source.",
+  "_tokens_comment": "User-visible brand strings include their leading quote (\" or `) so we match the actual code literal (\"Start Paperclip\" / `Paperclip dashboard`) rather than free-form prose (e.g. 'restart Paperclip and re-run' in shell scripts), mirroring the pattern used in the .github/workflows/pr.yml brand-check guards 4 and 8.",
+  "tokens": [
+    "pcp_invite_",
+    "pcp_mcp_",
+    "pcp_claim_",
+    "\"Start Paperclip",
+    "\"Paperclip dashboard",
+    "\"Paperclip plugin API",
+    "\"Paperclip setup"
+  ],
+  "allowPaths": [
+    ".changeset/*",
+    ".github/workflows/pr.yml",
+    "docs/superpowers/plans/*",
+    "docs/archive/**",
+    ".forbidden-tokens.json"
+  ]
 }

@@ -560,7 +560,7 @@ export function computeConnectorDeliverability(
       envTemplate: connector.envTemplate,
       // Sentinel: only truthiness matters. NEVER a real credential — this path
       // does not resolve secrets, and must not.
-      secretValue: hasSecret ? " bound" : null,
+      secretValue: hasSecret ? "\u0000bound" : null,
     },
   ]);
   if (skipped.length > 0) {

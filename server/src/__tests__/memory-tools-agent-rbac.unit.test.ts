@@ -305,3 +305,111 @@ describe("U2a — find_similar_memory_hnsw RBAC gate wiring", () => {
     expect(whereMock).toHaveBeenCalledTimes(1);
   });
 });
+
+// DAT-007 — query_memory is the broker memory tool U2a MISSED. Its in-memory
+// `filterQueryResults`/`splitCommanderMemoryItems` short-circuits on
+// `isFounder(userRole)` (memory-policy.ts), and the crew broker sets
+// `userRole:"founder"` (broker-tool-context.ts CREW_SESSION_USER_ROLE) — so a
+// crew agent over the broker would otherwise see every approved company memory,
+// including others' private / invalidated / cross-department rows, violating the
+// #118/#119 acceptance. These prove query_memory now threads the SAME in-SQL
+// enterprise gate (actorForAgentRun + memoryAccessConditions) as
+// find_similar_memory / detect_conflicts, for the agent actor ONLY — with
+// board/Commander/founder-human calls byte-unchanged (no accessConditions key).
+describe("DAT-007 — query_memory RBAC gate wiring (the U2a-missed tool)", () => {
+  const tool = createMemoryTools().find((t) => t.name === "query_memory")!;
+
+  it("threads accessConditions into searchMultiPath for the agent actor (query path), even with the crew founder-session role", async () => {
+    actorForAgentRunMock.mockClear();
+    memoryAccessConditionsMock.mockClear();
+    const searchMultiPath = vi.fn(async () => []);
+    const ctx = baseCtx({
+      actorType: "agent",
+      agentId: "agent-D2",
+      // The exact bypass vector: broker-tool-context sets CREW_SESSION_USER_ROLE="founder".
+      userRole: "founder",
+      services: { memory: { searchMultiPath } } as unknown as ToolContext["services"],
+    });
+
+    const result = await tool.execute({ query: "shared secret plan" }, ctx);
+
+    expect(result.success).toBe(true);
+    expect(actorForAgentRunMock).toHaveBeenCalledWith(ctx.db, "co-1", "agent-D2");
+    expect(memoryAccessConditionsMock).toHaveBeenCalledWith(ctx.db, AGENT_ACTOR);
+    expect(searchMultiPath).toHaveBeenCalledTimes(1);
+    const filters = searchMultiPath.mock.calls[0]![2] as Record<string, unknown>;
+    expect(filters.accessConditions).toEqual([SENTINEL_GATE_CONDITION]);
+  });
+
+  it("threads accessConditions into list for the agent actor (no-query list path)", async () => {
+    actorForAgentRunMock.mockClear();
+    memoryAccessConditionsMock.mockClear();
+    const list = vi.fn(async () => []);
+    const ctx = baseCtx({
+      actorType: "agent",
+      agentId: "agent-D2",
+      userRole: "founder",
+      services: { memory: { list } } as unknown as ToolContext["services"],
+    });
+
+    const result = await tool.execute({}, ctx);
+
+    expect(result.success).toBe(true);
+    expect(actorForAgentRunMock).toHaveBeenCalledWith(ctx.db, "co-1", "agent-D2");
+    expect(memoryAccessConditionsMock).toHaveBeenCalledWith(ctx.db, AGENT_ACTOR);
+    expect(list).toHaveBeenCalledTimes(1);
+    const filters = list.mock.calls[0]![1] as Record<string, unknown>;
+    expect(filters.accessConditions).toEqual([SENTINEL_GATE_CONDITION]);
+  });
+
+  it("does NOT gate the board actor — searchMultiPath call shape byte-unchanged (no accessConditions key)", async () => {
+    actorForAgentRunMock.mockClear();
+    memoryAccessConditionsMock.mockClear();
+    const searchMultiPath = vi.fn(async () => []);
+    const ctx = baseCtx({
+      actorType: "board",
+      services: { memory: { searchMultiPath } } as unknown as ToolContext["services"],
+    });
+
+    const result = await tool.execute({ query: "shared secret plan" }, ctx);
+
+    expect(result.success).toBe(true);
+    expect(actorForAgentRunMock).not.toHaveBeenCalled();
+    expect(memoryAccessConditionsMock).not.toHaveBeenCalled();
+    const filters = searchMultiPath.mock.calls[0]![2] as Record<string, unknown>;
+    expect(filters).not.toHaveProperty("accessConditions");
+  });
+
+  it("does NOT gate the board actor on the list path either (byte-unchanged)", async () => {
+    actorForAgentRunMock.mockClear();
+    memoryAccessConditionsMock.mockClear();
+    const list = vi.fn(async () => []);
+    const ctx = baseCtx({
+      actorType: "board",
+      services: { memory: { list } } as unknown as ToolContext["services"],
+    });
+
+    await tool.execute({}, ctx);
+
+    expect(memoryAccessConditionsMock).not.toHaveBeenCalled();
+    const filters = list.mock.calls[0]![1] as Record<string, unknown>;
+    expect(filters).not.toHaveProperty("accessConditions");
+  });
+
+  it("agent actorType WITHOUT ctx.agentId does not gate (mirrors the source's `&& ctx.agentId` guard)", async () => {
+    actorForAgentRunMock.mockClear();
+    memoryAccessConditionsMock.mockClear();
+    const searchMultiPath = vi.fn(async () => []);
+    const ctx = baseCtx({
+      actorType: "agent",
+      agentId: undefined,
+      services: { memory: { searchMultiPath } } as unknown as ToolContext["services"],
+    });
+
+    await tool.execute({ query: "shared secret plan" }, ctx);
+
+    expect(actorForAgentRunMock).not.toHaveBeenCalled();
+    const filters = searchMultiPath.mock.calls[0]![2] as Record<string, unknown>;
+    expect(filters).not.toHaveProperty("accessConditions");
+  });
+});

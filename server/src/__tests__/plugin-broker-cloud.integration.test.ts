@@ -1,38 +1,34 @@
 /**
- * U10 (Cloud Execution Isolation / E2B, Wave 5) — cloud integration proof
- * that a plugin tool call from an agent run-JWT reaches the host-resident
- * plugin worker and returns, with cross-company isolation held.
+ * FND-006 (Decision #103 cloud-enforcement amendment) — cloud integration proof
+ * that a plugin tool call from an agent run-JWT is DENIED on `cloud_auth`: no
+ * host-process plugin worker may start, so the broker cannot dispatch to one,
+ * with cross-company isolation still held.
+ *
+ * Superseded intent: an earlier Wave-5 iteration (U10) proved the OPPOSITE — a
+ * "host-resident worker" running in cloud — and asserted
+ * `isCloudPluginExecutionBlocked()` was `false`. Decision #103's amendment
+ * reverses that: `cloud_auth` executes no host-process plugin worker at any
+ * sink or trust tier. This file now proves the denial through the same real
+ * harness.
  *
  * Proven here against a REAL Postgres (embedded-postgres + the committed
  * migration chain), through the REAL HTTP router (`mcpServerRoutes(db)`)
  * mounted behind the REAL `actorMiddleware` in `deploymentMode:"cloud_auth"`
- * — the run-JWT is verified for real, not stubbed, and `isCloudPluginExecutionBlocked()`
- * is asserted `false` under that exact mode. This mirrors the embedded-pg
- * pattern of `broker-internal-registry.test.ts` (agent run-JWT dispatch
- * proof) and `mcp-connectors-e2e-delivery.integration.test.ts` (delivery
- * seam proof).
+ * — the run-JWT is verified for real, and:
+ *   - `isCloudPluginExecutionBlocked()` (and every typed sink) is asserted
+ *     `true` under `cloud_auth`;
+ *   - a plugin `tools/call` is DENIED before dispatch: FND-008 adds the typed
+ *     cloud denial at the top of `dispatchPluginToolCall`, so the broker fails
+ *     closed with `forbidden` (HTTP 403 / JSON-RPC -32003, carrying the stable
+ *     Decision #103 block message) BEFORE resolving the dispatcher or reaching a
+ *     worker — no plugin worker may start on cloud_auth anyway (the real worker
+ *     manager's denial is proven in `cloud-plugin-process-composition.test.ts` /
+ *     `plugin-worker-manager.test.ts`);
+ *   - cross-company isolation and the board-actor denial still hold.
  *
- * WHAT IS REAL vs STUBBED, and why:
- *   - REAL: company/agent DB rows, run-JWT minting + verification, the
- *     broker HTTP route, `assertCompanyAccess`, `isCloudPluginExecutionBlocked()`,
- *     the production `createPluginToolRegistry`/`createPluginToolDispatcher`
- *     (the actual company-scoped `getTool` + `executeTool` dispatch logic —
- *     the security-critical code this task is about).
- *   - STUBBED: the `PluginWorkerManager`'s `isRunning`/`call` — i.e. the OS
- *     process fork + stdio JSON-RPC transport that actually runs a plugin's
- *     worker code. No test in this codebase today forks a real plugin
- *     worker end-to-end (plugin-worker-manager.test.ts's own fixture uses a
- *     deliberately-nonexistent entrypoint to prove REJECTION, never a
- *     working fork) — building that fixture (a real ESM worker file, doing
- *     its own module resolution from an ad-hoc location, forked as a
- *     genuine child process on Windows) is substantial, platform-risky
- *     infra unrelated to what U10 changed. `plugin-worker-manager.ts`'s own
- *     fork/RPC mechanics have their own dedicated unit tests. Stubbing only
- *     that leaf still exercises the REAL registry/dispatcher all the way
- *     down to "hand the RPC params to the worker manager and return its
- *     result" — the actual host-resident-worker dispatch path this task
- *     adds. Flagged as a suggested follow-up (a real-fork proof) in the
- *     task report rather than silently left uncovered.
+ * The worker-manager leaf is imported TYPE-ONLY here (a value import tips this
+ * file's graph into the drizzle-orm require(esm) cycle — E0-F005), so the
+ * not-running state is stubbed to mirror the proven cloud reality.
  *
  * Skipped on Windows (embedded-postgres can't start on this platform's CI
  * runner — Issue #114); set AOA_RUN_WIN_INTEGRATION=1 on a Windows dev box
@@ -55,8 +51,15 @@ import { allocateEmbeddedPgPort } from "./helpers/embedded-pg-port.js";
 import { setDeploymentMode } from "../config/deployment-mode.js";
 import { isCloudPluginExecutionBlocked } from "../services/cloud-plugin-execution.js";
 import { createPluginToolDispatcher, type PluginToolDispatcher } from "../services/plugin-tool-dispatcher.js";
+// NOTE: `plugin-worker-manager.js` is imported TYPE-ONLY. Adding a value import
+// of it to this file's already-heavy graph (plugin-tool-dispatcher + mcp/server
+// + @armyofagents/db) tips vitest into the drizzle-orm require(esm) cycle
+// (finding E0-F005), which fails collection on every lane. The REAL worker
+// manager's cloud-denial (startWorker/fork fail closed) is proven separately in
+// `cloud-plugin-process-composition.test.ts` and `plugin-worker-manager.test.ts`,
+// which import it in a graph that stays clear of the cycle.
 import type { PluginWorkerManager } from "../services/plugin-worker-manager.js";
-import type { AoAPluginManifestV1 } from "@armyofagents/shared";
+import type { PaperclipPluginManifestV1 } from "@armyofagents/shared";
 
 type EmbeddedPostgresInstance = {
   initialise(): Promise<void>;
@@ -109,7 +112,7 @@ let pluginDbId = "";
 const PLUGIN_KEY = "acme.test";
 const TOOL_NAME = `${PLUGIN_KEY}:search`;
 
-const MANIFEST: AoAPluginManifestV1 = {
+const MANIFEST: PaperclipPluginManifestV1 = {
   id: PLUGIN_KEY,
   apiVersion: 1,
   version: "1.0.0",
@@ -190,7 +193,7 @@ afterAll(async () => {
   if (originalJwtSecret === undefined) delete process.env[JWT_SECRET_ENV];
   else process.env[JWT_SECRET_ENV] = originalJwtSecret;
   setDeploymentMode("local_trusted");
-  delete (globalThis as any).__aoaPluginToolDispatcher;
+  delete (globalThis as any).__paperclipPluginToolDispatcher;
   try {
     if (pg) await pg.stop();
   } catch {
@@ -212,11 +215,11 @@ describe.skipIf(process.platform === "win32" && process.env.AOA_RUN_WIN_INTEGRAT
 
       c1 = firstId(
         await db.execute<{ id: string }>(sql`
-          INSERT INTO companies (id, name, issue_prefix) VALUES (gen_random_uuid(), 'Plugin Broker Co 1', 'PBC1') RETURNING id`),
+          INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Plugin Broker Co 1', 'PBC1') RETURNING id`),
       );
       c2 = firstId(
         await db.execute<{ id: string }>(sql`
-          INSERT INTO companies (id, name, issue_prefix) VALUES (gen_random_uuid(), 'Plugin Broker Co 2', 'PBC2') RETURNING id`),
+          INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Plugin Broker Co 2', 'PBC2') RETURNING id`),
       );
 
       agentInC1 = firstId(
@@ -255,21 +258,21 @@ describe.skipIf(process.platform === "win32" && process.env.AOA_RUN_WIN_INTEGRAT
       );
       expect(pluginDbId).toBeTruthy();
 
-      // The REAL production dispatcher + registry (plugin-tool-dispatcher.ts
-      // / plugin-tool-registry.ts) — only the deepest leaf (the worker
-      // process fork + stdio RPC transport) is stubbed; see the file header
-      // for why. `registerPluginTools` is the SDK-documented "manual
-      // registration for testing or recovery scenarios" entry point —
-      // mirrors what `registerFromDb` does from a real `plugins` row at
-      // plugin-enable time.
-      // rpcParams is `{ toolName, parameters, runContext }`
-      // (plugin-tool-registry.ts `executeTool`) — echoed back so the test
-      // can assert the runContext identity that actually crossed the
-      // broker -> registry -> worker-manager boundary.
+      // The REAL production dispatcher + registry (plugin-tool-dispatcher.ts /
+      // plugin-tool-registry.ts). The worker manager leaf is stubbed as NOT
+      // RUNNING — the faithful cloud_auth state: no plugin worker may start
+      // (proven in cloud-plugin-process-composition.test.ts /
+      // plugin-worker-manager.test.ts via the real manager), so `isRunning` is
+      // false and the registry cannot dispatch. `registerPluginTools` registers
+      // tool METADATA only (it starts no worker), mirroring `registerFromDb` at
+      // plugin-enable time. `call` is present but unreachable (the not-running
+      // check fires first) — it would fail the test loudly if ever invoked.
       const workerManager: Pick<PluginWorkerManager, "isRunning" | "call"> = {
-        isRunning: () => true,
-        call: (async (_pluginId: string, _method: string, rpcParams: unknown) => {
-          return { content: JSON.stringify({ echo: rpcParams }) };
+        isRunning: () => false,
+        call: (async () => {
+          throw new Error(
+            "worker.call must never be reached on cloud_auth (no worker runs)",
+          );
         }) as PluginWorkerManager["call"],
       };
       const dispatcher: PluginToolDispatcher = createPluginToolDispatcher({
@@ -277,17 +280,27 @@ describe.skipIf(process.platform === "win32" && process.env.AOA_RUN_WIN_INTEGRAT
         db,
       });
       dispatcher.registerPluginTools(PLUGIN_KEY, MANIFEST, pluginDbId, c1);
-      (globalThis as any).__aoaPluginToolDispatcher = dispatcher;
+      (globalThis as any).__paperclipPluginToolDispatcher = dispatcher;
 
       expect(dispatcher.getTool(TOOL_NAME, c1)).not.toBeNull();
     });
 
-    it("isCloudPluginExecutionBlocked() is false under cloud_auth (host-resident worker model)", () => {
+    it("isCloudPluginExecutionBlocked() is true under cloud_auth for every sink (FND-006 / Decision #103)", () => {
       assertSetupOk();
-      expect(isCloudPluginExecutionBlocked()).toBe(false);
+      expect(isCloudPluginExecutionBlocked()).toBe(true);
+      for (const sink of [
+        "worker-manager",
+        "worker-fork",
+        "lifecycle",
+        "loader",
+        "loader-import",
+        "ui-static",
+      ] as const) {
+        expect(isCloudPluginExecutionBlocked(sink)).toBe(true);
+      }
     });
 
-    it("tools/list for c1's agent run includes the registered plugin tool", async () => {
+    it("tools/list for c1's agent run includes the registered plugin tool (registration is metadata)", async () => {
       assertSetupOk();
       const res = await listTools(c1, jwtC1);
 
@@ -305,39 +318,34 @@ describe.skipIf(process.platform === "win32" && process.env.AOA_RUN_WIN_INTEGRAT
       expect(names).not.toContain(TOOL_NAME);
     });
 
-    it("tools/call for c1's agent run reaches the host-resident worker and returns its result", async () => {
+    it("tools/call for c1's agent run is DENIED before dispatch on cloud_auth (FND-008) — the broker never reaches a worker", async () => {
       assertSetupOk();
       const res = await callTool(c1, jwtC1, TOOL_NAME, { query: "auth" });
 
-      expect(res.status).toBe(200);
-      expect(res.body.error).toBeUndefined();
-      // The worker's result crosses back over the broker HTTP response as
-      // this text content — the worker itself never entered a VM.
-      const outer = JSON.parse(res.body.result.content[0].text);
-      const echoed = JSON.parse(outer.content).echo as {
-        toolName: string;
-        parameters: unknown;
-        runContext: { agentId: string; runId: string; companyId: string; projectId: string };
-      };
-      expect(echoed.toolName).toBe("search");
-      expect(echoed.parameters).toEqual({ query: "auth" });
-      // companyId/agentId/runId came from the VERIFIED run-JWT (never the
-      // request body, which never carried them).
-      expect(echoed.runContext).toEqual({
-        agentId: agentInC1,
-        runId: runInC1,
-        companyId: c1,
-        projectId: "",
-      });
+      // FND-008 (Decision #103 CP-003): `dispatchPluginToolCall` fails closed
+      // with the typed cloud denial BEFORE resolving the dispatcher or reaching
+      // any worker — the broker maps `forbidden` to HTTP 403 / JSON-RPC -32003
+      // carrying the stable block message. (Before FND-008 the call fell through
+      // to the registry, which threw "worker not running" as -32000; the denial
+      // now fires strictly earlier, so no worker/registry path is exercised.)
+      expect(res.status).toBe(403);
+      expect(res.body.result).toBeUndefined();
+      expect(res.body.error).toBeDefined();
+      expect(res.body.error.code).toBe(-32003);
+      expect(String(res.body.error.message)).toMatch(/blocked on AoA Cloud/i);
     });
 
-    it("the same tool called with a c2 JWT 404s (company-scoped getTool yields no tool owned by c2)", async () => {
+    it("the same tool called with a c2 JWT is cloud-blocked (403) before the company-scoped getTool 404 — tenant isolation preserved", async () => {
       assertSetupOk();
       const res = await callTool(c2, jwtC2, TOOL_NAME, { query: "auth" });
 
-      expect(res.status).toBe(404);
+      // FND-008: cloud plugin tool dispatch is blocked (403 / -32003) for every
+      // company BEFORE the company-scoped getTool lookup that would 404. This is
+      // strictly safer than the prior 404 — c2 is denied all plugin dispatch and
+      // the response discloses nothing about whether c1 owns the tool.
+      expect(res.status).toBe(403);
       expect(res.body.error).toBeDefined();
-      expect(res.body.error.code).toBe(-32004);
+      expect(res.body.error.code).toBe(-32003);
     });
 
     it("a board (non-agent) actor cannot call the plugin tool over the broker", async () => {

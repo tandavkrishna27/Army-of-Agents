@@ -104,7 +104,7 @@ AOA_STRIP_CC_ENV=1 AOA_RUNTIME_DECISION_ROUTING=1 AOA_HOME=C:\Users\TK\.aoa\mem-
   pnpm -C C:/Users/TK/.aoa/wt/mem --filter @armyofagents/server dev
 ```
 
-- **Sandbox prereqs:** `AOA_STRIP_CC_ENV=1` + `AOA_RUNTIME_DECISION_ROUTING=1` + the agent's `runtimeConfig.runtimeDecisionRoutingEnabled=true`. Embedded-pg DB URL: `postgres://upstream:upstream@127.0.0.1:54340/upstream`.
+- **Sandbox prereqs:** `AOA_STRIP_CC_ENV=1` + `AOA_RUNTIME_DECISION_ROUTING=1` + the agent's `runtimeConfig.runtimeDecisionRoutingEnabled=true`. Embedded-pg DB URL: `postgres://paperclip:paperclip@127.0.0.1:54340/paperclip`.
 - **AUTH GOTCHA:** the user's standalone `claude` login expires / gets revoked when the desktop app rotates the shared Max token → AoA `claude_local` silently 401s. If auth fails, re-login (`claude` → `/login`). **Never diagnose CLI auth from inside a Claude Code subprocess** — it inherits a revoked child-session token (documented false-negative).
 - **Test data** (in `mem-inst`, company AcmeMem `febba560-8625-4aa1-b61b-2207f76faef5`): agents `MemProbe` `fe83831b…` (org), `MemProbe2` `d41083b1…` (org, bridge opt-in), `MemCrew` `3d0795bb…` (crew). Seeded identity memory. Org run recipe: create a todo task assigned to the agent → `POST /api/agents/:id/wakeup {"source":"assignment"}` → `GET /api/heartbeat-runs/:runId/log` (the `system/init` line is the tool-exposure canary).
 - **Live crew bundle check** (deterministic, no LLM): a tiny `tsx` script calling `loadScopedMemoryLines(db, companyId, "vision", {}, actor, memoryAccessConditions(db,actor), {agentId})` with `actor = actorForAgentRun(db, companyId, crewAgentId)` — prints the `## Context` lines. (Used to prove crew this session.)

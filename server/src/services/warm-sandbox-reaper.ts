@@ -8,6 +8,10 @@ import {
 } from "./environment-runtime.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { normalizeWarmIdleTtlMinutes } from "./warm-sandbox-constants.js";
+import { EXECUTION_TARGET_KINDS } from "./execution-target-resolver.js";
+import { killedProviders } from "./execution-kill-switches.js";
+import { createKillSwitchPolicyReader } from "./execution-kill-switch-policy.js";
+import { deriveE2bKeyGeneration } from "./e2b-credential-authority-wiring.js";
 import type { SandboxRuntimeProvider } from "./sandbox-provider-runtime.js";
 import { logger } from "../middleware/logger.js";
 
@@ -32,7 +36,24 @@ export interface WarmReaperDeps {
   runtimeProviderKeys?: RuntimeKeysOption;
   /** DI seam for tests: control the reaper flag + idle TTL without a DB row. */
   getExperimental?: () => Promise<{ enableWarmSandboxReaper: boolean; warmSandboxIdleTtlMinutes: number }>;
+  /**
+   * DI seam for tests ONLY. Production builds the reader from `db` inside the sweep — Lane C
+   * §2.2's lesson, with the hazard INVERTED: there a permissive injected reader disabled a stop
+   * button; here an aggressive one force-kills virtual machines.
+   */
+  readKillSwitchDocument?: () => Promise<unknown>;
+  /** DI seam for tests: the company's CURRENT e2b key generation (REL-004 Lane D §5). */
+  currentKeyGeneration?: (companyId: string) => Promise<string | null>;
 }
+
+/**
+ * REL-004 Lane D (D2a) — the floor grace applied to a reclaim pass.
+ *
+ * NOT zero. A cutoff of exactly `now` races a resume that is already in flight, and the codebase
+ * already refuses zero as an operator intent: `normalizeWarmIdleTtlMinutes` clamps to [1, 1440]
+ * and returns the default for any non-positive input. One minute is that same floor.
+ */
+export const KILL_SWITCH_RECLAIM_GRACE_MS = 60_000;
 
 function resolveDeps(db: Db, deps: WarmReaperDeps): {
   environments: EnvironmentService;
@@ -58,20 +79,24 @@ function resolveDeps(db: Db, deps: WarmReaperDeps): {
  *  SKIP the kill and leave the now-LIVE sandbox untouched. Returns
  *  `{ destroyed }`: false = we lost the race to a concurrent resume (or a
  *  co-running destroyer), true = we own the row and killed it. */
-async function destroyPausedLease(
+async function destroyClaimedLease(
   lease: EnvironmentLease,
   ctx: {
     environments: Pick<EnvironmentService, "get" | "releaseLease" | "expireLeaseIfPaused">;
     runtime: Pick<EnvironmentRuntimeService, "releaseRunLease">;
   },
+  claim: () => Promise<unknown | null>,
+  /** Why a lost claim happened, for the log. REL-004 Lane D added a SECOND cause; a
+   *  hard-coded "concurrent resume" message would now misattribute a structural refusal. */
+  lostClaimReason: string,
 ): Promise<{ destroyed: boolean }> {
-  // Claim the row FIRST. Losing this CAS means someone else (a resume, or the
-  // sibling over-cap evictor) already owns it — never force-kill in that case.
-  const claimed = await ctx.environments.expireLeaseIfPaused(lease.id);
+  // Claim the row FIRST. Losing this CAS means someone else (a resume, the sibling
+  // over-cap evictor, or a co-running sweep) already owns it — never force-kill then.
+  const claimed = await claim();
   if (!claimed) {
     logger.info(
-      { leaseId: lease.id, environmentId: lease.environmentId },
-      "warm-sandbox reaper: lease no longer paused (concurrent resume/evict won the CAS) — skipping destroy",
+      { leaseId: lease.id, environmentId: lease.environmentId, lostClaimReason },
+      "warm-sandbox reaper: lost the claim — skipping destroy",
     );
     return { destroyed: false };
   }
@@ -98,6 +123,42 @@ async function destroyPausedLease(
   return { destroyed: true };
 }
 
+/** The paused-lease arm: claim via the `WHERE status='paused'` CAS, then force-kill. */
+function destroyPausedLease(
+  lease: EnvironmentLease,
+  ctx: {
+    environments: Pick<EnvironmentService, "get" | "releaseLease" | "expireLeaseIfPaused">;
+    runtime: Pick<EnvironmentRuntimeService, "releaseRunLease">;
+  },
+): Promise<{ destroyed: boolean }> {
+  return destroyClaimedLease(
+    lease, ctx,
+    () => ctx.environments.expireLeaseIfPaused(lease.id),
+    "lease no longer paused (concurrent resume or over-cap evict won the paused CAS)",
+  );
+}
+
+/**
+ * REL-004 Lane D (D3) — the STRANDED arm: claim a terminal row that still holds a provider
+ * handle, then force-kill. A separate claim is not a nicety: the paused CAS is
+ * `WHERE status='paused'` and can never match these rows, so reusing it would have made this
+ * whole arm inert.
+ */
+function destroyStrandedLease(
+  lease: EnvironmentLease,
+  ctx: {
+    environments: Pick<EnvironmentService, "get" | "releaseLease" | "expireLeaseIfPaused"> &
+      Pick<EnvironmentService, "claimTerminalUncleaned">;
+    runtime: Pick<EnvironmentRuntimeService, "releaseRunLease">;
+  },
+): Promise<{ destroyed: boolean }> {
+  return destroyClaimedLease(
+    lease, ctx,
+    () => ctx.environments.claimTerminalUncleaned(lease.id),
+    "lease already cleaned or claimed by a co-running sweep (terminal CAS lost)",
+  );
+}
+
 /**
  * Destroy every paused warm sandbox left idle past the instance TTL. No-ops
  * (scans nothing) when `enableWarmSandboxReaper` is off. Per-lease best-effort:
@@ -109,16 +170,105 @@ export async function sweepIdleWarmSandboxes(
 ): Promise<{ scanned: number; reaped: number }> {
   const getExperimental = deps.getExperimental ?? (() => instanceSettingsService(db).getExperimental());
   const experimental = await getExperimental();
-  if (!experimental.enableWarmSandboxReaper) {
-    return { scanned: 0, reaped: 0 };
+  const { environments, runtime } = resolveDeps(db, deps);
+  let reaped = 0;
+
+  // REL-004 Lane D (D2 / D2a arm 2) — the RECLAIM arm, ABOVE the flag gate on purpose (J12).
+  //
+  // `enableWarmSandboxReaper` is a warm-ECONOMY default: "do not bother reaping idle snapshots".
+  // An operator who has thrown a kill switch carrying `reclaim: true` has expressed a stronger and
+  // far more specific intent, and an incident-response reclaim must not be silently disabled by a
+  // background toggle that has no UI. The two ROUTINE arms below stay subordinate to it.
+  //
+  // Destructive and therefore opt-in: a plain deny-list stops placement and touches nothing,
+  // because the paused population is the IN-USE population (warm leases pause at the end of every
+  // Commander turn) and destroying it is irreversible.
+  //
+  // Provider-SCOPED, one pass per killed value, rather than a global cutoff of zero.
+  const readDocument = deps.readKillSwitchDocument
+    ?? (() => createKillSwitchPolicyReader({ appDb: db }).read());
+  // Fail-OPEN, inverted from leasing: `killedProviders` returns the empty set for an absent,
+  // malformed or unreadable document, and a read that THROWS must not be able to trigger a
+  // fleet-wide teardown.
+  let reclaimProviders: ReadonlySet<string> = new Set();
+  try {
+    reclaimProviders = killedProviders(await readDocument(), EXECUTION_TARGET_KINDS);
+  } catch (err) {
+    logger.warn({ err }, "warm-sandbox reaper: kill-switch policy unreadable — reclaiming nothing");
+  }
+  let reclaimScanned = 0;
+  for (const provider of reclaimProviders) {
+    const reclaimCutoff = new Date(Date.now() - KILL_SWITCH_RECLAIM_GRACE_MS);
+    const doomed = await environments.listPausedLeasesForProvider(provider, reclaimCutoff);
+    reclaimScanned += doomed.length;
+    for (const row of doomed) {
+      const lease = normalizeEnvironmentLease(row);
+      try {
+        const outcome = await destroyPausedLease(lease, { environments, runtime });
+        if (outcome.destroyed) reaped++;
+      } catch (err) {
+        logger.warn(
+          { err, leaseId: lease.id, provider },
+          "warm-sandbox reaper: failed to reclaim a killed provider's paused lease (best-effort)",
+        );
+      }
+    }
   }
 
-  const { environments, runtime } = resolveDeps(db, deps);
+  // REL-004 Lane D (§5) — inherited deferral #5, "old-key kill-switch enforcement".
+  //
+  // A paused snapshot created under a SUPERSEDED e2b key generation is dead weight by this
+  // system's own policy: `e2b-credential-authority` refuses to resolve or inject a superseded
+  // generation, so AoA will never resume it. Reclaiming it destroys nothing anyone can use.
+  //
+  // Above the flag gate for the same reason as the reclaim arm: this is credential hygiene after
+  // a rotation, not warm economy. Fail-OPEN throughout — an unknown generation, a null current
+  // generation (no BYO key), or a lookup that throws all reclaim NOTHING. Absence must never be
+  // read as supersession, or the first deploy after this ships would reap every pre-existing
+  // warm snapshot.
+  const currentKeyGeneration = deps.currentKeyGeneration
+    ?? ((companyId: string) => deriveE2bKeyGeneration(db, companyId));
+  let supersededScanned = 0;
+  try {
+    const graceCutoff = new Date(Date.now() - KILL_SWITCH_RECLAIM_GRACE_MS);
+    const pausedE2b = await environments.listPausedLeasesWithKeyGeneration(graceCutoff);
+    const generationByCompany = new Map<string, string | null>();
+    for (const row of pausedE2b) {
+      const lease = normalizeEnvironmentLease(row);
+      const recorded = (lease.metadata as Record<string, unknown> | null)?.keyGeneration;
+      if (typeof recorded !== "string" || recorded.length === 0) continue;
+      if (!generationByCompany.has(lease.companyId)) {
+        generationByCompany.set(lease.companyId, await currentKeyGeneration(lease.companyId));
+      }
+      const current = generationByCompany.get(lease.companyId) ?? null;
+      if (current === null || current === recorded) continue;
+      supersededScanned++;
+      try {
+        const outcome = await destroyPausedLease(lease, { environments, runtime });
+        if (outcome.destroyed) reaped++;
+      } catch (err) {
+        logger.warn(
+          { err, leaseId: lease.id, recorded, current },
+          "warm-sandbox reaper: failed to reclaim a superseded-key snapshot (best-effort)",
+        );
+      }
+    }
+  } catch (err) {
+    logger.warn({ err }, "warm-sandbox reaper: superseded-key scan failed — reclaiming nothing");
+  }
+
+  if (!experimental.enableWarmSandboxReaper) {
+    logger.info(
+      { scanned: reclaimScanned + supersededScanned, reclaimProviders: [...reclaimProviders], supersededScanned, reaped },
+      "Warm sandbox reap complete (routine arms disabled by enableWarmSandboxReaper)",
+    );
+    return { scanned: reclaimScanned + supersededScanned, reaped };
+  }
+
   const ttlMinutes = normalizeWarmIdleTtlMinutes(experimental.warmSandboxIdleTtlMinutes);
   const cutoff = new Date(Date.now() - ttlMinutes * 60 * 1000);
 
   const stale = await environments.listPausedLeasesOlderThan(cutoff);
-  let reaped = 0;
   for (const row of stale) {
     const lease = normalizeEnvironmentLease(row);
     try {
@@ -134,8 +284,33 @@ export async function sweepIdleWarmSandboxes(
     }
   }
 
-  logger.info({ scanned: stale.length, reaped, ttlMinutes }, "Warm sandbox idle reap complete");
-  return { scanned: stale.length, reaped };
+  // REL-004 Lane D (D3 / D2a arm 1) — the STRANDED arm, deliberately switch-INDEPENDENT.
+  // A terminal row still holding a provider handle is pure waste with no user-visible state:
+  // there is nothing for an operator to opt into. This is also the arm that closes MIG-008's
+  // orphan, which would otherwise leave a billing sandbox unreachable forever.
+  const stranded = await environments.listTerminalUncleanedLeases();
+  for (const row of stranded) {
+    const lease = normalizeEnvironmentLease(row);
+    try {
+      const outcome = await destroyStrandedLease(lease, { environments, runtime });
+      if (outcome.destroyed) reaped++;
+    } catch (err) {
+      logger.warn(
+        { err, leaseId: lease.id, environmentId: lease.environmentId },
+        "warm-sandbox reaper: failed to reclaim stranded lease (best-effort)",
+      );
+    }
+  }
+
+  const scanned = stale.length + stranded.length + reclaimScanned + supersededScanned;
+  logger.info(
+    {
+      scanned, stalePaused: stale.length, stranded: stranded.length,
+      reclaimScanned, reclaimProviders: [...reclaimProviders], supersededScanned, reaped, ttlMinutes,
+    },
+    "Warm sandbox idle reap complete",
+  );
+  return { scanned, reaped };
 }
 
 /**

@@ -3,6 +3,11 @@ import type { Db } from "@armyofagents/db";
 import { createMcpApiKeySchema, updateMcpSettingsSchema } from "@armyofagents/shared";
 import { z } from "zod";
 import { forbidden, unauthorized } from "../errors.js";
+import { readDistributedExecutionDeploymentFlag } from "../config/distributed-execution.js";
+import {
+  createDistributedRunCurrencyResolver,
+  type DistributedRunCurrencyResolver,
+} from "./distributed-run-currency-resolver.js";
 import {
   accessService,
   agentService,
@@ -106,6 +111,11 @@ export function createFixedWindowRateLimiter(limit: number, windowMs: number) {
 
 const protocolRateLimiter = createFixedWindowRateLimiter(RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS);
 
+/** The ONE coarse forbidden message the /mcp seam returns for BOTH a wrong-tenant key and,
+ *  under DAT-007 item #1, a stale/replaced distributed run — so a denial leaks no oracle that
+ *  distinguishes the two (or "no such run"). */
+const MCP_CROSS_COMPANY_FORBIDDEN_MSG = "MCP key cannot access another company";
+
 interface McpRouteDeps {
   issuesSvc?: ReturnType<typeof issueService>;
   goalsSvc?: ReturnType<typeof goalService>;
@@ -127,6 +137,8 @@ interface McpRouteDeps {
   ) => Promise<McpUserScope>;
   resolveRole?: (companyId: string, userId: string) => Promise<string>;
   resolveScopedAgentIds?: (companyId: string, scope: McpUserScope) => Promise<Set<string> | null>;
+  /** DAT-007 item #1 — the fence-bound run-JWT currency gate (injectable for tests). */
+  resolveDistributedRunCurrency?: DistributedRunCurrencyResolver["resolve"];
 }
 
 function jsonRpcResult(id: unknown, result: unknown) {
@@ -259,7 +271,7 @@ async function ensureProtocolAccess(
     throw unauthorized();
   }
   if (actor.companyId && actor.companyId !== companyId) {
-    throw forbidden("MCP key cannot access another company");
+    throw forbidden(MCP_CROSS_COMPANY_FORBIDDEN_MSG);
   }
   await assertCompanyAccess(db, req, companyId);
   const company = await companiesSvc.getById(companyId);
@@ -282,6 +294,12 @@ async function ensureProtocolAccess(
 
 export function mcpServerRoutes(db: Db, deps: McpRouteDeps = {}) {
   const router = Router();
+  // DAT-007 item #1 — read the deployment flag ONCE at construction (it THROWS on an
+  // unparseable value; a per-request read would 500 every /mcp call). Self-hosted default
+  // is false, so the gate is inert unless a distributed deployment arms it.
+  const distributedExecutionEnabled = readDistributedExecutionDeploymentFlag(process.env);
+  const resolveDistributedRunCurrency =
+    deps.resolveDistributedRunCurrency ?? createDistributedRunCurrencyResolver(db).resolve;
   const issuesSvc = deps.issuesSvc ?? issueService(db);
   const goalsSvc = deps.goalsSvc ?? goalService(db);
   const memorySvc = deps.memorySvc ?? memoryService(db);
@@ -444,6 +462,23 @@ export function mcpServerRoutes(db: Db, deps: McpRouteDeps = {}) {
 
     try {
       const { actor: protocolActor, company } = await ensureProtocolAccess(db, req, companyId, companiesSvc);
+
+      // DAT-007 item #1 — fence-bound run-JWT currency gate (Option B, per-call). Runs at the
+      // request-authorization seam so it dominates BOTH tool-dispatch paths plus tools/list and
+      // resources/*. Inert behind the flag; scoped to a distributed run-JWT agent actor; keyed on
+      // the SIGNED run id (req.actor.signedRunId — immune to the x-aoa-run-id header override). A
+      // stale/replaced sandbox is denied with the SAME coarse forbidden as wrong-tenant (no
+      // oracle). A resolver throw propagates to the route catch (fail-CLOSED = 500 = deny).
+      if (distributedExecutionEnabled && protocolActor.source === "agent" && req.actor.signedRunId) {
+        const verdict = await resolveDistributedRunCurrency({
+          signedRunId: req.actor.signedRunId,
+          companyId,
+          agentId: protocolActor.agentId,
+        });
+        if (verdict === "deny") {
+          throw forbidden(MCP_CROSS_COMPANY_FORBIDDEN_MSG);
+        }
+      }
       // U2c: builds the internal-agent ToolContext for an `agent`-source actor
       // (crew/org run — including an E2B-sandboxed run whose ONLY path to the
       // DB is this broker). Lazy (not called unconditionally per-request):

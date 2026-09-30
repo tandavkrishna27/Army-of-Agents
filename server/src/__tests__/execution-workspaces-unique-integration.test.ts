@@ -92,8 +92,8 @@ describe.skipIf(process.platform === "win32")(
       const secondWorkspaceId = "66666666-6666-4666-8666-666666666666";
 
       await db.execute(sql`
-        INSERT INTO companies (id, name, issue_prefix)
-        VALUES (${companyId}, 'Execution Workspace Unique Co', 'EWU')
+        INSERT INTO companies (organization_id, id, name, issue_prefix)
+        VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Execution Workspace Unique Co', 'EWU')
       `);
       await db.execute(sql`
         INSERT INTO projects (id, company_id, name)

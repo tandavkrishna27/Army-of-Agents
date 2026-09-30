@@ -1,15 +1,15 @@
--- Process tracking columns (AoA 0055 equivalent)
+-- Process tracking columns (Paperclip 0055 equivalent)
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "process_group_id" integer;
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "process_pid" integer;
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "process_started_at" timestamp with time zone;
 
--- Output tracking (AoA 0070)
+-- Output tracking (Paperclip 0070)
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "last_output_at" timestamp with time zone;
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "last_output_seq" integer DEFAULT 0 NOT NULL;
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "last_output_stream" text;
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "last_output_bytes" bigint;
 
--- Liveness columns (AoA 0069)
+-- Liveness columns (Paperclip 0069)
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "liveness_state" text;
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "liveness_reason" text;
 ALTER TABLE "heartbeat_runs" ADD COLUMN IF NOT EXISTS "continuation_attempt" integer DEFAULT 0 NOT NULL;

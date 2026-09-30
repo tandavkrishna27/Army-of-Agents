@@ -32,7 +32,7 @@ These were decided during design review. Do not relitigate them while executing.
 | D3 | **Commander sees all company connectors**, still under strict mode. | Commander is the coordination layer; it should not be starved. Strict governs *where the list comes from*, not *how much Commander gets*. |
 | D4 | **Company-level install + per-agent opt-in.** | One credential to rotate/revoke; mirrors how `browser_use` gates Playwright. |
 | D5 | **Secrets via env indirection.** Config files contain `${VAR}`; the real secret is passed in the spawned process env. | Preserves the existing convention documented at `packages/adapter-utils/src/types.ts:274-286` — config/context are persisted into run events, so secrets must never flow through them. |
-| D6 | **Governance mirrors the agent-hire rule.** Approval required in `authenticated` mode; auto-approved in `local_trusted`. | Consistent with Upstream Divergence D6. |
+| D6 | **Governance mirrors the agent-hire rule.** Approval required in `authenticated` mode; auto-approved in `local_trusted`. | Consistent with Paperclip Divergence D6. |
 | D7 | **stdio is deployment-mode-aware.** `local_trusted` may register stdio connectors; `authenticated` restricts BYO to remote HTTP. | An `npx` command runs on the AoA host. On a founder's own laptop that is normal; in multi-tenant it is RCE. |
 | D8 | **No CLI token delegation.** AoA brokers auth; we do not rely on the CLI's stored MCP OAuth tokens. | Whether a CLI-stored token keys by server *name* or *URL* is undocumented; building on it means building on internal behavior that can change without notice. |
 

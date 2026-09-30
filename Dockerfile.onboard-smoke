@@ -9,7 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
   AOA_OPEN_ON_LISTEN=false \
   HOST=127.0.0.1 \
   PORT=3100 \
-  HOME=/home/aoa \
+  HOME=/home/paperclip \
   LANG=en_US.UTF-8 \
   LC_ALL=en_US.UTF-8 \
   NPM_CONFIG_UPDATE_NOTIFIER=false \
@@ -26,15 +26,15 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install -y --no-install-recommends nodejs \
   && locale-gen en_US.UTF-8 \
-  && groupadd --gid 10001 aoa \
-  && useradd --create-home --shell /bin/bash --uid "${HOST_UID}" --gid 10001 aoa \
-  && mkdir -p /aoa /home/aoa/workspace \
-  && chown -R aoa:aoa /aoa /home/aoa \
+  && groupadd --gid 10001 paperclip \
+  && useradd --create-home --shell /bin/bash --uid "${HOST_UID}" --gid 10001 paperclip \
+  && mkdir -p /aoa /home/paperclip/workspace \
+  && chown -R paperclip:paperclip /aoa /home/paperclip \
   && rm -rf /var/lib/apt/lists/*
 
 VOLUME ["/aoa"]
-WORKDIR /home/aoa/workspace
+WORKDIR /home/paperclip/workspace
 EXPOSE 3101
-USER aoa
+USER paperclip
 
 CMD ["bash", "-lc", "set -euo pipefail; mkdir -p \"$AOA_HOME\"; socat TCP-LISTEN:3101,fork,reuseaddr TCP:127.0.0.1:3100 & exec npx --yes \"@armyofagents/cli@${AOA_CLI_VERSION}\" onboard --yes --data-dir \"$AOA_HOME\""]

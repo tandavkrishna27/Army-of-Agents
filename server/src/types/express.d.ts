@@ -10,6 +10,9 @@ interface Actor {
   agentId?: string;
   keyId?: string;
   runId?: string;
+  /** DAT-007 item #1: the SIGNED run_id claim (never the header-overridable runId).
+   *  Set only for a type:"agent" run-JWT actor; the distributed /mcp currency gate keys on it. */
+  signedRunId?: string;
   /** Commander JWT actor fields (W7.5a). Set only for type:"commander". */
   userRole?: string;
   conversationId?: string;

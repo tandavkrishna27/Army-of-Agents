@@ -16,6 +16,7 @@ import {
 import type { HomeSummary, GoalProgress, GoalGapNudge, RecentActivityItem, SetupStatus } from "@armyofagents/shared";
 import { notCrewAssigned } from "./issue-crew-scope.js";
 import { computeGoalProgressPercent } from "./goal-progress.js";
+import { notDenialNamespace } from "./activity-namespace.js";
 
 const TERMINAL_STATUSES = ["done", "cancelled"];
 
@@ -183,6 +184,11 @@ export function homeService(db: Db) {
               and(
                 eq(activityLog.companyId, companyId),
                 gte(activityLog.createdAt, oneDayAgo),
+                // E0-F013 Decision 3 (Q3), founder-ruled 2026-09-11: never
+                // disclose a `security.denied.*` row to a tenant. This feed
+                // carries the row's full `details`, so it is the reader that
+                // would leak the most (reason code, requested company, key id).
+                notDenialNamespace(),
               ),
             )
             .orderBy(sql`${activityLog.createdAt} DESC`)

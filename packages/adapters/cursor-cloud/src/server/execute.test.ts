@@ -100,7 +100,7 @@ function createContext(
       CURSOR_API_KEY: "cursor-secret",
       EXTRA_FLAG: "1",
     },
-    repoUrl: "https://github.com/aoaai/aoa.git",
+    repoUrl: "https://github.com/paperclipai/paperclip.git",
     repoStartingRef: "main",
     runtimeEnvType: "cloud",
     promptTemplate: "Do the work for {{agent.name}}",
@@ -118,7 +118,7 @@ function createContext(
     runtime,
     config,
     context,
-    authToken: "aoa-run-jwt",
+    authToken: "paperclip-run-jwt",
     onLog: async (stream, chunk) => {
       logs.push({ stream, chunk });
     },
@@ -142,7 +142,7 @@ describe("cursor_cloud execute", () => {
     getRunMock.mockReset();
   });
 
-  it("creates a fresh Cursor agent and injects AoA env without CURSOR_API_KEY", async () => {
+  it("creates a fresh Cursor agent and injects Paperclip env without CURSOR_API_KEY", async () => {
     const run = createMockRun({
       agentId: "agent-fresh",
       streamMessages: [
@@ -165,19 +165,19 @@ describe("cursor_cloud execute", () => {
     expect(getRunMock).not.toHaveBeenCalled();
     expect(createMock.mock.calls[0]?.[0]).toMatchObject({
       apiKey: "cursor-secret",
-      name: "AoA Cursor Cloud Agent",
+      name: "Paperclip Cursor Cloud Agent",
       model: { id: "gpt-5.4" },
       cloud: {
         env: { type: "cloud" },
-        repos: [{ url: "https://github.com/aoaai/aoa.git", startingRef: "main" }],
+        repos: [{ url: "https://github.com/paperclipai/paperclip.git", startingRef: "main" }],
       },
     });
     expect(createMock.mock.calls[0]?.[0]?.cloud?.envVars).toMatchObject({
       EXTRA_FLAG: "1",
-      AOA_RUN_ID: "run-heartbeat-1",
-      AOA_TASK_ID: "issue-1",
-      AOA_WAKE_REASON: "issue_commented",
-      AOA_API_KEY: "aoa-run-jwt",
+      PAPERCLIP_RUN_ID: "run-heartbeat-1",
+      PAPERCLIP_TASK_ID: "issue-1",
+      PAPERCLIP_WAKE_REASON: "issue_commented",
+      PAPERCLIP_API_KEY: "paperclip-run-jwt",
     });
     expect(createMock.mock.calls[0]?.[0]?.cloud?.envVars).not.toHaveProperty("CURSOR_API_KEY");
 
@@ -192,7 +192,7 @@ describe("cursor_cloud execute", () => {
         latestRunId: "run-123",
         runtime: "cloud",
         envType: "cloud",
-        repos: [{ url: "https://github.com/aoaai/aoa.git", startingRef: "main" }],
+        repos: [{ url: "https://github.com/paperclipai/paperclip.git", startingRef: "main" }],
       },
     });
     expect(ctx.logs.map((entry) => entry.chunk)).toEqual(
@@ -219,7 +219,7 @@ describe("cursor_cloud execute", () => {
           latestRunId: "run-previous",
           runtime: "cloud",
           envType: "cloud",
-          repos: [{ url: "https://github.com/aoaai/aoa.git", startingRef: "main" }],
+          repos: [{ url: "https://github.com/paperclipai/paperclip.git", startingRef: "main" }],
         },
       },
     });
@@ -279,7 +279,7 @@ describe("cursor_cloud execute", () => {
           latestRunId: "run-attached",
           runtime: "cloud",
           envType: "cloud",
-          repos: [{ url: "https://github.com/aoaai/aoa.git", startingRef: "main" }],
+          repos: [{ url: "https://github.com/paperclipai/paperclip.git", startingRef: "main" }],
         },
       },
     });
@@ -311,12 +311,12 @@ describe("cursor_cloud execute", () => {
     expect(ctx.meta[0]?.context).toMatchObject({
       cursorCloud: {
         canReuseSession: true,
-        repoUrl: "https://github.com/aoaai/aoa.git",
+        repoUrl: "https://github.com/paperclipai/paperclip.git",
       },
     });
   });
 
-  it("maps non-finished Cursor results to failing AoA runs", async () => {
+  it("maps non-finished Cursor results to failing Paperclip runs", async () => {
     const cancelledRun = createMockRun({
       id: "run-cancelled",
       agentId: "agent-cancelled",

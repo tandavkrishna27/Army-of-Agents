@@ -1,0 +1,28 @@
+-- SVC-003b - the liveness deadline's only input.
+--
+-- ONE nullable column. Everything below is `db:generate` output apart from the C14 class (a)
+-- `IF NOT EXISTS` guard, which drizzle-kit cannot emit and which this file needs for the same
+-- measured reason 0275 states: migration-idempotency's static check matches only
+-- /^\s*CREATE (UNIQUE )?(TABLE|INDEX)\s+"/, so a bare `ADD COLUMN` is covered by NO static
+-- check at all and a re-apply would raise 42701. No C14 class (b) block is involved:
+-- `service_instances` is an already-registered relation whose grants, RLS and policy are in
+-- place, and adding a column to it changes no ACL.
+--
+-- NULLABLE, AND WITH NO DEFAULT, deliberately. `DEFAULT now()` would forge an observation at
+-- INSERT time -- the reconciler creating the row is not the worker being seen -- and would
+-- destroy the distinction the deadline is built on: NULL means the worker has NEVER been
+-- observed, which is aged against `created_at` under a separate and longer admission window,
+-- never against the short liveness window. See `classifyServiceInstanceLiveness`.
+--
+-- NO NEW INDEX, and the cost of that choice is stated rather than left to be found. The sweep
+-- reads live instances per organization, and `service_instances_live_service_uq` is already a
+-- partial unique index on (organization_id, service_id) WHERE status NOT IN
+-- ('stopped','failed','lost') -- the organization-prefixed scan of exactly that set, so the
+-- FILTER is served. The SORT is not: the sweep orders by
+-- COALESCE(last_observed_at, created_at), an expression no index covers, so the live set is
+-- sorted per tick before LIMIT. Accepted because that set is empty on every real deployment
+-- today (nothing creates a service -- SVC-007) and is bounded by ONE live instance per
+-- service in any case. If it ever matters the fix is one db:generate expression index on
+-- (organization_id, COALESCE(last_observed_at, created_at)) with the same partial predicate;
+-- re-measure with EXPLAIN when SVC-007 makes services creatable. See SVC-003b-result.md 5.6.
+ALTER TABLE "service_instances" ADD COLUMN IF NOT EXISTS "last_observed_at" timestamp with time zone;

@@ -24,7 +24,7 @@
 
 import type { Db } from "@armyofagents/db";
 import type {
-  AoAPluginManifestV1,
+  PaperclipPluginManifestV1,
   PluginRecord,
 } from "@armyofagents/shared";
 import type { ToolRunContext, ToolResult } from "@armyofagents/plugin-sdk";
@@ -155,7 +155,7 @@ export interface PluginToolDispatcher {
    */
   registerPluginTools(
     pluginId: string,
-    manifest: AoAPluginManifestV1,
+    manifest: PaperclipPluginManifestV1,
     pluginDbId?: string,
     companyId?: string
   ): void;
@@ -489,7 +489,7 @@ export function createPluginToolDispatcher(
 
     registerPluginTools(
       pluginId: string,
-      manifest: AoAPluginManifestV1,
+      manifest: PaperclipPluginManifestV1,
       pluginDbId?: string,
       companyId?: string
     ): void {

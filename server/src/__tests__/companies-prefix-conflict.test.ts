@@ -43,6 +43,7 @@ describe("companyService issue prefix allocation", () => {
 
     const company = await companyService(db as never).create({
       name: "E2E Test Company",
+      organizationId: "00000000-0000-0000-0000-000000000001",
     } as never);
 
     expect(company.issuePrefix).toBe("EETA");

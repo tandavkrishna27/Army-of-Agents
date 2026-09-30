@@ -13,6 +13,7 @@ Files are stored at:
 ~/.aoa/instances/default/data/storage
 ```
 
+> Note: existing installs that still have `~/.paperclip/` are read via the legacy fallback in `cli/src/config/home.ts`. On a fresh install, AoA writes only to `~/.aoa/`.
 
 No configuration required. Suitable for local development and single-machine deployments.
 

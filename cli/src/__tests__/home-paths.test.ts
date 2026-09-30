@@ -16,7 +16,9 @@ describe("home path resolution", () => {
   });
 
   it("defaults to ~/.aoa and default instance", () => {
-    // Set AOA_HOME explicitly so the expected path is independent of the host.
+    // Set AOA_HOME explicitly to its default value so the legacy
+    // ~/.paperclip migration fallback doesn't depend on whether the
+    // developer running the test has a real ~/.paperclip/ on disk.
     const defaultAoaHome = path.resolve(os.homedir(), ".aoa");
     process.env.AOA_HOME = defaultAoaHome;
     delete process.env.AOA_INSTANCE_ID;
@@ -28,10 +30,10 @@ describe("home path resolution", () => {
   });
 
   it("supports AOA_HOME and explicit instance ids", () => {
-    process.env.AOA_HOME = "~/aoa-home";
+    process.env.AOA_HOME = "~/paperclip-home";
 
     const home = resolveAoaHomeDir();
-    expect(home).toBe(path.resolve(os.homedir(), "aoa-home"));
+    expect(home).toBe(path.resolve(os.homedir(), "paperclip-home"));
     expect(resolveAoaInstanceId("dev_1")).toBe("dev_1");
   });
 

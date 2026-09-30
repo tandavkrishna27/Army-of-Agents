@@ -3,23 +3,62 @@ import { lookup as dnsLookup } from "node:dns/promises";
 import { request as httpsRequest } from "node:https";
 import { BlockList, isIP } from "node:net";
 import { resolveConsentSecret } from "./mcp-connector-consent.js";
+import { INTERNAL_RANGE_DENY_CIDRS } from "./w10c-internal-range-deny-set.js";
 
 export const OAUTH_FETCH_TIMEOUT_MS = 10_000;
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 const MAX_METADATA_REDIRECTS = 3;
 
+// W13 — THE OAUTH DENY TABLE IS DERIVED, NOT TRANSCRIBED.
+//
+// These two `BlockList`s used to be hand-typed range lists. Hand-typing is how they
+// diverged from `isPrivateIP` — this repository's reference "is this address internal"
+// predicate — and E8-F009 measured the divergence: one IPv4 /24 (192.88.99.0/24, the
+// relay-anycast END of the 6to4 tunnel) and EIGHT IPv6 classes, including the ADDRESS
+// end of that same tunnel (2002::/16) and the NAT64 well-known prefix (64:ff9b::/96),
+// which embeds an IPv4 destination and so re-opened every IPv4 range this table denies.
+//
+// They are now built from `INTERNAL_RANGE_DENY_CIDRS` — the MECHANICALLY DERIVED cover
+// of `isPrivateIP`, re-derived from that live predicate in CI on every run
+// (w10c-internal-range-deny-set.test.ts: a full 2^24 sweep on IPv4, all 65536 leading
+// words on IPv6). So a change to the predicate now propagates here instead of silently
+// leaving this table behind, and there is no second list to keep in step by hand.
+//
+// ★ THAT COVER IS A STRICT SUPERSET OF THE PREDICATE, NOT AN EXACT RENDERING OF IT,
+// and this table inherits the difference. On IPv4 it is the exact minimal cover; on
+// IPv6 it is deliberately wider, by one enumerated class — `::/16` numerically contains
+// every IPv4-mapped address, so this `BlockList` denies `::ffff:<public v4>` while
+// `isPrivateIP` allows it (measured: `isBlockedOAuthAddress('::ffff:8.8.8.8')` is
+// `true`, `isPrivateIP('::ffff:8.8.8.8')` is `false`). That is PRE-EXISTING — the
+// hand-typed table this replaced denied the same `::ffff:0:0/96` explicitly — it fails
+// CLOSED, and it is pinned by the two `IPv4-MAPPED:` tests in
+// `w13-oauth-deny-table-divergence.test.ts`. Do not "correct" it into exactness: that
+// moves addresses denied -> allowed on a live SSRF filter.
+//
+// `BlockList` is kept as the runtime mechanism (native, and the two `assert*` call sites
+// below are unchanged); only the DATA it is loaded with changed.
 const blockedIpv4 = new BlockList();
-for (const [network, prefix] of [
-  ["0.0.0.0", 8], ["10.0.0.0", 8], ["100.64.0.0", 10], ["127.0.0.0", 8],
-  ["169.254.0.0", 16], ["172.16.0.0", 12], ["192.0.0.0", 24], ["192.0.2.0", 24],
-  ["192.168.0.0", 16], ["198.18.0.0", 15], ["198.51.100.0", 24],
-  ["203.0.113.0", 24], ["224.0.0.0", 4], ["240.0.0.0", 4],
-] as const) blockedIpv4.addSubnet(network, prefix, "ipv4");
 const blockedIpv6 = new BlockList();
-for (const [network, prefix] of [
-  ["::", 128], ["::1", 128], ["::ffff:0:0", 96], ["100::", 64],
-  ["2001::", 32], ["2001:db8::", 32], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8],
-] as const) blockedIpv6.addSubnet(network, prefix, "ipv6");
+for (const cidr of INTERNAL_RANGE_DENY_CIDRS) {
+  const slash = cidr.indexOf("/");
+  const network = cidr.slice(0, slash);
+  const prefix = Number(cidr.slice(slash + 1));
+  if (network.includes(":")) blockedIpv6.addSubnet(network, prefix, "ipv6");
+  else blockedIpv4.addSubnet(network, prefix, "ipv4");
+}
+
+/**
+ * True iff `address` is an IP literal this path refuses to reach. Exported so the
+ * divergence test can compare THE LIVE TABLE against `isPrivateIP` directly, rather
+ * than a reimplementation of it — the mistake that produced E8-F009 in the first place.
+ * A non-IP string is NOT blocked here; the two callers below handle that case with the
+ * fail-open/fail-closed posture each of them needs.
+ */
+export function isBlockedOAuthAddress(address: string): boolean {
+  const family = isIP(address);
+  if (family === 0) return false;
+  return family === 4 ? blockedIpv4.check(address, "ipv4") : blockedIpv6.check(address, "ipv6");
+}
 
 export type OAuthRequestFailureKind = "policy" | "transient" | "http" | "invalid_response";
 
@@ -54,26 +93,18 @@ export function assertSafeOAuthUrl(raw: string, label = "OAuth endpoint"): URL {
   if (hostname === "localhost" || hostname.endsWith(".localhost")) {
     throw new OAuthRequestError(`${label} targets a blocked host`, "policy");
   }
-  const family = isIP(hostname);
-  if (
-    family !== 0 &&
-    (family === 4
-      ? blockedIpv4.check(hostname, "ipv4")
-      : blockedIpv6.check(hostname, "ipv6"))
-  ) {
+  // A hostname that is not an IP literal is left to `assertPublicResolvedAddress`,
+  // which sees what it actually resolves to.
+  if (isBlockedOAuthAddress(hostname)) {
     throw new OAuthRequestError(`${label} targets a blocked address`, "policy");
   }
   return url;
 }
 
 function assertPublicResolvedAddress(address: string): void {
-  const family = isIP(address);
-  if (
-    family === 0 ||
-    (family === 4
-      ? blockedIpv4.check(address, "ipv4")
-      : blockedIpv6.check(address, "ipv6"))
-  ) {
+  // Fail CLOSED on a non-IP resolver result: unlike the URL check above, there is no
+  // later stage that could vet it.
+  if (isIP(address) === 0 || isBlockedOAuthAddress(address)) {
     throw new OAuthRequestError("OAuth endpoint resolved to a blocked address", "policy");
   }
 }

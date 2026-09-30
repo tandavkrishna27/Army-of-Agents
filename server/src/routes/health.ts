@@ -9,14 +9,24 @@ export function healthRoutes(
     deploymentExposure: DeploymentExposure;
     authReady: boolean;
     companyDeletionEnabled: boolean;
+    distributedExecutionEnabled?: boolean;
   } = {
     deploymentMode: "local_trusted",
     deploymentExposure: "private",
     authReady: true,
     companyDeletionEnabled: true,
+    distributedExecutionEnabled: false,
   },
 ) {
   const router = Router();
+
+  // DEP-003 (E6 deployment harness): pure LIVENESS. The process is up; this probe
+  // performs NO schema-compatibility or dependency checks (that is readiness,
+  // `/api/ready`) and never blocks, so a container liveness probe stays green even
+  // while readiness is 503-gated behind a pending migration.
+  router.get("/live", (_req, res) => {
+    res.json({ status: "ok", live: true, revision: process.env.AOA_DEPLOY_SHA || null });
+  });
 
   router.get("/", async (_req, res) => {
     if (!db) {
@@ -48,6 +58,7 @@ export function healthRoutes(
       features: {
         companyDeletionEnabled: opts.companyDeletionEnabled,
       },
+      ...(opts.distributedExecutionEnabled ? { distributedExecutionEnabled: true } : {}),
     });
   });
 

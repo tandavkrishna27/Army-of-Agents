@@ -210,15 +210,15 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const alwaysApprove = asBoolean(config.alwaysApprove, true);
   const disableWebSearch = asBoolean(config.disableWebSearch, true);
 
-  const workspaceContext = parseObject(context.aoaWorkspace);
+  const workspaceContext = parseObject(context.paperclipWorkspace);
   const workspaceCwd = asString(workspaceContext.cwd, "");
   const workspaceSource = asString(workspaceContext.source, "");
   const workspaceId = asString(workspaceContext.workspaceId, "");
   const workspaceRepoUrl = asString(workspaceContext.repoUrl, "");
   const workspaceRepoRef = asString(workspaceContext.repoRef, "");
   const agentHome = asString(workspaceContext.agentHome, "");
-  const workspaceHints = Array.isArray(context.aoaWorkspaces)
-    ? context.aoaWorkspaces.filter(
+  const workspaceHints = Array.isArray(context.paperclipWorkspaces)
+    ? context.paperclipWorkspaces.filter(
         (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null,
       )
     : [];
@@ -271,7 +271,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     const linkedIssueIds = Array.isArray(context.issueIds)
       ? context.issueIds.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
       : [];
-    const wakePayloadJson = stringifyAoaWakePayload(context.aoaWake);
+    const wakePayloadJson = stringifyAoaWakePayload(context.paperclipWake);
     const issueWorkMode = readAoaIssueWorkModeFromContext(context);
     if (wakeTaskId) env.AOA_TASK_ID = wakeTaskId;
     if (issueWorkMode) env.AOA_ISSUE_WORK_MODE = issueWorkMode;
@@ -452,10 +452,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       run: { id: runId, source: "on_demand" },
       context,
     };
-    const wakePrompt = renderAoaWakePrompt(context.aoaWake, { resumedSession: Boolean(sessionId) });
+    const wakePrompt = renderAoaWakePrompt(context.paperclipWake, { resumedSession: Boolean(sessionId) });
     const shouldUseResumeDeltaPrompt = Boolean(sessionId) && wakePrompt.length > 0;
     const renderedPrompt = shouldUseResumeDeltaPrompt ? "" : renderTemplate(promptTemplate, templateData);
-    const sessionHandoffNote = asString(context.aoaSessionHandoffMarkdown, "").trim();
+    const sessionHandoffNote = asString(context.paperclipSessionHandoffMarkdown, "").trim();
     const aoaEnvNote = renderAoaEnvNote(env);
     const apiAccessNote = renderApiAccessNote(env);
     const prompt = joinPromptSections([

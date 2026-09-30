@@ -54,8 +54,19 @@ import {
 import type { EnvironmentAcquisitionResult } from "./environment-run-orchestrator.js";
 import { environmentRuntimeService } from "./environment-runtime.js";
 import { acquireExecutionContext } from "./acquire-execution-context.js";
+// CLI-005 — the dormant-by-default distributed-execution rollout hook. The type-only
+// import keeps this module's static graph unchanged; the hook is injected by the
+// composition root ONLY when distributed execution is enabled, and is otherwise absent
+// (the seam skips it entirely → byte-identical legacy path).
+import {
+  HEARTBEAT_TASK_RUN_WORKLOAD_TYPE,
+  type HeartbeatDistributedRolloutHook,
+} from "./heartbeat-distributed-rollout.js";
+import { getDistributedRolloutPort } from "./distributed-rollout-port.js";
+import type { RunRolloutState } from "../config/distributed-execution-rollout-source.js";
 import { instanceSettingsService } from "./instance-settings.js";
 import { resolveWarmSandboxPreference, readAgentWarmOverride } from "./warm-sandbox-policy.js";
+import { lockBudgetAuthority } from "./budget-capacity.js";
 import { conflict, notFound, HttpError } from "../errors.js";
 import { logger } from "../middleware/logger.js";
 import { publishLiveEvent, threadWorkingAgents, broadcastThreadPresence } from "./live-events.js";
@@ -148,6 +159,27 @@ import {
   resolveAgentSubscriptionEnvironment,
 } from "./provider-credential-bindings.js";
 import { postRunSummaryComment } from "./run-summary-comment.js";
+import {
+  buildHandoffRunPatch,
+  shouldSuppressLegacyExecution,
+  type RunExecutionOwner,
+} from "./run-execution-owner.js";
+import { buildCutoverSelectionEvent } from "./cutover-selection-audit.js";
+import { buildTaskRunBatchWorkload } from "./task-run-batch-workload.js";
+import { resolveTaskRunInstructionsBundle } from "./task-run-instructions-bundle.js";
+import { SANDBOX_INVOCATION_BINARY_ARG_INDEX } from "./task-run-sandbox-invocation.js";
+import {
+  dispatchCancel,
+  getDistributedCancellationPort,
+} from "./distributed-cancellation-port.js";
+import { createCanaryRunProjector } from "./canary-run-projector.js";
+import {
+  createAttemptTerminalProjectionHandler,
+  projectionSeqBase,
+  toProjectorTerminalWriter,
+  type AttemptEventRow,
+} from "./canary-terminal-projection.js";
+import type { AttemptTerminalSignal } from "./job-events.js";
 import { emitSandboxPreviewTaskOutput } from "./task-output-emitters.js";
 import {
   buildWorkspaceReadyComment,
@@ -340,7 +372,12 @@ export function resolveTerminalLatchFallback(
 }
 
 const HEARTBEAT_RUN_RESULT_SUMMARY_MAX_CHARS = 500;
+// AoA canonical names. Existing rows still using the legacy paperclip-
+// names are read transparently via the helpers below; writes only emit
+// the AoA names and strip the legacy keys from the same blob so we
+// converge over time.
 const DEFERRED_WAKE_CONTEXT_KEY = "_aoaWakeContext";
+const LEGACY_DEFERRED_WAKE_CONTEXT_KEY = "_paperclipWakeContext";
 // Context key set during executeRun when the harness pre-claims the issue via
 // issueService.checkout. Downstream (renderAoaWakePrompt) reads this from the
 // wake payload to suppress the redundant /issues/{id}/checkout agent call.
@@ -1296,6 +1333,7 @@ async function resolveRunScopedMentionedSkillKeys(
 /**
  * Merge run-scoped mentioned skill keys into the adapter config's
  * aoaSkillSync.desiredSkills (preserving any existing selections).
+ * Also dual-writes paperclipSkillSync for external back-compat.
  */
 export function applyRunScopedMentionedSkillKeys<T extends Record<string, unknown>>(
   config: T,
@@ -1417,7 +1455,29 @@ export async function buildTeamCoordinationSkillEntries(
   });
 }
 
-export function heartbeatService(db: Db) {
+export function heartbeatService(
+  db: Db,
+  options?: {
+    /** CLI-005: injected ONLY by the composition root when distributed execution is
+     * enabled. Absent (default) → the org-heartbeat seam runs the legacy path unchanged. */
+    distributedRollout?: HeartbeatDistributedRolloutHook;
+  },
+) {
+  // Unit 1.5 — an EXPLICIT option always wins; otherwise fall back to the process-wide
+  // port. Without this fallback only the scheduler instance is hook-bearing, and the
+  // route-constructed instances that actually execute task runs silently run legacy with
+  // no [CLI-006] line — see services/distributed-rollout-port.ts for the measured trace.
+  //
+  // ★ RESOLVED LAZILY, PER RUN — NEVER CAPTURED HERE. `createApp` (index.ts:931) eagerly
+  // constructs the route factories, and three of them hold a factory-scope
+  // `heartbeatService(db)`: routes/issues.ts:99, routes/agents.ts, routes/approvals.ts.
+  // That happens ~466 lines BEFORE the composition root registers the port
+  // (index.ts:1397), so a `const` captured here would be `undefined` forever on exactly
+  // the sites this port exists for — wired-looking, typechecking, and never firing. A
+  // lazy read makes the boot ORDER irrelevant instead of merely getting it right once.
+  const explicitRolloutHook = options?.distributedRollout;
+  const resolveDistributedRolloutHook = (): HeartbeatDistributedRolloutHook | undefined =>
+    explicitRolloutHook ?? getDistributedRolloutPort();
   const runLogStore = getRunLogStore();
   const secretsSvc = secretService(db);
   const outputDetector = outputDetectionService(db);
@@ -2426,6 +2486,21 @@ export function heartbeatService(db: Db) {
     for (const run of activeRuns) {
       if (runningProcesses.has(run.id)) continue;
 
+      // CLI-006 (R1): a distributed-owned run has NO child process by design — it
+      // handed execution to a worker attempt and suppressed its own adapter — so
+      // the `runningProcesses` guard above can never protect it. Reaping it would
+      // not merely mislabel it: the recovery chain below releases the issue lock
+      // and PROMOTES A DEFERRED WAKE INTO A NEW RUN, putting a second executor on
+      // an issue whose attempt is still live. Any attempt outliving the staleness
+      // window — essentially every real agent run — would be double-executed.
+      //
+      // The attempt is the terminal authority for these runs; the projector
+      // terminalizes them from its durable evidence. This applies to the STARTUP
+      // path too (staleThresholdMs === 0): surviving a control-plane restart is
+      // exactly what the durable marker exists for, so a boot sweep must not fail
+      // every in-flight handed-off run.
+      if (run.executionOwner === "distributed") continue;
+
       // A-H6: In the periodic path, never reap a "queued" run. A queued run has
       // no child process to lose — it is legitimately waiting behind the
       // per-agent concurrency clamp (HEARTBEAT_MAX_CONCURRENT_RUNS_DEFAULT = 1),
@@ -2441,11 +2516,26 @@ export function heartbeatService(db: Db) {
         if (now.getTime() - refTime < staleThresholdMs) continue;
       }
 
-      await setRunStatus(run.id, "failed", {
+      const reapedRun = await setRunStatus(run.id, "failed", {
         error: "Process lost -- server may have restarted",
         errorCode: "process_lost",
         finishedAt: now,
       });
+      // CLI-006 (R1b): honour the terminal latch before running the recovery chain.
+      // `setRunStatus` returns null when the row was already terminal — e.g. a
+      // concurrent cancel, or a projection, landed between the activeRuns select
+      // above and this write. Without this check the chain below still fires
+      // `releaseIssueExecutionAndPromote` (which promotes a deferred wake into a
+      // NEW run) and `finalizeAgentStatus(..., "failed")` against a run that just
+      // finished on its own. This mirrors the completion path's
+      // "lost terminal-status race; skipping side effects" guard.
+      if (!reapedRun) {
+        logger.info(
+          { runId: run.id },
+          "orphan reap lost terminal-status race; skipping recovery side effects",
+        );
+        continue;
+      }
       await setWakeupStatus(run.wakeupRequestId, "failed", {
         finishedAt: now,
         error: "Process lost -- server may have restarted",
@@ -2545,7 +2635,10 @@ export function heartbeatService(db: Db) {
     const additionalCostCents = Math.max(0, Math.round((result.costUsd ?? 0) * 100));
     const hasTokenUsage = inputTokens > 0 || outputTokens > 0 || cachedInputTokens > 0;
 
-    await db
+    await db.transaction(async (tx) => {
+      const txDb = tx as unknown as Db;
+      await lockBudgetAuthority(txDb, agent.companyId);
+      await txDb
       .update(agentRuntimeState)
       .set({
         adapterType: agent.adapterType,
@@ -2562,7 +2655,7 @@ export function heartbeatService(db: Db) {
       .where(eq(agentRuntimeState.agentId, agent.id));
 
     if (additionalCostCents > 0 || hasTokenUsage) {
-      await db.insert(costEvents).values({
+        await txDb.insert(costEvents).values({
         companyId: agent.companyId,
         agentId: agent.id,
         provider: result.provider ?? "unknown",
@@ -2575,7 +2668,7 @@ export function heartbeatService(db: Db) {
     }
 
     if (additionalCostCents > 0) {
-      await db
+        await txDb
         .update(agents)
         .set({
           spentMonthlyCents: sql`${agents.spentMonthlyCents} + ${additionalCostCents}`,
@@ -2583,10 +2676,12 @@ export function heartbeatService(db: Db) {
         })
         .where(eq(agents.id, agent.id));
 
-      // Budget alert checks
-      if (agent.budgetMonthlyCents > 0) {
-        await checkBudgetAlerts(agent, run);
-      }
+    }
+    });
+
+    // Alerts are evaluated after the authoritative charge transaction commits.
+    if (additionalCostCents > 0 && agent.budgetMonthlyCents > 0) {
+      await checkBudgetAlerts(agent, run);
     }
   }
 
@@ -3094,27 +3189,80 @@ export function heartbeatService(db: Db) {
       };
       context.currentTaskMarkdown = currentTaskMarkdown;
     }
+    // ── CLI-005 distributed-execution rollout resolution ───────────────────
+    // DORMANT unless the deployment flag is on AND this run's org+workload is opted
+    // in. The hook reads the flag FIRST and resolves "off" with no DB effect when off,
+    // so with the hook absent (default) or flag off this whole block is a no-op and the
+    // legacy path below is byte-identical. Best-effort — never fails the run.
+    let distributedRolloutState: RunRolloutState = "off";
+    let distributedRolloutOrganizationId: string | null = null;
+    // Unit 1.5 — resolved HERE, per run, not at construction. See the factory-scope note:
+    // the eagerly-constructed route instances predate the port's registration, so a
+    // captured value would be permanently `undefined` on the sites that matter most.
+    const distributedRolloutHook = resolveDistributedRolloutHook();
+    if (distributedRolloutHook && issueId && issueContext) {
+      try {
+        const resolution = await distributedRolloutHook.resolveRunRolloutState({
+          companyId: agent.companyId,
+          // MIG-002 per-sink axis. An org heartbeat run is a `task_run`; naming it here is what
+          // lets an operator canary Commander without arming this sink, which is the ordering
+          // Wave 4 prescribes and could not previously express.
+          sourceKind: "task_run",
+        });
+        distributedRolloutState = resolution.state;
+        distributedRolloutOrganizationId = resolution.organizationId;
+      } catch (err) {
+        logger.warn({ runId: run.id, issueId, err }, "[heartbeat] CLI-005 rollout resolution failed — legacy path");
+        distributedRolloutState = "off";
+      }
+    }
+
+    // ── Unit 1.5 — the FALSIFIABILITY line. ────────────────────────────────
+    // The two `[CLI-006]` decision logs below both sit INSIDE the seven-conjunct canary
+    // guard, so their absence conflates "the hook was never wired" with "the dial said
+    // off", "this was a mention wake", "organizationId was null" and "no issue on the
+    // run" — the operator cannot tell a broken canary from a declining one, which is the
+    // exact unfalsifiable silence this port exists to remove. Emitted UNCONDITIONALLY on
+    // every run that reaches the seam, so a canary that declines says WHY.
+    logger.info(
+      {
+        runId: run.id,
+        issueId: issueId ?? null,
+        agentId: agent.id,
+        rolloutHookPresent: Boolean(distributedRolloutHook),
+        rolloutState: distributedRolloutState,
+        rolloutOrganizationId: distributedRolloutOrganizationId,
+        hasIssueContext: Boolean(issueContext),
+      },
+      "[CLI-006] rollout resolved",
+    );
+
     // ── Auto-checkout for scoped wakes (T22 / PR #3538 upstream) ────────────
     // When the wake is scoped to an issue and the wake reason is comment-driven,
     // pre-claim the issue server-side before the adapter runs so the agent
     // prompt can skip the redundant /api/issues/{id}/checkout round-trip.
     // Best-effort: any failure (conflict or other) is caught and logged.
+    // CLI-005 (D3): for an ACTIVE run, checkout ownership moves harness→bridge, so the
+    // harness checkout is SUPPRESSED here and the active-convert block below drives the
+    // ONE run-guarded checkout via `admitAndSubmit` (checkout parity).
+    // CLI-005 (D3 parity): the bridge owns the checkout ONLY on the exact wakes the harness
+    // itself would have checked out (comment-driven + assigned). BOTH the harness block and
+    // the active-convert block gate on this ONE predicate — otherwise active mode would
+    // check out (flip status → in_progress, reset startedAt, re-broadcast) on
+    // mention/execution_/null wakes that legacy leaves to the agent's self-checkout.
+    const shouldAutoCheckoutForWake = (() => {
+      if (!issueId || !issueContext || issueContext.assigneeAgentId !== agent.id) return false;
+      const wr = readNonEmptyString(context.wakeReason);
+      return wr !== null && wr !== "issue_comment_mentioned" && !wr.startsWith("execution_");
+    })();
     if (
       issueId &&
       issueContext &&
       issueContext.assigneeAgentId === agent.id
     ) {
-      const wakeReason = readNonEmptyString(context.wakeReason);
-      // Mirror the shouldAutoCheckoutIssueForWake: only fire for
-      // comment-driven wakes; skip execution_* and issue_comment_mentioned.
-      const shouldAutoCheckout =
-        wakeReason !== null &&
-        wakeReason !== "issue_comment_mentioned" &&
-        !wakeReason.startsWith("execution_") &&
-        (
-          issueContext.assigneeAgentId === agent.id
-        );
-      if (shouldAutoCheckout) {
+      // CLI-005 (D3): suppress the harness checkout for an active run — the active-convert
+      // block below owns the ONE run-guarded checkout via the bridge (same predicate).
+      if (shouldAutoCheckoutForWake && distributedRolloutState !== "active") {
         try {
           const issueSvc = createIssueService(db);
           await issueSvc.checkout(issueId, agent.id, ["todo", "backlog", "blocked", "in_progress"], run.id);
@@ -3138,6 +3286,45 @@ export function heartbeatService(db: Db) {
           context[AOA_HARNESS_CHECKOUT_KEY] = false;
         }
         context.checkedOutByHarness = context[AOA_HARNESS_CHECKOUT_KEY] === true;
+      }
+    }
+
+    // ── CLI-005 (D3) active convert: durable NON-LEASABLE job + the ONE checkout ──
+    // For an active run, the bridge drives the SAME run-guarded checkout in-transaction,
+    // establishing run↔job identity + provenance. The job is non-leasable and never
+    // placed (O1), so the legacy adapter below stays the sole authoritative executor.
+    // Gated on `shouldAutoCheckoutForWake` so the bridge only owns the checkout on the
+    // exact wakes the harness would have — no extra checkout on non-comment wakes (parity).
+    // Best-effort: a failed convert rolls back the whole tx (no job row, checkout undone),
+    // leaving the issue's legacy claim INTACT (executionRunId from the wakeup) — the legacy
+    // run proceeds unchanged and the agent self-checks-out. It never fails the run.
+    if (
+      distributedRolloutHook &&
+      distributedRolloutState === "active" &&
+      shouldAutoCheckoutForWake &&
+      issueId &&
+      issueContext &&
+      issueContext.assigneeAgentId === agent.id
+    ) {
+      const convert = await distributedRolloutHook.convertActiveRun({
+        source: { kind: "task_run", runId: run.id, issueId, assigneeAgentId: agent.id },
+        actor: { kind: "agent", id: agent.id, companyId: agent.companyId },
+        idempotencyKey: run.id,
+      });
+      if (convert.converted) {
+        // The bridge owns the ONE checkout (ownership moved harness→bridge). Mirror the
+        // harness context flags so the wake prompt skips the redundant self-checkout.
+        context[AOA_HARNESS_CHECKOUT_KEY] = true;
+        context.checkedOutByHarness = true;
+        logger.info(
+          { runId: run.id, issueId, jobId: convert.response?.jobId, replayed: convert.reason === "replayed" },
+          "[heartbeat] CLI-005 active convert — bridge owns checkout (non-leasable job)",
+        );
+      } else {
+        logger.warn(
+          { runId: run.id, issueId, reason: convert.reason },
+          "[heartbeat] CLI-005 active convert skipped/failed — legacy path continues",
+        );
       }
     }
     // ────────────────────────────────────────────────────────────────────────
@@ -3611,7 +3798,7 @@ export function heartbeatService(db: Db) {
         }
 
         // Populate context with execution workspace details (mirrors existing path).
-        context.aoaWorkspace = {
+        context.paperclipWorkspace = {
           cwd: threadOutcome.realizedWorkspace.cwd,
           source: threadOutcome.realizedWorkspace.source,
           mode: executionWorkspaceMode,
@@ -3670,7 +3857,7 @@ export function heartbeatService(db: Db) {
         }
 
         // Skip the rest of the isolatedWorkspacesEnabled block (existing path).
-        // Fall through to context.aoaWorkspaces assignment below.
+        // Fall through to context.paperclipWorkspaces assignment below.
       } else {
       // ── Existing per-task workspace path (UNCHANGED) ──────────────────────
       const issueScopedExecutionWorkspace =
@@ -3936,7 +4123,7 @@ export function heartbeatService(db: Db) {
       }
 
       // ── Populate context with execution workspace details ───────────
-      context.aoaWorkspace = {
+      context.paperclipWorkspace = {
         cwd: executionWorkspace.cwd,
         source: executionWorkspace.source,
         mode: executionWorkspaceMode,
@@ -3960,7 +4147,7 @@ export function heartbeatService(db: Db) {
       } // end else (existing per-task workspace path)
     } else {
       // ── Isolated workspaces disabled — use resolvedWorkspace directly ──
-      context.aoaWorkspace = {
+      context.paperclipWorkspace = {
         cwd: resolvedWorkspace.cwd,
         source: resolvedWorkspace.source,
         mode: executionWorkspaceMode,
@@ -3982,7 +4169,7 @@ export function heartbeatService(db: Db) {
         context.projectId = resolvedWorkspace.projectId;
       }
     }
-    context.aoaWorkspaces = resolvedWorkspace.workspaceHints;
+    context.paperclipWorkspaces = resolvedWorkspace.workspaceHints;
 
     // ── Session resolution with effective workspace cwd ──────────────
     const runtimeSessionResolution = resolveRuntimeSessionParamsForWorkspace({
@@ -4017,9 +4204,9 @@ export function heartbeatService(db: Db) {
         : [];
     })();
     if (runtimeServiceIntents.length > 0) {
-      context.aoaRuntimeServiceIntents = runtimeServiceIntents;
+      context.paperclipRuntimeServiceIntents = runtimeServiceIntents;
     } else {
-      delete context.aoaRuntimeServiceIntents;
+      delete context.paperclipRuntimeServiceIntents;
     }
 
     // Enrich context with memory items and company info for the agent
@@ -4367,8 +4554,8 @@ export function heartbeatService(db: Db) {
             : undefined,
         });
         if (runtimeServices.length > 0) {
-          context.aoaRuntimeServices = runtimeServices;
-          context.aoaRuntimePrimaryUrl =
+          context.paperclipRuntimeServices = runtimeServices;
+          context.paperclipRuntimePrimaryUrl =
             runtimeServices.find((service) => readNonEmptyString(service.url))?.url ?? null;
           await db
             .update(heartbeatRuns)
@@ -4540,7 +4727,7 @@ export function heartbeatService(db: Db) {
       // Inject available plugin tools into context
       try {
         const pluginToolDispatcher: PluginToolDispatcher | undefined =
-          (globalThis as any).__aoaPluginToolDispatcher;
+          (globalThis as any).__paperclipPluginToolDispatcher;
         if (pluginToolDispatcher) {
           const pluginTools = pluginToolDispatcher.listToolsForAgent({ companyId: agent.companyId });
           if (pluginTools.length > 0) {
@@ -4859,8 +5046,8 @@ export function heartbeatService(db: Db) {
               ...runtimeServices,
               ...Array.from(adapterManagedRuntimeServicesById.values()),
             ];
-            context.aoaRuntimeServices = combinedRuntimeServices;
-            context.aoaRuntimePrimaryUrl =
+            context.paperclipRuntimeServices = combinedRuntimeServices;
+            context.paperclipRuntimePrimaryUrl =
               combinedRuntimeServices.find((service) => readNonEmptyString(service.url))?.url ?? null;
             await db
               .update(heartbeatRuns)
@@ -5021,8 +5208,312 @@ export function heartbeatService(db: Db) {
         });
       }
 
+      // ── CLI-005 (D2) shadow comparison ────────────────────────────────────
+      // EFFECT-FREE diff of the resolved routing/provenance/policy vs the would-be
+      // distributed intent, recorded to the observability sink. No jobs row, no
+      // checkout, no capacity, no lease — the hook's comparator holds no Db handle.
+      // Best-effort (never throws into the run). O7: workload synthesis is a
+      // diff-stable characterization refined at MIG-002.
+      if (distributedRolloutHook && distributedRolloutState === "shadow" && issueId) {
+        const runScopedModel =
+          typeof (runScopedConfig as Record<string, unknown>).model === "string"
+            ? ((runScopedConfig as Record<string, unknown>).model as string)
+            : null;
+        distributedRolloutHook.runShadowComparison({
+          organizationId: distributedRolloutOrganizationId ?? agent.companyId,
+          companyId: agent.companyId,
+          // MIG-005/006/007 (D3): identity travels INSIDE the source, so the same
+          // comparator serves commander_turn / crew_run / one_shot, none of which
+          // has a run or an issue to put at the top level.
+          source: {
+            kind: "task_run",
+            runId: run.id,
+            issueId,
+            assigneeAgentId: agent.id,
+          },
+          workloadType: HEARTBEAT_TASK_RUN_WORKLOAD_TYPE,
+          routing: { executionTargetType: executionTarget.type },
+          provenance: { executionPrincipalKind: "agent", credentialKind: null },
+          policy: {
+            model: runScopedModel,
+            budgetPolicyId: null,
+            effectiveCompletionPolicy: "review_required",
+          },
+          workloadCharacterization: {
+            command: agent.adapterType,
+            args: [],
+            maxRuntimeSeconds: 600,
+            stdinArtifactId: null,
+          },
+        });
+      }
+
+      // ── CLI-006 (D3/D3a) — the canary execution-ownership decision ────────
+      // Computed HERE, not at the CLI-005 convert seam ~2,000 lines above,
+      // because the frozen batch envelope carries the run's context as artifacts
+      // and the submission is immutable: a job cannot be submitted before the
+      // context exists (D3a). The harness checkout above runs unchanged for
+      // canary; `admitAndSubmit` skips its own via the D3a bypass, so the run is
+      // never checked out twice.
+      //
+      // ONE call, ONE stored value. The suppression guard below reads THAT value
+      // and never re-derives the condition — Invariant 1 is what makes double
+      // execution structurally hard rather than merely tested against.
+      //
+      // Best-effort by construction: `resolveExecutionOwner` never throws and
+      // every failure direction resolves to legacy (Invariant 2).
+      let canaryExecutionOwner: RunExecutionOwner | undefined;
+      if (
+        distributedRolloutHook &&
+        distributedRolloutState === "canary" &&
+        // M6 — the SAME wake predicate the active-convert block carries, for the
+        // same reason. Without it, a mention / execution_* / null wake skips the
+        // harness checkout (heartbeat.ts:3212) while this block still fires; the
+        // D3a bypass probe then fails because `issues.checkoutRunId !== run.id`,
+        // so `admitAndSubmit` drives its OWN checkout and silently flips a backlog
+        // task the founder merely mentioned into `in_progress` with `startedAt`
+        // reset. That is the exact parity break CLI-005's review closed for active
+        // mode. Canary must fire only on the wakes the harness checks out for.
+        shouldAutoCheckoutForWake &&
+        distributedRolloutOrganizationId &&
+        issueId &&
+        issueContext &&
+        issueContext.assigneeAgentId === agent.id
+      ) {
+        // ── Blocker A — the WORKLOAD. ──────────────────────────────────────
+        // The optional `input` has been plumbed end-to-end since CLI-005
+        // (heartbeat-distributed-rollout -> run-execution-owner ->
+        // job-convert-orchestrator -> job-admission-bridge) and NOTHING pushed
+        // into it, so every canary job carried `{}`. `createSpecFor` then fell
+        // back to `command = workloadType` and the sandbox would have run a
+        // binary called "batch". This is the push.
+        //
+        // FAIL CLOSED: a workload we cannot build is a run we must NOT convert.
+        // Converting without one places a leasable attempt whose only possible
+        // outcome is a sandbox running a nonexistent command — while the legacy
+        // executor has already been suppressed. Staying legacy is correct.
+        //
+        // ── CLI-008 Unit D — the CONTEXT the workload's argv reads. ─────────
+        // The agent's instructions bundle entry file lives on the HOST; the
+        // sandbox has no host filesystem, so the control plane reads it here and
+        // Unit B's staging channel puts the bytes inside the sandbox, where
+        // `--append-system-prompt-file` (claude) / the stdin prepend (codex) can
+        // reach them. A configured-but-UNREADABLE bundle is a refusal, not an
+        // absence: running a canary agent without its identity produces plausible
+        // work and a clean terminal, which is the one failure nothing downstream
+        // detects. `resolveTaskRunInstructionsBundle` never throws.
+        const canaryInstructions = await resolveTaskRunInstructionsBundle({
+          adapterConfig: runScopedConfig,
+        });
+        const canaryWorkload = canaryInstructions.ok
+          ? buildTaskRunBatchWorkload({
+              adapterType: agent.adapterType,
+              runtimeCommandSpec,
+              adapterConfig: runScopedConfig,
+              currentTaskMarkdown: context.currentTaskMarkdown,
+              instructions: canaryInstructions.configured ? canaryInstructions.content : null,
+            })
+          // ★ The `reason` here is never read: the `detail` below reports the INSTRUCTIONS
+          //   failure whenever `canaryInstructions.ok` is false, so this branch exists only to
+          //   give the union an `ok: false` arm the code below can narrow on. It is a
+          //   placeholder, and saying so is cheaper than someone later chasing why an
+          //   unreadable bundle is logged as a schema problem.
+          : ({ ok: false, reason: "invalid_workload" } as const);
+        canaryExecutionOwner = canaryWorkload.ok
+          ? await distributedRolloutHook.resolveExecutionOwner({
+              source: { kind: "task_run", runId: run.id, issueId, assigneeAgentId: agent.id },
+              actor: { kind: "agent", id: agent.id, companyId: agent.companyId },
+              organizationId: distributedRolloutOrganizationId,
+              idempotencyKey: run.id,
+              rolloutState: distributedRolloutState,
+              input: canaryWorkload.workload,
+              // ★ The files the argv above READS. Passed from the SAME build result, so a
+              // future edit cannot give the sandbox one and not the other.
+              stagedFiles: canaryWorkload.stagedFiles,
+            })
+          : {
+              owner: "legacy",
+              reason: "workload_unavailable",
+              // The instructions refusal is reported under its own reason rather than
+              // folded into `invalid_workload`, which would send someone reading this log
+              // to the frozen schema instead of to a file they cannot read.
+              detail: canaryInstructions.ok
+                ? canaryWorkload.reason
+                : `instructions_${canaryInstructions.reason}: ${canaryInstructions.detail}`,
+            };
+
+        // ── DE-20 (audit, conjunct 4a) — THE CUTOVER SELECTION RECORD ─────────
+        // ★ THE ONE SITE, FOR BOTH ARMS, AND THAT POSITION IS THE FIX.
+        // Before this, a DISTRIBUTED selection wrote a
+        // `distributed_execution_handoff` row (`markRunHandedOffToDistributed`
+        // below) and a LEGACY selection wrote NO DURABLE ROW AT ALL — it fell
+        // through the suppression guard to `adapter.execute`. So "the cutover
+        // selected legacy" was indistinguishable, in the database, from "this run
+        // was never a cutover candidate", which is the same blindness the comment
+        // directly below names for the LOG.
+        //
+        // This sits AFTER the assignment and BEFORE `shouldSuppressLegacyExecution`
+        // reads it, so it is unconditional over the decision: there is no arm of
+        // the cutover that can reach the executor without leaving this row.
+        // `buildCutoverSelectionEvent` is total over `RunExecutionOwner`, so the
+        // "both arms" property is carried by the type and not by a reviewer
+        // remembering the second call site.
+        // `de-20-cutover-selection-audit.integration.test.ts` asserts that
+        // position structurally, because `executeRun` cannot be instantiated
+        // in-process (the standing CLI-003/005/006 limitation).
+        //
+        // ★ BEST-EFFORT, exactly like the handoff lifecycle event below. This is
+        // visibility about a decision that has already been made and stored in
+        // `canaryExecutionOwner`; a failed append must not throw into a `try`
+        // whose only handler is a `finally`, because `executeRun`'s outer catch
+        // would then write `adapter_failed` AND call
+        // `releaseIssueExecutionAndPromote` — promoting a deferred wake into a
+        // second executor on the same issue. An audit write must never become a
+        // double-execution lever.
+        //
+        // ★ DE-20 DOES NOT CLOSE ON THIS. Its `audit` clause is a CONJUNCTION —
+        // "cutover selection AND rollback transitions" — and the ROLLBACK conjunct
+        // stays vacuous: `createDistributedExecutionDrain` has zero production
+        // callers, so no rollback transition occurs and none can be recorded.
+        //
+        // ★ IT TAKES ITS SEQ FROM THE IN-PROCESS COUNTER (`seq++`), NOT FROM A
+        // `max(seq)` READ — Codex P2 on PR #409, verified at source. The first
+        // draft copied `markRunHandedOffToDistributed`'s max-based read, which is
+        // right THERE (that function is outside `executeRun` and cannot see the
+        // counter) and WRONG HERE. At this point `seq` is already 2 — the "run
+        // started" lifecycle event consumed 1 — while the durable max is 1, so
+        // `projectionSeqBase(1) + 1` also yields 2 and leaves the local counter
+        // untouched. The very next `seq++` event would then reuse 2.
+        // `heartbeat_run_events` carries only a NON-UNIQUE `(run_id, seq)` index,
+        // so nothing errors: the two rows silently interleave and a
+        // resume-by-seq reader can drop one. That is the exact failure
+        // `projectionSeqBase`'s own doc comment was written for. Note this bites
+        // ONLY the legacy arm — the distributed arm returns at the suppression
+        // seam and never appends again — i.e. precisely the arm this change adds.
+        try {
+          await appendRunEvent(run, seq++, buildCutoverSelectionEvent(canaryExecutionOwner));
+        } catch (selectionErr) {
+          logger.warn(
+            { err: selectionErr, runId: run.id },
+            "[DE-20] cutover selection audit event failed — the selection itself is unaffected",
+          );
+        }
+
+        // ★ A NEW REASON ALONE IS INVISIBLE. Before this, `reason`/`detail` was
+        // never logged or persisted anywhere: all nine `canaryExecutionOwner`
+        // references below read only `owner`/`jobId`/`attemptId`. So a canary
+        // that silently stayed legacy because of a missing workload would have
+        // been indistinguishable, in aggregate, from one that was simply not a
+        // canary — the exact blindness this change exists to remove. Log EVERY
+        // outcome, not just the new one. (The CLI-005 precedent above logs a
+        // different type, `JobConvertReason`.)
+        if (canaryExecutionOwner.owner === "distributed") {
+          logger.info(
+            {
+              runId: run.id,
+              issueId,
+              agentId: agent.id,
+              adapterType: agent.adapterType,
+              jobId: canaryExecutionOwner.jobId,
+              attemptId: canaryExecutionOwner.attemptId,
+              // ★ SINCE UNIT D `workload.command` IS ALWAYS `sh`, so logging it alone tells an
+              // operator nothing about what actually runs. `binary` is the argv element the
+              // script execs as `$0` — the adapter's real CLI, which is what this line existed
+              // to report. Both are logged: `command` because it is what the supervisor
+              // receives, `binary` because it is what the sandbox runs.
+              command: canaryWorkload.ok ? canaryWorkload.workload.command : null,
+              binary: canaryWorkload.ok
+                ? (canaryWorkload.workload.args[SANDBOX_INVOCATION_BINARY_ARG_INDEX] ?? null)
+                : null,
+              stagedPaths: canaryWorkload.ok
+                ? canaryWorkload.stagedFiles.map((file) => file.path)
+                : null,
+              maxRuntimeSeconds: canaryWorkload.ok
+                ? canaryWorkload.workload.maxRuntimeSeconds
+                : null,
+            },
+            "[CLI-006] canary execution owner = DISTRIBUTED — legacy executor will be suppressed",
+          );
+        } else {
+          logger.info(
+            {
+              runId: run.id,
+              issueId,
+              agentId: agent.id,
+              adapterType: agent.adapterType,
+              reason: canaryExecutionOwner.reason,
+              detail: canaryExecutionOwner.detail ?? null,
+            },
+            "[CLI-006] canary execution owner = LEGACY — the legacy executor runs this task",
+          );
+        }
+      }
+
       let adapterResult: Awaited<ReturnType<typeof adapter.execute>>;
       try {
+        // ── CLI-006 (D4) — the suppression seam. The ONLY edit to this call site.
+        //
+        // This return MUST stay INSIDE this `try`. The `finally` below is the sole
+        // call site of `deregisterRuntimeHook` and of `heartbeatMcpDelivery.cleanup()`;
+        // returning before `try {` typechecks, passes every behavioural test, and
+        // silently leaks a 24-hour-valid runtime-permission token plus a tmpdir MCP
+        // config file that, for non-brokered claude_local, embeds DATABASE_URL — no
+        // TTL, no sweeper. `cli-006-seam-suppression.test.ts` asserts this position
+        // structurally, because nothing else in this repo can.
+        if (shouldSuppressLegacyExecution(canaryExecutionOwner)) {
+          // H2 — this try has only a `finally`, no `catch`, so an unguarded throw
+          // here reaches `executeRun`'s outer catch, which writes `adapter_failed`
+          // AND calls `releaseIssueExecutionAndPromote` — promoting a deferred wake
+          // into a NEW run on the same issue. The attempt is already durably
+          // lease-eligible at this point, so that is two executors on one task.
+          //
+          // Suppress regardless of whether the marker landed — letting
+          // `adapter.execute` run is CERTAIN double execution.
+          //
+          // But an unmarked suppressed run is NOT merely "recoverable", as an
+          // earlier version of this comment claimed. Nothing in the codebase
+          // recovers it, and the one mechanism that touches it does the actively
+          // wrong thing: with the marker absent, the reaper's R1 stand-down does
+          // not apply, so the run is reaped and `releaseIssueExecutionAndPromote`
+          // frees the issue lock and promotes a deferred wake — a SECOND executor,
+          // while the attempt is durably lease-eligible.
+          //
+          // So the failure is CONVERGED instead: revoke the attempt's fence. The
+          // attempt then never runs, which makes the later reap the correct
+          // action and hands the work back to legacy — a genuine Invariant 2
+          // outcome rather than a stranded run with a live worker behind it.
+          try {
+            await markRunHandedOffToDistributed(run, canaryExecutionOwner!);
+          } catch (markerErr) {
+            const cancelPort = getDistributedCancellationPort();
+            if (cancelPort && canaryExecutionOwner!.owner === "distributed") {
+              try {
+                await cancelPort.requestCancellation({
+                  jobId: canaryExecutionOwner!.jobId,
+                  companyId: run.companyId,
+                  reason: "handoff marker write failed — converging to legacy",
+                  graceful: false,
+                });
+              } catch (revokeErr) {
+                logger.error(
+                  { err: revokeErr, runId: run.id, jobId: canaryExecutionOwner!.jobId },
+                  "[CLI-006] fence revoke FAILED after a failed handoff marker write — a lease-eligible attempt is live with no marker",
+                );
+              }
+            }
+            logger.error(
+              {
+                err: markerErr,
+                runId: run.id,
+                jobId: canaryExecutionOwner!.owner === "distributed" ? canaryExecutionOwner!.jobId : null,
+                attemptId:
+                  canaryExecutionOwner!.owner === "distributed" ? canaryExecutionOwner!.attemptId : null,
+              },
+              "[CLI-006] handoff marker write FAILED after a lease-eligible placement — suppressing the legacy executor anyway; this run is handed off but unmarked",
+            );
+          }
+          return; // CLI-006-SUPPRESSION-RETURN
+        }
         adapterResult = await adapter.execute({
           runId: run.id,
           agent,
@@ -5185,8 +5676,8 @@ export function heartbeatService(db: Db) {
             ...runtimeServices,
             ...adapterManagedRuntimeServices,
           ];
-          context.aoaRuntimeServices = combinedRuntimeServices;
-          context.aoaRuntimePrimaryUrl =
+          context.paperclipRuntimeServices = combinedRuntimeServices;
+          context.paperclipRuntimePrimaryUrl =
             combinedRuntimeServices.find((service) => readNonEmptyString(service.url))?.url ?? null;
           await db
             .update(heartbeatRuns)
@@ -5675,7 +6166,19 @@ export function heartbeatService(db: Db) {
         .catch((leaseReleaseErr: unknown) => {
           logger.warn({ err: leaseReleaseErr, runId: run.id }, "heartbeat: failed to release environment leases in finally");
         });
-      await dispatchQueuedRunsAfterAgentSignal(agent.id);
+      // CLI-006 (R6) — the ONLY bare await in this finally, now chained like its
+      // three neighbours above. `dispatchQueuedRunsAfterAgentSignal` throws in the
+      // tenant-isolated branch when an Organization cannot be resolved. Unchained,
+      // that rejection escapes `executeRun` into the call-site `.catch`, which sees
+      // the run still `running` and writes `pre_spawn_failed` + releases the issue
+      // — precisely the legacy finalization the suppression seam exists to
+      // prevent, reached through an exception instead of through the guarded path.
+      await dispatchQueuedRunsAfterAgentSignal(agent.id).catch((dispatchErr: unknown) => {
+        logger.warn(
+          { err: dispatchErr, runId: run.id, agentId: agent.id },
+          "heartbeat: failed to dispatch queued runs in finally",
+        );
+      });
     }
   }
 
@@ -5750,7 +6253,7 @@ export function heartbeatService(db: Db) {
 
         const deferredPayload = parseObject(deferred.payload);
         const deferredContextSeed = parseObject(
-          deferredPayload[DEFERRED_WAKE_CONTEXT_KEY],
+          deferredPayload[DEFERRED_WAKE_CONTEXT_KEY] ?? deferredPayload[LEGACY_DEFERRED_WAKE_CONTEXT_KEY],
         );
         const promotedContextSeed: Record<string, unknown> = { ...deferredContextSeed };
         const promotedReason = readNonEmptyString(deferred.reason) ?? "issue_execution_promoted";
@@ -5760,6 +6263,7 @@ export function heartbeatService(db: Db) {
           (readNonEmptyString(deferred.triggerDetail) as WakeupOptions["triggerDetail"]) ?? null;
         const promotedPayload = deferredPayload;
         delete promotedPayload[DEFERRED_WAKE_CONTEXT_KEY];
+        delete promotedPayload[LEGACY_DEFERRED_WAKE_CONTEXT_KEY];
 
         const {
           contextSnapshot: promotedContextSnapshot,
@@ -6169,14 +6673,17 @@ export function heartbeatService(db: Db) {
           if (existingDeferred) {
             const existingDeferredPayload = parseObject(existingDeferred.payload);
             const existingDeferredContext = parseObject(
-              existingDeferredPayload[DEFERRED_WAKE_CONTEXT_KEY],
+              existingDeferredPayload[DEFERRED_WAKE_CONTEXT_KEY] ?? existingDeferredPayload[LEGACY_DEFERRED_WAKE_CONTEXT_KEY],
             );
             const mergedDeferredContext = mergeCoalescedContextSnapshot(
               existingDeferredContext,
               enrichedContextSnapshot,
             );
+            // Spread existing payload then overwrite with AoA key; also strip the legacy
+            // key so that every write converges the row toward the new name.
+            const { [LEGACY_DEFERRED_WAKE_CONTEXT_KEY]: _stripLegacy, ...existingWithoutLegacy } = existingDeferredPayload;
             const mergedDeferredPayload = {
-              ...existingDeferredPayload,
+              ...existingWithoutLegacy,
               ...(payload ?? {}),
               issueId,
               [DEFERRED_WAKE_CONTEXT_KEY]: mergedDeferredContext,
@@ -6423,6 +6930,113 @@ export function heartbeatService(db: Db) {
     return newRun;
   }
 
+  /**
+   * CLI-006 (Task 3) — durably record that a distributed attempt, not this
+   * process, owns this run's execution.
+   *
+   * This write is what every other consumer reads. `reapOrphanedRuns` exempts a
+   * run only when it appears in the in-process `runningProcesses` map, which a
+   * distributed attempt never populates, and the startup reap runs with
+   * `staleThresholdMs = 0` — so without this marker a control-plane restart
+   * would fail every handed-off run. The five cancel writers and the projector
+   * read it too.
+   *
+   * Deliberately no `status` write: the attempt is the terminal authority from
+   * here, and latching a terminal now would make the projector's later terminal
+   * a no-op and discard the distributed evidence.
+   */
+  /**
+   * CLI-006 (Task 4) — route ONE run's cancellation, and tell the caller whether
+   * it still owns the legacy terminal writes.
+   *
+   * Returns `true` for the ordinary legacy run (the caller proceeds exactly as
+   * before) and `false` when a distributed attempt owns this run — in which case
+   * the caller must write NO terminal, NO wakeup status, and must NOT release the
+   * issue execution lock. Releasing that lock while the attempt is still live
+   * would let another run claim the issue underneath a running worker; the
+   * projector does all three when the attempt's real terminal arrives.
+   *
+   * Reads the port from module scope rather than an injected option, because
+   * every real `cancelRun` caller holds a bare `heartbeatService(db)` — see the
+   * note in `distributed-cancellation-port.ts`.
+   */
+  async function routeRunCancellation(
+    run: typeof heartbeatRuns.$inferSelect,
+    reason: string,
+    opts: { graceful: boolean; onError: "propagate" | "skip" },
+  ): Promise<boolean> {
+    const outcome = await dispatchCancel({
+      run,
+      companyId: run.companyId,
+      reason,
+      graceful: opts.graceful,
+      port: getDistributedCancellationPort(),
+      onError: opts.onError,
+    });
+    if (outcome.degraded) {
+      logger.warn(
+        { runId: run.id, jobId: run.distributedJobId, degraded: outcome.degraded },
+        "[CLI-006] distributed cancel degraded",
+      );
+    }
+    return outcome.writeLegacyTerminal;
+  }
+
+  async function markRunHandedOffToDistributed(
+    run: typeof heartbeatRuns.$inferSelect,
+    owner: RunExecutionOwner,
+  ) {
+    // H2 — the marker UPDATE is the ONLY critical statement here. The lifecycle
+    // event below is visibility, and a failure to append it must not cost the
+    // marker, so it is separately guarded.
+    const patch = buildHandoffRunPatch(owner, new Date());
+    await db.update(heartbeatRuns).set(patch).where(eq(heartbeatRuns.id, run.id));
+    try {
+    const maxSeq = await db
+      .select({ value: sql<number | null>`max(${heartbeatRunEvents.seq})` })
+      .from(heartbeatRunEvents)
+      .where(eq(heartbeatRunEvents.runId, run.id))
+      .then((rows) => rows[0]?.value ?? null);
+    await appendRunEvent(run, projectionSeqBase(maxSeq) + 1, {
+      eventType: "distributed_execution_handoff",
+      stream: "system",
+      level: "info",
+      message: `Execution handed off to distributed attempt ${patch.distributedAttemptId}`,
+      payload: { jobId: patch.distributedJobId, attemptId: patch.distributedAttemptId },
+    });
+    } catch (eventErr) {
+      logger.warn({ err: eventErr, runId: run.id }, "[CLI-006] handoff lifecycle event failed (marker is durable)");
+    }
+  }
+
+  async function finalizeDistributedRunImpl(input: {
+    runId: string;
+    outcome: "succeeded" | "failed" | "cancelled" | "timed_out";
+    errorMessage: string | null;
+  }): Promise<void> {
+    const run = await getRun(input.runId);
+    if (!run) return;
+    const wakeupStatus = input.outcome === "succeeded" ? "completed" : input.outcome;
+    try {
+      await setWakeupStatus(run.wakeupRequestId, wakeupStatus, {
+        finishedAt: new Date(),
+        error: input.errorMessage,
+      });
+    } catch (err) {
+      logger.warn({ err, runId: run.id }, "[CLI-006] distributed finalize: wakeup status failed");
+    }
+    try {
+      await releaseIssueExecutionAndPromote(run);
+    } catch (err) {
+      logger.warn({ err, runId: run.id }, "[CLI-006] distributed finalize: issue release failed");
+    }
+    try {
+      await finalizeAgentStatus(run.agentId, input.outcome);
+    } catch (err) {
+      logger.warn({ err, runId: run.id }, "[CLI-006] distributed finalize: agent status failed");
+    }
+  }
+
   return {
     list: (companyId: string, agentId?: string, limit?: number) => {
       const query = db
@@ -6442,6 +7056,146 @@ export function heartbeatService(db: Db) {
     },
 
     getRun,
+
+    /**
+     * CLI-006 — discharge, for a run whose execution was owned by a distributed
+     * attempt, the finalization the legacy completion path would have done. The
+     * projector calls this after it wins the terminal latch.
+     *
+     * These three effects live in closures over `heartbeatService`'s `db` and are
+     * not otherwise reachable, which is why the capability is exposed here rather
+     * than assembled in the composition root:
+     *
+     *   - `releaseIssueExecutionAndPromote` — release the issue execution lock and
+     *     promote any deferred wake, so the next run for that issue can proceed.
+     *   - `finalizeAgentStatus` — recompute the agent's status. Without it the
+     *     agent pins at `running`, and since the recompute counts running rows,
+     *     the pinned row also holds every OTHER run of that agent at `running`.
+     *   - `setWakeupStatus` — terminalize the originating wakeup request.
+     *
+     * The caller owns the latch check: this runs ONLY when the terminal write won,
+     * so it can never release a lock or reset an agent out from under whoever did.
+     * Best-effort per substep and never throws — a stranded finalization is
+     * recoverable, and this is invoked from an after-commit projection hook whose
+     * failure must not cost the worker's ACK.
+     */
+    finalizeDistributedRun: finalizeDistributedRunImpl,
+
+    /**
+     * CLI-006 (2b) — project a distributed attempt's durable terminal onto the
+     * canary-owned heartbeat run it was handed off from.
+     *
+     * Exposed here for the same reason `finalizeDistributedRun` is: the writes it
+     * needs — `setRunStatus` (the terminal latch) and `appendRunEvent` — are
+     * closures over this service's `db` and are deliberately NOT on the public
+     * surface. Publishing `setRunStatus` would hand any caller the ability to
+     * terminalize a run, which is precisely the second authority Invariant 8
+     * forbids. So the narrow capability is exposed and the latch stays private.
+     *
+     * The ONE thing this service cannot do is read the attempt's events: they live
+     * in the tenant-scoped `job_events` table behind RLS, reachable only through
+     * `runInTenant` over the `aoa_app` pool. That is the single injected port.
+     *
+     * Never throws: it is driven from JOB-005's after-commit hook, whose failure
+     * would otherwise cost the worker its ACK and make it replay the terminal.
+     */
+    async projectDistributedAttemptTerminal(input: {
+      signal: AttemptTerminalSignal;
+      listAttemptEvents: (query: {
+        organizationId: string;
+        companyId: string;
+        jobId: string;
+        attemptId: string;
+      }) => Promise<readonly AttemptEventRow[]>;
+    }): Promise<void> {
+      // Per-projection caches for the M4/M5 hoist. Scoped to this one call, so a
+      // concurrent projection for a different run never shares them.
+      let projectionRun: Awaited<ReturnType<typeof getRun>> | undefined;
+      let projectionSeqOffset: number | undefined;
+      const handler = createAttemptTerminalProjectionHandler({
+        findRunForAttempt: async ({ jobId, attemptId, companyId }) =>
+          db
+            .select({
+              id: heartbeatRuns.id,
+              companyId: heartbeatRuns.companyId,
+              agentId: heartbeatRuns.agentId,
+              executionOwner: heartbeatRuns.executionOwner,
+              startedAt: heartbeatRuns.startedAt,
+            })
+            .from(heartbeatRuns)
+            .where(
+              and(
+                eq(heartbeatRuns.companyId, companyId),
+                eq(heartbeatRuns.distributedJobId, jobId),
+                eq(heartbeatRuns.distributedAttemptId, attemptId),
+              ),
+            )
+            .limit(1)
+            .then((rows) => rows[0] ?? null),
+
+        listAttemptEvents: input.listAttemptEvents,
+
+        // Resolved BEFORE projection, because the projector's `finalizeRun` step
+        // releases the very execution lock this issue lookup reads.
+        resolveTarget: async ({ run }) => {
+          const agent = await getAgent(run.agentId);
+          if (!agent) return null;
+          const issue = await db
+            .select({ id: issues.id })
+            .from(issues)
+            .where(and(eq(issues.companyId, run.companyId), eq(issues.executionRunId, run.id)))
+            .limit(1)
+            .then((rows) => rows[0] ?? null);
+          return {
+            issueId: issue?.id ?? null,
+            agentName: agent.name,
+            runtimeConfig: agent.runtimeConfig as Record<string, unknown> | null | undefined,
+          };
+        },
+
+        projector: createCanaryRunProjector({
+          // M4/M5 — the run row and the seq base are resolved ONCE per projection,
+          // not once per event. Re-reading `max(seq)` inside the loop made the base
+          // grow with every insert, so projected seqs went 1, 3, 6, 10, … —
+          // sum-of-sequence growth that overflows `heartbeat_run_events.seq`
+          // (int4) at roughly 65k events, where the projector's blanket catch would
+          // silently swallow the failure. It also issued three sequential
+          // round-trips per event inside the worker's awaited ACK path.
+          appendRunEvent: async (event) => {
+            const run = projectionRun ?? (projectionRun = await getRun(event.runId));
+            if (!run) return;
+            projectionSeqOffset ??= projectionSeqBase(
+              await db
+                .select({ value: sql<number | null>`max(${heartbeatRunEvents.seq})` })
+                .from(heartbeatRunEvents)
+                .where(eq(heartbeatRunEvents.runId, run.id))
+                .then((rows) => rows[0]?.value ?? null),
+            );
+            await appendRunEvent(run, projectionSeqOffset + event.seq, {
+              eventType: event.eventType,
+              stream: event.stream,
+              message: event.message,
+              payload: event.payload,
+            });
+          },
+          setRunStatus: toProjectorTerminalWriter((runId, status, patch) =>
+            setRunStatus(runId, status, patch as Partial<typeof heartbeatRuns.$inferInsert>),
+          ),
+          finalizeRun: ({ runId, outcome, errorMessage }) =>
+            finalizeDistributedRunImpl({ runId, outcome, errorMessage }),
+          postRunSummary: (summary) => postRunSummaryComment(db, summary),
+        }),
+      });
+
+      try {
+        await handler(input.signal);
+      } catch (err) {
+        logger.warn(
+          { err, signal: input.signal },
+          "[CLI-006] distributed attempt terminal projection failed",
+        );
+      }
+    },
 
     scheduleBoundedRetryForRun,
 
@@ -6600,6 +7354,21 @@ export function heartbeatService(db: Db) {
       if (!run) throw notFound("Heartbeat run not found");
       if (run.status !== "running" && run.status !== "queued") return run;
 
+      // CLI-006 (Task 4) — `propagate`: this answers an HTTP request, so an
+      // operator who asked to cancel must be told it failed rather than shown a
+      // false success.
+      if (!(await routeRunCancellation(run, "Cancelled by control plane", {
+        graceful: true,
+        onError: "propagate",
+      }))) {
+        // CLI-006 (Task 4) — a distributed attempt owns this run. Revoke its
+        // fence and stop: no terminal, no wakeup status, and NO issue-lock
+        // release while the worker is still live. The projector does all three
+        // when the attempt's real terminal arrives.
+        await cancelRuntimeDecisionPromptsForRun(run, "run cancelled");
+        return run;
+      }
+
       const running = runningProcesses.get(run.id);
       if (running) {
         logger.info(
@@ -6681,6 +7450,13 @@ export function heartbeatService(db: Db) {
         .where(and(eq(heartbeatRuns.agentId, agentId), inArray(heartbeatRuns.status, ["queued", "running"])));
 
       for (const run of runs) {
+        // CLI-006 (Task 4) — `skip`: one unreachable attempt must not abort a
+        // batch cancel for every other run. The skipped run stays `running`
+        // and the next sweep revisits it.
+        if (!(await routeRunCancellation(run, "Cancelled due to agent pause", { graceful: true, onError: "skip" }))) {
+          await cancelRuntimeDecisionPromptsForRun(run, "run cancelled due to agent pause");
+          continue;
+        }
         await setRunStatus(run.id, "cancelled", {
           finishedAt: new Date(),
           error: "Cancelled due to agent pause",
@@ -6729,6 +7505,13 @@ export function heartbeatService(db: Db) {
           .where(and(eq(heartbeatRuns.agentId, scope.scopeId), inArray(heartbeatRuns.status, ["queued", "running"])));
 
         for (const run of runs) {
+          // CLI-006 (Task 4) — `skip`: one unreachable attempt must not abort a
+          // batch cancel for every other run. The skipped run stays `running`
+          // and the next sweep revisits it.
+          if (!(await routeRunCancellation(run, "Cancelled due to budget hard-stop", { graceful: true, onError: "skip" }))) {
+            await cancelRuntimeDecisionPromptsForRun(run, "run cancelled due to budget hard-stop");
+            continue;
+          }
           await setRunStatus(run.id, "cancelled", {
             finishedAt: new Date(),
             error: "Cancelled due to budget hard-stop",
@@ -6766,6 +7549,13 @@ export function heartbeatService(db: Db) {
         .where(and(eq(heartbeatRuns.companyId, scope.companyId), inArray(heartbeatRuns.status, ["queued", "running"])));
 
       for (const run of runs) {
+        // CLI-006 (Task 4) — `skip`: one unreachable attempt must not abort a
+        // batch cancel for every other run. The skipped run stays `running`
+        // and the next sweep revisits it.
+        if (!(await routeRunCancellation(run, "Cancelled due to company budget hard-stop", { graceful: true, onError: "skip" }))) {
+          await cancelRuntimeDecisionPromptsForRun(run, "run cancelled due to company budget hard-stop");
+          continue;
+        }
         await setRunStatus(run.id, "cancelled", {
           finishedAt: new Date(),
           error: "Cancelled due to company budget hard-stop",

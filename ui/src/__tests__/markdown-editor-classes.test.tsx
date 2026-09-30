@@ -31,7 +31,7 @@ function renderBody(markdown: string) {
   );
 }
 
-describe("MarkdownBody — AoA project mention class", () => {
+describe("MarkdownBody — CSS class rename (paperclip- → aoa-)", () => {
   it("renders a project mention link with class aoa-project-mention-chip", () => {
     // Use an https sentinel URL that passes react-markdown's protocol sanitizer
     // but is intercepted by our mocked parseProjectMentionHref above.
@@ -42,4 +42,12 @@ describe("MarkdownBody — AoA project mention class", () => {
     expect(chip).not.toBeNull();
   });
 
+  it("does NOT emit any element whose class starts with paperclip-", () => {
+    const markdown = "see [Dev](https://mention.test/dev)";
+    const { container } = renderBody(markdown);
+
+    // querySelectorAll with attribute-contains selector to catch any paperclip- class
+    const paperclipNodes = container.querySelectorAll('[class*="paperclip-"]');
+    expect(paperclipNodes.length).toBe(0);
+  });
 });

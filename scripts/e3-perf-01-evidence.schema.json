@@ -1,0 +1,396 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://armyofagents.invalid/schemas/e3-perf-01-evidence-v1.json",
+  "oneOf": [
+    { "$ref": "#/$defs/measurementEvidence" },
+    { "$ref": "#/$defs/postSampleFailureEvidence" }
+  ],
+  "$defs": {
+    "sha40": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "nonnegativeNumber": { "type": "number", "minimum": 0 },
+    "nonnegativeInteger": { "type": "integer", "minimum": 0 },
+    "scenario": {
+      "enum": [
+        "hot_worker_fully_certified_no_work",
+        "hot_worker_head_saturated_999744_prefix",
+        "ten_thousand_workers_by_one_hundred",
+        "ninety_percent_stale_version_or_context"
+      ]
+    },
+    "queryFingerprints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimSha256", "bulkUpsertSha256", "cleanupSha256"],
+      "properties": {
+        "claimSha256": { "$ref": "#/$defs/sha256" },
+        "bulkUpsertSha256": { "$ref": "#/$defs/sha256" },
+        "cleanupSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["thresholdsPassed", "structurePassed", "canaryScanPassed", "failedThresholds"],
+      "properties": {
+        "thresholdsPassed": { "type": "boolean" },
+        "structurePassed": { "type": "boolean" },
+        "canaryScanPassed": { "type": "boolean" },
+        "failedThresholds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "imageDigest",
+        "kernel",
+        "architecture",
+        "cpuModel",
+        "vcpus",
+        "ramMiB",
+        "storageClass",
+        "filesystem",
+        "mountFlags",
+        "nodeVersion",
+        "nodeSha256",
+        "pnpmVersion",
+        "pnpmSha256",
+        "postgresVersion",
+        "postgresBinarySha256",
+        "postgresSettings"
+      ],
+      "properties": {
+        "imageDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "kernel": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "architecture": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "cpuModel": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "vcpus": { "type": "integer", "minimum": 1, "maximum": 4096 },
+        "ramMiB": { "type": "integer", "minimum": 1 },
+        "storageClass": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "filesystem": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "mountFlags": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+          "uniqueItems": true
+        },
+        "nodeVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$" },
+        "nodeSha256": { "$ref": "#/$defs/sha256" },
+        "pnpmVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$" },
+        "pnpmSha256": { "$ref": "#/$defs/sha256" },
+        "postgresVersion": { "type": "string", "pattern": "^[0-9]+(?:\\.[0-9]+){0,2}$" },
+        "postgresBinarySha256": { "$ref": "#/$defs/sha256" },
+        "postgresSettings": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[a-z][a-z0-9_]{0,62}$": { "type": "string", "minLength": 1, "maxLength": 200 }
+          }
+        }
+      }
+    },
+    "planEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Plan"],
+      "properties": {
+        "Plan": { "$ref": "#/$defs/planNode" },
+        "Planning Time": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Execution Time": { "$ref": "#/$defs/nonnegativeNumber" }
+      }
+    },
+    "planNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Node Type", "Actual Rows"],
+      "properties": {
+        "Node Type": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "Parent Relationship": { "type": "string", "maxLength": 100 },
+        "Parallel Aware": { "type": "boolean" },
+        "Async Capable": { "type": "boolean" },
+        "Join Type": { "type": "string", "maxLength": 100 },
+        "Strategy": { "type": "string", "maxLength": 100 },
+        "Operation": { "type": "string", "maxLength": 100 },
+        "Scan Direction": { "type": "string", "maxLength": 100 },
+        "Relation Name": { "type": "string", "maxLength": 200 },
+        "Schema": { "type": "string", "maxLength": 200 },
+        "Alias": { "type": "string", "maxLength": 200 },
+        "Index Name": { "type": "string", "maxLength": 200 },
+        "Index Cond": { "type": "string", "maxLength": 20000 },
+        "Recheck Cond": { "type": "string", "maxLength": 20000 },
+        "Hash Cond": { "type": "string", "maxLength": 20000 },
+        "Join Filter": { "type": "string", "maxLength": 20000 },
+        "Filter": { "type": "string", "maxLength": 20000 },
+        "One-Time Filter": { "type": "string", "maxLength": 20000 },
+        "Sort Key": { "type": "array", "items": { "type": "string", "maxLength": 2000 } },
+        "Presorted Key": { "type": "array", "items": { "type": "string", "maxLength": 2000 } },
+        "Group Key": { "type": "array", "items": { "type": "string", "maxLength": 2000 } },
+        "Output": { "type": "array", "items": { "type": "string", "maxLength": 2000 } },
+        "Startup Cost": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Total Cost": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Plan Rows": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Plan Width": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Actual Startup Time": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Actual Total Time": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Actual Rows": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Actual Loops": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Rows Removed by Filter": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Rows Removed by Index Recheck": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Rows Removed by Join Filter": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Heap Fetches": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Exact Heap Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Lossy Heap Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Shared Hit Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Shared Read Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Shared Dirtied Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Shared Written Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Local Hit Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Local Read Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Local Dirtied Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Local Written Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Temp Read Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Temp Written Blocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "I/O Read Time": { "$ref": "#/$defs/nonnegativeNumber" },
+        "I/O Write Time": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Temp I/O Read Time": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Temp I/O Write Time": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Sort Method": { "type": "string", "maxLength": 100 },
+        "Sort Space Used": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Sort Space Type": { "type": "string", "maxLength": 100 },
+        "Peak Memory Usage": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Hash Buckets": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Original Hash Buckets": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Hash Batches": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Original Hash Batches": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Disk Usage": { "$ref": "#/$defs/nonnegativeNumber" },
+        "Subplan Name": { "type": "string", "maxLength": 200 },
+        "Plans": { "type": "array", "items": { "$ref": "#/$defs/planNode" } }
+      }
+    },
+    "claimPlanSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["indexes", "actualRows", "rowsRemoved", "heapFetches", "sharedBlocks", "localBlocks", "tempBlocks"],
+      "properties": {
+        "indexes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "actualRows": { "$ref": "#/$defs/nonnegativeNumber" },
+        "rowsRemoved": { "$ref": "#/$defs/nonnegativeNumber" },
+        "heapFetches": { "$ref": "#/$defs/nonnegativeNumber" },
+        "sharedBlocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "localBlocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "tempBlocks": { "$ref": "#/$defs/nonnegativeNumber" }
+      }
+    },
+    "cleanupPlanSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["indexes", "actualRows", "rowsRemoved", "tempBlocks", "rootActualRows", "candidateRows", "affectedRows"],
+      "properties": {
+        "indexes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "actualRows": { "$ref": "#/$defs/nonnegativeNumber" },
+        "rowsRemoved": { "$ref": "#/$defs/nonnegativeNumber" },
+        "tempBlocks": { "$ref": "#/$defs/nonnegativeNumber" },
+        "rootActualRows": { "$ref": "#/$defs/nonnegativeNumber" },
+        "candidateRows": { "$ref": "#/$defs/nonnegativeNumber" },
+        "affectedRows": { "$ref": "#/$defs/nonnegativeNumber" }
+      }
+    },
+    "claimRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "scenario", "querySha256", "actualAttemptIds", "samples", "p95Ms", "maxMs", "plan", "planSummary"],
+      "properties": {
+        "kind": { "const": "claim_scenario" },
+        "scenario": { "$ref": "#/$defs/scenario" },
+        "querySha256": { "$ref": "#/$defs/sha256" },
+        "actualAttemptIds": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 200 }, "uniqueItems": true },
+        "samples": { "type": "array", "items": { "$ref": "#/$defs/nonnegativeNumber" } },
+        "p95Ms": { "$ref": "#/$defs/nonnegativeNumber" },
+        "maxMs": { "$ref": "#/$defs/nonnegativeNumber" },
+        "plan": { "$ref": "#/$defs/planEnvelope" },
+        "planSummary": { "$ref": "#/$defs/claimPlanSummary" }
+      }
+    },
+    "bulkRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "querySha256", "affectedPerSample", "samples", "p95Ms"],
+      "properties": {
+        "kind": { "const": "bulk_upsert" },
+        "querySha256": { "$ref": "#/$defs/sha256" },
+        "affectedPerSample": { "type": "array", "items": { "$ref": "#/$defs/nonnegativeInteger" } },
+        "samples": { "type": "array", "items": { "$ref": "#/$defs/nonnegativeNumber" } },
+        "p95Ms": { "$ref": "#/$defs/nonnegativeNumber" }
+      }
+    },
+    "cleanupRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "layout", "querySha256", "affectedPerSample", "samples", "p95Ms", "plan", "planSummary"],
+      "properties": {
+        "kind": { "const": "cleanup" },
+        "layout": { "enum": ["sparse", "tail"] },
+        "querySha256": { "$ref": "#/$defs/sha256" },
+        "affectedPerSample": { "type": "array", "items": { "$ref": "#/$defs/nonnegativeInteger" } },
+        "samples": { "type": "array", "items": { "$ref": "#/$defs/nonnegativeNumber" } },
+        "p95Ms": { "$ref": "#/$defs/nonnegativeNumber" },
+        "plan": { "$ref": "#/$defs/planEnvelope" },
+        "planSummary": { "$ref": "#/$defs/cleanupPlanSummary" }
+      }
+    },
+    "indexFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index_name", "valid", "ready", "definition", "predicate"],
+      "properties": {
+        "index_name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "valid": { "type": "boolean" },
+        "ready": { "type": "boolean" },
+        "definition": { "type": "string", "minLength": 1, "maxLength": 20000 },
+        "predicate": { "type": ["string", "null"], "maxLength": 20000 },
+        "columns": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 200 } },
+        "descending": { "type": "array", "items": { "type": "boolean" } }
+      }
+    },
+    "storageRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "candidate_rows", "certificate_rows", "joined_job_rows", "relation_bytes", "table_bytes", "index_bytes", "total_bytes", "indexes"],
+      "properties": {
+        "kind": { "const": "storage" },
+        "candidate_rows": { "$ref": "#/$defs/nonnegativeInteger" },
+        "certificate_rows": { "$ref": "#/$defs/nonnegativeInteger" },
+        "joined_job_rows": { "$ref": "#/$defs/nonnegativeInteger" },
+        "relation_bytes": { "$ref": "#/$defs/nonnegativeNumber" },
+        "table_bytes": { "$ref": "#/$defs/nonnegativeNumber" },
+        "index_bytes": { "$ref": "#/$defs/nonnegativeNumber" },
+        "total_bytes": { "$ref": "#/$defs/nonnegativeNumber" },
+        "indexes": { "type": "array", "items": { "$ref": "#/$defs/indexFact" } }
+      }
+    },
+    "sampleSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario", "milliseconds", "actualRows", "removedRows"],
+      "properties": {
+        "scenario": { "$ref": "#/$defs/scenario" },
+        "milliseconds": { "$ref": "#/$defs/nonnegativeNumber" },
+        "actualRows": { "$ref": "#/$defs/nonnegativeInteger" },
+        "removedRows": { "$ref": "#/$defs/nonnegativeNumber" }
+      }
+    },
+    "storageSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tableBytes", "indexBytes", "combinedBytes"],
+      "properties": {
+        "tableBytes": { "$ref": "#/$defs/nonnegativeNumber" },
+        "indexBytes": { "$ref": "#/$defs/nonnegativeNumber" },
+        "combinedBytes": { "$ref": "#/$defs/nonnegativeNumber" }
+      }
+    },
+    "planSummaryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario", "plan"],
+      "properties": {
+        "scenario": { "$ref": "#/$defs/scenario" },
+        "plan": { "$ref": "#/$defs/planNode" }
+      }
+    },
+    "measurementEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "gate",
+        "attempt",
+        "implementationRevision",
+        "environment",
+        "dataset",
+        "samples",
+        "storage",
+        "plans",
+        "measurementRecords",
+        "productionQueryFingerprints",
+        "results"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "gate": { "const": "E3-PERF-01" },
+        "attempt": { "type": "string", "pattern": "^a[1-9][0-9]*$" },
+        "implementationRevision": { "$ref": "#/$defs/sha40" },
+        "environment": { "$ref": "#/$defs/environment" },
+        "dataset": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["seed", "candidateRows", "certificateRows"],
+          "properties": {
+            "seed": { "const": 3003 },
+            "candidateRows": { "const": 1000000 },
+            "certificateRows": { "const": 1000000 }
+          }
+        },
+        "samples": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "$ref": "#/$defs/sampleSummary" } },
+        "storage": { "$ref": "#/$defs/storageSummary" },
+        "plans": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "$ref": "#/$defs/planSummaryEntry" } },
+        "measurementRecords": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/claimRecord" },
+              { "$ref": "#/$defs/bulkRecord" },
+              { "$ref": "#/$defs/cleanupRecord" },
+              { "$ref": "#/$defs/storageRecord" }
+            ]
+          }
+        },
+        "productionQueryFingerprints": { "$ref": "#/$defs/queryFingerprints" },
+        "results": { "$ref": "#/$defs/results" },
+        "objectVersion": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "checksumSha256": { "$ref": "#/$defs/sha256" },
+        "objectLockMode": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "retentionUntil": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "readbackSha256": { "$ref": "#/$defs/sha256" },
+        "failureCode": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "failedAttempt": { "type": "boolean" }
+      }
+    },
+    "postSampleFailureEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "gate", "attempt", "implementationRevision", "disposition", "failure", "results"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "gate": { "const": "E3-PERF-01" },
+        "attempt": { "type": "string", "pattern": "^a[1-9][0-9]*$" },
+        "implementationRevision": { "$ref": "#/$defs/sha40" },
+        "disposition": { "const": "fail" },
+        "failure": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["class", "failedChecks", "childOutputSha256"],
+          "properties": {
+            "class": { "enum": ["LOAD_CHILD_FAILURE", "LOAD_EVIDENCE_CONTRACT_FAILURE", "REQUIRED_STRUCTURE_MISS"] },
+            "failedChecks": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 300 }, "uniqueItems": true },
+            "childOutputSha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "results": { "$ref": "#/$defs/results" },
+        "objectVersion": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "checksumSha256": { "$ref": "#/$defs/sha256" },
+        "objectLockMode": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "retentionUntil": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "readbackSha256": { "$ref": "#/$defs/sha256" },
+        "failureCode": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "failedAttempt": { "type": "boolean" }
+      }
+    }
+  }
+}

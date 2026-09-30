@@ -1,4 +1,5 @@
-import { pgTable, uuid, text, timestamp, integer, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, integer, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { companies } from "./companies.js";
 import { agents } from "./agents.js";
 import { issues } from "./issues.js";
@@ -29,6 +30,16 @@ export const costEvents = pgTable(
     cachedInputTokens: integer("cached_input_tokens").notNull().default(0),
     outputTokens: integer("output_tokens").notNull().default(0),
     costCents: integer("cost_cents").notNull(),
+    // JOB-012 — server-owned authoritative-cost provenance (all nullable; legacy
+    // writers pass nothing → stay NULL). `sourceIdempotencyKey` is the stable
+    // per-accepted-usage-event charge key that makes the authoritative charge
+    // at-most-once (the partial unique below is the DB backstop alongside the
+    // bridge's receipt fast-path). `rateId`/`rateVersion`/`roundingMode` pin the
+    // versioned rate schedule the SERVER resolved (never a worker-supplied price).
+    sourceIdempotencyKey: text("source_idempotency_key"),
+    rateId: text("rate_id"),
+    rateVersion: integer("rate_version"),
+    roundingMode: text("rounding_mode"),
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -53,5 +64,10 @@ export const costEvents = pgTable(
       table.companyId,
       table.heartbeatRunId,
     ),
+    // JOB-012 — at-most-once authoritative charge per (company, accepted-usage-event)
+    // identity. Partial so legacy rows (source_idempotency_key IS NULL) are exempt.
+    sourceIdemUq: uniqueIndex("cost_events_source_idem_uq")
+      .on(table.companyId, table.sourceIdempotencyKey)
+      .where(sql`${table.sourceIdempotencyKey} IS NOT NULL`),
   }),
 );

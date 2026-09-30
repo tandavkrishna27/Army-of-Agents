@@ -84,7 +84,15 @@ pnpm dev
 
 5. **MCP inbound follows revised Decision #14.** Authenticated MCP, board, and agent callers may create or update structured tasks directly when RBAC allows it. Use `debrief-push` for unstructured content that should enter the Discussion extraction pipeline. Anonymous MCP traffic is rejected outside `local_trusted`; loopback `local_trusted` traffic is treated as trusted board/agent context, not public anonymous input.
 
-6. **Drizzle ORM only.** Schema changes go in `packages/db/src/schema/`. Run `pnpm db:generate`. Never write raw SQL migration files. (Decision #19) **Narrow exception:** drizzle-kit cannot emit (a) idempotency guards (`IF NOT EXISTS` / `DO $$ … duplicate_object`, per C14) or (b) data-only backfills; a few migrations (e.g. `0189`, `0195`) hand-APPEND these after generation, always with an inline comment and always idempotent (`WHERE … IS NULL` / `ON CONFLICT DO NOTHING`). This covers ONLY idempotency guards and data backfills — schema DDL is never hand-authored. Concretely, 0195 was produced by `pnpm db:generate`, then the C14 idempotency guards on its constraint swap plus the data backfills (`UPDATE` / `INSERT … ON CONFLICT DO NOTHING`) were hand-appended below the generated DDL.
+6. **Drizzle ORM only.** Schema changes go in `packages/db/src/schema/`. Run `pnpm db:generate`. Never write raw SQL migration files. (Decision #19) **Narrow exception (C14) — TWO classes, and nothing else.** Both are things drizzle-kit provably cannot emit under this repo's config.
+
+   **(a) Idempotency guards and data-only backfills**, hand-APPENDED below generated DDL, always with an inline comment and always idempotent (`WHERE … IS NULL` / `ON CONFLICT DO NOTHING`). Concretely, 0195 was produced by `pnpm db:generate`, then the C14 idempotency guards on its constraint swap plus the data backfills were hand-appended below the generated DDL.
+
+   **(b) Idempotent cluster/security DDL** — roles, `GRANT`/`REVOKE`, `ENABLE`/`FORCE ROW LEVEL SECURITY`, `CREATE POLICY`, and `SECURITY DEFINER` functions plus their ACLs — hand-authored into a delta-free `--custom` migration (`pnpm db:generate --custom --name=…`), because there is no schema delta to diff onto. `drizzle.config.ts` declares no `entities.roles` and no `pgPolicy`, and drizzle-orm's `pg-core` exposes no function/routine primitive, so no generator route exists for any of it. Exemplars: 0211 (the tenant-RLS foundation), 0213/0214 (serving-role hardening), 0259/0261 (app-select grants), 0267 (the canary preflight's `SECURITY DEFINER` evidence functions; 0266 is superseded and is NOT an exemplar — see Decision #122).
+
+   **⚠ Class (b) is governed by Decision #122 in `docs/architecture/decisions.md`, plus its 2026-09-01 amendment covering `CREATE FUNCTION`. That decision is the AUTHORITY and carries the binding conditions — a delta-free `--custom` migration, idempotent statements with an inline comment saying why drizzle-kit cannot emit them, no committed role credential, and for definer functions a manifest entry certified at boot with fatal drift. Read it before hand-authoring anything; the text here is a summary and cannot widen it.**
+
+   **Tables, columns, indexes and foreign keys are NEVER hand-authored** — that is always `db:generate` output, diffed from `packages/db/src/schema/`. A `--custom` migration that touches them is the violation this rule exists to stop.
 
 7. **New services follow `server/src/services/goals.ts`. New routes follow `server/src/routes/goals.ts`.**
 
@@ -176,6 +184,16 @@ pnpm build
 ```
 
 If anything cannot be run, explicitly report what was not run and why.
+
+> **Authoritative build (FND-005 / Decision #121).** `pnpm build` is the
+> repository/CI build authority. It is **network-free**: `prebuild` verifies the
+> pinned checked-in snapshot inputs (`scripts/bundled-snapshots.manifest.json`)
+> via `node scripts/check-bundled-snapshot-inputs.mjs` instead of fetching the
+> live catalog/connector CDN, and it must leave tracked bytes unchanged. To
+> intentionally refresh the bundled marketplace/connector snapshots, run the
+> explicit `pnpm refresh:bundled-snapshots` (network) — it re-fetches and re-pins
+> the manifest together, and is never invoked by build or test. See
+> `docs/architecture/distributed-execution-delivery-policy.md`.
 
 > Docs-only PRs (every changed file under `docs/` or a root-level `*.md` like
 > README/CLAUDE/AGENTS) skip the heavy CI suite and pass via the `ci-required`

@@ -39,7 +39,7 @@ network isolation, and migration/restore safety remain follow-up work.
 - Updated `docker-compose.quickstart.yml` as the single-container embedded
   Postgres trial path.
 - Added `scripts/docker-bootstrap.mjs` to create first-run config, directories,
-  and persisted auth/JWT secrets under `/aoa`.
+  and persisted auth/JWT secrets under `/paperclip`.
 - Added `scripts/docker-bootstrap-ceo.mjs` for printing the first CEO invite.
 - Updated `scripts/docker-entrypoint.sh` to run first-boot bootstrap, load
   persisted secrets, unset blank optional variables, handle optional Docker

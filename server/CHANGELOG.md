@@ -1,4 +1,4 @@
-# @armyofagents/server
+# @paperclipai/server
 
 ## 0.2.7
 
@@ -6,12 +6,12 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/shared@0.2.7
-  - @armyofagents/adapter-utils@0.2.7
-  - @armyofagents/db@0.2.7
-  - @armyofagents/adapter-claude-local@0.2.7
-  - @armyofagents/adapter-codex-local@0.2.7
-  - @armyofagents/adapter-openclaw@0.2.7
+  - @paperclipai/shared@0.2.7
+  - @paperclipai/adapter-utils@0.2.7
+  - @paperclipai/db@0.2.7
+  - @paperclipai/adapter-claude-local@0.2.7
+  - @paperclipai/adapter-codex-local@0.2.7
+  - @paperclipai/adapter-openclaw@0.2.7
 
 ## 0.2.6
 
@@ -19,12 +19,12 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/shared@0.2.6
-  - @armyofagents/adapter-utils@0.2.6
-  - @armyofagents/db@0.2.6
-  - @armyofagents/adapter-claude-local@0.2.6
-  - @armyofagents/adapter-codex-local@0.2.6
-  - @armyofagents/adapter-openclaw@0.2.6
+  - @paperclipai/shared@0.2.6
+  - @paperclipai/adapter-utils@0.2.6
+  - @paperclipai/db@0.2.6
+  - @paperclipai/adapter-claude-local@0.2.6
+  - @paperclipai/adapter-codex-local@0.2.6
+  - @paperclipai/adapter-openclaw@0.2.6
 
 ## 0.2.5
 
@@ -32,12 +32,12 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/shared@0.2.5
-  - @armyofagents/adapter-utils@0.2.5
-  - @armyofagents/db@0.2.5
-  - @armyofagents/adapter-claude-local@0.2.5
-  - @armyofagents/adapter-codex-local@0.2.5
-  - @armyofagents/adapter-openclaw@0.2.5
+  - @paperclipai/shared@0.2.5
+  - @paperclipai/adapter-utils@0.2.5
+  - @paperclipai/db@0.2.5
+  - @paperclipai/adapter-claude-local@0.2.5
+  - @paperclipai/adapter-codex-local@0.2.5
+  - @paperclipai/adapter-openclaw@0.2.5
 
 ## 0.2.4
 
@@ -45,12 +45,12 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/shared@0.2.4
-  - @armyofagents/adapter-utils@0.2.4
-  - @armyofagents/db@0.2.4
-  - @armyofagents/adapter-claude-local@0.2.4
-  - @armyofagents/adapter-codex-local@0.2.4
-  - @armyofagents/adapter-openclaw@0.2.4
+  - @paperclipai/shared@0.2.4
+  - @paperclipai/adapter-utils@0.2.4
+  - @paperclipai/db@0.2.4
+  - @paperclipai/adapter-claude-local@0.2.4
+  - @paperclipai/adapter-codex-local@0.2.4
+  - @paperclipai/adapter-openclaw@0.2.4
 
 ## 0.2.3
 
@@ -58,12 +58,12 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/shared@0.2.3
-  - @armyofagents/adapter-utils@0.2.3
-  - @armyofagents/db@0.2.3
-  - @armyofagents/adapter-claude-local@0.2.3
-  - @armyofagents/adapter-codex-local@0.2.3
-  - @armyofagents/adapter-openclaw@0.2.3
+  - @paperclipai/shared@0.2.3
+  - @paperclipai/adapter-utils@0.2.3
+  - @paperclipai/db@0.2.3
+  - @paperclipai/adapter-claude-local@0.2.3
+  - @paperclipai/adapter-codex-local@0.2.3
+  - @paperclipai/adapter-openclaw@0.2.3
 
 ## 0.2.2
 
@@ -71,12 +71,12 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/shared@0.2.2
-  - @armyofagents/adapter-utils@0.2.2
-  - @armyofagents/db@0.2.2
-  - @armyofagents/adapter-claude-local@0.2.2
-  - @armyofagents/adapter-codex-local@0.2.2
-  - @armyofagents/adapter-openclaw@0.2.2
+  - @paperclipai/shared@0.2.2
+  - @paperclipai/adapter-utils@0.2.2
+  - @paperclipai/db@0.2.2
+  - @paperclipai/adapter-claude-local@0.2.2
+  - @paperclipai/adapter-codex-local@0.2.2
+  - @paperclipai/adapter-openclaw@0.2.2
 
 ## 0.2.1
 
@@ -84,9 +84,9 @@
 
 - Version bump (patch)
 - Updated dependencies
-  - @armyofagents/shared@0.2.1
-  - @armyofagents/adapter-utils@0.2.1
-  - @armyofagents/db@0.2.1
-  - @armyofagents/adapter-claude-local@0.2.1
-  - @armyofagents/adapter-codex-local@0.2.1
-  - @armyofagents/adapter-openclaw@0.2.1
+  - @paperclipai/shared@0.2.1
+  - @paperclipai/adapter-utils@0.2.1
+  - @paperclipai/db@0.2.1
+  - @paperclipai/adapter-claude-local@0.2.1
+  - @paperclipai/adapter-codex-local@0.2.1
+  - @paperclipai/adapter-openclaw@0.2.1

@@ -25,6 +25,9 @@ export interface NotificationPreferenceRule {
   semanticType: HubSemanticType;
   deliveryMode: NotificationPreference;
   toastEnabled: boolean;
+  /** Unsolicited channels are opt-in and absent legacy values decode off. */
+  soundEnabled?: boolean;
+  voiceEnabled?: boolean;
 }
 
 export interface NotificationPreferences {
@@ -39,6 +42,8 @@ export const notificationPreferenceRuleSchema = z
     semanticType: z.enum(HUB_SEMANTIC_TYPES),
     deliveryMode: z.enum(NOTIFICATION_PREFERENCES),
     toastEnabled: z.boolean(),
+    soundEnabled: z.boolean().default(false),
+    voiceEnabled: z.boolean().default(false),
   })
   .strict();
 
@@ -93,6 +98,8 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
     semanticType,
     deliveryMode: "realtime",
     toastEnabled: true,
+    soundEnabled: false,
+    voiceEnabled: false,
   })),
   quietHours: { enabled: false, start: "18:00", end: "09:00", timezone: "UTC" },
   digest: { enabled: true, cadence: "daily" },

@@ -295,7 +295,7 @@ Future enhancement: auto-capture decisions from human choices in workspace (appr
 
 ### New (to build):
 - Universal workspace view (multi-panel layout)
-- Workspace backend (ported from the upstream project — files already copied, prompt written)
+- Workspace backend (ported from Paperclip — files already copied, prompt written)
 - Department function picker at creation
 - TaskSlideOver workspace section
 - TaskSlideOver wiring into ProjectDetail
@@ -309,7 +309,7 @@ Future enhancement: auto-capture decisions from human choices in workspace (appr
 ## Backend Status
 
 **Completed (verified 2026-04-03):**
-- 14 files ported from the upstream project → AoA and fully wired
+- 14 files ported from Paperclip → AoA and fully wired
 - Migration 0050 applied (execution_workspaces, workspace_runtime_services, workspace_operations)
 - Heartbeat fully integrated with workspace realization, runtime services, cleanup
 - Routes registered in app.ts
@@ -327,7 +327,7 @@ Future enhancement: auto-capture decisions from human choices in workspace (appr
 
 Decided: **Hybrid approach, evaluate later.**
 - MCP for agent-side tool use (already exists)
-- the upstream project's full plugin system (19 services) evaluated later for: webhooks, background jobs, scheduled sync, external integrations
+- Paperclip's full plugin system (19 services) evaluated later for: webhooks, background jobs, scheduled sync, external integrations
 - NOT ruled out — just deferred
 
 ---
@@ -348,6 +348,6 @@ Import/export of department configurations can be added later as convenience fea
 
 ## References
 
-- Vibe-kanban codebase studied for UX patterns (historical checkout, location no longer valid)
-- the upstream project codebase as source for workspace backend (historical checkout, location no longer valid)
-- Backend wiring prompt: historical prompt, location no longer valid
+- Vibe-kanban codebase studied for UX patterns (at `Paperclip-AoA/vibe-kanban-main/`)
+- Paperclip codebase as source for workspace backend (at `Paperclip-AoA/paperclip-master/`)
+- Backend wiring prompt: `Paperclip-AoA/workspace-port-prompt.md`

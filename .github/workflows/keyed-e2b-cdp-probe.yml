@@ -1,0 +1,71 @@
+name: Keyed E2B port-exposure probe (BRW-002)
+
+# BRW-002 terrain probe. Answers ONE question that cannot be settled from source:
+# does E2B's edge serve a sandbox's arbitrary user ports to an UNAUTHENTICATED caller?
+#
+# It runs from a GitHub runner on purpose — that is a genuinely external network location,
+# which is the actual threat model. Running the same check from inside the sandbox would
+# prove nothing.
+#
+# Deliberately SEPARATE from `keyed-e2b-conformance.yml` (CLI-001's lane) so a probe result
+# is never buried inside another epic's suite and a probe re-trigger never re-runs theirs.
+#
+# OPERATOR ACTION (never the controller): `E2B_API_KEY` must exist as a repo secret — it
+# already does. Without it the probe SKIPS cleanly and claims no result; it never fakes one.
+# `workflow_dispatch` only registers from the DEFAULT branch, and this lane lives only on
+# `docs/replatform-program`, so — mirroring the `campaign.env` / `keyed-e2b-trigger` pattern
+# — bump `.github/keyed-e2b-cdp-probe-trigger` to fire it here.
+
+on:
+  workflow_dispatch:
+    inputs:
+      e2b_template:
+        description: E2B sandbox template alias. Empty = bare "base".
+        required: false
+        default: ""
+        type: string
+  push:
+    branches:
+      - docs/replatform-program
+    paths:
+      - ".github/keyed-e2b-cdp-probe-trigger"
+      - "packages/sandbox-e2b-provider/scripts/probe-e2b-port-exposure.mjs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keyed-e2b-cdp-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Probe sandbox port exposure from OUTSIDE the sandbox
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          E2B_TEMPLATE: ${{ inputs.e2b_template }}
+          PROBE_NONCE: ${{ github.run_id }}
+        # The script lives INSIDE the package that depends on the `e2b` SDK. Node resolves
+        # ESM bare imports from the SCRIPT's location, not the CWD, so a repo-root script
+        # cannot see a workspace package's node_modules however the CWD is set.
+        run: node packages/sandbox-e2b-provider/scripts/probe-e2b-port-exposure.mjs

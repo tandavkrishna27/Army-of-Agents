@@ -503,7 +503,7 @@ async function teamMemberLinkCount(companyId: string, agentId: string): Promise<
  */
 async function createHistoricalNullOriginStewardCompany(name: string) {
   await withCatalog();
-  const company = await companyService(db).create({ name } as never);
+  const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name } as never);
   const steward = (await crewRows(company.id)).find((row) => row.name === "Steward")!;
 
   await db.execute(sql`
@@ -577,7 +577,7 @@ async function updatePipelineSeesCompany(companyId: string): Promise<boolean> {
 async function createLegacyCompany(name: string): Promise<string> {
   await clearCatalogCache();
   registerMarketplaceCatalogService(null);
-  const company = await companyService(db).create({ name } as never);
+  const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name } as never);
   // Boot backfill: this is what turns NULL origins into `…@legacy` in the wild.
   await backfillCrewTemplateOrigin(db);
   return company.id;
@@ -1062,7 +1062,7 @@ describe.skipIf(
     FIXTURE_BODIES[teamUrl] = TEAM_TEMPLATE_WITH_STEWARD;
     try {
       await withCatalog(buildCatalogWithSteward());
-      const company = await companyService(db).create({
+      const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001",
         name: "Steward Marketplace Bootstrap Co",
       } as never);
 
@@ -1473,7 +1473,7 @@ describe.skipIf(
   it("repair is a no-op on an already-marketplace-managed company", async () => {
     assertSetupOk();
     await withCatalog();
-    const company = await companyService(db).create({ name: "Managed Crew Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Managed Crew Co" } as never);
     const before = await crewRows(company.id);
 
     const results = [];
@@ -1526,8 +1526,8 @@ describe.skipIf(
 
     const companyId = randomUUID();
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Crewless Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Crewless Co', ${nextIssuePrefix()})
     `);
     await ensureInfrastructureAgents(db, companyId);
     // Production parity, and it is load-bearing: the boot backfill stamps
@@ -1558,7 +1558,7 @@ describe.skipIf(
   it("seals an install operation that still reports failure over a committed crew", async () => {
     assertSetupOk();
     await withCatalog();
-    const company = await companyService(db).create({ name: "Lying Op Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Lying Op Co" } as never);
     await db.execute(sql`
       UPDATE marketplace_install_operations
       SET status = 'failure', error_message = 'live-event subscriber threw', completed_at = NULL
@@ -1580,7 +1580,7 @@ describe.skipIf(
   it("does not touch a FRESH `running` operation row", async () => {
     assertSetupOk();
     await withCatalog();
-    const company = await companyService(db).create({ name: "Live Op Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Live Op Co" } as never);
     await db.execute(sql`
       UPDATE marketplace_install_operations
       SET status = 'running', started_at = now(), completed_at = NULL WHERE company_id = ${company.id}
@@ -1598,7 +1598,7 @@ describe.skipIf(
   it("seals a stale `running` operation row over an installed crew", async () => {
     assertSetupOk();
     await withCatalog();
-    const company = await companyService(db).create({ name: "Dead Owner Op Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Dead Owner Op Co" } as never);
     await db.execute(sql`
       UPDATE marketplace_install_operations
       SET status = 'running', started_at = now() - interval '30 minutes', completed_at = NULL
@@ -1613,7 +1613,7 @@ describe.skipIf(
   it("ABLATION: an unsealed `failure` row lets the next provisioning pass duplicate the roster", async () => {
     assertSetupOk();
     await withCatalog();
-    const company = await companyService(db).create({ name: "Unsealed Op Co" } as never);
+    const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Unsealed Op Co" } as never);
     await db.execute(sql`
       UPDATE marketplace_install_operations
       SET status = 'failure', error_message = 'bookkeeping failed', completed_at = NULL
@@ -1775,8 +1775,8 @@ describe.skipIf(
     await withCatalog();
     const companyId = randomUUID();
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Ambiguous Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Ambiguous Co', ${nextIssuePrefix()})
     `);
     await ensureInfrastructureAgents(db, companyId);
     await backfillCrewTemplateOrigin(db);
@@ -1805,8 +1805,8 @@ describe.skipIf(
     await withCatalog();
     const companyId = randomUUID();
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Retired Role Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Retired Role Co', ${nextIssuePrefix()})
     `);
     await ensureInfrastructureAgents(db, companyId);
     await db.execute(sql`
@@ -1847,7 +1847,7 @@ describe.skipIf(
     const degradedA = await createLegacyCompany("Pass Co A");
     const degradedB = await createLegacyCompany("Pass Co B");
     await withCatalog();
-    const healthy = await companyService(db).create({ name: "Pass Co Healthy" } as never);
+    const healthy = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "Pass Co Healthy" } as never);
     const healthyBefore = await crewRows(healthy.id);
     const companyIds = [degradedA, degradedB, healthy.id];
 

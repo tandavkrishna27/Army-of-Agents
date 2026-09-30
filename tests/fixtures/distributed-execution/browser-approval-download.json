@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "id": "browser-approval-download",
+  "workloadType": "browser_session",
+  "purpose": "A browser session pauses for approval and commits bounded evidence.",
+  "source": {
+    "kind": "browser_request"
+  },
+  "organization": {
+    "id": "org_A581XN2CECDMX13WC47D17VMKD",
+    "name": "Cyberdyne Research"
+  },
+  "company": {
+    "id": "company_3D9SBT0AV2ACNDKGTY2GRBH31F",
+    "name": "Cyberdyne Research HQ",
+    "organizationId": "org_A581XN2CECDMX13WC47D17VMKD"
+  },
+  "requester": {
+    "type": "founder",
+    "id": "user-founder-3",
+    "displayName": "Cleo Founder"
+  },
+  "executor": {
+    "type": "browser_worker",
+    "id": "cloud-browser-1"
+  },
+  "placement": {
+    "targetPolicy": "single_region_pinned",
+    "provider": "e2b",
+    "region": "us-east-1",
+    "generation": 1
+  },
+  "inputBase": {
+    "workspaceBaseId": "wsbase-ccy3ksgs61pakx0emgt5w47q7d",
+    "gitRemote": null,
+    "gitRef": null,
+    "immutable": true
+  },
+  "identity": {
+    "jobId": "job_CCQ89AM47BSCFSTQ169QNKDD57",
+    "attempts": [
+      {
+        "attempt": 1,
+        "workerId": "worker_C45T5R4DT8J9537XK5X4HRQSSA",
+        "leaseId": "lease_V3DYXWQXRZPTS01HDHG4B50809",
+        "fenceToken": 100
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "submit"
+    },
+    {
+      "action": "lease_and_ack"
+    },
+    {
+      "action": "launch_browser",
+      "emits": [
+        "attempt_started"
+      ]
+    },
+    {
+      "action": "request_approval",
+      "emits": [
+        "browser_approval_requested"
+      ]
+    },
+    {
+      "action": "approve"
+    },
+    {
+      "action": "download",
+      "emits": [
+        "browser_observation",
+        "artifact_prepared"
+      ]
+    },
+    {
+      "action": "complete",
+      "emits": [
+        "terminal"
+      ]
+    }
+  ],
+  "failureInjection": null,
+  "expectedEvents": [
+    {
+      "protocolVersion": 1,
+      "eventId": "BEZFRBF4F8513971MHBWPV2EJM",
+      "eventType": "attempt_started",
+      "organizationId": "org_A581XN2CECDMX13WC47D17VMKD",
+      "companyId": "company_3D9SBT0AV2ACNDKGTY2GRBH31F",
+      "workerId": "worker_C45T5R4DT8J9537XK5X4HRQSSA",
+      "jobId": "job_CCQ89AM47BSCFSTQ169QNKDD57",
+      "attempt": 1,
+      "leaseId": "lease_V3DYXWQXRZPTS01HDHG4B50809",
+      "fenceToken": 100,
+      "seq": 1,
+      "occurredAt": "2026-08-08T12:00:00.000Z",
+      "payload": {},
+      "eventDigest": "0feacf6ffeb5ac54260f7d8b9b7db535d1edd75595fc59bc88abb75906ac6e6e"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "4JSVCXJGJRC1H2QAY47Q1XDNCH",
+      "eventType": "browser_approval_requested",
+      "organizationId": "org_A581XN2CECDMX13WC47D17VMKD",
+      "companyId": "company_3D9SBT0AV2ACNDKGTY2GRBH31F",
+      "workerId": "worker_C45T5R4DT8J9537XK5X4HRQSSA",
+      "jobId": "job_CCQ89AM47BSCFSTQ169QNKDD57",
+      "attempt": 1,
+      "leaseId": "lease_V3DYXWQXRZPTS01HDHG4B50809",
+      "fenceToken": 100,
+      "seq": 2,
+      "occurredAt": "2026-08-08T12:00:04.000Z",
+      "payload": {
+        "detail": "requesting approval to download the export",
+        "approved": false
+      },
+      "eventDigest": "8386fc2b164c32364734c7966de463fe2c0490a6622c5de56d75a1cb0110eb0b"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "X19VRJYRYE8PPFSJBFV0HHKF5Z",
+      "eventType": "browser_observation",
+      "organizationId": "org_A581XN2CECDMX13WC47D17VMKD",
+      "companyId": "company_3D9SBT0AV2ACNDKGTY2GRBH31F",
+      "workerId": "worker_C45T5R4DT8J9537XK5X4HRQSSA",
+      "jobId": "job_CCQ89AM47BSCFSTQ169QNKDD57",
+      "attempt": 1,
+      "leaseId": "lease_V3DYXWQXRZPTS01HDHG4B50809",
+      "fenceToken": 100,
+      "seq": 3,
+      "occurredAt": "2026-08-08T12:00:12.000Z",
+      "payload": {
+        "detail": "download approved and observed",
+        "approved": true
+      },
+      "eventDigest": "16470c5688224127cab3e9aff1f7a0165f6ad5e4ef0d077cdc896b811b707536"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "92ND0VQSENN96ED94T5KV283FY",
+      "eventType": "artifact_prepared",
+      "organizationId": "org_A581XN2CECDMX13WC47D17VMKD",
+      "companyId": "company_3D9SBT0AV2ACNDKGTY2GRBH31F",
+      "workerId": "worker_C45T5R4DT8J9537XK5X4HRQSSA",
+      "jobId": "job_CCQ89AM47BSCFSTQ169QNKDD57",
+      "attempt": 1,
+      "leaseId": "lease_V3DYXWQXRZPTS01HDHG4B50809",
+      "fenceToken": 100,
+      "seq": 4,
+      "occurredAt": "2026-08-08T12:00:13.000Z",
+      "payload": {
+        "artifactRef": "download",
+        "hash": "6989e5111202b9412b46f73a95d9ad6488273f07ea22805d4810c82b8c7df45a",
+        "sizeBytes": 51200,
+        "prefix": "artifacts/job/download"
+      },
+      "eventDigest": "c5736ccf5eec351ae3d0d3a1576716f71c464354bafa8cd92185b6639141b47b"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "RYRMMX7KBDK35H96G49H9TW4WS",
+      "eventType": "terminal",
+      "organizationId": "org_A581XN2CECDMX13WC47D17VMKD",
+      "companyId": "company_3D9SBT0AV2ACNDKGTY2GRBH31F",
+      "workerId": "worker_C45T5R4DT8J9537XK5X4HRQSSA",
+      "jobId": "job_CCQ89AM47BSCFSTQ169QNKDD57",
+      "attempt": 1,
+      "leaseId": "lease_V3DYXWQXRZPTS01HDHG4B50809",
+      "fenceToken": 100,
+      "seq": 5,
+      "occurredAt": "2026-08-08T12:00:14.000Z",
+      "payload": {
+        "detail": "browser session succeeded",
+        "code": "succeeded"
+      },
+      "eventDigest": "b1c4da9b8d1b1eafb87af0bbb0f74c02653aa297bf69103aaad943eb2c5d6496"
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "maxTotalCents": 300,
+    "observedTotalCents": 60,
+    "tokenBudget": 50000,
+    "observedTokens": 12000
+  },
+  "timing": {
+    "queuedAt": "2026-08-08T11:59:56.000Z",
+    "startedAt": "2026-08-08T12:00:00.000Z",
+    "finishedAt": "2026-08-08T12:00:14.000Z",
+    "maxWallClockMs": 300000,
+    "observedWallClockMs": 14000
+  },
+  "cleanup": {
+    "authority": "lease_holder",
+    "scope": "browser_session:job_CCQ89AM47BSCFSTQ169QNKDD57",
+    "idempotent": true,
+    "deadlineMs": 20000,
+    "restoresEffectAuthority": false
+  },
+  "control": {
+    "cancellation": "none",
+    "productApproval": "requested_granted",
+    "runtimeDecision": "none"
+  },
+  "expected": {
+    "terminalState": "succeeded",
+    "artifacts": [
+      "screenshot",
+      "playwright_trace",
+      "download"
+    ],
+    "auditActions": [
+      "browser.approval_requested",
+      "browser.approval_granted",
+      "artifact.committed",
+      "job.succeeded"
+    ],
+    "forbiddenEffects": [
+      "public_cdp_endpoint",
+      "cookie_in_event_payload"
+    ]
+  }
+}

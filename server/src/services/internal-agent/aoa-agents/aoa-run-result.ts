@@ -126,4 +126,10 @@ export interface AoaRunResult {
   /** Raw usage counts from the adapter, persisted as internal_agent_runs.tokenUsage
    *  JSONB. Pass through verbatim from AdapterExecutionResult.usage. */
   usage?: UsageSummary;
+
+  /** MIG-006 — set when the crew run's execution was HANDED OFF to a distributed worker
+   *  attempt (the runAoaAgent seam suppressed adapter.execute and wrote the durable marker).
+   *  Absent for every legacy run. Slice 2 teaches the dispatcher to skip wakeup finalization
+   *  when this is set (the crew terminal projector finalizes instead). */
+  distributedHandoff?: { jobId: string; attemptId: string };
 }

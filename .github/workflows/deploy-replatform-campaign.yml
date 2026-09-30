@@ -5,7 +5,9 @@ name: Deploy replatform campaign
 # lane targets the E7-1 campaign overlay on the replatform host.
 #
 # The target host is expected to be bootstrapped once by the operator with:
-#   - /opt/aoa/docker/campaign/.env.campaign (not tracked)
+#   - /opt/aoa/docker/campaign/.env.campaign (not tracked) — must carry a stable
+#     AOA_CAMPAIGN_SECRETS_MASTER_KEY (see docker/campaign/.env.campaign.example);
+#     the deploy fails loud if it is missing/empty
 #   - /opt/campaign/cp-extra.env (not tracked)
 #   - /opt/campaign/secrets/* (not tracked)
 #   - the existing aoa-staging Postgres/project volumes and enrolled worker
@@ -106,8 +108,8 @@ jobs:
 
       - name: Load the deployment SSH key
         env:
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_PASSPHRASE: ${{ secrets.DEPLOY_PASSPHRASE }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY1 }}
+          DEPLOY_PASSPHRASE: ${{ secrets.DEPLOY_PASSPHRASE1 }}
         run: |
           set -euo pipefail
           umask 077
@@ -275,6 +277,22 @@ jobs:
           campaign_env_changed=false
           cp_extra_changed=false
 
+          # Mirrors the control plane's decodeMasterKey (server/src/secrets/
+          # local-encrypted-provider.ts): a valid AOA_SECRETS_MASTER_KEY is 64-char hex,
+          # base64 decoding to exactly 32 bytes (standard OR url-safe, padded or not), or a
+          # raw 32-byte string. Anything else the CP rejects at first secret decrypt.
+          is_valid_master_key() {
+            local v="$1" s pad decoded_len
+            if [[ "$v" =~ ^[A-Fa-f0-9]{64}$ ]]; then return 0; fi
+            if [[ "$(printf '%s' "$v" | wc -c)" -eq 32 ]]; then return 0; fi
+            s="$(printf '%s' "$v" | tr '_-' '/+')"
+            pad=$(( (4 - ${#s} % 4) % 4 ))
+            if [[ $pad -gt 0 ]]; then s="$s$(printf '=%.0s' $(seq 1 "$pad"))"; fi
+            decoded_len="$(printf '%s' "$s" | base64 -d 2>/dev/null | wc -c)" || decoded_len=0
+            if [[ "$decoded_len" -eq 32 ]]; then return 0; fi
+            return 1
+          }
+
           [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid deployment SHA" >&2; exit 1; }
           [[ "$expected_checksum" =~ ^[0-9a-f]{64}$ ]] || { echo "invalid archive checksum" >&2; exit 1; }
           [[ "$stage" =~ ^/opt/aoa/incoming/replatform-campaign-[0-9a-f]{40}-[0-9]+-[0-9]+$ ]] || {
@@ -299,6 +317,23 @@ jobs:
           }
           [[ -f "$campaign_env" && -f "$cp_extra_env" ]] || {
             echo "campaign bootstrap files are missing" >&2
+            exit 1
+          }
+          # The control plane maps AOA_CAMPAIGN_SECRETS_MASTER_KEY -> AOA_SECRETS_MASTER_KEY
+          # (docker-compose.campaign.yml) to decrypt company provider secrets. A compose
+          # `environment:` value overrides env_file, so an empty/invalid campaign source
+          # would ship a broken key and fail decryption AFTER the health check passes.
+          # Validate the EFFECTIVE value: compose-go dotenv is last-wins for duplicate keys,
+          # so take the LAST assignment, trim surrounding whitespace/CR (the CP .trim()s),
+          # and require a valid 32-byte key so an unfilled placeholder cannot slip through.
+          master_key_line="$(grep -E '^AOA_CAMPAIGN_SECRETS_MASTER_KEY=' "$campaign_env" | tail -n1 || true)"
+          master_key_value="$(printf '%s' "${master_key_line#*=}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          is_valid_master_key "$master_key_value" || {
+            echo "AOA_CAMPAIGN_SECRETS_MASTER_KEY in .env.campaign is missing, empty, or not a" >&2
+            echo "valid key. The control plane requires a 32-byte key as 64-char hex, base64," >&2
+            echo "or a raw 32-char string (the effective last value is checked). Generate one" >&2
+            echo "with 'openssl rand -base64 32' and set it before deploying (see" >&2
+            echo "docker/campaign/.env.campaign.example)." >&2
             exit 1
           }
           [[ -f "$campaign_root/secrets/cp-signing-key.pem" ]] || exit 1

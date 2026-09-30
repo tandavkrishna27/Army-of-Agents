@@ -144,8 +144,20 @@ export const runtimeDecisionDetailSchema = z
     id: z.string().uuid(),
     hubItemId: z.string().uuid().nullable(),
     companyId: z.string().uuid(),
-    agentId: z.string().uuid(),
-    runId: z.string().uuid(),
+    /**
+     * BRW-004 (E8-F002) — NULLABLE, in an all-or-nothing pair (DB CHECK
+     * `(agent_id IS NULL) = (run_id IS NULL)`). A distributed `browser_request` decision has
+     * no `agents` row and no `heartbeat_runs` row; its binding rides the fence-guarded
+     * `job_projection_receipts` row.
+     *
+     * ★ This is the API-visible half of the relaxation, and it is why the widening could not
+     * stop at the service: `.strict()` here means a null would have been REJECTED at the
+     * boundary — the decision would exist in the database and be unreadable through the hub,
+     * which is a worse failure than not creating it. Every UI reader of these two fields must
+     * therefore treat them as optional; they are already rendered conditionally.
+     */
+    agentId: z.string().uuid().nullable(),
+    runId: z.string().uuid().nullable(),
     adapterType: z.enum(AGENT_ADAPTER_TYPES),
     adapterSessionId: z.string().nullable(),
     kind: z.enum(RUNTIME_DECISION_KINDS),

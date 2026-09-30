@@ -10,6 +10,13 @@ const REDACTED = "[REDACTED]";
 const DEPTH_EXCEEDED = "[redacted: depth exceeded]";
 const MAX_DEPTH = 8;
 const MAX_ARRAY_LENGTH = 100;
+// Cap individual string values so an oversized payload field (e.g. a rejected
+// multi-MB request body) cannot become a multi-MB log line. A single 4 MB string
+// serialized through the vitest fork IPC as one stdout line stalled a worker past
+// the birpc timeout and hung the whole shard (CI run 33019158926). Logs never need
+// more than a few KB of any one field; anything above this is truncated with a
+// marker, exactly like the array cap above.
+const MAX_STRING_LENGTH = 8192;
 
 /**
  * Single source of truth for which keys are redacted.
@@ -43,6 +50,15 @@ function isSensitiveKey(key: string): boolean {
 }
 
 function redactInternal(value: unknown, depth: number): unknown {
+  // Cap oversized strings FIRST, at ANY depth. A string is a leaf, so the
+  // object-depth cutoff below must never reach it — if the `depth >= MAX_DEPTH`
+  // branch's `return value` fired for a deeply-nested multi-MB string it would be
+  // logged verbatim, reproducing the exact log/fork-IPC stall this cap prevents.
+  if (typeof value === "string") {
+    return value.length > MAX_STRING_LENGTH
+      ? `${value.slice(0, MAX_STRING_LENGTH)}[redacted: ${value.length - MAX_STRING_LENGTH} more chars truncated]`
+      : value;
+  }
   if (depth >= MAX_DEPTH) {
     // Only mark as truncated if we'd actually be descending into something.
     if (value !== null && typeof value === "object") {
@@ -84,6 +100,9 @@ function redactInternal(value: unknown, depth: number): unknown {
  *   the literal string "[redacted: depth exceeded]".
  * - Arrays are capped at {@link MAX_ARRAY_LENGTH} items; truncation is
  *   marked with a trailing string entry naming the number of dropped items.
+ * - Individual string values are capped at {@link MAX_STRING_LENGTH} chars;
+ *   the overflow is replaced with a "[redacted: N more chars truncated]" marker
+ *   so an oversized body field cannot become a multi-MB log line.
  * - Input is never mutated.
  */
 export function redactSensitiveBodyFields(body: unknown): unknown {

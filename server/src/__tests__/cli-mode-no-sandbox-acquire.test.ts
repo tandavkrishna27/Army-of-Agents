@@ -13,8 +13,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { EventEmitter } from "node:events";
 import { setDeploymentMode } from "../config/deployment-mode.js";
 
-vi.mock("node:child_process", async (importOriginal) => ({
-  ...await importOriginal<typeof import("node:child_process")>(),
+vi.mock("node:child_process", () => ({
   execSync: vi.fn(),
   spawn: vi.fn(),
 }));

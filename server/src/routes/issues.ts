@@ -1845,6 +1845,19 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.json(comments);
   });
 
+  // Canonical read-only receipt lookup for an ambiguous task-comment Send.
+  router.get("/issues/:id/comments/submissions/:clientSubmissionId", async (req, res) => {
+    const id = req.params.id as string;
+    const clientSubmissionId = req.params.clientSubmissionId as string;
+    const issue = await svc.getById(id);
+    if (!issue) { res.status(404).json({ error: "Issue not found" }); return; }
+    await assertCompanyAccess(db, req, issue.companyId);
+    if (!clientSubmissionId || clientSubmissionId.length > 200) { res.status(400).json({ error: "Invalid client submission id" }); return; }
+    const comment = await svc.getCommentByClientSubmissionId(issue.companyId, id, clientSubmissionId);
+    res.setHeader("Cache-Control", "no-store");
+    res.json(comment ? { state: "completed", commentId: comment.id } : { state: "not_found" });
+  });
+
   router.get("/issues/:id/comments/:commentId", async (req, res) => {
     const id = req.params.id as string;
     const commentId = req.params.commentId as string;

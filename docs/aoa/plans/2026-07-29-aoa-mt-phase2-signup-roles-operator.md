@@ -71,7 +71,7 @@ grep -R "DEFAULT_ORGANIZATION_ID\|ensureDefaultOrganization" server/src/services
 // packages/shared/src/__tests__/config-schema-cloud-auth.test.ts
 import { describe, it, expect } from "vitest";
 import { DEPLOYMENT_MODES } from "../constants.js";
-import { upstreamConfigSchema } from "../config-schema.js";
+import { paperclipConfigSchema } from "../config-schema.js";
 
 const base = {
   $meta: { version: 1 },
@@ -87,14 +87,14 @@ describe("cloud_auth deployment mode", () => {
   });
 
   it("requires public exposure + explicit base URL", () => {
-    const bad = upstreamConfigSchema.safeParse({
+    const bad = paperclipConfigSchema.safeParse({
       ...base,
       server: { deploymentMode: "cloud_auth", exposure: "private", host: "0.0.0.0", port: 3101, allowedHostnames: [], serveUi: true },
       auth: { baseUrlMode: "auto" },
     });
     expect(bad.success).toBe(false);
 
-    const good = upstreamConfigSchema.safeParse({
+    const good = paperclipConfigSchema.safeParse({
       ...base,
       server: { deploymentMode: "cloud_auth", exposure: "public", host: "0.0.0.0", port: 3101, allowedHostnames: [], serveUi: true },
       auth: { baseUrlMode: "explicit", publicBaseUrl: "https://app.example.com" },
@@ -1244,7 +1244,7 @@ git commit -m "feat(mt): atomic cloud_auth cutover — disable first-user hooks 
 
 > **Why:** P6 §4.0b's strict cloud_auth e2e journeys (cross-tenant-negative, access-required, break-glass, invited-join) only exercise real tenant-isolation behavior when the instance boots in TRUE `cloud_auth` (in `authenticated` the P3 `isInstanceAdmin` clamp + enforced tenant gate are OFF — single-tenant preserved — so those tests would be meaningless). But `cloud_auth` normally hard-requires Google client id/secret. This task lets `cloud_auth` boot without real Google creds **only** under the same hard flag P6 §4.0 introduced (`AOA_E2E_TEST_SUPPORT === "1"`); sessions then come from the P6 test-mint seam, never real OAuth.
 >
-> **Where the Google-creds boot requirement actually lives (reconciliation):** the coordinator named `config-schema.ts superRefine`, but the file-based `upstreamConfigSchema` holds **no** Google creds — `googleClientId`/`googleClientSecret` are env-resolved `Config` fields (`server/src/config.ts:42-43`), and the boot-time requirement is enforced in **`assertAuthProviderConfigured` (`server/src/auth/better-auth.ts:256-267`)**. The flag-gated relaxation therefore goes there (plus the stub provider in `buildBetterAuthConfig`), which is the equivalent gate.
+> **Where the Google-creds boot requirement actually lives (reconciliation):** the coordinator named `config-schema.ts superRefine`, but the file-based `paperclipConfigSchema` holds **no** Google creds — `googleClientId`/`googleClientSecret` are env-resolved `Config` fields (`server/src/config.ts:42-43`), and the boot-time requirement is enforced in **`assertAuthProviderConfigured` (`server/src/auth/better-auth.ts:256-267`)**. The flag-gated relaxation therefore goes there (plus the stub provider in `buildBetterAuthConfig`), which is the equivalent gate.
 >
 > **PROD-SAFETY:** the relaxation applies ONLY when `AOA_E2E_TEST_SUPPORT === "1"`. Real prod `cloud_auth` still hard-requires Google creds. The existing fail-closed boot guard that refuses to start if `AOA_E2E_TEST_SUPPORT` is set on a real public deployment (P6 §4.0) is the leak backstop — this task does NOT weaken it and must not be merged ahead of it (cross-phase dep).
 

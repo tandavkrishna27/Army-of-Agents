@@ -221,7 +221,7 @@ function randomPrefixSafeWord(): string {
 /** Mirrors w2-extract-then-scope.integration.test.ts's seedCompanyAndAgent:
  *  a real company + a founder user (hub-item emission throws without one). */
 async function seedCompanyWithFounder(label: string): Promise<{ companyId: string }> {
-  const company = await companyService(db).create({
+  const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001",
     name: `${randomPrefixSafeWord()} ${label} Co`,
   } as never);
   const companyId = company.id;

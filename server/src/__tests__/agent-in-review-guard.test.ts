@@ -2,7 +2,7 @@
  * Unit tests for assertAgentInReviewReviewPath — the guard that prevents
  * agents from self-marking tasks as `in_review` with no human review path.
  *
- * Ports the severable middleware slice from AoA commit 68f69975.
+ * Ports the severable middleware slice from Paperclip commit 68f69975.
  * AoA-adapted: dropped executionState/monitor predicates (columns don't exist).
  *
  * Tested as unit tests (not integration) because the guard logic is

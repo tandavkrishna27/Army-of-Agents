@@ -6,6 +6,7 @@ import type {
   SecretProviderConfigHealthStatus,
   SecretProviderConfigStatus,
   SecretStatus,
+  SecretResolutionScope,
   RuntimeProviderKeyProvider,
   RuntimeProviderKeyStatus,
 } from "../constants.js";
@@ -36,6 +37,7 @@ export interface CompanySecret {
   name: string;
   key: string | null;
   status: SecretStatus;
+  resolutionScope: SecretResolutionScope;
   managedMode: SecretManagedMode;
   provider: SecretProvider;
   providerConfigId: string | null;

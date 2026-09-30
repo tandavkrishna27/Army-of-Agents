@@ -1,0 +1,20 @@
+{
+  "protocolVersion": 1,
+  "targetId": "11111111-1111-4111-8111-111111111111",
+  "targetClass": "managed_cloud",
+  "scope": "platform",
+  "organizationId": null,
+  "ownerPrincipalId": null,
+  "trustCeiling": "shared_isolated",
+  "credentialCeiling": "platform_brokered",
+  "dataLocalityCeiling": "transfer_allowed",
+  "providerConstraints": {
+    "profileId": "d1-fake-managed-cloud",
+    "version": 1,
+    "digest": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "capabilityCeiling": ["workload.batch", "provider.lifecycle_v1", "provider.cleanup_v1"],
+  "deviceGeneration": 1,
+  "revokedAt": null,
+  "policyHash": "aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111aaaa1111"
+}

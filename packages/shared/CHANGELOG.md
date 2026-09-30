@@ -1,4 +1,4 @@
-# @armyofagents/shared
+# @paperclipai/shared
 
 ## 0.2.7
 

@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 export const upsertBudgetPolicySchema = z.object({
-  scopeType: z.enum(["company", "agent"]),
+  // JOB-012 — `department` extends the existing scope surface (a department is a
+  // `projects` row of type 'department'; scopeId = the project id). cost_events
+  // observe department spend via cost_events.project_id.
+  scopeType: z.enum(["company", "agent", "department"]),
   scopeId: z.string().uuid(),
   amountCents: z.number().int().nonnegative(),
   warnPercent: z.number().int().min(1).max(99).optional().default(80),

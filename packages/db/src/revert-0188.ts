@@ -153,6 +153,39 @@ export async function revert0188(sql: Sql): Promise<void> {
     await tx.unsafe(`DROP INDEX IF EXISTS "issues_identifier_idx"`);
     await tx.unsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "issues_identifier_idx" ON "issues" USING btree ("identifier")`);
     // 3. Drop the org column + tenant tables.
+    // Before dropping companies.organization_id, detach every INBOUND FK that
+    // references it. Later phases add composite (organization_id, company_id)
+    // FKs from OTHER tables onto companies (jobs/services @ E3, and any future
+    // org-scoped table). Those reference `companies`, not `organizations`, so
+    // the organizations-FK sweep further below does not catch them — without
+    // this the transactional DROP COLUMN aborts with a dependent-object error
+    // (2BP01). Robust + future-proof: resolve the live attnum and drop every FK
+    // whose referenced columns include it, no hardcoded table list.
+    await tx.unsafe(`
+      DO $$
+      DECLARE
+        r record;
+        org_attnum smallint;
+      BEGIN
+        SELECT attnum INTO org_attnum
+        FROM pg_attribute
+        WHERE attrelid = 'companies'::regclass
+          AND attname = 'organization_id'
+          AND NOT attisdropped;
+        IF org_attnum IS NULL THEN
+          RETURN; -- column already gone; nothing inbound to detach
+        END IF;
+        FOR r IN
+          SELECT conrelid::regclass AS tbl, conname
+          FROM pg_constraint
+          WHERE contype = 'f'
+            AND confrelid = 'companies'::regclass
+            AND org_attnum = ANY(confkey)
+        LOOP
+          EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', r.tbl, r.conname);
+        END LOOP;
+      END $$;
+    `);
     await tx.unsafe(`ALTER TABLE "companies" DROP COLUMN IF EXISTS "organization_id"`);
     // Later phases add org FKs from OTHER tables (provider_connections in 0190,
     // execution_targets in 0191, and any future org-referencing table). DROP

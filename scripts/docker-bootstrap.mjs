@@ -217,7 +217,7 @@ if (!fs.existsSync(configPath)) {
         baseDir: env("AOA_STORAGE_LOCAL_DIR", path.join(configDir, "data", "storage")),
       },
       s3: {
-        bucket: env("AOA_STORAGE_S3_BUCKET", "aoa"),
+        bucket: env("AOA_STORAGE_S3_BUCKET", "paperclip"),
         region: env("AOA_STORAGE_S3_REGION", "us-east-1"),
         endpoint: env("AOA_STORAGE_S3_ENDPOINT", ""),
         prefix: env("AOA_STORAGE_S3_PREFIX", ""),

@@ -29,7 +29,7 @@ Tokens are either:
 
 - All request bodies are JSON with `Content-Type: application/json`
 - Company-scoped endpoints require `:companyId` in the path
-- Run audit trail: include `X-AoA-Run-Id` header on all mutating requests during heartbeats.
+- Run audit trail: include `X-Aoa-Run-Id` header on all mutating requests during heartbeats. The legacy `X-Paperclip-Run-Id` name is also accepted for backward compatibility.
 
 ## Response Format
 

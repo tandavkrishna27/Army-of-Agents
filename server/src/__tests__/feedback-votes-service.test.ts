@@ -121,7 +121,7 @@ const baseInput = {
 describe("feedbackVotesService — recordVote", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("inserts upvote with no reason (reason stripped per AoA normalizeReason)", async () => {
+  it("inserts upvote with no reason (reason stripped per Paperclip normalizeReason)", async () => {
     const { db, captured } = createUpsertCaptureDb();
     const svc = feedbackVotesService(db as any);
     await svc.recordVote({ ...baseInput, vote: "up", reason: "looks great" });

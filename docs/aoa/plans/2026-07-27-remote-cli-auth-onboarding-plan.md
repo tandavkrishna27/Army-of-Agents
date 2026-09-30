@@ -33,7 +33,7 @@ This plan fixes both reported failures:
 | API-key path | Secret resolution and adapter probes already exist. | Probe failures are inferred from free-form codes/text and the Verify screen omits diagnostic detail. |
 | Verify layout | `body` is `overflow: hidden`; the step grows naturally and has no bounded vertical scroll region. | Long checks/auth panels can extend beyond the viewport and become unreachable. |
 | Dark appearance | Onboarding uses a scoped dark token set, while the global theme can still change with stored/system preference. | Inspect/device emulation can expose a light body/root, a theme transition, or a render failure. The exact white-screen trigger needs a captured browser error and computed-style assertion. |
-| Naming | Runtime data is mounted at `/upstream`; PostgreSQL defaults also retain the legacy name. | A direct rename can orphan existing named-volume data or break rollback. |
+| Naming | Runtime data is mounted at `/paperclip`; PostgreSQL defaults also retain the legacy name. | A direct rename can orphan existing named-volume data or break rollback. |
 
 ## Premises
 
@@ -196,9 +196,9 @@ new tests:
 Migration must preserve the existing `aoa-data` named volume. Changing its mount
 target does not change the volume contents. For one major compatibility window:
 
-- Create `/upstream -> /aoa` as a legacy symlink in the image.
+- Create `/paperclip -> /aoa` as a legacy symlink in the image.
 - Warn once when a legacy environment/path is observed.
-- Keep legacy `UPSTREAM_*` environment reads and frozen wire identifiers only
+- Keep legacy `PAPERCLIP_*` environment reads and frozen wire identifiers only
   as documented compatibility aliases.
 - Never write new state through the legacy path.
 - Record a data-layout version sentinel and an image/Compose compatibility

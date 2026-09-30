@@ -124,7 +124,7 @@ describe.skipIf(process.platform === "win32")(
           `embedded-postgres setup failed; cannot run integration test: ${String(setupError)}`,
         );
       }
-      const company = await companyService(db).create({ name: "AoA Backend Co" } as any);
+      const company = await companyService(db).create({ name: "AoA Backend Co", organizationId: "00000000-0000-0000-0000-000000000001" } as any);
       companyId = company.id;
       expect(companyId).toBeTruthy();
 

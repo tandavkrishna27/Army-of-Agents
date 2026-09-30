@@ -1,0 +1,11 @@
+-- DAT-005 (C14): drizzle-kit cannot emit an idempotency guard, so the generated
+-- ADD COLUMN below is hand-augmented with IF NOT EXISTS. The statement is additive +
+-- nullable (empty seam, no backfill) and idempotent; schema DDL is otherwise
+-- db:generate output (Critical Rule #1 / Decision #19).
+-- `applied_policy_version` records the network-policy version applied at the last
+-- governed egress resolve (DAT-005-D3). `network_denied` cannot carry a version
+-- (frozen wire) and the version is a frozen job-side concept, so it is recorded here
+-- server-side, written by resolveExecutionSecret in the SAME audit UPDATE. NO secret
+-- value column exists. It widens job_secret_handles, which inherits the whole-table
+-- aoa_app grant + RLS + policy (0211) — no keystone reconciliation (DAT-005-D3).
+ALTER TABLE "job_secret_handles" ADD COLUMN IF NOT EXISTS "applied_policy_version" integer;

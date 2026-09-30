@@ -47,7 +47,7 @@ import {
 } from "./authz.js";
 import { assertHumanRole, assertRole } from "../middleware/rbac.js";
 import { findActiveServerAdapter, findServerAdapter, listAdapterModels } from "../adapters/index.js";
-import { redactEventPayload, redactSecretsInString } from "../redaction.js";
+import { redactEventPayload, redactRunEventPayload, redactSecretsInString } from "../redaction.js";
 import { runClaudeLogin } from "@armyofagents/adapter-claude-local/server";
 import {
   DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX,
@@ -2189,7 +2189,10 @@ export function agentRoutes(db: Db) {
     const events = await heartbeat.listEvents(runId, Number.isFinite(afterSeq) ? afterSeq : 0, Number.isFinite(limit) ? limit : 200);
     const redactedEvents = events.map((event) => ({
       ...event,
-      payload: redactEventPayload(event.payload),
+      // BRW-003d-2 — the EVENT egress, so the structural URL pass applies here and
+      // NOT to the adapterConfig/runtimeConfig responses above, where a legitimate
+      // query string is part of what the operator is trying to read.
+      payload: redactRunEventPayload(event.payload),
     }));
     res.json(redactedEvents);
   });

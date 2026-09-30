@@ -17,14 +17,14 @@ export const agentConfigurationDoc = `# gemini_local agent configuration
 Adapter: gemini_local
 
 Use when:
-- You want AoA to run the Gemini CLI locally on the host machine
+- You want Paperclip to run the Gemini CLI locally on the host machine
 - You want Gemini chat sessions resumed across heartbeats with --resume
-- You want AoA skills injected locally without polluting the global environment
+- You want Paperclip skills injected locally without polluting the global environment
 
 Don't use when:
 - You need webhook-style external invocation (use http or openclaw_gateway)
 - You only need a one-shot script without an AI coding agent loop (use process)
-- Gemini CLI is not installed on the machine that runs AoA
+- Gemini CLI is not installed on the machine that runs Paperclip
 
 Core fields:
 - cwd (string, optional): default absolute working directory fallback for the agent process (created if missing when possible)
@@ -43,6 +43,6 @@ Operational fields:
 Notes:
 - Runs use positional prompt arguments, not stdin.
 - Sessions resume with --resume when stored session cwd matches the current cwd.
-- AoA auto-injects local skills into \`~/.gemini/skills/\` via symlinks, so the CLI can discover both credentials and skills in their natural location.
+- Paperclip auto-injects local skills into \`~/.gemini/skills/\` via symlinks, so the CLI can discover both credentials and skills in their natural location.
 - Authentication can use GEMINI_API_KEY / GOOGLE_API_KEY or local Gemini CLI login.
 `;

@@ -1061,7 +1061,7 @@ Roughly 5 hours wall-clock from "let's plan it" to "all 4 merged". Distribution:
 
 | Item | Status |
 |---|---|
-| [#96](https://github.com/MeteoriteLabs/AoA/issues/96) `killProcessTree` real fix | Open. Upstream's working impl (`detached:true` + `process.kill(-pgid, sig)`) is the reference. Suggested 1-hr fix. |
-| Port Upstream's `refresh-lockfile.yml` automation | Mentioned in AGENTS.md §7. Eliminates the manual chore-PR ceremony. ~30 min if accepted. |
+| [#96](https://github.com/MeteoriteLabs/AoA/issues/96) `killProcessTree` real fix | Open. Paperclip's working impl (`detached:true` + `process.kill(-pgid, sig)`) is the reference. Suggested 1-hr fix. |
+| Port Paperclip's `refresh-lockfile.yml` automation | Mentioned in AGENTS.md §7. Eliminates the manual chore-PR ceremony. ~30 min if accepted. |
 | 7 new event types from PR #94 + 12 from PR #95 in `LIVE_EVENT_TYPES` | Need to confirm any consumers (e.g., live-event router) handle the new types correctly. Spot-checked at merge; production verification pending. |
 | Worktree-archive patch for `memory-phase-6-0` | `.claude/worktree-archive/memory-phase-6-0-uncommitted.patch` — 25.6 KB of uncommitted work from the cleanup. Apply or discard at user's discretion. |

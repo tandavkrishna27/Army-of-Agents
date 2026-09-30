@@ -48,12 +48,19 @@
         if (window.location.pathname.startsWith("/onboarding")) {
           document.documentElement.dataset.aoaOnboardingBoot = "dark";
         }
-        // Inline theme bootstrap prevents a flash before the UI renders.
-        const themeKey = "aoa.theme";
+        // Inline FOUC-prevention. Reads aoa.theme first, falls back to the
+        // legacy paperclip.theme key for users who haven't yet hit the
+        // boot-time migration in src/lib/storage-migrations.ts. This dual
+        // read keeps the user's chosen theme stable across the rebrand
+        // even on the first reload, before main.tsx runs.
+        const newKey = "aoa.theme";
+        const legacyKey = "paperclip.theme";
         const darkThemeColor = "#18181b";
         const lightThemeColor = "#ffffff";
         try {
-          const stored = window.localStorage.getItem(themeKey);
+          const stored =
+            window.localStorage.getItem(newKey) ??
+            window.localStorage.getItem(legacyKey);
           const theme = stored === "light" || stored === "dark" ? stored : "dark";
           const isDark = theme === "dark";
           document.documentElement.classList.toggle("dark", isDark);

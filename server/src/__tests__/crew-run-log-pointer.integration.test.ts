@@ -105,8 +105,8 @@ async function seedCompanyAndCrewAgent(label: string): Promise<{
   const companyId = randomUUID();
   seedCounter += 1;
   await db.execute(sql`
-    INSERT INTO companies (id, name, issue_prefix)
-    VALUES (${companyId}, ${`Crew Run Log ${label} Co`}, ${`CRL${seedCounter}`})
+    INSERT INTO companies (organization_id, id, name, issue_prefix)
+    VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, ${`Crew Run Log ${label} Co`}, ${`CRL${seedCounter}`})
   `);
   const [agent] = rowsOf(
     await db.execute(sql`

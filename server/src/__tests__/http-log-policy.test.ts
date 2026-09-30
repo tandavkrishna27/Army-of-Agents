@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { shouldSilenceHttpSuccessLog } from "../middleware/http-log-policy.js";
+import {
+  shouldOmitHttpRequestPayload,
+  shouldSilenceHttpSuccessLog,
+  safeHttpLogUrl,
+} from "../middleware/http-log-policy.js";
+
+describe("shouldOmitHttpRequestPayload", () => {
+  it("omits distributed job and credential-bearing worker-control payloads from HTTP logs", () => {
+    const path = "/api/organizations/org-1/companies/company-1/jobs";
+    expect(shouldOmitHttpRequestPayload("POST", `${path}?trace=1`)).toBe(true);
+    expect(shouldOmitHttpRequestPayload("POST", path.slice(4))).toBe(true);
+    expect(shouldOmitHttpRequestPayload("POST", "/api/worker-control/enroll?raw-code=must-not-log")).toBe(true);
+    expect(shouldOmitHttpRequestPayload("POST", "/api/execution-targets/heartbeat?session=must-not-log")).toBe(true);
+    expect(shouldOmitHttpRequestPayload("GET", path)).toBe(false);
+    expect(shouldOmitHttpRequestPayload("POST", `${path}/other`)).toBe(false);
+  });
+});
 
 describe("shouldSilenceHttpSuccessLog", () => {
   it("silences cached 304 responses", () => {
@@ -97,5 +113,27 @@ describe("shouldSilenceHttpSuccessLog", () => {
   it("returns false when method or url is missing", () => {
     expect(shouldSilenceHttpSuccessLog(undefined, "/api/health", 200)).toBe(false);
     expect(shouldSilenceHttpSuccessLog("GET", undefined, 200)).toBe(false);
+  });
+});
+
+describe("DAT-008 execution-secret resolve is treated as credential-bearing", () => {
+  it("omits the payload for the resolve route, mounted with and without the /api prefix", () => {
+    expect(shouldOmitHttpRequestPayload("POST", "/api/worker-control/execution-secrets/resolve"))
+      .toBe(true);
+    expect(shouldOmitHttpRequestPayload("POST", "/worker-control/execution-secrets/resolve"))
+      .toBe(true);
+  });
+
+  it("logs only the safe route for it, dropping any query string", () => {
+    expect(safeHttpLogUrl("POST", "/api/worker-control/execution-secrets/resolve?trace=1"))
+      .toBe("/api/worker-control/execution-secrets/resolve");
+  });
+
+  it("does not accidentally cover a sibling worker-control route", () => {
+    // The registration must be the resolve route specifically, not a prefix match that
+    // would silently start omitting payloads for every worker-control operation.
+    expect(shouldOmitHttpRequestPayload("POST", "/api/worker-control/execution-secrets/resolve/extra"))
+      .toBe(false);
+    expect(shouldOmitHttpRequestPayload("POST", "/api/worker-control/events")).toBe(false);
   });
 });

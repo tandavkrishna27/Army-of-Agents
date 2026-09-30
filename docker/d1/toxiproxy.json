@@ -1,0 +1,26 @@
+[
+  {
+    "name": "control-plane-to-postgres",
+    "listen": "0.0.0.0:15432",
+    "upstream": "postgres:5432",
+    "enabled": true
+  },
+  {
+    "name": "worker-to-control-plane",
+    "listen": "0.0.0.0:13100",
+    "upstream": "control-plane:3100",
+    "enabled": true
+  },
+  {
+    "name": "worker-to-control-plane-b",
+    "listen": "0.0.0.0:13101",
+    "upstream": "control-plane-b:3100",
+    "enabled": true
+  },
+  {
+    "name": "worker-to-minio",
+    "listen": "0.0.0.0:19000",
+    "upstream": "minio:9000",
+    "enabled": true
+  }
+]

@@ -1025,7 +1025,7 @@ Expected: all pass; no new failures.
 pnpm brand-check 2>&1 | Select-Object -Last 20
 ```
 
-Expected: 0 violations. (If this fails, check that no `upstream` references leaked in; the `ClipboardList` icon name is fine — it's from lucide-react, not a brand string.)
+Expected: 0 violations. (If this fails, check that no `paperclip` references leaked in; the `ClipboardList` icon name is fine — it's from lucide-react, not a brand string.)
 
 - [ ] **Step 5: Final commit (if any fixes needed)**
 
@@ -1041,7 +1041,7 @@ git commit -m "fix(planning-mode): typecheck and test suite cleanup (D8)"
 ## Task 12: CLAUDE.md Divergence Point Entry
 
 **Files:**
-- Modify: `CLAUDE.md` — Upstream Divergence Points section
+- Modify: `CLAUDE.md` — Paperclip Divergence Points section
 
 - [ ] **Step 1: Add D8 to the divergence section**
 
@@ -1057,7 +1057,7 @@ In `CLAUDE.md`, after the **D6** section, add:
   `server/src/routes/issues-planning-mode-dispatch.ts`.
 - UI: amber "Planning" pill on IssuesList rows, NewIssueDialog chip bar, and
   TaskSlideOver header (click to revert to Standard).
-- **Do NOT port** any Upstream commit that adds `work_mode` or a similar field
+- **Do NOT port** any Paperclip commit that adds `work_mode` or a similar field
   differently — AoA's interpretation is that planning tasks are human-curated and
   must not auto-dispatch until the founder switches them to Standard.
 ```
@@ -1090,5 +1090,5 @@ After writing this plan, verify against the spec from `memory/project_v1_to_v2_r
 - [x] **Unit test** — `shouldDispatchIssueWakeup` (Task 3)
 - [x] **UI tests** — chip toggle, pill render (Tasks 7, 9)
 - [x] **E2E test** — create planning task → no heartbeat run (Task 10)
-- [x] **Brand-check** — no `upstream-*` strings introduced (Task 11)
+- [x] **Brand-check** — no `paperclip-*` strings introduced (Task 11)
 - [x] **CLAUDE.md** — D8 divergence point documented (Task 12)

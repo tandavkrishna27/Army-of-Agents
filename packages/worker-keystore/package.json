@@ -1,0 +1,37 @@
+{
+  "name": "@armyofagents/worker-keystore",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "aoa-worker-desktop": "./dist/bin/aoa-worker-desktop.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "pnpm --filter @armyofagents/worker-protocol build && pnpm --filter @armyofagents/worker-daemon build && pnpm --filter @armyofagents/sandbox-e2b-provider build && tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "@armyofagents/sandbox-e2b-provider": "workspace:*",
+    "@armyofagents/worker-daemon": "workspace:*",
+    "@armyofagents/worker-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.6"
+  }
+}

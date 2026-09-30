@@ -70,12 +70,12 @@ beforeAll(async () => {
     db = createDb(connectionString);
 
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${COMPANY_ID}, 'Provider Readiness Co', 'PRC')
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${COMPANY_ID}, 'Provider Readiness Co', 'PRC')
     `);
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${OTHER_COMPANY_ID}, 'Other Tenant Co', 'OTC')
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${OTHER_COMPANY_ID}, 'Other Tenant Co', 'OTC')
     `);
   } catch (err) {
     setupError = err;

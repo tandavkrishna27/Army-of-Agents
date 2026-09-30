@@ -68,9 +68,9 @@ export function resolveSessionKey(input: {
   runId: string;
   issueId: string | null;
 }): string {
-  const fallback = input.configuredSessionKey ?? "aoa";
-  if (input.strategy === "run") return `aoa:run:${input.runId}`;
-  if (input.strategy === "issue" && input.issueId) return `aoa:issue:${input.issueId}`;
+  const fallback = input.configuredSessionKey ?? "paperclip";
+  if (input.strategy === "run") return `paperclip:run:${input.runId}`;
+  if (input.strategy === "issue" && input.issueId) return `paperclip:issue:${input.issueId}`;
   return fallback;
 }
 
@@ -247,14 +247,14 @@ export function buildWakePayload(ctx: AdapterExecutionContext): WakePayload {
 }
 
 export function buildAoaEnvForWake(ctx: AdapterExecutionContext, wakePayload: WakePayload): Record<string, string> {
-  const aoaApiUrlOverride = resolveAoaApiUrlOverride(ctx.config.aoaApiUrl);
+  const paperclipApiUrlOverride = resolveAoaApiUrlOverride(ctx.config.paperclipApiUrl);
   const aoaEnv: Record<string, string> = {
     ...buildAoaEnv(ctx.agent),
     AOA_RUN_ID: ctx.runId,
   };
 
-  if (aoaApiUrlOverride) {
-    aoaEnv.AOA_API_URL = aoaApiUrlOverride;
+  if (paperclipApiUrlOverride) {
+    aoaEnv.AOA_API_URL = paperclipApiUrlOverride;
   }
   if (wakePayload.taskId) aoaEnv.AOA_TASK_ID = wakePayload.taskId;
   if (wakePayload.wakeReason) aoaEnv.AOA_WAKE_REASON = wakePayload.wakeReason;
@@ -269,7 +269,7 @@ export function buildAoaEnvForWake(ctx: AdapterExecutionContext, wakePayload: Wa
 }
 
 export function buildWakeText(payload: WakePayload, aoaEnv: Record<string, string>): string {
-  const claimedApiKeyPath = "~/.openclaw/workspace/aoa-claimed-api-key.json";
+  const claimedApiKeyPath = "~/.openclaw/workspace/paperclip-claimed-api-key.json";
   const orderedKeys = [
     "AOA_RUN_ID",
     "AOA_AGENT_ID",
@@ -291,7 +291,7 @@ export function buildWakeText(payload: WakePayload, aoaEnv: Record<string, strin
   }
 
   const lines = [
-    "AoA wake event for a cloud adapter.",
+    "Paperclip wake event for a cloud adapter.",
     "",
     "Set these values in your run context:",
     ...envLines,
@@ -308,7 +308,7 @@ export function buildWakeText(payload: WakePayload, aoaEnv: Record<string, strin
     `linked_issue_ids=${payload.issueIds.join(",")}`,
   ];
 
-  lines.push("", "Run your AoA heartbeat procedure now.");
+  lines.push("", "Run your Paperclip heartbeat procedure now.");
   return lines.join("\n");
 }
 

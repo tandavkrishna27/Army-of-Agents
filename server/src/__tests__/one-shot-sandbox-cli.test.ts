@@ -16,12 +16,13 @@
  * NOT a bare `EnvironmentAcquisitionResult`. The fakes below mirror that
  * real shape, not the plan doc's simplified sketch.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   runOneShotCliInSandbox,
   OneShotSandboxError,
   type OneShotSandboxHandle,
 } from "../services/one-shot-sandbox-cli.js";
+import { setDistributedShadowPort } from "../services/distributed-shadow-port.js";
 
 const COMPANY_ID = "co-1";
 
@@ -483,5 +484,82 @@ describe("runOneShotCliInSandbox (U13.1)", () => {
     });
 
     expect(recordOneShotCliCost).not.toHaveBeenCalled();
+  });
+  // ─── MIG-007 ───────────────────────────────────────────────────────────────
+  // This helper is the ONE seam all three one-shot operation kinds route through, so
+  // wiring it once covers extraction, compaction and readiness probes.
+  describe("MIG-007 — the shadow observation", () => {
+    afterEach(() => setDistributedShadowPort(null));
+
+    it("records nothing when no port is registered, and the result is unchanged", async () => {
+      const result = await runOneShotCliInSandbox(baseInput({ deps: deps() }));
+      expect(result.stdout).toBe("ok");
+      expect(execute).toHaveBeenCalledTimes(1);
+    });
+
+    it("records exactly one observation, with the operation's own identity", async () => {
+      const record = vi.fn(async () => {});
+      setDistributedShadowPort({ record });
+      await runOneShotCliInSandbox(baseInput({ deps: deps() }));
+
+      expect(record).toHaveBeenCalledTimes(1);
+      const observed = record.mock.calls[0]?.[0] as {
+        companyId: string;
+        source: { kind: string; operationKind: string; operationId: string };
+        routing: { executionTargetType: string };
+        principal: { kind: string };
+        workloadCharacterization: { command: string; maxRuntimeSeconds: number };
+      };
+      expect(observed.companyId).toBe(COMPANY_ID);
+      expect(observed.source.kind).toBe("one_shot");
+      expect(observed.source.operationKind).toBe("extraction");
+      // No fabricated run or issue: a one_shot carries its own operation identity, and
+      // the FROZEN .strict() variant refuses anything else.
+      expect(observed.source).not.toHaveProperty("runId");
+      expect(observed.source).not.toHaveProperty("issueId");
+      // The REAL resolved provider, not a constant.
+      expect(observed.routing.executionTargetType).toBe("e2b");
+      expect(observed.principal.kind).toBe("system");
+      expect(observed.workloadCharacterization.command).toBe("claude");
+      expect(observed.workloadCharacterization.maxRuntimeSeconds).toBe(30);
+    });
+
+    it.each([
+      ["extraction", "extraction"],
+      ["compaction", "compaction"],
+      ["readiness", "readiness_probe"],
+    ] as const)("maps the %s cost source to the frozen %s operation kind", async (source, kind) => {
+      const record = vi.fn(async () => {});
+      setDistributedShadowPort({ record });
+      await runOneShotCliInSandbox(baseInput({ source, deps: deps() }));
+      const observed = record.mock.calls[0]?.[0] as { source: { operationKind: string } };
+      expect(observed.source.operationKind).toBe(kind);
+    });
+
+    it("observes BEFORE the command runs — the record is the intent, not the outcome", async () => {
+      const order: string[] = [];
+      setDistributedShadowPort({
+        record: async () => {
+          order.push("shadow");
+        },
+      });
+      execute.mockImplementation(async () => {
+        order.push("execute");
+        return { exitCode: 0, signal: null, timedOut: false, stdout: "ok", stderr: "" };
+      });
+      await runOneShotCliInSandbox(baseInput({ deps: deps() }));
+      expect(order).toEqual(["shadow", "execute"]);
+    });
+
+    it("a port that throws never fails the operation", async () => {
+      setDistributedShadowPort({
+        record: async () => {
+          throw new Error("shadow exploded");
+        },
+      });
+      const result = await runOneShotCliInSandbox(baseInput({ deps: deps() }));
+      expect(result.stdout).toBe("ok");
+      expect(execute).toHaveBeenCalledTimes(1);
+    });
   });
 });

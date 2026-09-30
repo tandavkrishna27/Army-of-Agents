@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "id": "service-budget-stop",
+  "workloadType": "service",
+  "purpose": "Control-plane budget exhaustion stops a running service.",
+  "source": {
+    "kind": "service_reconcile"
+  },
+  "organization": {
+    "id": "org_E29GKVYWJJKN22EAF2N3G7Q97Z",
+    "name": "Hooli Cloud"
+  },
+  "company": {
+    "id": "company_K6VWDHEA05X62F0NTVHV05FYV0",
+    "name": "Hooli Cloud HQ",
+    "organizationId": "org_E29GKVYWJJKN22EAF2N3G7Q97Z"
+  },
+  "requester": {
+    "type": "system",
+    "id": "service-reconciler",
+    "displayName": "Service Reconciler"
+  },
+  "executor": {
+    "type": "service_instance",
+    "id": "svc-worker-pool-2"
+  },
+  "placement": {
+    "targetPolicy": "latest_generation",
+    "provider": "e2b",
+    "region": "us-east-1",
+    "generation": 1
+  },
+  "inputBase": {
+    "workspaceBaseId": "wsbase-ymve7sp52gcfezwcse0r06q6xy",
+    "gitRemote": "https://git.example.com/hooli/svc.git",
+    "gitRef": "refs/tags/v2.0.0",
+    "baseDigest": "be749baee739b645a2104c4f8e1f3c2cd9ee20580046b786fd5e0bc3343ff2dd",
+    "immutable": true
+  },
+  "identity": {
+    "jobId": "job_01WNZVVQBAHYEZT0FC174J5387",
+    "attempts": [
+      {
+        "attempt": 1,
+        "workerId": "worker_V2Y8ABTCJQRP95127S4HN6BR9Q",
+        "leaseId": "lease_D2F28344EZPJ32VP7F6KTVN5D4",
+        "fenceToken": 100
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "set_desired_running"
+    },
+    {
+      "action": "reconcile_and_lease",
+      "emits": [
+        "service_instance_started"
+      ]
+    },
+    {
+      "action": "report_healthy",
+      "emits": [
+        "service_health",
+        "usage"
+      ]
+    },
+    {
+      "action": "exhaust_budget"
+    },
+    {
+      "action": "request_stop"
+    },
+    {
+      "action": "graceful_stop",
+      "emits": [
+        "service_graceful_stop_observed",
+        "service_instance_stopped"
+      ]
+    }
+  ],
+  "failureInjection": {
+    "point": "healthy",
+    "effect": "budget_exhausted"
+  },
+  "expectedEvents": [
+    {
+      "protocolVersion": 1,
+      "eventId": "EXM33798C4YT0HZJHAKQGQPA27",
+      "eventType": "service_instance_started",
+      "organizationId": "org_E29GKVYWJJKN22EAF2N3G7Q97Z",
+      "companyId": "company_K6VWDHEA05X62F0NTVHV05FYV0",
+      "workerId": "worker_V2Y8ABTCJQRP95127S4HN6BR9Q",
+      "jobId": "job_01WNZVVQBAHYEZT0FC174J5387",
+      "attempt": 1,
+      "leaseId": "lease_D2F28344EZPJ32VP7F6KTVN5D4",
+      "fenceToken": 100,
+      "seq": 1,
+      "occurredAt": "2026-08-08T12:00:00.000Z",
+      "payload": {
+        "generation": 1
+      },
+      "eventDigest": "2509f437ebfc71a0dc18074e31a03df117270e25d8ba13d1bc63592a629b1bfb"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "W7Z02P57B6A91T57YN74JNYKPC",
+      "eventType": "service_health",
+      "organizationId": "org_E29GKVYWJJKN22EAF2N3G7Q97Z",
+      "companyId": "company_K6VWDHEA05X62F0NTVHV05FYV0",
+      "workerId": "worker_V2Y8ABTCJQRP95127S4HN6BR9Q",
+      "jobId": "job_01WNZVVQBAHYEZT0FC174J5387",
+      "attempt": 1,
+      "leaseId": "lease_D2F28344EZPJ32VP7F6KTVN5D4",
+      "fenceToken": 100,
+      "seq": 2,
+      "occurredAt": "2026-08-08T12:00:05.000Z",
+      "payload": {
+        "code": "healthy"
+      },
+      "eventDigest": "656fe91bb6616a7b588b496cce087c0b984463c5dda88670c052992ecba3e542"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "BWV0FSJR3QGA8PEVSPXFJHC3TK",
+      "eventType": "usage",
+      "organizationId": "org_E29GKVYWJJKN22EAF2N3G7Q97Z",
+      "companyId": "company_K6VWDHEA05X62F0NTVHV05FYV0",
+      "workerId": "worker_V2Y8ABTCJQRP95127S4HN6BR9Q",
+      "jobId": "job_01WNZVVQBAHYEZT0FC174J5387",
+      "attempt": 1,
+      "leaseId": "lease_D2F28344EZPJ32VP7F6KTVN5D4",
+      "fenceToken": 100,
+      "seq": 3,
+      "occurredAt": "2026-08-08T12:00:30.000Z",
+      "payload": {
+        "metrics": {
+          "tokensIn": 0,
+          "tokensOut": 0,
+          "costCents": 5000,
+          "durationMs": 30000
+        },
+        "tags": [
+          "service"
+        ]
+      },
+      "eventDigest": "e44a34700e0deb9ae077bf4659d04276ac52e26ad2ac1b053cd52e04aaf5b06c"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "NYJ8P5164PGRS9700YSZMEBTVY",
+      "eventType": "budget_exhausted",
+      "organizationId": "org_E29GKVYWJJKN22EAF2N3G7Q97Z",
+      "companyId": "company_K6VWDHEA05X62F0NTVHV05FYV0",
+      "workerId": "worker_V2Y8ABTCJQRP95127S4HN6BR9Q",
+      "jobId": "job_01WNZVVQBAHYEZT0FC174J5387",
+      "attempt": 1,
+      "leaseId": "lease_D2F28344EZPJ32VP7F6KTVN5D4",
+      "fenceToken": 100,
+      "seq": 4,
+      "occurredAt": "2026-08-08T12:00:31.000Z",
+      "payload": {
+        "reason": "company_budget_exhausted"
+      },
+      "eventDigest": "23c6944713f7f581c0265ef613a78982543c7dc86ffdad05323d729da6b5229f"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "41AYN6W2B962HJJFFA0VE1HSMV",
+      "eventType": "service_graceful_stop_observed",
+      "organizationId": "org_E29GKVYWJJKN22EAF2N3G7Q97Z",
+      "companyId": "company_K6VWDHEA05X62F0NTVHV05FYV0",
+      "workerId": "worker_V2Y8ABTCJQRP95127S4HN6BR9Q",
+      "jobId": "job_01WNZVVQBAHYEZT0FC174J5387",
+      "attempt": 1,
+      "leaseId": "lease_D2F28344EZPJ32VP7F6KTVN5D4",
+      "fenceToken": 100,
+      "seq": 5,
+      "occurredAt": "2026-08-08T12:00:33.000Z",
+      "payload": {
+        "detail": "draining connections"
+      },
+      "eventDigest": "03cbbdb624754ea90072f1df7f847d36989853cd722e28fa1a4abeae5732ec1d"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "0GJSQK7CJV63672ZGTPF9VE4Q9",
+      "eventType": "service_instance_stopped",
+      "organizationId": "org_E29GKVYWJJKN22EAF2N3G7Q97Z",
+      "companyId": "company_K6VWDHEA05X62F0NTVHV05FYV0",
+      "workerId": "worker_V2Y8ABTCJQRP95127S4HN6BR9Q",
+      "jobId": "job_01WNZVVQBAHYEZT0FC174J5387",
+      "attempt": 1,
+      "leaseId": "lease_D2F28344EZPJ32VP7F6KTVN5D4",
+      "fenceToken": 100,
+      "seq": 6,
+      "occurredAt": "2026-08-08T12:00:35.000Z",
+      "payload": {
+        "code": "stopped"
+      },
+      "eventDigest": "e715d2058a3219041b763259076389e28051207280a6b3ae93ae5dbaf55497ea"
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "maxTotalCents": 5000,
+    "observedTotalCents": 5000,
+    "tokenBudget": 0,
+    "observedTokens": 0
+  },
+  "timing": {
+    "queuedAt": "2026-08-08T11:59:55.000Z",
+    "startedAt": "2026-08-08T12:00:00.000Z",
+    "finishedAt": "2026-08-08T12:00:35.000Z",
+    "maxWallClockMs": 86400000,
+    "observedWallClockMs": 35000
+  },
+  "cleanup": {
+    "authority": "lease_holder",
+    "scope": "service_instance:worker_V2Y8ABTCJQRP95127S4HN6BR9Q",
+    "idempotent": true,
+    "deadlineMs": 60000,
+    "restoresEffectAuthority": false
+  },
+  "control": {
+    "cancellation": "none",
+    "productApproval": "none",
+    "runtimeDecision": "budget_stop"
+  },
+  "expected": {
+    "terminalState": "stopped",
+    "artifacts": [],
+    "auditActions": [
+      "budget.exhausted",
+      "service.stop_requested",
+      "service.instance_stopped"
+    ],
+    "forbiddenEffects": [
+      "worker_budget_override",
+      "automatic_restart_after_budget_stop"
+    ]
+  }
+}

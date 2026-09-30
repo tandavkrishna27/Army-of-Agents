@@ -1,0 +1,191 @@
+{
+  "$comment": [
+    "DEP-013 — the declaration behind the CI-verdict CONSUMER.",
+    "",
+    "A red check nobody reads is a check that did not run. `d1-merge-train` failed on three",
+    "consecutive integration-branch merges (2026-08-29/30/31), uploaded a complete evidence",
+    "bundle every time exactly as DEP-004 specified, and all three expired UNREAD. Production",
+    "was specified; consumption never was. This file is the human half of the fix.",
+    "",
+    "THE UNIT IS A (workflow, branch) STREAM, not a workflow. `d1-merge-train` declares",
+    "branches [main, docs/replatform-program]; reading 'the latest run of this workflow'",
+    "repo-wide would let a green on one branch mask a red on the other — and the masked branch",
+    "would be docs/replatform-program, where the incident that motivated this ticket happened.",
+    "",
+    "MODES. `coverage` (push-triggered): is the newest commit on this branch that matches the",
+    "workflow's OWN paths: filter covered by a successful run? A quiet path reports NOTHING —",
+    "a wall-clock rule there would raise an incident whose only repair is forcing a matching",
+    "push, which is an incident nobody can honestly close. `cadence` (schedule-triggered):",
+    "wall-clock against the workflow's OWN cron times the declared tolerance — the only thing",
+    "that can see a schedule that stopped firing.",
+    "",
+    "The paths: filter and the cron are read FROM THE WORKFLOW FILE, never re-declared here, so",
+    "a path added to a lane cannot drift from what the consumer tests. This file declares only",
+    "what a machine cannot infer: which streams are watched, in which mode, with what tolerance,",
+    "and — for every stream that is NOT watched — WHAT WOULD HAVE TO CHANGE. A reason is not an",
+    "excuse.",
+    "",
+    "Reporting is not fixing. A finding published here does not block a merge and does not",
+    "assert that the lane must be repaired first; it asserts only that the verdict was READ."
+  ],
+  "consumer": {
+    "issueTitle": "Workflow verdict reconciliation (DEP-013)",
+    "issueLabel": "verdict-consumer",
+    "reconcilerWorkflow": "verdict-reconcile.yml",
+    "toleratedSilenceHours": 72,
+    "toleratedSilenceReason": "DELIBERATELY GENEROUS WHILE THE ONLY LIVE TRIGGER ON THIS BRANCH IS `push`. GitHub runs `schedule` triggers ONLY from the DEFAULT branch (main) — this repository already relies on that fact in three places (d1-merge-train.yml and keyed-e2b-conformance.yml both say so at the line, and every cross-platform-weekly/catalog-audit/thread-v2-e2e run in the API is on main). The reconciler's 6h cron therefore fires for nothing until this workflow reaches main, and on docs/replatform-program the marker is refreshed by pushes alone. 72h ≈ a quiet long weekend on the integration branch, so a quiet programme cannot red every open PR — a cry-wolf gate is the shape that gets a guard switched off. SUCCESSOR CONDITION, stated so this number is reviewable rather than habitual: once verdict-reconcile.yml is on main and its 6h schedule is observed firing, drop this to 26 (four intervals plus slack, so three consecutive missed scheduled reconciliations are needed to red)."
+  },
+  "streams": {
+    "d1-merge-train.yml@docs/replatform-program": {
+      "workflow": "d1-merge-train.yml",
+      "branch": "docs/replatform-program",
+      "watch": "coverage",
+      "note": "THE CHARTERED STREAM. This is the branch on which the five-day unread-red window happened."
+    },
+    "d1-merge-train.yml@main": {
+      "workflow": "d1-merge-train.yml",
+      "branch": "main",
+      "watch": "coverage",
+      "note": "LATENT TODAY and declared anyway: all 25 recent runs are on docs/replatform-program and ZERO are on main, so there is currently no green here to do the masking. It becomes live the moment anything lands on main, which is this programme's normal end-state — so it is designed for now rather than discovered then."
+    },
+    "cross-platform-weekly.yml@main": {
+      "workflow": "cross-platform-weekly.yml",
+      "branch": "main",
+      "watch": "cadence",
+      "toleranceMultiplier": 2,
+      "note": "THE FREE POSITIVE CONTROL. Measured 2026-09-04: the last three scheduled runs (08-16, 08-23, 08-30) are all `cancelled` — three consecutive weeks with NO cross-platform verdict at all — so this entry reports on its first reconciliation with nothing broken to arrange it. It reports on the CONCLUSION, not on staleness, which is why a ×2 tolerance does not hide it. Making it green is that lane's own work (DEP-013 §8)."
+    },
+    "catalog-audit.yml@main": {
+      "workflow": "catalog-audit.yml",
+      "branch": "main",
+      "watch": "cadence",
+      "toleranceMultiplier": 2,
+      "note": "Daily 08:00 UTC advisory lane; ×2 tolerates one missed day before reporting."
+    },
+    "thread-v2-e2e.yml@main": {
+      "workflow": "thread-v2-e2e.yml",
+      "branch": "main",
+      "watch": "cadence",
+      "toleranceMultiplier": 2,
+      "note": "Nightly advisory lane; ×2 tolerates one missed night before reporting."
+    },
+    "keyed-e2b-conformance.yml@docs/replatform-program": {
+      "workflow": "keyed-e2b-conformance.yml",
+      "branch": "docs/replatform-program",
+      "watch": "coverage",
+      "note": "Fires only on a bump of `.github/keyed-e2b-trigger`, so coverage is correctly silent between bumps — exactly the case a wall-clock rule would misreport."
+    },
+    "keyed-e2b-cdp-probe.yml@docs/replatform-program": {
+      "workflow": "keyed-e2b-cdp-probe.yml",
+      "branch": "docs/replatform-program",
+      "watch": "coverage"
+    },
+    "keyed-e2b-egress-constraint-probe.yml@docs/replatform-program": {
+      "workflow": "keyed-e2b-egress-constraint-probe.yml",
+      "branch": "docs/replatform-program",
+      "watch": "coverage"
+    },
+    "keyed-e2b-egress-constraint-probe.yml@claude/brw-004-**": {
+      "workflow": "keyed-e2b-egress-constraint-probe.yml",
+      "branch": "claude/brw-004-**",
+      "watch": "coverage",
+      "note": "BRW-004's own bootstrap branch pattern, declared because the workflow declares it. Slice (a) is a keyed real-provider probe whose whole point is to run BEFORE its PR merges, so the pattern cannot be dropped; after the ticket lands no such branch is pushed, the coverage evaluator is silent for a branch with no commits, and a dead bootstrap branch therefore costs no false incident. Same shape and same rationale as the keyed-e2b-unit-d proving-branch entry above."
+    },
+    "keyed-e2b-unit-d.yml@docs/replatform-program": {
+      "workflow": "keyed-e2b-unit-d.yml",
+      "branch": "docs/replatform-program",
+      "watch": "coverage"
+    },
+    "keyed-e2b-unit-d.yml@claude/unit-d-e2b-live-verify": {
+      "workflow": "keyed-e2b-unit-d.yml",
+      "branch": "claude/unit-d-e2b-live-verify",
+      "watch": "coverage",
+      "note": "The ticket's own proving branch, declared because the workflow declares it. If the branch has been deleted the coverage evaluator is silent — nothing is owed for a branch with no commits — so a dead proving branch costs no false incident."
+    },
+    "keyed-e2b-w7u1-output-probe.yml@docs/replatform-program": {
+      "workflow": "keyed-e2b-w7u1-output-probe.yml",
+      "branch": "docs/replatform-program",
+      "watch": "coverage",
+      "note": "W7U1's output probe pack. `coverage`, not `cadence`: the ONLY path in its push filter is `.github/keyed-e2b-w7u1-output-probe-trigger`, so it is correctly silent between operator bumps and a wall-clock rule would misreport it. Unlike its sibling keyed lanes it deliberately does NOT list its own source in `paths` — a run spends model tokens against an operator's authorisation, so an automatic re-fire would consume an authorisation nobody gave (see the lane's header and the W7U1 runbook). It declares no bootstrap branch pattern for the same reason: the pack's own PR must not fire it."
+    },
+    "keyed-e2b-w10b-egress-enforcement-probe.yml@docs/replatform-program": {
+      "workflow": "keyed-e2b-w10b-egress-enforcement-probe.yml",
+      "branch": "docs/replatform-program",
+      "watch": "coverage",
+      "note": "W10B's DE-08 egress-enforcement probe. `coverage`, not `cadence`: the ONLY path in its push filter is `.github/keyed-e2b-w10b-egress-enforcement-trigger`, so it is correctly silent between operator bumps and a wall-clock rule would misreport it. Like the W7U1 lane, and unlike its other keyed siblings, it deliberately does NOT list its own source in `paths` — the founder authorises keyed E2B runs individually, so an automatic re-fire would consume an authorisation nobody gave. It declares no bootstrap branch pattern for the same reason: the probe's own PR must not fire it."
+    },
+    "pr.yml@main": {
+      "workflow": "pr.yml",
+      "branch": "main",
+      "watch": "coverage",
+      "note": "The PULL-REQUEST half of pr.yml is consumed by branch protection (`ci-required`). Its `push` to main half is not consumed by anything, which is precisely the shape this ticket exists to close."
+    },
+    "docker.yml@main": {
+      "workflow": "docker.yml",
+      "branch": "main",
+      "watch": "coverage",
+      "note": "Publishes multi-arch GHCR images on every main push and has NO paths filter, so every main commit owes a run. Nothing reads its verdict today."
+    },
+    "release.yml@main": {
+      "workflow": "release.yml",
+      "branch": "main",
+      "watch": "not-watched",
+      "reason": "`disabled_manually` in the Actions API. A disabled workflow is a VISIBLE state, not a silent one: it cannot produce a verdict and does not pretend to. Watching it would report a permanent finding whose only repair is a decision nobody has taken (re-enabling Release means npm publish, and 32 changesets are stacked behind it).",
+      "wouldTakeToWatch": "Re-enable the workflow in the Actions UI (which is the npm-publish sign-off decision) and flip this entry to `coverage`."
+    },
+    "llm-evals.yml@*": {
+      "workflow": "llm-evals.yml",
+      "branch": null,
+      "watch": "not-watched",
+      "reason": "`disabled_manually`, and its only trigger is `pull_request` — there is no branch stream to key on. Same visible-state argument as release.yml.",
+      "wouldTakeToWatch": "Re-enable it, and give it a base-branch-keyed mode: neither `coverage` (which reads branch commits) nor `cadence` (which reads a cron) fits a pull_request-only lane, so watching it needs a THIRD mode this ticket did not build."
+    },
+    "release-smoke.yml@*": {
+      "workflow": "release-smoke.yml",
+      "branch": null,
+      "watch": "not-watched",
+      "reason": "`workflow_dispatch`/`workflow_call` only — the dormant callee of the disabled release.yml. Its last 10 recorded runs are ALL `failure`, most recently 2026-04-25 (131 days ago), and nothing re-triggers it. It is a weak instance of this ticket's class: the last verdict is red and unread, but no cadence and no commit stream can be owed a run, so neither mode can ask a question about it that has an answer.",
+      "wouldTakeToWatch": "Re-enable release.yml so this lane is actually called, then watch the CALLER's stream — a callee with no trigger of its own is not a stream."
+    },
+    "deploy-testing.yml@*": {
+      "workflow": "deploy-testing.yml",
+      "branch": null,
+      "watch": "not-watched",
+      "reason": "`workflow_dispatch` only, with required human-supplied inputs (a reviewed deploy sha). It is an OPERATOR ACTION, not a lane: there is no commit that owes it a run and no cadence it is late for, so a missing run is the normal state rather than an incident.",
+      "wouldTakeToWatch": "Nothing short of giving deploys a declared cadence would make a verdict here owed. If deploys become scheduled, add a `cadence` entry."
+    },
+    "deploy-replatform-campaign.yml@*": {
+      "workflow": "deploy-replatform-campaign.yml",
+      "branch": null,
+      "watch": "not-watched",
+      "reason": "`workflow_dispatch` only, with a required human-supplied `deploy_sha` (a reviewed commit from docs/replatform-program) plus operator inputs (e2b_template, start_worker, cleanup_builder_cache). It is an OPERATOR ACTION, not a lane: there is no commit that owes it a run and no cadence it is late for, so a missing run is the normal state rather than an incident.",
+      "wouldTakeToWatch": "Nothing short of giving campaign deploys a declared cadence would make a verdict here owed. If deploys become scheduled, add a `cadence` entry."
+    },
+    "verdict-reconcile.yml@main": {
+      "workflow": "verdict-reconcile.yml",
+      "branch": "main",
+      "watch": "not-watched",
+      "reason": "THE RECURSION, TERMINATED DELIBERATELY (DEP-013 §4, Option D's fatal con). The reconciler is itself a non-required workflow, so watching it HERE would put its health inside the artifact only it publishes — a consumer that certifies itself. Its liveness is asserted instead by `policy`'s freshness reader (`scripts/check-verdict-consumer-freshness.mjs`), which lives inside the ONE check branch protection already requires and runs on every PR by construction. Self-watching would also be strictly weaker than that reader: a reconciler run that FAILED is never reported by the next sweep, because the next sweep's own run is still in progress and the coverage evaluator is correctly silent on it.",
+      "wouldTakeToWatch": "Nothing here. The right consumer for this workflow is the `policy` reader, and it is wired. If that reader is ever removed, this entry is not the replacement — the removal is."
+    },
+    "verdict-reconcile.yml@docs/replatform-program": {
+      "workflow": "verdict-reconcile.yml",
+      "branch": "docs/replatform-program",
+      "watch": "not-watched",
+      "reason": "Same as verdict-reconcile.yml@main: the consumer may not be its own consumer. Declared per-branch because the workflow declares `push` on both branches and the completeness check requires an entry for each.",
+      "wouldTakeToWatch": "Nothing here — see verdict-reconcile.yml@main."
+    },
+    "keyed-e2b-dat-009-export.yml@docs/replatform-program": {
+      "workflow": "keyed-e2b-dat-009-export.yml",
+      "branch": "docs/replatform-program",
+      "watch": "coverage",
+      "note": "Keyed lane for DAT-009 slice 3 link 2 (the real E2B exportArtifact/digestArtifact). Fires on push to this branch and on dispatch, so coverage is correctly silent between touches - the case a wall-clock rule would misreport."
+    },
+    "keyed-e2b-dat-009-export.yml@claude/e2b-export-artifact": {
+      "workflow": "keyed-e2b-dat-009-export.yml",
+      "branch": "claude/e2b-export-artifact",
+      "watch": "coverage",
+      "note": "The ticket own proving branch, declared because the workflow declares it. If the branch has been deleted the coverage evaluator is silent - nothing is owed for a branch with no commits - so a dead proving branch costs no false incident."
+    }
+  }
+}

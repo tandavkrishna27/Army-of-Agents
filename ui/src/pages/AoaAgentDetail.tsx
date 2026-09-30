@@ -504,7 +504,7 @@ function AoaConfigurePage({
       // Cache the saved row (incl. fresh updatedAt) synchronously so a quick
       // repeat save uses the up-to-date optimistic-concurrency token, not the
       // stale pre-save one (which would 409 the user against their own save).
-      // The invalidate still refetches for eventual consistency. (Decision #104)
+      // The invalidate still refetches for eventual consistency. (Decision #125)
       queryClient.setQueryData(queryKeys.agents.detail(agent.id), result);
       if (agent.urlKey) queryClient.setQueryData(queryKeys.agents.detail(agent.urlKey), result);
       void queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.id) });
@@ -515,7 +515,7 @@ function AoaConfigurePage({
     },
     onError: (err) => {
       // Optimistic-concurrency conflict: someone else changed the agent. Refetch
-      // the latest and tell the user to redo their edit. (Decision #104)
+      // the latest and tell the user to redo their edit. (Decision #125)
       if (err instanceof ApiError && err.status === 409) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.id) });
         if (agent.urlKey) {

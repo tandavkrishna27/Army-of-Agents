@@ -2,7 +2,7 @@
 
 **Verdict: ✅ PASS across the board.** The crew/org separation holds on every surface, the conversational pattern works at all three dials, the crew cards render rich, and the chat UI is fixed. No product bugs found. A handful of non-blocking observations are logged at the end.
 
-**Run context:** server `:3200` (`local_trusted`, HEAD `291714858`), UI vite `:5273`, company **QA-Crew-Live** (`a58e1f16…`), DB `:54330`. Method: REST (`?taskScope=`), DB probes (`upstream:upstream@…54330`), gstack `/browse` screenshots, and a background live-agent subagent for the conversational flows. Evidence screenshots in `…/Temp/qa-shots/`.
+**Run context:** server `:3200` (`local_trusted`, HEAD `291714858`), UI vite `:5273`, company **QA-Crew-Live** (`a58e1f16…`), DB `:54330`. Method: REST (`?taskScope=`), DB probes (`paperclip:paperclip@…54330`), gstack `/browse` screenshots, and a background live-agent subagent for the conversational flows. Evidence screenshots in `…/Temp/qa-shots/`.
 
 ---
 

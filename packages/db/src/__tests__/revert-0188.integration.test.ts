@@ -21,9 +21,10 @@
 // is deleted. A negative case proves the single-org guard still refuses.
 //
 // Windows CI can't start embedded-postgres on the `runneradmin` runner (Issue
-// #114), so this is gated on Windows by default. Set
-// AOA_FORCE_EMBEDDED_TESTS=1 to run locally; UTF-8 initdbFlags below make the
-// cluster locale-safe.
+// #114), so this is gated `describe.skipIf(process.platform === "win32")`. To
+// run locally on Windows, temporarily flip that to `describe.skipIf(false)` —
+// the UTF-8 initdbFlags below make the cluster locale-safe. ALWAYS restore the
+// win32 predicate before committing.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -210,8 +211,8 @@ beforeAll(async () => {
     // without FIX A's dynamic FK drop.
     const [{ id: orgId }] = await client<{ id: string }[]>`SELECT id FROM organizations LIMIT 1`;
     const [{ id: companyId }] = await client<{ id: string }[]>`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (gen_random_uuid(), 'Revert Co', 'RVT')
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Revert Co', 'RVT')
       RETURNING id`;
     // auth_method 'oauth' satisfies both provider_connections shape CHECKs
     // (neither 'api_key' nor 'personal_subscription') so no secret_ref is needed.
@@ -219,8 +220,8 @@ beforeAll(async () => {
       INSERT INTO provider_connections (id, organization_id, company_id, provider, auth_method)
       VALUES (gen_random_uuid(), ${orgId}, ${companyId}, 'anthropic', 'oauth')`;
     await client`
-      INSERT INTO execution_targets (id, organization_id, slug, kind, trust_class)
-      VALUES (gen_random_uuid(), ${orgId}, 'et-1', 'local', 'trusted')`;
+      INSERT INTO execution_targets (id, organization_id, slug, kind, trust_class, scope, target_authority_key)
+      VALUES (gen_random_uuid(), ${orgId}, 'et-1', 'local', 'trusted', 'organization', ${`organization:${orgId}`})`;
   } catch (err) {
     setupError = err;
     // eslint-disable-next-line no-console
@@ -246,7 +247,7 @@ afterAll(async () => {
   }
 }, 60_000);
 
-describe.skipIf(process.platform === "win32" && process.env.AOA_FORCE_EMBEDDED_TESTS !== "1")("revert0188 against a real applied migration chain", () => {
+describe.skipIf(process.platform === "win32")("revert0188 against a real applied migration chain", () => {
   // NEGATIVE first: it is non-destructive (rejects at the guard, before the
   // transaction), so it must run before the positive case drops the schema.
   it("refuses when more than one organization exists (one-way-door guard)", async () => {

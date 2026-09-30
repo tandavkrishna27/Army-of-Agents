@@ -431,7 +431,7 @@ describe("feedbackBundles — buildBundle", () => {
         status: "idle",
         adapterType: "claude_local",
       },
-      aoa: {
+      paperclip: {
         schemaVersion: FEEDBACK_SCHEMA_VERSION,
         bundleVersion: FEEDBACK_BUNDLE_VERSION,
       },
@@ -614,7 +614,7 @@ describe("feedbackBundles — anonymizeForTransmission", () => {
       },
       agentContext: {
         agent: { id: authorAgentId, name: "ResearchAgent", role: "research", title: null, status: "idle", adapterType: "claude_local" },
-        aoa: { schemaVersion: FEEDBACK_SCHEMA_VERSION, bundleVersion: FEEDBACK_BUNDLE_VERSION },
+        paperclip: { schemaVersion: FEEDBACK_SCHEMA_VERSION, bundleVersion: FEEDBACK_BUNDLE_VERSION },
       },
     },
     redactionSummary: {

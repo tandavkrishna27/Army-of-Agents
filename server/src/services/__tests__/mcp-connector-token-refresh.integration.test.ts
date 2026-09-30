@@ -78,8 +78,8 @@ suite("DB-backed OAuth refresh fencing", () => {
     dbOne = createDb(url);
     dbTwo = createDb(url);
     await dbOne.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Refresh Lease Co', 'RLC')
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Refresh Lease Co', 'RLC')
     `);
     await dbOne.execute(sql`
       INSERT INTO company_secrets (

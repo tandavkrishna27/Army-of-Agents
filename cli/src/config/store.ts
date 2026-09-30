@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { aoaConfigSchema, type AoaConfig } from "./schema.js";
+import { paperclipConfigSchema, type AoaConfig } from "./schema.js";
 import {
   resolveDefaultConfigPath,
   resolveAoaInstanceId,
@@ -88,7 +88,7 @@ export function readConfig(configPath?: string): AoaConfig | null {
   if (!fs.existsSync(filePath)) return null;
   const raw = parseJson(filePath);
   const migrated = migrateLegacyConfig(raw);
-  const parsed = aoaConfigSchema.safeParse(migrated);
+  const parsed = paperclipConfigSchema.safeParse(migrated);
   if (!parsed.success) {
     throw new Error(`Invalid config at ${filePath}: ${formatValidationError(parsed.error)}`);
   }

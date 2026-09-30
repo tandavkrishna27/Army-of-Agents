@@ -1,0 +1,150 @@
+{
+  "version": 1,
+  "title": "Distributed Execution Legacy Parity v1",
+  "description": "Frozen authority for the six current-main execution-source kinds and their legacy parity matrix. Each kind declares required/forbidden source fields, opaque requester/executor principal kinds, its owning current-main crosswalk CM rows, and a behavior (or a justified not_applicable) for every parity dimension. Only task_run carries run/issue identity; the other five carry opaque typed provenance. Consumed by PRT-002/003/006/007, TEN-006, JOB-010..014, CLI-005, and MIG-005/006/007. Locked by Decision #121; the migration inventory that owns cutover of these sources is current-main-crosswalk.md.",
+  "parityDimensions": [
+    "checkout_assignment",
+    "capacity_claim_release_wakeup",
+    "product_runtime_approval",
+    "budget",
+    "audit",
+    "cost",
+    "output_run_summary",
+    "completion_cancel_retry"
+  ],
+  "forbiddenOrganizationSentinels": [
+    "org_00000000000000000000000000",
+    "00000000-0000-0000-0000-000000000001"
+  ],
+  "sentinelNote": "The fail-open DEFAULT_ORGANIZATION_ID sentinel ('00000000-0000-0000-0000-000000000001', @armyofagents/shared) and its nil-ULID fixture-namespace form ('org_' + 26 zeros). TEN-006 removes the sentinel default; JOB-010 rejects sentinel/unmapped Organization admission before persistence. No execution source may be admitted against a sentinel Organization.",
+  "sources": [
+    {
+      "kind": "task_run",
+      "workloadClass": "batch",
+      "requiredFields": ["runId", "issueId"],
+      "forbiddenFields": [],
+      "requesterPrincipalKinds": ["founder", "team_lead", "team_member", "agent"],
+      "executorPrincipalKinds": ["worker", "sandbox"],
+      "crosswalkRows": ["CM-002"],
+      "parity": {
+        "checkout_assignment": "Atomic single-agent checkout on issues via SELECT FOR UPDATE NO WAIT; reviewerUserId materialized on entry to in_review; the domain run stays product authority.",
+        "capacity_claim_release_wakeup": "min(perAgentSlots, ORG_MAX_CONCURRENT_RUNS) atomic capacity claim; excess work queued; queued work woken on release; a failed or terminal claim is released once (CM-014).",
+        "product_runtime_approval": "Effective completion policy (review_required or agent_can_complete); runtime decisions surface through ask_human / work_questions.",
+        "budget": "Company/department budget hard-stop preflight; cost_events recorded per run.",
+        "audit": "activity_log plus heartbeat_run_events full trail.",
+        "cost": "cost_events per-agent/per-run; token usage and cost projected on the run summary.",
+        "output_run_summary": "postRunSummaryComment on the issue; task_outputs / artifactId output capture.",
+        "completion_cancel_retry": "review_required or agent completion under the snapshot policy; cancel via cancel_requested; retry is a new fenced attempt."
+      }
+    },
+    {
+      "kind": "commander_turn",
+      "workloadClass": "batch",
+      "requiredFields": [],
+      "forbiddenFields": ["runId", "issueId"],
+      "requesterPrincipalKinds": ["founder", "team_lead", "team_member", "commander"],
+      "executorPrincipalKinds": ["sandbox"],
+      "crosswalkRows": ["CM-004"],
+      "parity": {
+        "checkout_assignment": {
+          "status": "not_applicable",
+          "justification": "A Commander turn is a per-conversation warm lease (Decision #120, environment_leases.commanderConversationId), not an issue-locked run; there is no task checkout or assignee."
+        },
+        "capacity_claim_release_wakeup": "Warm paused/resumed per-conversation E2B lease claim/pause/resume; the warm reaper bounds idle leases; the instance flag may choose ephemeral-per-turn behavior.",
+        "product_runtime_approval": "Commander runtime-approval policy (internal_agent_runtime_approvals, internal_agent_tool_trust_rules).",
+        "budget": "internal_agent_config budget; per-turn cost projected on internal_agent_runs.",
+        "audit": "internal_agent_runs plus internal_agent_messages persistence.",
+        "cost": "internal_agent_runs.costCents / tokenUsage per turn.",
+        "output_run_summary": "SSE stream and internal_agent_messages persistence into the one persistent conversation; no issue run-summary comment or artifact version is produced.",
+        "completion_cancel_retry": "The turn completes on the assistant reply; abort cancels the turn; Retry/Edit re-runs it; there is no task-completion policy."
+      }
+    },
+    {
+      "kind": "crew_run",
+      "workloadClass": "batch",
+      "requiredFields": [],
+      "forbiddenFields": ["runId", "issueId"],
+      "requesterPrincipalKinds": ["founder", "team_lead", "team_member", "agent"],
+      "executorPrincipalKinds": ["worker", "sandbox"],
+      "crosswalkRows": ["CM-003"],
+      "parity": {
+        "checkout_assignment": "Crew dispatch assigns the discussion-spawned issue (issues.originKind='crew_thread'); the planning->standard gate governs dispatchability.",
+        "capacity_claim_release_wakeup": "Crew per-agent slot plus the per-Organization clamp; the crew_dispatch Inbox approval flips planning->standard and dispatches; release/wakeup follow the shared capacity primitive.",
+        "product_runtime_approval": "Crew autonomy dial (crew_autonomy_level: Manual/Assist/Drive); Assist raises one crew_dispatch approval; crew tool calls are not subject to Commander runtime-approval policy.",
+        "budget": "preflightCrewDispatch company budget hard-stop plus thread pause/disable.",
+        "audit": "activity_log plus thread_agent_actions.",
+        "cost": "cost_events per crew run.",
+        "output_run_summary": "postRunSummaryComment on the task plus relayCrewResult / postCrewFailureCard loopback into the originating thread (W3a).",
+        "completion_cancel_retry": "Effective completion policy; thread pause/disable cancels; retry is a re-dispatch as a new fenced attempt."
+      }
+    },
+    {
+      "kind": "one_shot",
+      "workloadClass": "batch",
+      "requiredFields": [],
+      "forbiddenFields": ["runId", "issueId"],
+      "requesterPrincipalKinds": ["agent", "system", "commander"],
+      "executorPrincipalKinds": ["worker", "sandbox"],
+      "crosswalkRows": ["CM-005", "CM-006", "CM-007"],
+      "parity": {
+        "checkout_assignment": {
+          "status": "not_applicable",
+          "justification": "A one-shot extraction/compaction/readiness-probe is not backed by an issue or domain run (CM-007); it carries a typed actor, not a task checkout or assignee, and never a fabricated runId/issueId."
+        },
+        "capacity_claim_release_wakeup": "Bounded batch sandbox handle acquire/reuse/release across the extract-then-scope entry set with partial-failure cleanup; no queued wakeup.",
+        "product_runtime_approval": {
+          "status": "not_applicable",
+          "justification": "A one-shot has no product review or runtime-approval surface; it returns a single structured result (extracted items, compaction output, or a readiness/auth verdict)."
+        },
+        "budget": "Company model-provider key audience and containment; cost recorded against the Company.",
+        "audit": "activity_log one-shot record with the typed actor and Company scope.",
+        "cost": "Input/output token cost recorded; Company-key audience, zero-secret evidence.",
+        "output_run_summary": "The structured result is returned to the caller (discussion_extracted_items, compacted context, or probe verdict); no run-summary comment is written.",
+        "completion_cancel_retry": "Atomic claim/replay idempotency; bounded retry; active-operation drain/cancel; no host fallback."
+      }
+    },
+    {
+      "kind": "browser_request",
+      "workloadClass": "browser_session",
+      "requiredFields": [],
+      "forbiddenFields": ["runId", "issueId"],
+      "requesterPrincipalKinds": ["founder", "team_lead", "team_member", "agent"],
+      "executorPrincipalKinds": ["browser_worker"],
+      "crosswalkRows": [],
+      "crosswalkNote": "A net-new target-only workload class; current main has no distributed browser execution sink, so there is no CM row. Owned by BRW-001..006 in program-design.md.",
+      "parity": {
+        "checkout_assignment": "The browser session is assigned to a browser_worker under the browserSession lifecycle; no issue checkout.",
+        "capacity_claim_release_wakeup": "Browser-session lease claim and release; the session lifecycle bounds concurrency.",
+        "product_runtime_approval": "Download and egress approval (requested_granted / requested_denied); runtime egress decisions gate outbound bytes.",
+        "budget": "Per-session budget; cost recorded against the Company.",
+        "audit": "activity_log browser-session trail.",
+        "cost": "Session cost recorded.",
+        "output_run_summary": "Approved download artifact capture plus a session summary; no issue run-summary comment.",
+        "completion_cancel_retry": "The session completes, is cancelled, or expires; retry is a new fenced session attempt."
+      }
+    },
+    {
+      "kind": "service_reconcile",
+      "workloadClass": "service",
+      "requiredFields": [],
+      "forbiddenFields": ["runId", "issueId"],
+      "requesterPrincipalKinds": ["system"],
+      "executorPrincipalKinds": ["service_instance"],
+      "crosswalkRows": [],
+      "crosswalkNote": "A net-new target-only workload class; a service is desired state plus reconciled instances (Decision #121), not a current-main sink, so there is no CM row. Owned by SVC-001..007 in program-design.md.",
+      "parity": {
+        "checkout_assignment": "The reconciler converges serviceDesired into serviceInstance rows and assigns instances; this is desired-state reconciliation, not an issue checkout.",
+        "capacity_claim_release_wakeup": "Instance capacity claim and release under scale reconciliation; no queued task wakeup.",
+        "product_runtime_approval": {
+          "status": "not_applicable",
+          "justification": "A service reconcile has no per-run product review or runtime-approval surface; it converges desired state rather than completing a reviewable unit of work."
+        },
+        "budget": "Service budget stop (the budget_stop runtime decision halts reconciliation).",
+        "audit": "activity_log reconcile trail.",
+        "cost": "Aggregate service cost recorded.",
+        "output_run_summary": "Instance health and checkpoint state; no per-run summary comment.",
+        "completion_cancel_retry": "The service reconciles to healthy or stopped; cancellation flows through the desired state; restart is a checkpoint restore on a new instance attempt."
+      }
+    }
+  ]
+}

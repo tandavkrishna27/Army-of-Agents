@@ -35,6 +35,37 @@ function normalizePath(url: string): string {
   return pathname.length > 0 ? pathname : "/";
 }
 
+const PAYLOAD_OMITTED_PATHS = [
+  /^(?:\/api)?\/organizations\/[^/]+\/companies\/[^/]+\/jobs$/,
+  /^(?:\/api)?\/worker-control\/enroll$/,
+  // DAT-008 — the execution-secret resolve request carries a live FENCE TOKEN and its
+  // response carries a resolved provider credential. Registered here for the same
+  // reason enroll is: this route is credential-bearing on both legs.
+  /^(?:\/api)?\/worker-control\/execution-secrets\/resolve$/,
+  /^(?:\/api)?\/execution-targets\/heartbeat$/,
+];
+
+/** Credential-bearing worker control and job commands log only a safe route. */
+export function shouldOmitHttpRequestPayload(
+  method: string | undefined,
+  url: string | undefined,
+): boolean {
+  if (method?.toUpperCase() !== "POST" || !url) return false;
+  const pathname = normalizePath(url);
+  return PAYLOAD_OMITTED_PATHS.some((pattern) => pattern.test(pathname));
+}
+
+export function isSensitiveWorkerControlPath(url: string | undefined): boolean {
+  if (!url) return false;
+  const pathname = normalizePath(url);
+  return /^(?:\/api)?\/(?:worker-control\/enroll|execution-targets\/heartbeat)$/.test(pathname);
+}
+
+export function safeHttpLogUrl(method: string | undefined, url: string | undefined): string {
+  if (!url) return "/";
+  return shouldOmitHttpRequestPayload(method, url) ? normalizePath(url) : url;
+}
+
 export function shouldSilenceHttpSuccessLog(method: string | undefined, url: string | undefined, statusCode: number): boolean {
   if (statusCode >= 400) return false;
   if (statusCode === 304) return true;

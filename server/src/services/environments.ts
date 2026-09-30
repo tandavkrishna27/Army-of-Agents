@@ -159,7 +159,21 @@ export function environmentService(db: Db) {
           failureReason: null,
           cleanupStatus: null,
           metadata: input.metadata ?? null,
-          createdAt: now,
+          // ★ `createdAt` is DELIBERATELY NOT STAMPED HERE. The column default is `now()`,
+          // so the value comes from the DATABASE clock. MIG-010 Unit 2.4 compares
+          // `environment_leases.created_at` against a reconciliation pass's DB-clock snapshot
+          // instant to narrow the canary gate's lease inventory; a value stamped from the
+          // application clock makes that a CROSS-CLOCK comparison, which is the two-clock bug
+          // design section 3.3 exists to close. Any skew between the app host and the database
+          // would decide whether a lease is inside or outside the watermark.
+          //
+          // `acquiredAt` / `lastUsedAt` / `updatedAt` keep the application clock on purpose:
+          // none of them participates in the watermark comparison, they are read by the warm
+          // reuse and reaper paths that already reason in application time, and moving them
+          // would be an unrelated behaviour change in this unit.
+          //
+          // `environments-lease-created-at-db-clock.integration.test.ts` reds if this line
+          // comes back.
           updatedAt: now,
         })
         .returning();
@@ -383,6 +397,128 @@ export function environmentService(db: Db) {
           ),
         )
         .orderBy(desc(environmentLeases.pausedAt));
+    },
+
+    /**
+     * REL-004 Lane D (D2) — paused leases of ONE provider, older than a cutoff.
+     *
+     * Provider-scoped on purpose. `listPausedLeasesOlderThan` applies a single cutoff to the
+     * whole result set, so expressing "this killed provider now, everything else at the idle
+     * TTL" through it is impossible: it would zero-grace every paused external-provider lease on
+     * the instance the moment any switch existed, including one naming a provider that has no
+     * legacy lease at all.
+     */
+    listPausedLeasesForProvider: async (provider: string, cutoff: Date) => {
+      return db
+        .select()
+        .from(environmentLeases)
+        .where(
+          and(
+            eq(environmentLeases.status, "paused"),
+            eq(environmentLeases.provider, provider),
+            lt(environmentLeases.pausedAt, cutoff),
+            isNotNull(environmentLeases.providerLeaseId),
+            notInArray(environmentLeases.provider, NON_SANDBOX_LEASE_PROVIDERS),
+          ),
+        )
+        .orderBy(desc(environmentLeases.pausedAt));
+    },
+
+    /**
+     * REL-004 Lane D (§5) — paused e2b snapshots that CARRY a recorded key generation.
+     *
+     * Its own query rather than a filter over `listPausedLeasesForProvider`, for two reasons: the
+     * `metadata->>'keyGeneration' IS NOT NULL` predicate belongs in SQL rather than scanning every
+     * paused lease into memory, and keeping the two scans distinct makes the reclaim arm and the
+     * superseded arm separately observable — in logs and in tests.
+     *
+     * Untagged rows are excluded here, not skipped later: absence of a generation is "acquired
+     * before this tag existed", never "superseded". Reading it the other way would reap every
+     * pre-existing warm snapshot on the first deploy.
+     */
+    listPausedLeasesWithKeyGeneration: async (cutoff: Date) => {
+      return db
+        .select()
+        .from(environmentLeases)
+        .where(
+          and(
+            eq(environmentLeases.status, "paused"),
+            eq(environmentLeases.provider, "e2b"),
+            lt(environmentLeases.pausedAt, cutoff),
+            isNotNull(environmentLeases.providerLeaseId),
+            sql`${environmentLeases.metadata}->>'keyGeneration' IS NOT NULL`,
+          ),
+        )
+        .orderBy(desc(environmentLeases.pausedAt));
+    },
+
+    /**
+     * REL-004 Lane D (D3) — STRANDED leases: terminal in the database, but still holding an
+     * unreleased provider handle. The row says "done", the VM says "running", and it bills.
+     *
+     * Two producers, both verified:
+     *   - MIG-008's `casClaimPaused` flips paused -> expired with `cleanup_status='pending'` and
+     *     deliberately does not kill;
+     *   - the reaper's own CAS (`expireLeaseIfPaused(id)` with no cleanupStatus) followed by a
+     *     process death, which leaves `expired` with the field UNCHANGED.
+     *
+     * `IS DISTINCT FROM 'success'` rather than `= 'pending'` so both are covered, plus the
+     * `cleanup_status='failed'` shapes where the provider reported a failed teardown. `status IN
+     * ('expired','failed')` because the exception path in environment-runtime sets `failed`, not
+     * `expired`. Bounded, because an unbounded sweep over a growing terminal table is its own
+     * hazard.
+     */
+    listTerminalUncleanedLeases: async (limit = 200) => {
+      return db
+        .select()
+        .from(environmentLeases)
+        .where(
+          and(
+            inArray(environmentLeases.status, ["expired", "failed"]),
+            // UNATTEMPTED only. `'failed'` means a teardown was already tried and did not
+            // confirm; re-listing it would retry a doomed kill every five minutes forever, and
+            // `'success'` is done. Claiming moves a row OUT of this set, which is what makes the
+            // claim a real compare-and-swap — see `claimTerminalUncleaned`.
+            sql`(${environmentLeases.cleanupStatus} IS NULL OR ${environmentLeases.cleanupStatus} = 'pending')`,
+            isNotNull(environmentLeases.providerLeaseId),
+            notInArray(environmentLeases.provider, NON_SANDBOX_LEASE_PROVIDERS),
+          ),
+        )
+        .orderBy(desc(environmentLeases.updatedAt))
+        .limit(limit);
+    },
+
+    /**
+     * REL-004 Lane D (D3) — the claim latch for a stranded lease, and its RETRY BOUND.
+     *
+     * The paused reaper claims with `expireLeaseIfPaused` (a `WHERE status='paused'` CAS), which
+     * by construction can never match a terminal row — widening the reaper's SELECT without this
+     * primitive would have been inert. This is the terminal-row equivalent.
+     *
+     * Claiming moves `cleanup_status` to 'failed' BEFORE the kill, and the kill promotes it to
+     * the real outcome. That is deliberate on both counts: it is the compare-and-swap that stops
+     * two concurrent sweeps double-killing one sandbox, AND it is the retry bound — a kill that
+     * never succeeds is attempted once, not every five minutes forever.
+     */
+    claimTerminalUncleaned: async (id: string) => {
+      const [lease] = await db
+        .update(environmentLeases)
+        .set({ cleanupStatus: "failed", updatedAt: new Date() })
+        .where(
+          and(
+            eq(environmentLeases.id, id),
+            inArray(environmentLeases.status, ["expired", "failed"]),
+            // The CAS predicate MUST exclude the state the claim WRITES, or it is not a CAS at
+            // all: with `IS DISTINCT FROM 'success'` a second concurrent claimer matched the
+            // already-claimed row and both killed the same sandbox. Caught by the barrier race in
+            // `warm-sandbox-reaper-race.integration.test.ts` — and NOT by the naive race beside
+            // it, which passed even with this predicate stripped entirely.
+            sql`(${environmentLeases.cleanupStatus} IS NULL OR ${environmentLeases.cleanupStatus} = 'pending')`,
+            isNotNull(environmentLeases.providerLeaseId),
+          ),
+        )
+        .returning();
+      return lease ?? null;
     },
   };
 }

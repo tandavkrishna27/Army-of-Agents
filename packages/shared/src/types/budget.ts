@@ -1,7 +1,7 @@
 export interface BudgetPolicy {
   id: string;
   companyId: string;
-  scopeType: "company" | "agent";
+  scopeType: "company" | "agent" | "department";
   scopeId: string;
   metric: string;
   windowKind: string;
@@ -44,7 +44,7 @@ export interface BudgetOverview {
 }
 
 export interface UpsertBudgetPolicyInput {
-  scopeType: "company" | "agent";
+  scopeType: "company" | "agent" | "department";
   scopeId: string;
   amountCents: number;
   warnPercent?: number;

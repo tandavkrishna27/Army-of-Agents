@@ -1,0 +1,1 @@
+W10B probe run #1 (2026-09-07): first measurement of whether the operator's E2B tier honours SandboxOpts.network.denyOut, whether getInfo() reads the policy back, and — the abandon question — whether the guest resolver sits inside the deny set. Gates DE-08 units U3/U4.

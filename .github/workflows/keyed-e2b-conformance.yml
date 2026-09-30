@@ -1,0 +1,79 @@
+name: Keyed E2B conformance (CLI-001)
+
+# The operator-dispatched real-E2B lane for the CLI-001 driver. It runs the keyed
+# real-E2B cases (`src/__tests__/keyed-real-e2b.test.ts`) against REAL E2B, supplying
+# the provider-control credential from a repo secret + a template alias from an
+# input. Without `E2B_API_KEY` the keyed cases SKIP cleanly (never faked); the
+# controller never handles the key in plaintext.
+#
+# OPERATOR ACTION (never the controller): add `E2B_API_KEY` to repo secrets, provide
+# a template id, and dispatch this workflow. See e2b/README.md for the template.
+
+on:
+  workflow_dispatch:
+    inputs:
+      e2b_template:
+        description: E2B sandbox template alias (e.g. "aoa-base"). Empty = bare "base".
+        required: false
+        default: ""
+        type: string
+  # On-demand re-trigger from the integration branch. `workflow_dispatch` only
+  # registers from the DEFAULT branch (main), and this lane lives only on
+  # `docs/replatform-program`, so — mirroring the d1-merge-train `campaign.env`
+  # pattern — bump `.github/keyed-e2b-trigger` to fire the real-E2B lane here. A push
+  # run carries no `inputs`, so `E2B_TEMPLATE` resolves to "" → the bare `base`
+  # template; `secrets.E2B_API_KEY` is a repo secret available on any branch.
+  push:
+    branches:
+      - docs/replatform-program
+    paths:
+      - ".github/keyed-e2b-trigger"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keyed-e2b-conformance
+  cancel-in-progress: false
+
+jobs:
+  keyed-e2b:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build dist-only leaves (required by the e2b provider tests)
+        run: |
+          pnpm --filter @armyofagents/worker-protocol build
+          pnpm --filter @armyofagents/worker-daemon build
+          # sandbox-provider-contract's tsconfig `files`-includes port-conformance.test.ts
+          # (a compile-time port-conformance assertion) which imports the
+          # @armyofagents/sandbox-fake-provider devDep — so its dist must exist before
+          # the contract's `tsc` runs, else TS2307 + cascading TS2344. The full `verify`
+          # gate builds everything, so this only bites the selective keyed-lane build.
+          pnpm --filter @armyofagents/sandbox-fake-provider build
+          pnpm --filter @armyofagents/sandbox-provider-contract build
+
+      - name: Run keyed real-E2B conformance
+        env:
+          # Supplied by the operator via repo secrets + this dispatch input. When
+          # E2B_API_KEY is absent the cases SKIP (describe.skip) — a clean pass.
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          E2B_TEMPLATE: ${{ inputs.e2b_template }}
+        run: pnpm --filter @armyofagents/sandbox-e2b-provider exec vitest run src/__tests__/keyed-real-e2b.test.ts

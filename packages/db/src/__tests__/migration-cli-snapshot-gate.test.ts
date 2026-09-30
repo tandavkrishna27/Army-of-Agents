@@ -9,7 +9,7 @@ const MIGRATE_SOURCE = readFileSync(join(__dirname, "..", "migrate.ts"), "utf8")
 describe("manual migration CLI snapshot-gate context", () => {
   it("passes an explicitly parsed deployment mode through the guarded shared entrypoint", () => {
     expect(MIGRATE_SOURCE).toContain("AOA_DEPLOYMENT_MODE");
-    expect(MIGRATE_SOURCE).toContain("AOA_DEPLOYMENT_MODE");
+    expect(MIGRATE_SOURCE).toContain("PAPERCLIP_DEPLOYMENT_MODE");
     expect(MIGRATE_SOURCE).toMatch(
       /applyPendingMigrations\(url,\s*\{\s*deploymentMode:\s*readDeploymentModeForMigration\(\)/,
     );

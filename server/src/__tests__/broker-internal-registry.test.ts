@@ -183,7 +183,7 @@ describe.skipIf(process.platform === "win32")(
 
       co = firstId(
         await db.execute<{ id: string }>(sql`
-          INSERT INTO companies (id, name, issue_prefix) VALUES (gen_random_uuid(), 'Broker Registry Co', 'BRK') RETURNING id`),
+          INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Broker Registry Co', 'BRK') RETURNING id`),
       );
 
       agentId = firstId(
@@ -509,7 +509,7 @@ describe.skipIf(process.platform === "win32")(
       assertSetupOk();
       const otherCo = firstId(
         await db.execute<{ id: string }>(sql`
-          INSERT INTO companies (id, name, issue_prefix) VALUES (gen_random_uuid(), 'Other Co', 'OTH') RETURNING id`),
+          INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Other Co', 'OTH') RETURNING id`),
       );
       const app = buildApp();
       const res = await request(app)

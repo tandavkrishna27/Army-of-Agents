@@ -31,6 +31,7 @@ export {
   SECRET_MANAGED_MODES,
   SECRET_VERSION_STATUSES,
   SECRET_BINDING_TARGET_TYPES,
+  SECRET_RESOLUTION_SCOPES,
   SECRET_ACCESS_OUTCOMES,
   RUNTIME_PROVIDER_KEY_PROVIDERS,
   RUNTIME_PROVIDER_KEY_STATUSES,
@@ -67,6 +68,7 @@ export {
   EXECUTION_TARGET_KINDS,
   EXECUTION_TARGET_TRUST_CLASSES,
   EXECUTION_TARGET_STATUSES,
+  WORKER_CONTROL_HEADERS,
   ORG_MAX_CONCURRENT_RUNS_DEFAULT,
   ORG_MAX_CONCURRENT_RUNS_MAX,
   type ExecutionTargetKind,
@@ -176,6 +178,7 @@ export {
   type SecretManagedMode,
   type SecretVersionStatus,
   type SecretBindingTargetType,
+  type SecretResolutionScope,
   type SecretAccessOutcome,
   type RuntimeProviderKeyProvider,
   type RuntimeProviderKeyStatus,
@@ -689,7 +692,7 @@ export type {
   PluginLauncherDeclaration,
   PluginMinimumHostVersion,
   PluginUiDeclaration,
-  AoAPluginManifestV1,
+  PaperclipPluginManifestV1,
   PluginRecord,
   PluginStateRecord,
   PluginConfig,
@@ -884,6 +887,7 @@ export {
   remoteSecretImportPreviewSchema,
   remoteSecretImportCommitSchema,
   updateRuntimeProviderKeySchema,
+  createRuntimeProviderKeyWithSecretSchema,
   type CreateSecret,
   type RotateSecret,
   type UpdateSecret,
@@ -894,6 +898,7 @@ export {
   type RemoteSecretImportCommit,
   type CreateRuntimeProviderKey,
   type UpdateRuntimeProviderKey,
+  type CreateRuntimeProviderKeyWithSecret,
   createCostEventSchema,
   updateBudgetSchema,
   financeDirectionSchema,
@@ -1091,6 +1096,18 @@ export {
   updateSidebarPreferencesSchema,
   type SidebarPreferences,
   type UpdateSidebarPreferences,
+  DEFAULT_UNIVERSE_PREFERENCES,
+  UNIVERSE_PREFERENCE_SECTIONS,
+  resolveUniversePreferences,
+  universePreferencesSchema,
+  universePreferencePatchSchema,
+  universePreferenceResetSchema,
+  type UniversePreferences,
+  type UniversePreferenceOverrides,
+  type PreferenceSection,
+  type UniversePreferencesSnapshot,
+  type UniversePreferencePatchInput,
+  type UniversePreferenceResetInput,
   homeBoardLayoutItemSchema,
   homeBoardLayoutArraySchema,
   updateHomeBoardLayoutSchema,
@@ -1099,6 +1116,43 @@ export {
   type HomeBoardLayoutItemLike,
   type HomeBoardLayoutValidationResult,
   type UpdateHomeBoardLayout,
+  UNIVERSE_REF_KINDS,
+  UNIVERSE_LAYOUT_SCHEMA_VERSION,
+  UNIVERSE_LAYOUT_MAX_PANELS,
+  UNIVERSE_LAYOUT_MAX_OPERATIONS,
+  UNIVERSE_LAYOUT_COORD_LIMIT,
+  UNIVERSE_LAYOUT_MIN_DIMENSION,
+  UNIVERSE_LAYOUT_MAX_DIMENSION,
+  UNIVERSE_LAYOUT_MIN_ZOOM,
+  UNIVERSE_LAYOUT_MAX_ZOOM,
+  rectSchema,
+  layoutOpSchema,
+  layoutPatchSchema,
+  universeLayoutDocumentSchema,
+  emptyUniverseLayoutDocument,
+  type UniverseRefKind,
+  type Rect,
+  type LayoutOp,
+  type LayoutPatch,
+  type LayoutAck,
+  type UniverseLayoutDocument,
+  UNIVERSE_DRAFT_DESTINATION_KINDS,
+  UNIVERSE_DRAFT_SCHEMA_VERSION,
+  UNIVERSE_DRAFT_MAX_TEXT,
+  UNIVERSE_DRAFT_MAX_ATTACHMENTS,
+  draftDestinationSchema,
+  draftPatchSchema,
+  universeDraftPayloadSchema,
+  pendingDraftAttemptSchema,
+  structuredDraftPatchSchema,
+  universeDraftPatchSchema,
+  type UniverseDraftDestinationKind,
+  type UniverseDraftDestination,
+  type UniverseDraftPatch,
+  type UniverseDraftPayload,
+  type PendingDraftAttempt,
+  type UniverseDraftPatchInput,
+  type UniverseDraft,
   INBOX_DISMISSAL_ITEM_KEY_REGEX,
   inboxDismissalSchema,
   createInboxDismissalSchema,
@@ -1165,8 +1219,10 @@ export {
   gvisorEnvironmentConfigSchema,
   createExecutionTargetSchema,
   workerExecutionTargetHeartbeatSchema,
+  issueWorkerEnrollmentCodeSchema,
   type CreateExecutionTargetInput,
   type WorkerExecutionTargetHeartbeatInput,
+  type IssueWorkerEnrollmentCodeInput,
 } from "./validators/index.js";
 
 export {
@@ -1351,7 +1407,7 @@ export {
 } from "./redaction.js";
 
 export {
-  aoaConfigSchema,
+  paperclipConfigSchema,
   configMetaSchema,
   llmConfigSchema,
   databaseBackupConfigSchema,
@@ -1394,6 +1450,13 @@ export * from "./hub.js";
 export * from "./work-questions.js";
 export * from "./user-entity-follows.js";
 export * from "./notification-registry.js";
+export * from "./types/job-control.js";
+export * from "./job-control-source.js";
+export {
+  submitJobCommandSchema,
+  submitJobSourceSchema,
+  type SubmitJobCommandInput,
+} from "./validators/job-control.js";
 
 // ── API contract artifacts ──
 // Phase 1 thread coordination contract: shared by backend (Lane A) and UI (Lane B).
@@ -1447,3 +1510,43 @@ export {
 export * from "./providers/provider-catalog.js";
 export * from "./mcp-connector-catalog.js";
 export * from "./provider-connections.js";
+export * from "./notification-delivery.js";
+
+export { checkpointDataSchema, checkpointPatchSchema, type CheckpointData, type CheckpointPatch, type CheckpointSnapshot } from "./validators/universe-layout.js";
+export {
+  universeAttentionSourceRefSchema,
+  universeAttentionEntrySchema,
+  universeAttentionResponseSchema,
+  universeAttentionCheckpointInputSchema,
+  universeAttentionCheckpointSchema,
+  type UniverseAttentionSourceRef,
+  type UniverseAttentionEntry,
+  type UniverseAttentionResponse,
+  type UniverseAttentionCheckpointInput,
+  type UniverseAttentionCheckpoint,
+} from "./validators/universe-attention.js";
+export {
+  universeSnapshotReferenceSchema,
+  universeSnapshotTaskSchema,
+  universeSnapshotOutputSchema,
+  universeReconciliationSnapshotSchema,
+  type UniverseReconciliationSnapshot,
+} from "./validators/universe-reconciliation.js";
+export {
+  universeIntakeDestinationSchema,
+  beginUniverseIntakeSchema,
+  universeIntakeSnapshotSchema,
+  type UniverseIntakeDestination,
+  type BeginUniverseIntake,
+  type UniverseIntakeSnapshot,
+} from "./validators/universe-intake.js";
+export {
+  FORMAT_DISPOSITIONS,
+  FORMAT_FAILURES,
+  formatCapabilitySchema,
+  type FormatDisposition,
+  type FormatCapability,
+  type FormatFailure,
+} from "./validators/universe-formats.js";
+export * from "./types/universe-context.js";
+export { universeReferenceSchema, universeViewportSchema, universeContextSchema, type UniverseContextInput } from "./validators/universe-context.js";

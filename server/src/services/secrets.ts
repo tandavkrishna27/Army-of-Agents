@@ -6,6 +6,7 @@ import {
   companySecretProviderConfigs,
   companySecrets,
   companySecretVersions,
+  providerConnections,
   runtimeProviderKeys,
   secretAccessEvents,
 } from "@armyofagents/db";
@@ -40,6 +41,10 @@ import {
   resolveProviderKeyTarget,
   type ProviderKeyTarget,
 } from "./providers/provider-key.js";
+import {
+  authorizeVoiceMediaCredential,
+  type VoiceMediaCapability,
+} from "./voice-media-credential-policy.js";
 
 const ENV_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const SENSITIVE_ENV_KEY_RE =
@@ -62,6 +67,8 @@ export type SecretConsumerContext = {
   pluginId?: string | null;
   /** Internal capability for the OAuth broker/loader; never accepted from API input. */
   mcpOAuthOwner?: McpOAuthSecretOwner;
+  /** Server-derived capability context. Generic API input must never populate it. */
+  voiceMedia?: { connectionId: string; capability: VoiceMediaCapability };
 };
 
 type Actor = { userId?: string | null; agentId?: string | null };
@@ -125,18 +132,32 @@ export function assertNotMcpOAuthManaged(metadata: unknown) {
   }
 }
 
-function assertMcpOAuthResolutionAllowed(
-  secret: typeof companySecrets.$inferSelect,
+/**
+ * R3 broker-owned-secret guard, keyed on the secret's provider_metadata only. EXPORTED so the
+ * distributed-run credential broker (provider-resolution-deps.ts), which reads provider_metadata
+ * via resolve_company_secret_bundle rather than the ORM row, reproduces the EXACT refusal the
+ * in-process resolveSecretValue applies. Behaviour is unchanged for the direct path — the private
+ * wrapper below simply forwards the ORM row's providerMetadata here.
+ */
+export function assertMcpOAuthResolutionAllowedByMetadata(
+  providerMetadata: unknown,
   context: SecretConsumerContext,
 ) {
-  if (!isMcpOAuthManagedMetadata(secret.providerMetadata)) return;
+  if (!isMcpOAuthManagedMetadata(providerMetadata)) return;
   const allowedConsumer =
     context.consumerType === "system" &&
     (context.consumerId === "mcp-connectors" || context.consumerId === "oauth-broker");
   if (!allowedConsumer || !context.mcpOAuthOwner) {
     throw unprocessable("OAuth connector credentials cannot be used by generic secret consumers");
   }
-  assertMcpOAuthOwner(secret.providerMetadata, context.mcpOAuthOwner);
+  assertMcpOAuthOwner(providerMetadata, context.mcpOAuthOwner);
+}
+
+function assertMcpOAuthResolutionAllowed(
+  secret: typeof companySecrets.$inferSelect,
+  context: SecretConsumerContext,
+) {
+  assertMcpOAuthResolutionAllowedByMetadata(secret.providerMetadata, context);
 }
 
 export async function prepareMcpOAuthSecretVersion(input: {
@@ -165,7 +186,10 @@ function isSensitiveEnvKey(key: string) {
   return SENSITIVE_ENV_KEY_RE.test(key);
 }
 
-function canonicalizeBinding(binding: EnvBinding): CanonicalEnvBinding {
+/** Exported for DAT-008: the handle mint must classify a per-agent provider binding
+ * (plain vs secret_ref) using the SAME canonicalization the persistence and runtime
+ * paths use, so "does this agent override the company key?" cannot drift between them. */
+export function canonicalizeBinding(binding: EnvBinding): CanonicalEnvBinding {
   if (typeof binding === "string") return { type: "plain", value: binding };
   if (binding.type === "plain") return { type: "plain", value: String(binding.value) };
   return { type: "secret_ref", secretId: binding.secretId, version: binding.version ?? "latest" };
@@ -452,6 +476,56 @@ export function secretService(db: Db) {
     }
   }
 
+  async function assertVoiceMediaBinding(
+    secret: typeof companySecrets.$inferSelect,
+    context: SecretConsumerContext,
+  ) {
+    if (secret.resolutionScope !== "voice_media") return;
+    if (context.consumerType !== "provider_connection" || !context.voiceMedia) {
+      throw new SecretCandidateUnavailableError(
+        "restricted_credential_denied",
+        "Restricted voice/media credential is unavailable (restricted_consumer)",
+      );
+    }
+    const connectionId = context.voiceMedia.connectionId;
+    const [connection] = await db
+      .select()
+      .from(providerConnections)
+      .where(
+        and(
+          eq(providerConnections.id, connectionId),
+          eq(providerConnections.companyId, secret.companyId),
+        ),
+      );
+    const binding = context.configPath
+      ? await db
+          .select()
+          .from(companySecretBindings)
+          .where(
+            and(
+              eq(companySecretBindings.companyId, secret.companyId),
+              eq(companySecretBindings.secretId, secret.id),
+              eq(companySecretBindings.targetType, "provider_connection"),
+              eq(companySecretBindings.targetId, connectionId),
+              eq(companySecretBindings.configPath, context.configPath),
+            ),
+          )
+          .then((rows) => rows[0] ?? null)
+      : null;
+    const decision = authorizeVoiceMediaCredential({
+      secret,
+      connection: connection ?? null,
+      binding,
+      context,
+    });
+    if (!decision.allowed) {
+      throw new SecretCandidateUnavailableError(
+        "restricted_credential_denied",
+        `Restricted voice/media credential is unavailable (${decision.reason})`,
+      );
+    }
+  }
+
   async function resolveSecretValue(
     companyId: string,
     secretId: string,
@@ -469,6 +543,7 @@ export function secretService(db: Db) {
       if (secret.status !== "active") {
         throw new SecretCandidateUnavailableError("secret_inactive", "Secret is not active");
       }
+      await assertVoiceMediaBinding(secret, context);
       // Broker-owned-secret guard (remediation R3): generic resolution paths must not
       // resolve/mutate an mcp:* OAuth bundle outside the broker's own consumer context.
       assertMcpOAuthResolutionAllowed(secret, context);

@@ -74,9 +74,10 @@ probing the database, provider APIs, or listening ports.
 
 ## `/aoa` data migration
 
-Current Compose mounts the `aoa-data` volume at `/aoa`. The image uses
-`/aoa` as its persistent data directory. Treat an older Compose deployment
-as a separate installation and migrate its data explicitly.
+The `aoa-data` volume name is unchanged; current Compose mounts it at `/aoa`.
+The image exposes `/paperclip` only as a compatibility symlink. A new image
+started with an old Compose file fails closed if the old file mounts a separate
+volume over `/paperclip`.
 
 Before upgrading:
 

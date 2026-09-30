@@ -1,0 +1,90 @@
+{
+  "version": "1",
+  "schema": "aoa-workspace-patch-vectors/v1",
+  "diffVectors": [
+    {
+      "name": "create_modify_delete",
+      "base": [
+        { "path": "keep.txt", "kind": "file", "sha256": "same", "sizeBytes": 4 },
+        { "path": "mod.txt", "kind": "file", "sha256": "old", "sizeBytes": 3 },
+        { "path": "gone.txt", "kind": "file", "sha256": "bye", "sizeBytes": 3 }
+      ],
+      "result": [
+        { "path": "keep.txt", "kind": "file", "sha256": "same", "sizeBytes": 4 },
+        { "path": "mod.txt", "kind": "file", "sha256": "new", "sizeBytes": 3 },
+        { "path": "new.txt", "kind": "file", "sha256": "fresh", "sizeBytes": 2 }
+      ],
+      "operations": [
+        { "op": "delete", "path": "gone.txt" },
+        { "op": "modify", "path": "mod.txt", "resultSha256": "new", "sizeBytes": 3 },
+        { "op": "create", "path": "new.txt", "resultSha256": "fresh", "sizeBytes": 2 }
+      ]
+    },
+    {
+      "name": "single_rename_and_directories_ignored",
+      "base": [
+        { "path": "src", "kind": "directory", "sha256": null, "sizeBytes": 0 },
+        { "path": "src/old.txt", "kind": "file", "sha256": "moved", "sizeBytes": 5 }
+      ],
+      "result": [
+        { "path": "src", "kind": "directory", "sha256": null, "sizeBytes": 0 },
+        { "path": "src/new.txt", "kind": "file", "sha256": "moved", "sizeBytes": 5 }
+      ],
+      "operations": [
+        { "op": "rename", "fromPath": "src/old.txt", "path": "src/new.txt", "resultSha256": "moved", "sizeBytes": 5 }
+      ]
+    },
+    {
+      "name": "ambiguous_two_delete_one_create_no_fold",
+      "base": [
+        { "path": "a.txt", "kind": "file", "sha256": "dup", "sizeBytes": 3 },
+        { "path": "b.txt", "kind": "file", "sha256": "dup", "sizeBytes": 3 }
+      ],
+      "result": [
+        { "path": "c.txt", "kind": "file", "sha256": "dup", "sizeBytes": 3 }
+      ],
+      "operations": [
+        { "op": "delete", "path": "a.txt" },
+        { "op": "delete", "path": "b.txt" },
+        { "op": "create", "path": "c.txt", "resultSha256": "dup", "sizeBytes": 3 }
+      ]
+    },
+    {
+      "name": "utf8_byte_order_over_destination_path",
+      "base": [
+        { "path": "z.txt", "kind": "file", "sha256": "z", "sizeBytes": 1 }
+      ],
+      "result": [
+        { "path": "b.txt", "kind": "file", "sha256": "b", "sizeBytes": 1 },
+        { "path": "A.txt", "kind": "file", "sha256": "A", "sizeBytes": 1 },
+        { "path": "a.txt", "kind": "file", "sha256": "a", "sizeBytes": 1 }
+      ],
+      "operations": [
+        { "op": "create", "path": "A.txt", "resultSha256": "A", "sizeBytes": 1 },
+        { "op": "create", "path": "a.txt", "resultSha256": "a", "sizeBytes": 1 },
+        { "op": "create", "path": "b.txt", "resultSha256": "b", "sizeBytes": 1 },
+        { "op": "delete", "path": "z.txt" }
+      ]
+    }
+  ],
+  "applyVectors": [
+    {
+      "name": "base_matches_applies",
+      "patchBaseManifestHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "currentBase": "1111111111111111111111111111111111111111111111111111111111111111",
+      "decision": "applied"
+    },
+    {
+      "name": "base_mismatch_quarantines",
+      "patchBaseManifestHash": "9999999999999999999999999999999999999999999999999999999999999999",
+      "currentBase": "1111111111111111111111111111111111111111111111111111111111111111",
+      "decision": "conflict_quarantined"
+    },
+    {
+      "name": "no_accepted_base_quarantines",
+      "patchBaseManifestHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "currentBase": null,
+      "decision": "conflict_quarantined"
+    }
+  ]
+}

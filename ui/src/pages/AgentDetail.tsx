@@ -1045,7 +1045,7 @@ export function AgentConfigurePage({
     onSuccess: (data) => {
       // Rollback also bumps updatedAt — cache the returned row so a follow-up
       // save uses the fresh optimistic-concurrency token, not the pre-rollback
-      // one (which would 409 the user against their own rollback). (Decision #104)
+      // one (which would 409 the user against their own rollback). (Decision #125)
       queryClient.setQueryData(queryKeys.agents.detail(agent.id), data);
       queryClient.setQueryData(queryKeys.agents.detail(agent.urlKey), data);
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.id) });
@@ -1392,7 +1392,7 @@ function ConfigurationTab({
       // synchronously so a quick repeat save uses the up-to-date
       // optimistic-concurrency token, not the stale pre-save one (which would
       // 409 the user against their own just-completed save). The invalidate
-      // below still refetches for eventual consistency. (Decision #104)
+      // below still refetches for eventual consistency. (Decision #125)
       queryClient.setQueryData(queryKeys.agents.detail(agent.id), result);
       queryClient.setQueryData(queryKeys.agents.detail(agent.urlKey), result);
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.id) });
@@ -1402,7 +1402,7 @@ function ConfigurationTab({
     },
     onError: (err) => {
       // Optimistic-concurrency conflict: someone else changed the agent. Refetch
-      // the latest and tell the user to redo their edit. (Decision #104)
+      // the latest and tell the user to redo their edit. (Decision #125)
       if (err instanceof ApiError && err.status === 409) {
         queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.id) });
         queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.urlKey) });

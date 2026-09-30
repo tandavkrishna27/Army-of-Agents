@@ -17,4 +17,9 @@ export const API = {
   joinRequests: `${API_PREFIX}/join-requests`,
   members: `${API_PREFIX}/members`,
   admin: `${API_PREFIX}/admin`,
+  jobSubmission: (organizationId: string, companyId: string) =>
+    `${API_PREFIX}/organizations/${organizationId}/companies/${companyId}/jobs`,
+  workerEnrollment: `${API_PREFIX}/worker-control/enroll`,
+  workerEnrollmentCode: (organizationId: string, targetId: string) =>
+    `${API_PREFIX}/organizations/${organizationId}/execution-targets/${targetId}/enrollment-codes`,
 } as const;

@@ -23,27 +23,27 @@ function parsedOptions(url: string): { user: string; pass: string; database: str
 describe("buildDatabaseUrl", () => {
   it("round-trips a password full of URL-reserved characters through real postgres.js", () => {
     const password = "p@ss/w#rd?x%20&y:z";
-    const url = buildDatabaseUrl({ user: "aoa", password, db: "aoa" });
+    const url = buildDatabaseUrl({ user: "paperclip", password, db: "paperclip" });
     const opts = parsedOptions(url);
     expect(opts.pass).toBe(password);
-    expect(opts.user).toBe("aoa");
-    expect(opts.database).toBe("aoa");
+    expect(opts.user).toBe("paperclip");
+    expect(opts.database).toBe("paperclip");
   });
 
   it("round-trips a username containing reserved characters", () => {
     const user = "a:b@c/d";
-    const url = buildDatabaseUrl({ user, password: "pw", db: "aoa" });
+    const url = buildDatabaseUrl({ user, password: "pw", db: "paperclip" });
     expect(parsedOptions(url).user).toBe(user);
   });
 
   it("places the database name literally, never percent-encoded", () => {
-    const url = buildDatabaseUrl({ user: "u", password: "pw", db: "aoa" });
-    expect(url.endsWith("/aoa")).toBe(true);
-    expect(parsedOptions(url).database).toBe("aoa");
+    const url = buildDatabaseUrl({ user: "u", password: "pw", db: "paperclip" });
+    expect(url.endsWith("/paperclip")).toBe(true);
+    expect(parsedOptions(url).database).toBe("paperclip");
   });
 
   it("hardcodes host:port as db:5432", () => {
-    const url = buildDatabaseUrl({ user: "u", password: "pw", db: "aoa" });
+    const url = buildDatabaseUrl({ user: "u", password: "pw", db: "paperclip" });
     expect(url).toContain("@db:5432/");
   });
 
@@ -62,9 +62,9 @@ describe("databaseUrlFromEnv", () => {
     expect(databaseUrlFromEnv({ AOA_POSTGRES_PASSWORD: "" })).toBeNull();
   });
 
-  it("assembles with aoa user/db defaults when only the password is set", () => {
-    expect(databaseUrlFromEnv({ AOA_POSTGRES_PASSWORD: "aoa" })).toBe(
-      "postgres://aoa:aoa@db:5432/aoa",
+  it("assembles with paperclip user/db defaults when only the password is set", () => {
+    expect(databaseUrlFromEnv({ AOA_POSTGRES_PASSWORD: "paperclip" })).toBe(
+      "postgres://paperclip:paperclip@db:5432/paperclip",
     );
   });
 

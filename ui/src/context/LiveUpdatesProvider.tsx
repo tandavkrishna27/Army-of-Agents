@@ -37,6 +37,8 @@ export interface ThreadWorkingAgent {
   activity?: string;
 }
 
+export type LiveEventHint = {seq?: number; referenceKey: string};
+
 interface LiveUpdatesContextValue {
   connectionState: LiveConnectionState;
   /** Subscribe the active WS to a thread's events (ref-counted). */
@@ -49,6 +51,8 @@ interface LiveUpdatesContextValue {
   onReconnect: (cb: () => void) => () => void;
   /** Register a callback fired when a visible hub item changes. Returns an unsubscribe fn. */
   onHubItemChanged: (cb: (itemId: string) => void) => () => void;
+  /** Read-only hint stream for canonical consumers such as Universe. */
+  onEventHint: (cb: (hint: LiveEventHint) => void) => () => void;
   /** Latest presence roster per thread (keyed by threadId). */
   presenceByThread: Record<string, ThreadPresenceMember[]>;
   /** Latest working-agents roster per thread (keyed by threadId). */
@@ -67,6 +71,7 @@ const NOOP_LIVE_UPDATES: LiveUpdatesContextValue = {
   sendPresence: () => {},
   onReconnect: () => () => {},
   onHubItemChanged: () => () => {},
+  onEventHint: () => () => {},
   presenceByThread: {},
   workingAgentsByThread: {},
 };
@@ -74,6 +79,14 @@ const NOOP_LIVE_UPDATES: LiveUpdatesContextValue = {
 /** Access the live-updates WS context (connection state, thread subscribe, presence). */
 export function useLiveUpdates(): LiveUpdatesContextValue {
   return useContext(LiveUpdatesContext) ?? NOOP_LIVE_UPDATES;
+}
+
+export function liveEventReferenceKey(event: Pick<LiveEvent, "type" | "payload">): string {
+  for (const field of ["issueId", "taskId", "artifactId", "itemId", "threadId", "conversationId"] as const) {
+    const value = readString(event.payload?.[field]);
+    if (value) return `${field}:${value}`;
+  }
+  return `event:${event.type}`;
 }
 
 const TOAST_COOLDOWN_WINDOW_MS = 10_000;
@@ -438,7 +451,7 @@ function invalidateHeartbeatQueries(
   // Broaden invalidation to issue views: a run completion typically changes
   // issue status (in_progress → in_review / done / cancelled), so the list
   // and any cached issue details need to be refreshed.  Mirrors the
-  // issueRefs-loop from AoA 68f69975, adapted for AoA (no issueRefs
+  // issueRefs-loop from Paperclip 68f69975, adapted for AoA (no issueRefs
   // field in the live-event payload — invalidate the whole list instead).
   const status = readString(payload.status);
   if (status && TERMINAL_RUN_STATUSES.has(status)) {
@@ -839,6 +852,11 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
   const subscribedThreadsRef = useRef<Map<string, number>>(new Map());
   const reconnectListenersRef = useRef<Set<() => void>>(new Set());
   const hubItemChangedListenersRef = useRef<Set<(itemId: string) => void>>(new Set());
+  const eventHintListenersRef = useRef<Set<(hint: LiveEventHint) => void>>(new Set());
+  // MIG-003: the max durable per-company `seq` seen. Sent as `?sinceSeq=N` on
+  // reconnect for gap recovery, and used to suppress duplicate seqs (overlapping
+  // replay + live). 0 = fresh (no server replay; only future events).
+  const lastSeqRef = useRef(0);
 
   const [connectionState, setConnectionState] = useState<LiveConnectionState>(
     typeof navigator !== "undefined" && navigator.onLine === false ? "offline" : "connecting",
@@ -917,6 +935,16 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const onEventHint = useCallback((cb: (hint: LiveEventHint) => void) => {
+    eventHintListenersRef.current.add(cb);
+    return () => { eventHintListenersRef.current.delete(cb); };
+  }, []);
+
+  const notifyEventHint = useCallback((event: LiveEvent & { seq?: number }) => {
+    const hint = { referenceKey: liveEventReferenceKey(event), ...(typeof event.seq === "number" ? { seq: event.seq } : {}) };
+    for (const cb of eventHintListenersRef.current) { try { cb(hint); } catch { /* isolate consumers */ } }
+  }, []);
+
   const notifyHubItemChanged = useCallback((itemId: string) => {
     if (!itemId) return;
     for (const cb of hubItemChangedListenersRef.current) {
@@ -944,6 +972,9 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!selectedCompanyId) return;
 
+    // Each company has its own durable seq space — reset the cursor on switch.
+    lastSeqRef.current = 0;
+
     let closed = false;
     let reconnectAttempt = 0;
     let reconnectTimer: number | null = null;
@@ -970,7 +1001,11 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
     const connect = () => {
       if (closed) return;
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const url = `${protocol}://${window.location.host}/api/companies/${encodeURIComponent(selectedCompanyId)}/events/ws`;
+      // MIG-003: send `?sinceSeq=N` only when we have a real cursor (>0), so a
+      // fresh connect gets no history replay (only future events); a reconnect
+      // replays exactly the gap it missed (or is told to snapshot-refetch).
+      const sinceSuffix = lastSeqRef.current > 0 ? `?sinceSeq=${lastSeqRef.current}` : "";
+      const url = `${protocol}://${window.location.host}/api/companies/${encodeURIComponent(selectedCompanyId)}/events/ws${sinceSuffix}`;
       socket = new WebSocket(url);
       socketRef.current = socket;
 
@@ -1004,7 +1039,28 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
         if (!raw) return;
 
         try {
-          const parsed = JSON.parse(raw) as LiveEvent;
+          const parsed = JSON.parse(raw) as LiveEvent & { seq?: number };
+          // MIG-003: bounded snapshot fallback — the server could not replay our
+          // cursor exactly (older than the retained window), so do a blanket
+          // refetch of active queries + notify catch-up consumers.
+          if ((parsed as { type?: string }).type === "__resume") {
+            void queryClient.invalidateQueries();
+            for (const cb of reconnectListenersRef.current) {
+              try {
+                cb();
+              } catch {
+                // listener errors must not break the socket
+              }
+            }
+            return;
+          }
+          // MIG-003: duplicate suppression by monotonic seq (overlapping replay +
+          // live). Seq-less events (ephemeral local-emit, e.g. presence) always
+          // pass and never advance the cursor.
+          if (typeof parsed.seq === "number") {
+            if (parsed.seq <= lastSeqRef.current) return;
+            lastSeqRef.current = parsed.seq;
+          }
           // Presence is ephemeral — consume it directly into local state.
           if (parsed.type === "thread.presence") {
             const threadId = readString(parsed.payload?.threadId);
@@ -1055,7 +1111,7 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
       }
       socketRef.current = null;
     };
-  }, [queryClient, selectedCompanyId, pushToast, sendRaw, notifyHubItemChanged]);
+  }, [queryClient, selectedCompanyId, pushToast, sendRaw, notifyHubItemChanged, notifyEventHint]);
 
   const contextValue = useMemo<LiveUpdatesContextValue>(
     () => ({
@@ -1065,6 +1121,7 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
       sendPresence,
       onReconnect,
       onHubItemChanged,
+      onEventHint,
       presenceByThread,
       workingAgentsByThread,
     }),
@@ -1075,6 +1132,7 @@ export function LiveUpdatesProvider({ children }: { children: ReactNode }) {
       sendPresence,
       onReconnect,
       onHubItemChanged,
+      onEventHint,
       presenceByThread,
       workingAgentsByThread,
     ],

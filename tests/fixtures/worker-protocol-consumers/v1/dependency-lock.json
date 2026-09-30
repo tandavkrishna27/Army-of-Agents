@@ -1,0 +1,16 @@
+{
+  "sourceSha": "b7a842870ce7509d8baa75409e0ab19da375c88a",
+  "zodVersion": "3.24.2",
+  "esbuildVersion": "0.28.1",
+  "lockfileIntegrity": "134169fe9cf4edecafc6b5c698eb251795a10da8bb69ac30dfbca58e451da426",
+  "packageIntegrity": "41acbb809c75647931a0cd891d92a6065cbd55f6609fbbc36937bca37f1291bb",
+  "bundlerOptions": {
+    "bundle": true,
+    "format": "esm",
+    "platform": "neutral",
+    "target": "es2022",
+    "sourcemap": false,
+    "legalComments": "none",
+    "minify": false
+  }
+}

@@ -266,8 +266,12 @@ export const SECRET_BINDING_TARGET_TYPES = [
   "plugin",
   "issue",
   "run",
+  "provider_connection",
 ] as const;
 export type SecretBindingTargetType = (typeof SECRET_BINDING_TARGET_TYPES)[number];
+
+export const SECRET_RESOLUTION_SCOPES = ["general", "voice_media"] as const;
+export type SecretResolutionScope = (typeof SECRET_RESOLUTION_SCOPES)[number];
 
 export const SECRET_ACCESS_OUTCOMES = ["success", "failure"] as const;
 export type SecretAccessOutcome = (typeof SECRET_ACCESS_OUTCOMES)[number];
@@ -447,6 +451,18 @@ export type ExecutionTargetTrustClass = (typeof EXECUTION_TARGET_TRUST_CLASSES)[
 
 export const EXECUTION_TARGET_STATUSES = ["active", "draining", "offline", "disabled"] as const;
 export type ExecutionTargetStatus = (typeof EXECUTION_TARGET_STATUSES)[number];
+
+/** JOB-002 transport-only device proof/session headers; frozen E1 JSON stays unchanged. */
+export const WORKER_CONTROL_HEADERS = Object.freeze({
+  enrollmentCode: "aoa-enrollment-code",
+  proofVersion: "aoa-device-proof-version",
+  publicKey: "aoa-device-public-key",
+  signature: "aoa-device-signature",
+  issuedAt: "aoa-device-issued-at",
+  proofId: "aoa-device-proof-id",
+  requestId: "aoa-device-request-id",
+  session: "aoa-worker-session",
+} as const);
 
 // Per-Organization concurrency clamp — mirrors HEARTBEAT_MAX_CONCURRENT_RUNS_*.
 export const ORG_MAX_CONCURRENT_RUNS_DEFAULT = 8;

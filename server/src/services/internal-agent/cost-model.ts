@@ -33,6 +33,21 @@ const RATES: Record<string, { inputCentsPerM: number; outputCentsPerM: number }>
 const DEFAULT_RATE = { inputCentsPerM: 300, outputCentsPerM: 1500 };
 
 /**
+ * JOB-012 — the closed set of models the versioned rate schedule KNOWS a real rate
+ * for (the exact keys of RATES). The authoritative-cost bridge gates on this BEFORE
+ * pricing so it can FAIL CLOSED on an unknown model instead of silently falling back
+ * to DEFAULT_RATE (`computeCostCents`'s fail-OPEN behavior is intentionally preserved
+ * for the legacy heartbeat/one-shot callers and must NOT change).
+ */
+export const KNOWN_RATE_MODELS: ReadonlySet<string> = new Set(Object.keys(RATES));
+
+/** True iff `model` maps to a KNOWN rate (RATES key). Used only by the JOB-012
+ * fail-closed authoritative-cost resolver; `computeCostCents` stays fail-open. */
+export function isKnownRateModel(model: string): boolean {
+  return KNOWN_RATE_MODELS.has(model);
+}
+
+/**
  * Compute cost in cents for a given provider + model + token counts.
  * Provider is accepted for future per-provider overrides but is currently
  * unused in lookups (model name is already globally unique across providers).

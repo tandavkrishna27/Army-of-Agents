@@ -13,6 +13,7 @@ function signatureForConfig(config: Config): string {
     s3Bucket: config.storageS3Bucket,
     s3Region: config.storageS3Region,
     s3Endpoint: config.storageS3Endpoint,
+    s3PresignEndpoint: config.storageS3PresignEndpoint,
     s3Prefix: config.storageS3Prefix,
     s3ForcePathStyle: config.storageS3ForcePathStyle,
   });

@@ -12,13 +12,13 @@ You are reading this as context for working on the AoA codebase. This applies wh
 - **Architectural decisions are locked.** Before changing how a system works, read `docs/architecture/decisions.md`. Do not relitigate them.
 - **AoA is not open source.** Do not add open-source license headers, public contribution guides, or community-facing copy.
 - **Commander** is the name of the always-on internal AI assistant built into AoA. It has its own onboarding context (`server/src/onboarding-assets/`). You are not Commander unless explicitly told so.
-- AoA began as a fork of an upstream project. The current contract is AoA-only; see `docs/upstream-migration.md` for lineage and `docs/architecture/wire-compat.md` for wire names.
+- **Paperclip** is the open-source base AoA forked from. It is not mentioned in user-facing docs. For wire protocol contracts and deprecated table tracking, see `docs/paperclip-migration.md`.
 
 ---
 
 ## Critical Rules
 
-1. **Drizzle ORM only.** Schema changes go in `packages/db/src/schema/`. Run `pnpm db:generate` for migrations. NEVER write raw SQL migration files. Schema DDL is always `db:generate` output. **Narrow exception (C14):** drizzle-kit cannot emit idempotency guards (`IF NOT EXISTS` / `DO $$ … duplicate_object`) or data-only backfills; a few migrations (e.g. `0189`, `0195`) hand-APPEND those after generation — always with an inline comment and always idempotent. Schema DDL is never hand-authored. See `AGENTS.md` and Decision #19.
+1. **Drizzle ORM only.** Schema changes go in `packages/db/src/schema/`. Run `pnpm db:generate` for migrations. NEVER write raw SQL migration files. Schema DDL is always `db:generate` output. **Narrow exception (C14) — TWO classes, both of which drizzle-kit provably cannot emit:** **(a) idempotency guards** (`IF NOT EXISTS` / `DO $$ … duplicate_object`) **and data-only backfills**, hand-APPENDED below generated DDL (e.g. `0189`, `0195`); **(b) idempotent cluster/security DDL** — roles, `GRANT`/`REVOKE`, `ENABLE`/`FORCE ROW LEVEL SECURITY`, `CREATE POLICY`, and `SECURITY DEFINER` functions plus their ACLs — hand-authored into a delta-free `--custom` migration (e.g. `0211`, `0213`, `0214`, `0261`, `0267`; `0266` is superseded and is NOT an exemplar). **Class (b) is governed by Decision #122 and its 2026-09-01 amendment, which carry the binding conditions — read them before hand-authoring anything;** this line is a summary, not the authority. **Tables, columns, indexes and foreign keys are NEVER hand-authored** — that is always `db:generate` output. See `AGENTS.md` and Decisions #19 + #122.
 2. **Follow existing patterns.** New services follow `server/src/services/goals.ts`. New routes follow `server/src/routes/goals.ts`. New schemas follow `packages/db/src/schema/goals.ts`.
 3. **"Issues" = "Tasks" in UI only.** The DB table is `issues`. The API routes use `/issues`. All user-facing text says "Task" / "Tasks". Never rename the table or routes.
 4. **"Projects" table serves both Departments and Projects.** Distinguished by `type` field: `'department'` | `'project'`. Same mechanics for both.
@@ -28,14 +28,14 @@ You are reading this as context for working on the AoA codebase. This applies wh
 8. **Memory feedback requires ≥3 occurrences.** Don't suggest memory from one-off edits. Pattern must be consistent. (Decision #46)
 9. **Discussion scope fallback: item-level > entry-level > discussion-level > null.** Founder's per-item override always wins. (Decision #61)
 10. **Consult `docs/architecture/decisions.md` before making architectural choices.** Do not relitigate locked decisions.
-11. **The only runtime hosted API key is for embeddings.** Agents, Commander, and **all extraction** (discussion + debrief-push + file-import + crew memory-extract tools) run keyless via locally-installed CLIs. Extraction is **CLI-only** — no extraction code path reads a hosted provider key, and there is no api fallback (the `callLLM`/`callAnthropic`/`callOpenAI` path + the engine-status route were removed, amended Decision #104 on 2026-06-27). Embeddings use OpenAI `text-embedding-3-small`; per-company key = Settings secret `llm:openai` → env `OPENAI_API_KEY`, configured in **Settings → Memory**. The `createOpenAiEmbedder` chokepoint in `server/src/services/embeddings.ts` is the sole caller. Do not add new hosted-API calls outside this chokepoint, and do not re-introduce a hosted-key extraction fallback. (Decision #104, amended 2026-06-27)
+11. **Extraction is CLI-only; credential mode follows the deployment boundary.** In self-hosted modes, agents, Commander, and extraction (discussion + debrief-push + file-import + crew memory-extract tools) use locally installed CLI logins and no hosted model-provider key. In `cloud_auth`, PR #320 keeps extraction as a sandbox-local CLI invocation but resolves the Company's configured model-provider key and materializes it only inside the isolated E2B environment; the shared host never executes model output or falls back to its own CLI login. There is no selectable/direct `api` extraction engine—the removed `callLLM`/`callAnthropic`/`callOpenAI` path and engine-status route stay removed. Embeddings continue to use OpenAI `text-embedding-3-small` through the `createOpenAiEmbedder` chokepoint. Do not add direct hosted-API extraction calls, serialize provider keys into prompts/protocol/evidence, or introduce a host fallback. (Decision #104, amended 2026-06-27 and 2026-08-08)
 
 ---
 
-## AoA Divergence Points
+## Paperclip Divergence Points
 
-These are intentional AoA-specific choices that **differ from the upstream project** and must
-survive future upstream pull syncs. Future agents: when you see an upstream commit
+These are intentional AoA-specific choices that **differ from Paperclip** and must
+survive future Paperclip pull syncs. Future agents: when you see a Paperclip commit
 touching these areas, check against this list before porting.
 
 ### D5 — Concurrency clamp (heartbeat)
@@ -44,9 +44,9 @@ touching these areas, check against this list before porting.
   AoA teams opt-up per-agent as they build trust. A founding team of 3-5 people
   running a multi-agent pipeline can set each agent to 3-5, yielding 9-25 concurrent
   runs — well within the clamp.
-- `HEARTBEAT_MAX_CONCURRENT_RUNS_MAX = 50` — raised from the upstream project's 10 in v1.1 (D5).
+- `HEARTBEAT_MAX_CONCURRENT_RUNS_MAX = 50` — raised from Paperclip's 10 in v1.1 (D5).
   Founding teams legitimately need > 10 concurrent runs across all agents.
-- **Do NOT port** any upstream commit that raises the DEFAULT above 1 or the MAX
+- **Do NOT port** any Paperclip commit that raises the DEFAULT above 1 or the MAX
   above 50 unless there is a specific AoA team-size reason to do so.
 
 ### D6 — Hire-approval default by deployment mode (company create)
@@ -58,7 +58,7 @@ touching these areas, check against this list before porting.
   Multi-human board → agent hiring is a governance decision. Default on = safe.
 - DB schema default (`.default(true)`) is unchanged — this is injected server-side
   in `server/src/routes/companies.ts` POST handler using `opts.deploymentMode`.
-- **Do NOT port** any upstream commit that sets this field to `false` in
+- **Do NOT port** any Paperclip commit that sets this field to `false` in
   `authenticated` mode. Multi-human board accountability is the AoA thesis.
 
 ### D8 — Planning mode dispatch gate
@@ -70,7 +70,7 @@ touching these areas, check against this list before porting.
   `server/src/routes/issues-planning-mode-dispatch.ts`.
 - UI: amber "Planning" pill on IssuesList rows, NewIssueDialog chip bar, and
   TaskSlideOver header (click to revert to Standard).
-- **Do NOT port** any upstream commit that adds `work_mode` or a similar field
+- **Do NOT port** any Paperclip commit that adds `work_mode` or a similar field
   differently — AoA's interpretation is that planning tasks are human-curated and
   must not auto-dispatch until the founder switches them to Standard.
 
@@ -114,7 +114,7 @@ Registered in `server/src/adapters/registry.ts`. All agent execution is CLI-only
 | `opencode_local` | OpenCode CLI |
 | `openclaw` | OpenClaw runtime |
 | `gemini_local` | Gemini CLI |
-| `hermes_local` | Hermes through the AoA-owned local adapter (`AOA_RUN_ID` / `AOA_API_KEY`) |
+| `hermes_local` | Hermes (uses `PAPERCLIP_RUN_ID` / `PAPERCLIP_API_KEY` wire protocol — do NOT rename to AOA_*) |
 | `process` | Generic shell process |
 | `http` | HTTP webhook |
 
@@ -131,9 +131,9 @@ Push-based agent execution. `heartbeat.wakeup()` → HeartbeatRun → adapter ex
 - **Atomic checkout:** Issues use `SELECT FOR UPDATE NO WAIT` for single-agent locking.
 - **Goal status machine:** `planned → active → at_risk → achieved/cancelled` with `at_risk → active` recovery.
 - **Why/What/How context:** Agents receive Vision + Mission + Goal + Memory items + Task details.
-- **Agent hire approvals:** When `company.requireBoardApprovalForNewAgents` is true (default for `authenticated` mode), hires queue in Inbox. Agent created as `pending_approval`. In `local_trusted` mode new companies default to `false` (agent created `idle` directly). See `server/src/routes/agents.ts:784` and **AoA Divergence Points § D6** above.
+- **Agent hire approvals:** When `company.requireBoardApprovalForNewAgents` is true (default for `authenticated` mode), hires queue in Inbox. Agent created as `pending_approval`. In `local_trusted` mode new companies default to `false` (agent created `idle` directly). See `server/src/routes/agents.ts:784` and **Paperclip Divergence Points § D6** above.
 - **Inbox Hub:** tab-first, no reading-pane preview. Row-click/deep-link opens and activates a dedicated tab; Home is the attention dashboard. Non-home tabs get the contextual `HubActionBar`; tabs are capped at 12 (Home + 11 closeable). `ask_founder` work questions relay on successful answer so the waiting-lane item closes. See Decision #108.
-- **Concurrency clamp:** `HEARTBEAT_MAX_CONCURRENT_RUNS_DEFAULT = 1` (teaching default; teams opt-up per-agent). `HEARTBEAT_MAX_CONCURRENT_RUNS_MAX = 50` (v1.1 D5 raise from 10). See **AoA Divergence Points § D5** above.
+- **Concurrency clamp:** `HEARTBEAT_MAX_CONCURRENT_RUNS_DEFAULT = 1` (teaching default; teams opt-up per-agent). `HEARTBEAT_MAX_CONCURRENT_RUNS_MAX = 50` (v1.1 D5 raise from 10). See **Paperclip Divergence Points § D5** above.
 - **Run summary comments:** Auto-generated task comments after each heartbeat run (duration, token usage, cost, outcome, detected files). Uses `issue_comments` table. Opt-out via `runtimeConfig.autoRunSummary`. Files truncated to 10 + "+N more". The writer is the shared `postRunSummaryComment` (`server/src/services/run-summary-comment.ts`) — heartbeat delegates to it, and the crew runner (`runAoaAgent`) uses it too (W3a).
 - **Crew result loopback (W3a):** when a CREW agent (kind='aoa') finishes a discussion-spawned task (`issues.originKind='crew_thread'`), `runAoaAgent` posts back into the originating thread — `relayCrewResult` ("Completed: …") on success, `postCrewFailureCard` ("… could not complete …") on failure — plus a `postRunSummaryComment` on the task. Composed as `postCrewRunSuccess`/`postCrewRunFailure` (`internal-agent/aoa-agents/crew-run-outcome.ts`), all best-effort (per-substep try/catch, never fail the run). The `autoRunSummary` opt-out suppresses ONLY the summary comment — the loopback/failure card always post (founder visibility). `detectedFiles` is `[]` for crew until W3b (workspaces). Was heartbeat-only before W3a.
 
@@ -168,8 +168,8 @@ Flow: Discussion entry → CLI extraction → `discussion_extracted_items` → f
 
 - Polymorphic scope: department / project / goal. Entry-level scope overrides thread-level scope.
 - Inline annotations on entries (anchorStart/anchorEnd character offsets).
-- **Extraction engine — CLI-only (Decision #104, amended 2026-06-27):** `resolveExtractionEngine` returns `"cli"` or throws ("install a CLI and run its login"). There is no `api` engine and no hosted-key precheck — extraction never reads a provider key. The CLI engine is Option B server-side one-shot (`--print` / `exec`): no MCP bridge, no `submit_extracted_items` handshake, no Decision #100 crew-CLI blockers. Windows prompt delivery: user content is sent via **stdin** to claude (never argv), fixing empty Commander turns. The same CLI extractor serves discussion, debrief-push, file-import, and the crew memory-extract tools.
-- Extraction failure: entry marked `failed`/`skipped`, founder notified via `notifications` table. Can retry or manually create. Failure type classified (`not_installed` / `not_authed` / `timeout` / `nonzero_exit` / `unparseable`) with actionable CLI-guidance copy in DiscussionDetail (never points at a key). No engine-status banner — that route + UI were removed.
+- **Extraction engine — CLI-only (Decision #104, amended 2026-08-08 for PR #320):** `resolveExtractionEngine` returns `"cli"` or throws. There is no `api` engine. In self-hosted modes, extraction remains a server-side one-shot (`--print` / `exec`) using the installed CLI login. In `cloud_auth`, `one-shot-sandbox-cli.ts` resolves the Company's model-provider key, directly acquires an isolated E2B environment, and invokes the sandbox provider runtime; it does not use the MCP bridge and fails closed when Company/provider/environment context is unavailable. The key is scoped to that sandbox execution and is never taken from the shared host's CLI login. There is no `submit_extracted_items` handshake or Decision #100 crew-CLI blocker. Windows prompt delivery sends user content via **stdin** to claude (never argv). The same CLI extractor serves discussion, debrief-push, file-import, and crew memory-extract tools.
+- Extraction failure: entry marked `failed`/`skipped`, founder notified via `notifications` table. Can retry or manually create. Failure copy is cause-aware: local `not_installed`/`not_authed` points to the configured CLI login, while cloud `sandbox_unavailable` may point to provider-key and execution-environment Settings; timeout/nonzero/unparseable cases do not invent credential advice. No selectable-engine status banner exists.
 - **Extract-then-scope (W2, D6):** the controller `create_scope_draft` commit awaits `extractionService.extractThreadEntriesAwait` (never-extracted entries only — status pending/skipped/failed with zero items; 25-entry cap + 180s wall-clock deadline; best-effort) BEFORE compiling, then compiles with `suppressFallbackTask: true` — an Adjutant draft with zero real items shows **no synthetic task card**. Range integrity: the helper folds truncation (cap/deadline) + the first non-completed entry into `rangeEndCap` → the draft's `sourceEndSeq` is capped there, so unprocessed/failed entries stay in the NEXT scope's range (an all-failed pass mints NO draft; entries stay retryable). Applying a card that came from an extracted item resolves the source item (approved + result linkage + pendingItemCount decrement + hub reconcile — no duplicate approvals, no stale badges). The human create-draft route does not run extraction (synchronous request) and keeps ONE fallback card titled by `derivedTitleFromEntries` (longest entry's first sentence, ≤80 chars); the keyword-stub titles ("Implement real multi-message scope generation", …) are dead. Reprocess (delete + re-extract) semantics stay in `discussions.ts reprocessAllEntries`. End-state (D17): all task titles agent-authored — the human button becomes "Ask Adjutant to scope", queued behind the fake-crew-harness CI work.
 - **Autonomy → dispatch (W1a/W1b/W1c):** a scope draft (`create_scope_draft`) auto-applies per thread autonomy (`thread.autonomyLevel ?? internal_agent_config.crewAutonomyLevel` — D18 split the company dial; crew reads `crew_autonomy_level`, Commander keeps `autonomy_level`). **Manual (0)** = propose-only (founder accepts each card). **Assist (1)** = auto-create + assign the crew tasks as `planning` (non-dispatchable), then raise ONE `crew_dispatch` approval in the Inbox (`approvalService`, generic `approval_request` hub item → deep-links to `/approvals`); approving flips those tasks `planning→standard` + dispatches them, rejecting leaves them parked. **Drive (2)** = auto-create as `standard` + auto-dispatch. Every real dispatch (Drive auto + Assist-on-approve) runs `preflightCrewDispatch` (company budget hard-stop + thread pause/disable); blocked → left for manual accept (Assist approve throws + rolls back). The `crew_dispatch` approval carries only `taskIds` — memory candidates always stay founder-gated (D12). Key files: `server/src/services/thread-agent-actions.ts` (enqueue), `server/src/services/approvals.ts` (`crew_dispatch` approve/reject side-effect).
 
@@ -254,7 +254,7 @@ Thumbs-up/down on agent-authored comments (`FeedbackThumbs` in CommentThread). R
 
 ### Company Portability
 
-Export/import full company bundles (`schemaVersion: 2`, 12 sections). Upstream v1 bundles import compatibly (warn-and-continue for unknown sections). UI: `/export` (checkboxes + preview → JSON download) + `/import` (upload → plan → import). See `docs/api/companies.md` for the full bundle schema and section list.
+Export/import full company bundles (`schemaVersion: 2`, 12 sections). Paperclip v1 bundles import compatibly (warn-and-continue for unknown sections). UI: `/export` (checkboxes + preview → JSON download) + `/import` (upload → plan → import). See `docs/api/companies.md` for the full bundle schema and section list.
 
 ### Execution Workspaces
 
@@ -344,7 +344,7 @@ Windows e2e skip is implemented at playwright config level (`tests/e2e/playwrigh
 
 ## Database Schema
 
-All table definitions live in `packages/db/src/schema/`. Schema changes use Drizzle ORM only — never raw SQL — except the C14 narrow exception (hand-appended idempotency guards + data backfills, e.g. 0189/0195; schema DDL is always `db:generate`).
+All table definitions live in `packages/db/src/schema/`. Schema changes use Drizzle ORM only — never raw SQL — except the C14 narrow exception, which has two classes: **(a)** hand-appended idempotency guards and data-only backfills (e.g. 0189/0195), and **(b)** idempotent cluster/security DDL, governed by Decision #122. Schema DDL is always `db:generate` output. See rule 1 above and `AGENTS.md` for the full text; **Decision #122 is the authority — this line summarises it and cannot widen it.**
 
 ### Core / Company
 
@@ -627,5 +627,5 @@ ui/src/lib/                → Shared utilities + constants
 | `docs/cli/` | CLI command reference |
 | `docs/roadmap.md` | Planned features — NOT current behavior |
 | `docs/STANDARDS.md` | Documentation lifecycle and session log extraction rules |
-| `docs/upstream-migration.md` | Upstream-to-AoA tracking: wire protocol, deprecated tables, removed adapters |
+| `docs/paperclip-migration.md` | Paperclip→AoA tracking: wire protocol, deprecated tables, removed adapters |
 | `docs/archive/` | Historical session logs, shipped plans, retired specs — not authoritative |

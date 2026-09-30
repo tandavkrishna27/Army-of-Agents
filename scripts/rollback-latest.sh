@@ -4,7 +4,10 @@ set -euo pipefail
 # rollback-latest.sh — Rollback the latest Changesets-based release.
 #
 # AoA uses @changesets/cli for releases (see scripts/release.sh), so this
-# script uses a Changesets-specific rollback pattern:
+# script deviates from Paperclip's rollback pattern:
+#
+#   - Paperclip (CalVer, 111 LOC): takes a version arg and repoints npm
+#     dist-tag "latest" for each publishable package. Pure tag repointer.
 #
 #   - AoA (Changesets-adapted): deprecates the current published version
 #     via `npm deprecate`, deletes the git tag locally + remotely, and
@@ -69,8 +72,8 @@ build_deprecate_cmd() {
   printf "npm deprecate %s@%s '%s'" "$pkg" "$version" "$message"
 }
 
-# Build the display form of an npm dist-tag repoint command (for
-# rollback when someone wants to also repoint "latest" to a prior
+# Build the display form of an npm dist-tag repoint command (for Paperclip-
+# style rollback when someone wants to also repoint "latest" to a prior
 # version). Not called by default; exposed for manual recovery flows.
 build_dist_tag_cmd() {
   local pkg="$1"
@@ -115,6 +118,8 @@ JSON
     "all packages are @armyofagents/ scoped"
   assert_eq "$(printf '%s\n' "$packages" | grep -c '^@armyofagents/cli$')" "1" \
     "1 CLI package (@armyofagents/cli)"
+  assert_eq "$(printf '%s\n' "$packages" | grep -c '^@paperclipai/')" "0" \
+    "no upstream-owned packages"
   local package_specs plugin_sdk_version cli_version
   package_specs="$(list_owned_public_packages specs)"
   plugin_sdk_version="$(cd "$REPO_ROOT" && node -p "require('./packages/plugins/sdk/package.json').version")"

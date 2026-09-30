@@ -1,4 +1,4 @@
-const CACHE_NAME = "aoa-v3";
+const CACHE_NAME = "paperclip-v2";
 
 self.addEventListener("install", () => {
   self.skipWaiting();

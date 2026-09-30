@@ -274,7 +274,7 @@ export function CompanyImport({
           <h1 className="text-xl font-bold">Import Company</h1>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Upload an AoA or AoA company bundle, preview what will be imported, then confirm.
+          Upload an AoA or Paperclip company bundle, preview what will be imported, then confirm.
         </p>
       </div>
 
@@ -284,7 +284,7 @@ export function CompanyImport({
           <div>
             <h2 className="text-sm font-semibold">Bundle source</h2>
             <p className="text-xs text-muted-foreground">
-              Upload a <code>.json</code> or <code>.aoa-bundle.json</code> file exported from AoA or AoA.
+              Upload a <code>.json</code> or <code>.aoa-bundle.json</code> file exported from AoA or Paperclip.
             </p>
           </div>
           <Separator />

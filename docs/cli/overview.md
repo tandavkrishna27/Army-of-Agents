@@ -20,7 +20,7 @@ All commands support:
 
 | Flag | Description |
 |------|-------------|
-| `--data-dir <path>` | Local AoA data root (isolates from `~/.aoa`) |
+| `--data-dir <path>` | Local AoA data root (isolates from `~/.aoa`; legacy `~/.paperclip` is used as a one-release fallback if `~/.aoa` does not yet exist — see `cli/src/config/home.ts`) |
 | `--api-base <url>` | API base URL |
 | `--api-key <token>` | Bearer token override; stored board login is the final fallback |
 | `--context <path>` | Context file path |

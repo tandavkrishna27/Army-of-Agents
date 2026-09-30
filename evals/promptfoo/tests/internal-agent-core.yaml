@@ -1,4 +1,4 @@
-# Internal Agent core behavioral tests (NEW for AoA — no the upstream project analog).
+# Internal Agent core behavioral tests (NEW for AoA — no Paperclip analog).
 # Tests tool routing and the Decision #15 memory-approval boundary.
 
 - description: "internal-agent.core.query_routing - routes factual question to query_tasks, does not hallucinate"

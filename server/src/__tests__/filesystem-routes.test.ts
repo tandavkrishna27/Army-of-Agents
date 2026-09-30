@@ -1,12 +1,34 @@
+import { randomUUID } from "node:crypto";
+import { EventEmitter } from "node:events";
 import os from "node:os";
 import path from "node:path";
 
 import express from "express";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { filesystemRoutes } from "../routes/filesystem.js";
 import { errorHandler } from "../middleware/error-handler.js";
+
+const processMock = vi.hoisted(() => ({ spawn: vi.fn() }));
+vi.mock("node:child_process", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:child_process")>();
+  return { ...actual, spawn: processMock.spawn };
+});
+class FakeChild extends EventEmitter {
+  unref = vi.fn();
+}
+let child: FakeChild;
+beforeEach(() => {
+  child = new FakeChild();
+  // Contain the red regression; assertions require the route's own handler too.
+  child.on("error", () => {});
+  processMock.spawn.mockReset();
+  processMock.spawn.mockImplementation(() => {
+    queueMicrotask(() => child.emit("spawn"));
+    return child;
+  });
+});
 
 function makeApp(actor: any) {
   const app = express();
@@ -44,6 +66,7 @@ describe("filesystem routes — instance admin gate", () => {
     const res = await request(makeApp(nonAdminBoard))
       .post("/api/filesystem/reveal").send({ path: "/tmp" });
     expect(res.status).toBe(403);
+    expect(processMock.spawn).not.toHaveBeenCalled();
   });
   it("403 drives for non-admin", async () => {
     const res = await request(makeApp(nonAdminBoard)).get("/api/filesystem/drives");
@@ -63,6 +86,7 @@ describe("filesystem routes — instance admin gate", () => {
       .post("/api/filesystem/reveal").send({ path: "/etc/passwd" });
     // Should be rejected with 400 (outside home) — never 200 or actually-spawn xdg-open
     expect(res.status).toBe(400);
+    expect(processMock.spawn).not.toHaveBeenCalled();
   });
   it("400 reveal for sibling-prefix path that bypasses startsWith (instance admin)", async () => {
     const homeDir = os.homedir();
@@ -77,13 +101,70 @@ describe("filesystem routes — instance admin gate", () => {
     const res = await request(makeApp(instanceAdmin))
       .post("/api/filesystem/reveal").send({ path: siblingPath });
     expect(res.status).toBe(400);
+    expect(processMock.spawn).not.toHaveBeenCalled();
   });
-  it("not 400 reveal for home dir itself (instance admin)", async () => {
+  it("acknowledges successful opener launch for the home directory", async () => {
     const homeDir = os.homedir();
     const res = await request(makeApp(instanceAdmin))
       .post("/api/filesystem/reveal").send({ path: homeDir });
-    // Could be 200 (success), 404 (rare CI), or 500 (spawn error in CI), but
-    // never 400 — the boundary check must not lock the user out of $HOME.
-    expect(res.status).not.toBe(400);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(processMock.spawn).toHaveBeenCalledTimes(1);
+    expect(processMock.spawn).toHaveBeenCalledWith(
+      process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open",
+      [homeDir],
+      { detached: true, stdio: "ignore" },
+    );
+    expect(child.unref).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports asynchronous opener launch failure", async () => {
+    processMock.spawn.mockImplementation(() => {
+      queueMicrotask(() => child.emit("error", new Error("fixture missing opener")));
+      return child;
+    });
+    const res = await request(makeApp(instanceAdmin))
+      .post("/api/filesystem/reveal").send({ path: os.homedir() });
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: "Unable to launch the file manager" });
+    expect(processMock.spawn).toHaveBeenCalledTimes(1);
+    expect(child.unref).not.toHaveBeenCalled();
+    expect(child.listenerCount("error")).toBeGreaterThan(1);
+  });
+
+  it("reports a synchronous opener launch failure", async () => {
+    processMock.spawn.mockImplementation(() => { throw new Error("fixture spawn failure"); });
+    const res = await request(makeApp(instanceAdmin))
+      .post("/api/filesystem/reveal").send({ path: os.homedir() });
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: "Unable to launch the file manager" });
+  });
+
+  it("keeps an error handler after successful launch", async () => {
+    const res = await request(makeApp(instanceAdmin))
+      .post("/api/filesystem/reveal").send({ path: os.homedir() });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(child.unref).toHaveBeenCalledTimes(1);
+    expect(child.listenerCount("error")).toBeGreaterThan(1);
+    expect(() => {
+      child.emit("error", new Error("fixture late error"));
+      child.emit("error", new Error("fixture second late error"));
+    }).not.toThrow();
+  });
+
+  it("rejects a missing reveal path without spawning", async () => {
+    const res = await request(makeApp(instanceAdmin))
+      .post("/api/filesystem/reveal").send({});
+    expect(res.status).toBe(400);
+    expect(processMock.spawn).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 for an absent in-home path without spawning", async () => {
+    const missingPath = path.join(os.homedir(), `aoa-reveal-missing-${randomUUID()}`);
+    const res = await request(makeApp(instanceAdmin))
+      .post("/api/filesystem/reveal").send({ path: missingPath });
+    expect(res.status).toBe(404);
+    expect(processMock.spawn).not.toHaveBeenCalled();
   });
 });

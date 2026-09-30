@@ -90,7 +90,7 @@ describe.skipIf(process.platform === "win32")("linkEntry — seq reassignment + 
       connectionString = `postgres://test:test@localhost:${PORT}/postgres`;
       await applyPendingMigrations(connectionString);
       db = createDb(connectionString);
-      const company = await companyService(db).create({ name: "LinkEntry Co" } as never);
+      const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: "LinkEntry Co" } as never);
       companyId = company.id;
     } catch (err) {
       setupError = err;

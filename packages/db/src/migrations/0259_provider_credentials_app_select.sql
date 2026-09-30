@@ -1,0 +1,45 @@
+-- DSK-001 Lane B (D12/3) Decision #122 custom security DDL. drizzle-kit cannot express
+-- role grants; every statement below is naturally idempotent per C14.
+--
+-- WHY. The fenced secret-resolve transaction must admit a `device_local` handle ONLY
+-- when its `provider_credentials` row is `state = 'verified'` and the owner triple
+-- agrees. That read happens inside `runInTenant`, which opens on the NON-OWNER
+-- `aoa_app` role (NOSUPERUSER / NOBYPASSRLS) — and `provider_credentials` has had no
+-- `aoa_app` grant of any kind since it was created in 0185. The read would have failed
+-- with permission denied at RUNTIME, not at compile time.
+--
+-- WHY TABLE-LEVEL, NOT COLUMN-LEVEL. This mirrors `company_memberships`
+-- (0214_e2_serving_role_hardening.sql), which is the same class of read: a legacy
+-- company-scoped authorization fact consulted inside the fence. The column-level form
+-- used for `execution_targets` (0221) exists to keep a WRITEABLE, worker-owned table
+-- narrow, and it carries its own bespoke column-allowlist constant plus a separate
+-- `has_column_privilege` assertion pass; adding a second such mechanism for a
+-- read-only lookup would be more machinery, not less exposure.
+--
+-- The exposure is proportionate and was verified rather than assumed:
+-- `provider_credentials` stores NO secret value. Its own header says "Logical
+-- credential ownership only. Provider-native subscription files remain in the owning
+-- execution target and are never stored in this table." The columns are id, company_id,
+-- provider, owner_user_id, execution_target_id, kind, state and timestamps.
+--
+-- Scoping is enforced in the QUERY, by the LOCKED lease's `company_id` — never a value
+-- taken from the wire — exactly as the sibling `company_memberships` re-check already
+-- does. No RLS policy, matching that precedent for legacy company-scoped tables.
+--
+-- MANIFEST COUPLING — this file alone is not enough, and getting it wrong is a BOOT
+-- CRASH rather than a test failure. `assertExactServingRoleAuthority` enumerates
+-- `has_table_privilege` for every table at startup and compares against
+-- `appTablePrivileges()`; a grant without a manifest entry, or a manifest entry without
+-- the grant, throws `distributed_execution_app_authority` and BOTH replicas refuse to
+-- start. The matching entries land in the same commit:
+--   - JOB_CONTROL_LEGACY_GRANTS            (server/src/db/job-control-legacy-grants.ts)
+--   - PLAN_DERIVED_ACL_MATRIX.relations    (same file, production copy)
+--   - the relation RLS boolean map         (same file)
+--   - PLAN_DERIVED_ACL_MATRIX              (the INDEPENDENT copy in the contract test)
+--   - PLAN_DERIVED_RELATION_ACL_NULLNESS   (a third hand-transcribed list, same test)
+
+-- C14 hand-authored security DDL: drizzle-kit cannot emit this statement; REVOKE is idempotent.
+REVOKE ALL ON "provider_credentials" FROM PUBLIC;
+--> statement-breakpoint
+-- C14 hand-authored security DDL: drizzle-kit cannot emit this statement; GRANT is idempotent.
+GRANT SELECT ON "provider_credentials" TO "aoa_app";

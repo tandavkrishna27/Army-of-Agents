@@ -331,7 +331,7 @@ This is what we want to see for full confidence. Already proven by the integrati
 
 ```bash
 # In WSL Ubuntu shell:
-cd "/mnt/c/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-2.5"
+cd "/mnt/c/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5"
 pnpm install --frozen-lockfile
 pnpm dev
 ```

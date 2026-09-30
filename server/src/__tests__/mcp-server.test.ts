@@ -436,7 +436,7 @@ function buildAgentApp(options: {
 
 describe("U10: plugin tool descriptors over the broker tools/list", () => {
   afterEach(() => {
-    delete (globalThis as any).__aoaPluginToolDispatcher;
+    delete (globalThis as any).__paperclipPluginToolDispatcher;
   });
 
   it("includes company-scoped plugin tool descriptors for an agent actor", async () => {
@@ -453,7 +453,7 @@ describe("U10: plugin tool descriptors over the broker tools/list", () => {
           ]
         : [],
     );
-    (globalThis as any).__aoaPluginToolDispatcher = { listToolsForAgent };
+    (globalThis as any).__paperclipPluginToolDispatcher = { listToolsForAgent };
 
     const app = buildAgentApp({
       actor: {
@@ -498,7 +498,7 @@ describe("U10: plugin tool descriptors over the broker tools/list", () => {
           ]
         : [],
     );
-    (globalThis as any).__aoaPluginToolDispatcher = { listToolsForAgent };
+    (globalThis as any).__paperclipPluginToolDispatcher = { listToolsForAgent };
 
     const app = buildAgentApp({
       actor: {
@@ -524,7 +524,7 @@ describe("U10: plugin tool descriptors over the broker tools/list", () => {
   });
 
   it("degrades to no plugin tools (never breaks the broker) when the dispatcher throws", async () => {
-    (globalThis as any).__aoaPluginToolDispatcher = {
+    (globalThis as any).__paperclipPluginToolDispatcher = {
       listToolsForAgent: () => {
         throw new Error("registry unavailable");
       },
@@ -555,7 +555,7 @@ describe("U10: plugin tool descriptors over the broker tools/list", () => {
 
 describe("U10: plugin tool dispatch over the broker tools/call", () => {
   afterEach(() => {
-    delete (globalThis as any).__aoaPluginToolDispatcher;
+    delete (globalThis as any).__paperclipPluginToolDispatcher;
   });
 
   function stubDispatcher(overrides: { getTool?: ReturnType<typeof vi.fn>; executeTool?: ReturnType<typeof vi.fn> } = {}) {
@@ -579,7 +579,7 @@ describe("U10: plugin tool dispatch over the broker tools/call", () => {
           : null,
       );
     const dispatcher = { listToolsForAgent: () => [], getTool, executeTool };
-    (globalThis as any).__aoaPluginToolDispatcher = dispatcher;
+    (globalThis as any).__paperclipPluginToolDispatcher = dispatcher;
     return dispatcher;
   }
 

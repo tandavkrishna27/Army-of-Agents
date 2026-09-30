@@ -26,7 +26,7 @@
 - Command-pinning `isStdioCommandSafe`/`assertStdioCommandSafe` (`services/mcp-connector-command-safety.ts`) is **mode-independent** and re-checked at delivery (`mcp-connectors.ts:271`) — it must stay untouched.
 - The plugin cloud block is `isCloudPluginExecutionBlocked()` → `tenantIsolationEnforced()` (`services/cloud-plugin-execution.ts:71`), enforced via `assertCloudPluginExecutionAllowed` at worker-fork (`plugin-worker-manager.ts:620/1255`), lifecycle (`plugin-lifecycle.ts:434`), loader (`plugin-loader.ts:1280/1679/1764`), install (`marketplace-install/plugin-installer.ts:105`), and the board tool-execute route (`routes/plugins.ts:752`, `rejectBlockedCloudExecution`).
 - The broker is `POST /companies/:companyId/mcp` (`server/src/mcp/server.ts:395`): `tools/list` returns the static `TOOL_DEFINITIONS` (`:562`), `tools/call` resolves `toolHandlers[params.name]` and returns `-32601 Tool not found` for anything unmapped (`:572-576`). Plugin tools are **not** exposed here today.
-- Plugin descriptors + execution already exist host-side: `pluginToolDispatcher.listToolsForAgent(filter?)` and `.executeTool(name, params, runContext)` (`services/plugin-tool-dispatcher.ts:120/141`), reached via the global handle `(globalThis as any).__aoaPluginToolDispatcher` (used at `heartbeat.ts:4405`).
+- Plugin descriptors + execution already exist host-side: `pluginToolDispatcher.listToolsForAgent(filter?)` and `.executeTool(name, params, runContext)` (`services/plugin-tool-dispatcher.ts:120/141`), reached via the global handle `(globalThis as any).__paperclipPluginToolDispatcher` (used at `heartbeat.ts:4405`).
 - **Host-side plugin authz (corrected):** there is **no importable** `resolvePluginInCompany(db, …)` — the function at `routes/plugins.ts:422` is a **non-exported nested `async function(pluginId, companyId)`** that closes over route-scoped `registry`/`db` (wrong arity, uncallable from the broker). Ownership is instead asserted from registry data: a `RegisteredTool` carries its owning `companyId` (`plugin-tool-registry.ts:65`) and `pluginDbId` (`:63`), and `pluginToolDispatcher.getTool(namespacedName, companyId)` (`plugin-tool-dispatcher.ts:453` → registry `getTool` at `plugin-tool-registry.ts:381`) is **already company-scoped**. So the broker asserts `registered.companyId === companyId` (belt-and-suspenders on top of the scoped lookup) — never body-supplied, no cross-module import.
 
 ---
@@ -226,7 +226,7 @@ A sandboxed agent must see its company's plugin tools in the broker's tool list,
 - Modify: `C:/Users/TK/.aoa/wt/e2b-exec/server/src/mcp/tools/index.ts` (add a helper to convert `AgentToolDescriptor` → MCP tool definition; keep the plugin actor gate)
 - Test (modify): `C:/Users/TK/.aoa/wt/e2b-exec/server/src/__tests__/mcp-server.test.ts`
 
-1. **Write the failing test** in `mcp-server.test.ts`: with a stubbed `__aoaPluginToolDispatcher.listToolsForAgent({ companyId })` returning one descriptor `{ name: "acme.linear:search-issues", displayName, description, parametersSchema, pluginId }` for company `c1`, an **agent**-actor `tools/list` on `/companies/c1/mcp` includes a tool named `acme.linear:search-issues` alongside the static `TOOL_DEFINITIONS`; a `tools/list` for a **different** company `c2` (dispatcher returns `[]`) does **not** include it (per-company scoping).
+1. **Write the failing test** in `mcp-server.test.ts`: with a stubbed `__paperclipPluginToolDispatcher.listToolsForAgent({ companyId })` returning one descriptor `{ name: "acme.linear:search-issues", displayName, description, parametersSchema, pluginId }` for company `c1`, an **agent**-actor `tools/list` on `/companies/c1/mcp` includes a tool named `acme.linear:search-issues` alongside the static `TOOL_DEFINITIONS`; a `tools/list` for a **different** company `c2` (dispatcher returns `[]`) does **not** include it (per-company scoping).
 2. **Run it — expect FAIL** (`tools/list` returns only the static array).
 3. **Implement.** In the `tools/list` branch, after the static array, append plugin descriptors:
    ```ts
@@ -235,7 +235,7 @@ A sandboxed agent must see its company's plugin tools in the broker's tool list,
      tools: [...TOOL_DEFINITIONS, ...pluginTools],
    }));
    ```
-   Add `readPluginToolDefinitions(companyId)` in `tools/index.ts` (or a small `plugin-broker-tools.ts` sibling): read `(globalThis as any).__aoaPluginToolDispatcher?.listToolsForAgent({ companyId })`, map each `AgentToolDescriptor` to `{ name, description, inputSchema: parametersSchema }`. Best-effort: a dispatcher error logs and yields `[]` (mirrors the `heartbeat.ts:4417` try/catch — plugin unavailability degrades the tool list, never breaks the broker).
+   Add `readPluginToolDefinitions(companyId)` in `tools/index.ts` (or a small `plugin-broker-tools.ts` sibling): read `(globalThis as any).__paperclipPluginToolDispatcher?.listToolsForAgent({ companyId })`, map each `AgentToolDescriptor` to `{ name, description, inputSchema: parametersSchema }`. Best-effort: a dispatcher error logs and yields `[]` (mirrors the `heartbeat.ts:4417` try/catch — plugin unavailability degrades the tool list, never breaks the broker).
 4. **Run — expect PASS.**
 5. **Commit:** `feat(plugins): expose per-company plugin tool descriptors over the broker tools/list (U10)`
 
@@ -254,7 +254,7 @@ A `tools/call` for a plugin tool must dispatch to the host-resident worker with 
    ```ts
    it("routes a plugin tool call to the host dispatcher with the run's verified identity", async () => {
      const executeTool = vi.fn().mockResolvedValue({ pluginId: "p1", result: { content: "ok" } });
-     (globalThis as any).__aoaPluginToolDispatcher = {
+     (globalThis as any).__paperclipPluginToolDispatcher = {
        listToolsForAgent: () => [{ name: "acme.linear:search", displayName: "s", description: "d", parametersSchema: {}, pluginId: "p1" }],
        // getTool is company-scoped; RegisteredTool carries its owning companyId + pluginDbId.
        getTool: (name: string, cid: string) =>
@@ -294,7 +294,7 @@ A `tools/call` for a plugin tool must dispatch to the host-resident worker with 
        res.status(403).json(jsonRpcError(id, -32003, `Tool ${params.name} is not available for ${protocolActor.source} actors`));
        return;
      }
-     const dispatcher = (globalThis as any).__aoaPluginToolDispatcher as PluginToolDispatcher | undefined;
+     const dispatcher = (globalThis as any).__paperclipPluginToolDispatcher as PluginToolDispatcher | undefined;
      // getTool(name, companyId) is ALREADY company-scoped (plugin-tool-dispatcher.ts:453 →
      // registry getTool at plugin-tool-registry.ts:381). Belt-and-suspenders: the returned
      // RegisteredTool.companyId (plugin-tool-registry.ts:65) must equal the JWT company.

@@ -167,8 +167,8 @@ beforeAll(async () => {
 
     // Company.
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Crew Skill E2E Co', 'CSE')
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Crew Skill E2E Co', 'CSE')
     `);
 
     // Founder — the only principal allowed to edit an AoA (crew) agent. The PATCH

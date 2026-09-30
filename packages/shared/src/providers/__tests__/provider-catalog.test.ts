@@ -25,7 +25,7 @@ const INTENTIONALLY_UNCATALOGUED: Record<string, string> = {
   http: "generic webhook, no auth",
   openclaw: "per-agent endpoint token, not a shared credential",
   openclaw_gateway: "per-agent endpoint token, not a shared credential",
-  hermes_local: "AOA_API_KEY wire protocol, JWT-injected",
+  hermes_local: "PAPERCLIP_API_KEY wire protocol, JWT-injected",
   acpx_local: "embedded; inherits claude/codex credentials",
 };
 

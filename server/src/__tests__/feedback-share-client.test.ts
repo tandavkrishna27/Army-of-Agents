@@ -42,9 +42,9 @@ function makeBundle(overrides: Record<string, unknown> = {}) {
     feedbackVoteId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
     createdAt: new Date("2026-04-21T10:30:00Z"),
     payloadSnapshot: {
-      schemaVersion: "aoa-feedback-envelope-v2",
-      bundleVersion: "aoa-feedback-bundle-v2",
-      payloadVersion: "aoa-feedback-v1",
+      schemaVersion: "paperclip-feedback-envelope-v2",
+      bundleVersion: "paperclip-feedback-bundle-v2",
+      payloadVersion: "paperclip-feedback-v1",
       sourceApp: "aoa",
       vote: { id: "ffffffff-ffff-4fff-8fff-ffffffffffff", value: "down", reason: null },
     },

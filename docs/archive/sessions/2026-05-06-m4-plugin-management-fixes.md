@@ -145,7 +145,7 @@ import { pluginVersionSnapshots } from "@armyofagents/db";
 import type {
   PluginStatus,
   PluginRecord,
-  UpstreamPluginManifestV1,
+  PaperclipPluginManifestV1,
 } from "@armyofagents/shared";
 import { pluginRegistryService } from "./plugin-registry.js";
 import { pluginLoader, type PluginLoader } from "./plugin-loader.js";
@@ -157,7 +157,7 @@ import type { Db } from "@armyofagents/db";
 import type {
   PluginStatus,
   PluginRecord,
-  UpstreamPluginManifestV1,
+  PaperclipPluginManifestV1,
 } from "@armyofagents/shared";
 import { pluginRegistryService } from "./plugin-registry.js";
 import { pluginLoader, type PluginLoader } from "./plugin-loader.js";

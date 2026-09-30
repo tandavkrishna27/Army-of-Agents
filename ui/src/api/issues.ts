@@ -102,6 +102,10 @@ export const issuesApi = {
     }),
   release: (id: string) => api.post<Issue>(`/issues/${id}/release`, {}),
   listComments: (id: string) => api.get<IssueComment[]>(`/issues/${id}/comments`),
+  getCommentSubmissionOutcome: (id: string, clientSubmissionId: string) =>
+    api.get<{ state: "not_found" } | { state: "completed"; commentId: string }>(
+      `/issues/${id}/comments/submissions/${encodeURIComponent(clientSubmissionId)}`,
+    ),
   addComment: (
     id: string,
     body: string,

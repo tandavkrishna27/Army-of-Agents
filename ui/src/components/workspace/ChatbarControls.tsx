@@ -1,5 +1,5 @@
 // ui/src/components/workspace/ChatbarControls.tsx
-import { AtSign, Mic, FilePlus2, Send } from "lucide-react";
+import { AtSign, Mic, Paperclip, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ComposerIconButton } from "../composer/ComposerIconButton";
 import { shortModelName } from "./adapter-utils";
@@ -61,7 +61,7 @@ export function ChatbarControls({
         title="Attach file"
         aria-label="Attach file"
       >
-        <FilePlus2 className="h-4 w-4" />
+        <Paperclip className="h-4 w-4" />
       </ComposerIconButton>
 
       {onMention && (

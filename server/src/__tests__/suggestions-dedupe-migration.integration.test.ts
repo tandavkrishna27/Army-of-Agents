@@ -175,8 +175,8 @@ beforeAll(async () => {
     db = createDb(connectionString);
 
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Suggestion Dedupe Co', 'SDC')
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Suggestion Dedupe Co', 'SDC')
     `);
   } catch (err) {
     setupError = err;

@@ -1,4 +1,5 @@
-import { pgTable, uuid, text, jsonb, timestamp, index, unique } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, uuid, text, jsonb, timestamp, integer, index, unique, check, foreignKey } from "drizzle-orm/pg-core";
 import { authUsers } from "./auth.js";
 import { organizations } from "./organizations.js"; // P1 (0188) — merged before P5
 
@@ -22,12 +23,22 @@ export const executionTargets = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }), // nullable = system/shared; org delete cascades tenant targets (they never survive as system rows)
-    ownerUserId: text("owner_user_id").references(() => authUsers.id, { onDelete: "set null" }),
+    ownerUserId: text("owner_user_id"),
+    // Nullable in the first generated migration so pre-E3 rows can be
+    // deterministically backfilled before the follow-up NOT NULL migration.
+    scope: text("scope").notNull(),
+    targetAuthorityKey: text("target_authority_key").notNull(),
+    deviceGeneration: integer("device_generation").notNull().default(1),
     slug: text("slug").notNull(),
     kind: text("kind").notNull(), // pooled_gvisor | dedicated_worker | e2b | local_host | desktop
     trustClass: text("trust_class").notNull(), // shared_multitenant | dedicated_tenant | local_trusted
     status: text("status").notNull().default("active"), // active | draining | offline | disabled
     capabilities: jsonb("capabilities").$type<Record<string, unknown>>().notNull().default({}),
+    // JOB-009: exact server-owned E1 target/provider profiles. Nullable legacy
+    // rows are deliberately unmapped and therefore ineligible, never inferred.
+    registeredProfile: jsonb("registered_profile").$type<Record<string, unknown>>(),
+    registeredProfileHash: text("registered_profile_hash"),
+    providerConstraintProfile: jsonb("provider_constraint_profile").$type<Record<string, unknown>>(),
     config: jsonb("config").$type<Record<string, unknown>>().notNull().default({}),
     // Finding #3: rotatable worker credential — SHA-256 hash only; the plaintext
     // is returned once at registration. The row id is no longer a credential.
@@ -47,5 +58,32 @@ export const executionTargets = pgTable(
       .nullsNotDistinct(),
     kindStatusIdx: index("execution_targets_kind_status_idx").on(table.kind, table.status),
     orgIdx: index("execution_targets_org_idx").on(table.organizationId),
+    authorityIdUq: unique("execution_targets_authority_id_uq").on(table.targetAuthorityKey, table.id),
+    authorityScopeValid: check(
+      "execution_targets_authority_scope_check",
+      sql`(
+        scope = 'platform' AND organization_id IS NULL AND owner_user_id IS NULL AND target_authority_key = 'platform'
+      ) OR (
+        scope = 'organization' AND organization_id IS NOT NULL AND owner_user_id IS NULL AND
+        target_authority_key = 'organization:' || organization_id::text
+      ) OR (
+        scope = 'owner' AND organization_id IS NOT NULL AND owner_user_id IS NOT NULL AND
+        target_authority_key = 'owner:' || organization_id::text || ':' || owner_user_id
+      )`,
+    ),
+    placementProfilesAtomic: check(
+      "execution_targets_placement_profiles_atomic_check",
+      sql`(
+        registered_profile IS NULL AND registered_profile_hash IS NULL AND provider_constraint_profile IS NULL
+      ) OR (
+        registered_profile IS NOT NULL AND registered_profile_hash ~ '^[0-9a-f]{64}$' AND
+        provider_constraint_profile IS NOT NULL
+      )`,
+    ),
+    ownerUserFk: foreignKey({
+      columns: [table.ownerUserId],
+      foreignColumns: [authUsers.id],
+      name: "execution_targets_owner_user_fk",
+    }).onDelete("restrict"),
   }),
 );

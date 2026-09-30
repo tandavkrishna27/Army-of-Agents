@@ -52,8 +52,10 @@ vi.mock("../services/execution-targets.js", () => ({
           status: "disabled",
         }
       : null,
-  resolveWorkerTargetId: async (_db: unknown, token: string) =>
-    token === "aoa_wtk_valid" ? "et-abc-123" : null,
+  resolveWorkerHeartbeatAuthority: async (_db: unknown, token: string) =>
+    token === "aoa_wtk_valid"
+      ? { targetId: "et-abc-123", organizationId: "77777777-7777-4777-8777-777777777777" }
+      : null,
 }));
 vi.mock("@armyofagents/db", () => ({ executionTargets: {} }));
 

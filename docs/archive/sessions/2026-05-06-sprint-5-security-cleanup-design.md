@@ -70,7 +70,7 @@ Existing Express 5.x backend, Drizzle ORM, Zod validators, Vitest with `createSe
 **Scope.**
 - `server/src/app.ts:164` — keep the global `express.json` (with `verify` for plugin webhook HMAC). No change to the global limit (preserve compat with all current routes).
 - Import-route-specific override: add `app.use("/api/companies/import", express.json({ limit: "20mb", verify: <same as global> }), ...)` mounted before the import routes. 20 MB is a defensible cap for a real export bundle (recon did not find a documented max-customer size; if a real customer breaks this, raise the cap with a changelog entry).
-- `packages/shared/src/validators/company-portability.ts` — add `.max(N)` to each top-level array field on `portabilityManifestSchema`. Conservative caps: `agents: 1_000`, `projects: 1_000`, `issues: 50_000`, `goals: 1_000`, `costEvents: 100_000` (per the existing 10K warn threshold). Skills/routines/envInputs match Upstream-bundle realistic sizes.
+- `packages/shared/src/validators/company-portability.ts` — add `.max(N)` to each top-level array field on `portabilityManifestSchema`. Conservative caps: `agents: 1_000`, `projects: 1_000`, `issues: 50_000`, `goals: 1_000`, `costEvents: 100_000` (per the existing 10K warn threshold). Skills/routines/envInputs match Paperclip-bundle realistic sizes.
 - Tests in `server/src/__tests__/company-portability-preview-export.test.ts`: payload over 20MB returns 413; payload with `agents: [...1001]` returns Zod error; payload at the cap succeeds.
 
 **Open question.** The 20 MB cap — is there a real customer bundle bigger than that today? If yes, raise the cap; if not, ship at 20 MB and treat any future raise as a changelog entry.

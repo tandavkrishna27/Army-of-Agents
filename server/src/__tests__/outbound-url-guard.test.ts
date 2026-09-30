@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildPinnedRequestOptions,
   executePinnedRequest,
@@ -8,6 +8,16 @@ import {
   validateAndResolveFetchUrl,
   type ValidatedFetchTarget,
 } from "../services/outbound-url-guard.js";
+
+const dnsMock = vi.hoisted(() => ({ lookup: vi.fn() }));
+vi.mock("node:dns/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:dns/promises")>();
+  return { ...actual, lookup: dnsMock.lookup };
+});
+beforeEach(() => {
+  dnsMock.lookup.mockReset();
+  dnsMock.lookup.mockRejectedValue(new Error("Unexpected DNS lookup in unit test"));
+});
 
 describe("isPrivateIP", () => {
   it("rejects IPv4 RFC 1918 ranges", () => {
@@ -80,12 +90,40 @@ describe("isPrivateIP", () => {
     "100::1",
     "2002:7f00:1::1",
     "3fff::1",
+    // W17 -- the two ranges the IANA audit found missing.
+    "5f00::1", // RFC9602 Segment Routing (SRv6) SIDs, allocated 2024-04
+    "5f00:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+    "100:0:0:1::1", // RFC9780 Dummy IPv6 Prefix, allocated 2025-04
+    "100:0:0:1:ffff:ffff:ffff:ffff",
   ])(
     "rejects reserved IPv6 address %s",
     (ip) => {
       expect(isPrivateIP(ip)).toBe(true);
     },
   );
+  // --- W17 -- the two added ranges, and their boundaries --------------------
+  //
+  // Added from the IANA IPv6 Special-Purpose registry (retrieved 2026-09-08,
+  // sha256 775feea0621dec8735a44fbf30f762e721e8f0a1b3ab7eb341961a88cfce2139).
+  // Both read Globally Reachable = FALSE. The full audit -- including the IPv4
+  // completeness result, the range deliberately NOT added, and the RFC6052
+  // structural limit -- is recorded above `isPrivateIP` in outbound-url-guard.ts and
+  // checked in w17-ipv6-range-closeout.test.ts.
+  it("W17: the added ranges are ranges, not blankets -- both boundaries stay public", () => {
+    // 5f00::/16 (RFC9602 SRv6 SIDs)
+    expect(isPrivateIP("5eff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")).toBe(false);
+    expect(isPrivateIP("5f00::")).toBe(true);
+    expect(isPrivateIP("5f01::")).toBe(false);
+    // 100:0:0:1::/64 (RFC9780 Dummy Prefix), adjacent to 100::/64 (RFC6666).
+    // The pre-W17 clause required the FOURTH word to be 0, so this /64 fell through
+    // to `return false` while its neighbour was blocked.
+    expect(isPrivateIP("100::ffff:ffff:ffff:ffff")).toBe(true); // last of 100::/64
+    expect(isPrivateIP("100:0:0:1::")).toBe(true); // first of the Dummy Prefix
+    expect(isPrivateIP("100:0:0:2::")).toBe(false); // first address past it
+    expect(isPrivateIP("100:0:1::1")).toBe(false); // third word non-zero
+    expect(isPrivateIP("100:1::1")).toBe(false); // second word non-zero
+  });
+
   it("does NOT reject 172.15.x.x or 172.32.x.x (boundary)", () => {
     expect(isPrivateIP("172.15.255.255")).toBe(false);
     expect(isPrivateIP("172.32.0.0")).toBe(false);
@@ -94,6 +132,52 @@ describe("isPrivateIP", () => {
     expect(isPrivateIP("8.8.8.8")).toBe(false);
     expect(isPrivateIP("1.1.1.1")).toBe(false);
     expect(isPrivateIP("2606:4700:4700::1111")).toBe(false); // Cloudflare DNS IPv6
+  });
+
+  // --- W13 / E8-F009 §4 — THE PARSER DEFECT, PINNED ------------------------
+  //
+  // `isPrivateIP('::169.254.169.254')` returned FALSE. The local IPv6 tokenizer's
+  // per-token regex forbade a dot, so an address with an EMBEDDED DOTTED QUAD never
+  // became words, never reached the IPv6 range checks below, and then fell through
+  // to the IPv4 branch where `Number("::169")` is NaN and every `startsWith` missed.
+  // Both this predicate AND the OAuth BlockList let that literal through.
+  //
+  // Reverting `outbound-url-guard.ts` to its own `parseIpv6Words` (the dot-forbidding
+  // one) reds the first assertion here. That is the anti-regression pin.
+  it("W13/E8-F009: parses an embedded dotted quad — ::169.254.169.254 is PRIVATE", () => {
+    expect(isPrivateIP("::169.254.169.254")).toBe(true);
+    // The same address, hex-spelled, was always caught — the defect was the SPELLING,
+    // not the range. Both spellings must now agree.
+    expect(isPrivateIP("::a9fe:a9fe")).toBe(true);
+  });
+
+  it.each([
+    // every spelling of an embedded dotted quad that lands in a range isPrivateIP owns
+    ["::169.254.169.254", true], // IPv4-compatible (RFC 4291 §2.5.5.1, deprecated)
+    ["::10.0.0.1", true],
+    ["::8.8.8.8", true], // still a ZERO leading word — the range, not the payload
+    ["64:ff9b::169.254.169.254", true], // NAT64 well-known prefix (RFC 6052)
+    ["2002::169.254.169.254", true], // 6to4 (RFC 3056)
+    ["fe80::192.168.1.1", true], // link-local
+    ["0:0:0:0:0:ffff:10.0.0.1", true], // uncompressed IPv4-mapped — was ALSO missed
+    ["0:0:0:0:0:ffff:8.8.8.8", false], // ...and the public one must stay allowed
+    ["::ffff:8.8.8.8", false],
+    ["2606:4700:4700::8.8.8.8", false], // a public prefix stays public
+  ])("W13: dotted-quad IPv6 spelling %s → isPrivateIP %s", (ip, expected) => {
+    expect(isPrivateIP(ip as string)).toBe(expected as boolean);
+  });
+
+  it("W13: the parser fix cannot UN-block anything — it only ever adds denials", () => {
+    // The pre-fix parser returned null for these, and a null parse skipped the whole
+    // IPv6 arm, so the old verdict was necessarily `false`. Anything that was TRUE
+    // before did not go through that arm at all and is unaffected; this asserts the
+    // representative set of those still holds.
+    for (const ip of ["10.0.0.1", "169.254.169.254", "::1", "fc00::1", "::ffff:127.0.0.1"]) {
+      expect(isPrivateIP(ip), ip).toBe(true);
+    }
+    for (const ip of ["8.8.8.8", "1.1.1.1", "2606:4700:4700::1111", "172.32.0.1"]) {
+      expect(isPrivateIP(ip), ip).toBe(false);
+    }
   });
 });
 
@@ -298,8 +382,8 @@ describe("executePinnedRequest", () => {
   });
 
   it("validateAndResolveFetchUrl strips embedded credentials from parsedUrl", async () => {
-    // Use a public-resolving DNS name so validate doesn't reject.
-    // We're only checking that the returned parsedUrl has no creds.
+    // Resolve a controlled public answer; credential stripping needs no network.
+    dnsMock.lookup.mockResolvedValueOnce([{ address: "8.8.8.8", family: 4 }]);
     const target = await validateAndResolveFetchUrl("https://user:pass@example.com/path?q=1");
     expect(target.parsedUrl.username).toBe("");
     expect(target.parsedUrl.password).toBe("");
@@ -308,6 +392,21 @@ describe("executePinnedRequest", () => {
     expect(target.parsedUrl.pathname).toBe("/path");
     expect(target.parsedUrl.search).toBe("?q=1");
     expect(target.hostHeader).toBe("example.com");
+    expect(target.resolvedAddress).toBe("8.8.8.8");
+    expect(target.tlsServername).toBe("example.com");
+    expect(dnsMock.lookup).toHaveBeenCalledWith("example.com", { all: true });
+  });
+
+  it("rejects an all-private DNS answer", async () => {
+    dnsMock.lookup.mockResolvedValueOnce([{ address: "127.0.0.1", family: 4 }]);
+    await expect(validateAndResolveFetchUrl("https://example.com/"))
+      .rejects.toThrow(/All resolved IPs/);
+  });
+
+  it("surfaces DNS failure without using an unvalidated target", async () => {
+    dnsMock.lookup.mockRejectedValueOnce(new Error("fixture resolver failure"));
+    await expect(validateAndResolveFetchUrl("https://example.com/"))
+      .rejects.toThrow(/DNS resolution failed/);
   });
 
   it("sends the request body when init.body is provided", async () => {

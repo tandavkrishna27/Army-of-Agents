@@ -68,7 +68,7 @@ async function seedCompanyAndAgent(label: string): Promise<{
   companyId: string;
   agentId: string;
 }> {
-  const company = await companyService(db).create({ name: `W1c ${label} Co` } as never);
+  const company = await companyService(db).create({ organizationId: "00000000-0000-0000-0000-000000000001", name: `W1c ${label} Co` } as never);
   const companyId = company.id;
 
   // Seed a founder user + user_roles row. companyService.create() does NOT create a

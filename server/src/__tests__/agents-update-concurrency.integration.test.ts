@@ -11,7 +11,7 @@ import {
 } from "@armyofagents/db";
 import { agentService } from "../services/agents.js";
 
-// Follow-up #3 (Decision #104) — the optimistic-concurrency guard is an atomic
+// Follow-up #3 (Decision #125) — the optimistic-concurrency guard is an atomic
 // conditional UPDATE whose correctness hinges on a MILLISECOND-precision compare:
 // `date_trunc('milliseconds', agents.updatedAt) = <ms token>`. `agents.updatedAt`
 // is stored at Postgres MICROSECOND resolution (defaultNow() on a freshly-created
@@ -68,8 +68,8 @@ beforeAll(async () => {
     db = createDb(connectionString);
 
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'Agent Concurrency Co', 'ACC')
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'Agent Concurrency Co', 'ACC')
     `);
 
     // W6 human-at-top: agentService.create() auto-parents a rootless org agent

@@ -1,0 +1,11 @@
+BRW-002 port-exposure probe #1 (2026-08-23): does E2B's edge serve an arbitrary in-sandbox
+user port to an UNAUTHENTICATED caller from outside? Source cannot settle this — the SDK's
+getHost(port) is pure string concatenation with no "expose" side effect, so omitting a
+port-exposure operation from AoA's transport is not a control. The frozen golden-journey
+fixture names `public_cdp_endpoint` a FORBIDDEN EFFECT, so the answer decides whether
+BRW-002 gets that for free or must prevent CDP from ever binding a reachable TCP port.
+
+probe #2 (2026-08-23): run #1 never reached E2B - it died on `Cannot find package 'e2b'`.
+Node resolves ESM bare imports from the SCRIPT's location, not the CWD, so a repo-root
+script cannot see a workspace package's node_modules however working-directory is set.
+Script moved into packages/sandbox-e2b-provider/scripts/. No sandbox was created by run #1.

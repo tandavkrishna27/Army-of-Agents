@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "id": "service-provider-pause-resume",
+  "workloadType": "service",
+  "purpose": "A provider pause moves a service to a replacement instance without overlapping fences.",
+  "source": {
+    "kind": "service_reconcile"
+  },
+  "organization": {
+    "id": "org_Q4129S6YP813MRY9A44HWVZ23V",
+    "name": "Pied Piper Infra"
+  },
+  "company": {
+    "id": "company_0SSA4Y88FBZNARX6V0667Y4Y0D",
+    "name": "Pied Piper Infra HQ",
+    "organizationId": "org_Q4129S6YP813MRY9A44HWVZ23V"
+  },
+  "requester": {
+    "type": "system",
+    "id": "service-reconciler",
+    "displayName": "Service Reconciler"
+  },
+  "executor": {
+    "type": "service_instance",
+    "id": "svc-worker-pool-3"
+  },
+  "placement": {
+    "targetPolicy": "latest_generation",
+    "provider": "e2b",
+    "region": "us-east-1",
+    "generation": 1
+  },
+  "inputBase": {
+    "workspaceBaseId": "wsbase-t4shqwbxkcp2eyg10j5vq53w8g",
+    "gitRemote": "https://git.example.com/piedpiper/svc.git",
+    "gitRef": "refs/tags/v3.1.0",
+    "baseDigest": "baa439f1175c4bfd130c3622cefe30a1a032c5bb17a5c39c08508b8bbd169ecf",
+    "immutable": true
+  },
+  "identity": {
+    "jobId": "job_2Z1V6S4K4MSRTR5FK83H8ZFZE9",
+    "attempts": [
+      {
+        "attempt": 1,
+        "workerId": "worker_RM1Z7RV7K1H28CZR5GMBB7CXJF",
+        "leaseId": "lease_TNT6JVYBDCY6R6FW613Y4A8332",
+        "fenceToken": 100
+      },
+      {
+        "attempt": 2,
+        "workerId": "worker_QCF7WVE6724CKWBAAKZQJ20A7Z",
+        "leaseId": "lease_CQM6HA54S1FTYDCYM41CEB0XHV",
+        "fenceToken": 200
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "reconcile_and_lease",
+      "emits": [
+        "service_instance_started"
+      ]
+    },
+    {
+      "action": "report_healthy",
+      "emits": [
+        "service_health"
+      ]
+    },
+    {
+      "action": "commit_checkpoint",
+      "emits": [
+        "service_checkpoint_prepared"
+      ]
+    },
+    {
+      "action": "inject_provider_pause",
+      "at": "healthy"
+    },
+    {
+      "action": "withdraw_old_effect_authority",
+      "emits": [
+        "service_instance_lost"
+      ]
+    },
+    {
+      "action": "resource_bound_cleanup_old"
+    },
+    {
+      "action": "reconcile_replacement"
+    },
+    {
+      "action": "restore_replacement",
+      "emits": [
+        "service_checkpoint_restored",
+        "service_instance_started",
+        "service_health"
+      ]
+    }
+  ],
+  "failureInjection": {
+    "point": "healthy",
+    "effect": "provider_pause"
+  },
+  "expectedEvents": [
+    {
+      "protocolVersion": 1,
+      "eventId": "Z610T4Q2YVRCDG9CWPD9SQ51M8",
+      "eventType": "service_instance_started",
+      "organizationId": "org_Q4129S6YP813MRY9A44HWVZ23V",
+      "companyId": "company_0SSA4Y88FBZNARX6V0667Y4Y0D",
+      "workerId": "worker_RM1Z7RV7K1H28CZR5GMBB7CXJF",
+      "jobId": "job_2Z1V6S4K4MSRTR5FK83H8ZFZE9",
+      "attempt": 1,
+      "leaseId": "lease_TNT6JVYBDCY6R6FW613Y4A8332",
+      "fenceToken": 100,
+      "seq": 1,
+      "occurredAt": "2026-08-08T12:00:00.000Z",
+      "payload": {
+        "generation": 1
+      },
+      "eventDigest": "f39c15d92358063eb269ee965ccfd64095d984d300b2032e53e3df29f6a34ea2"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "1RM9AZD5R6J6VV0R9TN7D12714",
+      "eventType": "service_health",
+      "organizationId": "org_Q4129S6YP813MRY9A44HWVZ23V",
+      "companyId": "company_0SSA4Y88FBZNARX6V0667Y4Y0D",
+      "workerId": "worker_RM1Z7RV7K1H28CZR5GMBB7CXJF",
+      "jobId": "job_2Z1V6S4K4MSRTR5FK83H8ZFZE9",
+      "attempt": 1,
+      "leaseId": "lease_TNT6JVYBDCY6R6FW613Y4A8332",
+      "fenceToken": 100,
+      "seq": 2,
+      "occurredAt": "2026-08-08T12:00:05.000Z",
+      "payload": {
+        "code": "healthy"
+      },
+      "eventDigest": "b740ceae8cf4e639e86e2982678bfd297f9cce2f201adaf4c9a3347993a8a508"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "37A6YGQWAQW6XCEABS06FEFTSZ",
+      "eventType": "service_checkpoint_prepared",
+      "organizationId": "org_Q4129S6YP813MRY9A44HWVZ23V",
+      "companyId": "company_0SSA4Y88FBZNARX6V0667Y4Y0D",
+      "workerId": "worker_RM1Z7RV7K1H28CZR5GMBB7CXJF",
+      "jobId": "job_2Z1V6S4K4MSRTR5FK83H8ZFZE9",
+      "attempt": 1,
+      "leaseId": "lease_TNT6JVYBDCY6R6FW613Y4A8332",
+      "fenceToken": 100,
+      "seq": 3,
+      "occurredAt": "2026-08-08T12:00:20.000Z",
+      "payload": {
+        "checkpointId": "chk-1ebhccbwsnhejga3273bg677w6",
+        "hash": "41aeab116c4c8b3c39f5914ef2b08a2322e7a36bf0468787bcc6623ca4f73cdd",
+        "sizeBytes": 40960
+      },
+      "eventDigest": "a80607ca0ba5c9ade25bebe9cf45c62aaf5599828cc8195f1d961009f3eeafb4"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "0V1NY0JNK5HP59XXA9ZA65Y06V",
+      "eventType": "provider_pause_observed",
+      "organizationId": "org_Q4129S6YP813MRY9A44HWVZ23V",
+      "companyId": "company_0SSA4Y88FBZNARX6V0667Y4Y0D",
+      "workerId": "worker_RM1Z7RV7K1H28CZR5GMBB7CXJF",
+      "jobId": "job_2Z1V6S4K4MSRTR5FK83H8ZFZE9",
+      "attempt": 1,
+      "leaseId": "lease_TNT6JVYBDCY6R6FW613Y4A8332",
+      "fenceToken": 100,
+      "seq": 4,
+      "occurredAt": "2026-08-08T12:00:40.000Z",
+      "payload": {
+        "reason": "provider_scheduled_maintenance"
+      },
+      "eventDigest": "e9a7aafffb8964b02ec360d105f8980b8ddea4a92b5b7ac5952b634df054ce0d"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "THG42GMS2ZD0KWJPB0ZS8WPX5J",
+      "eventType": "service_instance_lost",
+      "organizationId": "org_Q4129S6YP813MRY9A44HWVZ23V",
+      "companyId": "company_0SSA4Y88FBZNARX6V0667Y4Y0D",
+      "workerId": "worker_RM1Z7RV7K1H28CZR5GMBB7CXJF",
+      "jobId": "job_2Z1V6S4K4MSRTR5FK83H8ZFZE9",
+      "attempt": 1,
+      "leaseId": "lease_TNT6JVYBDCY6R6FW613Y4A8332",
+      "fenceToken": 100,
+      "seq": 5,
+      "occurredAt": "2026-08-08T12:00:41.000Z",
+      "payload": {
+        "reason": "provider_pause_effect_authority_withdrawn"
+      },
+      "eventDigest": "3a829eceed4b4f28e07c6542f0054ce354425fe9f1dd7749091745fb385d36d2"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "AM5C5169DMCP04ETK5DKZKS5GM",
+      "eventType": "service_checkpoint_restored",
+      "organizationId": "org_Q4129S6YP813MRY9A44HWVZ23V",
+      "companyId": "company_0SSA4Y88FBZNARX6V0667Y4Y0D",
+      "workerId": "worker_QCF7WVE6724CKWBAAKZQJ20A7Z",
+      "jobId": "job_2Z1V6S4K4MSRTR5FK83H8ZFZE9",
+      "attempt": 2,
+      "leaseId": "lease_CQM6HA54S1FTYDCYM41CEB0XHV",
+      "fenceToken": 200,
+      "seq": 6,
+      "occurredAt": "2026-08-08T12:01:10.000Z",
+      "payload": {
+        "checkpointId": "chk-1ebhccbwsnhejga3273bg677w6",
+        "hash": "41aeab116c4c8b3c39f5914ef2b08a2322e7a36bf0468787bcc6623ca4f73cdd"
+      },
+      "eventDigest": "20eec7310f3a4fdfb18d25fdbfbd689519592989898a4b865c663536e169d83f"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "KX892RWNKC4KBZ17P4XYREZTN1",
+      "eventType": "service_instance_started",
+      "organizationId": "org_Q4129S6YP813MRY9A44HWVZ23V",
+      "companyId": "company_0SSA4Y88FBZNARX6V0667Y4Y0D",
+      "workerId": "worker_QCF7WVE6724CKWBAAKZQJ20A7Z",
+      "jobId": "job_2Z1V6S4K4MSRTR5FK83H8ZFZE9",
+      "attempt": 2,
+      "leaseId": "lease_CQM6HA54S1FTYDCYM41CEB0XHV",
+      "fenceToken": 200,
+      "seq": 7,
+      "occurredAt": "2026-08-08T12:01:11.000Z",
+      "payload": {
+        "generation": 1
+      },
+      "eventDigest": "79f8a78bdedadd8207c498b68c526d5d073df64ff977682ce7ce001712f6210c"
+    },
+    {
+      "protocolVersion": 1,
+      "eventId": "S75WX7BECJH1SHRGYEK375GCRB",
+      "eventType": "service_health",
+      "organizationId": "org_Q4129S6YP813MRY9A44HWVZ23V",
+      "companyId": "company_0SSA4Y88FBZNARX6V0667Y4Y0D",
+      "workerId": "worker_QCF7WVE6724CKWBAAKZQJ20A7Z",
+      "jobId": "job_2Z1V6S4K4MSRTR5FK83H8ZFZE9",
+      "attempt": 2,
+      "leaseId": "lease_CQM6HA54S1FTYDCYM41CEB0XHV",
+      "fenceToken": 200,
+      "seq": 8,
+      "occurredAt": "2026-08-08T12:01:15.000Z",
+      "payload": {
+        "code": "healthy"
+      },
+      "eventDigest": "c6c0a5768f4482fbf32e6b59921372a669295125df39f6de190f50b75e1db4a4"
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "maxTotalCents": 10000,
+    "observedTotalCents": 3100,
+    "tokenBudget": 0,
+    "observedTokens": 0
+  },
+  "timing": {
+    "queuedAt": "2026-08-08T11:59:55.000Z",
+    "startedAt": "2026-08-08T12:00:00.000Z",
+    "finishedAt": "2026-08-08T12:01:15.000Z",
+    "maxWallClockMs": 86400000,
+    "observedWallClockMs": 75000
+  },
+  "cleanup": {
+    "authority": "resource_bound_cleanup",
+    "scope": "service_instance:worker_RM1Z7RV7K1H28CZR5GMBB7CXJF",
+    "idempotent": true,
+    "deadlineMs": 60000,
+    "restoresEffectAuthority": false
+  },
+  "control": {
+    "cancellation": "none",
+    "productApproval": "none",
+    "runtimeDecision": "provider_pause_resume"
+  },
+  "expected": {
+    "terminalState": "healthy",
+    "artifacts": [
+      "service_checkpoint"
+    ],
+    "auditActions": [
+      "service.provider_paused",
+      "service.instance_replaced",
+      "service.checkpoint_restored"
+    ],
+    "forbiddenEffects": [
+      "old_instance_resume",
+      "cleanup_creates_effect_authority",
+      "cleanup_reads_customer_bytes",
+      "cross_resource_cleanup",
+      "overlapping_governed_effects"
+    ]
+  }
+}

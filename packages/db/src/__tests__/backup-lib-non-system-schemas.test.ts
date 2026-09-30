@@ -5,6 +5,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import os from "node:os";
 import net from "node:net";
+import { createBackupFixture, cleanupBackupResources } from "./helpers/backup-fixture.js";
 import { runDatabaseBackup, runDatabaseRestore } from "../backup-lib.js";
 
 const describeBackupLib = process.platform === "win32" ? describe.skip : describe;
@@ -33,34 +34,58 @@ async function allocatePort(): Promise<number> {
 // embedded-postgres starts under a different Windows user in this environment;
 // its taskkill-based shutdown path can hang or fail with access denied.
 describeBackupLib("backup-lib non-system schemas", () => {
-  let pg: EmbeddedPostgres;
+  let dataDir: string | undefined;
   let backupDir: string;
   let connectionString: string;
-  let pgStarted = false;
-
-  beforeAll(async () => {
-    const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-backup-test-"));
-    backupDir = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-backup-files-"));
-    const port = await allocatePort();
-    pg = new EmbeddedPostgres({ databaseDir: dataDir, port, password: "postgres" });
-    await pg.initialise();
-    await pg.start();
-    pgStarted = true;
-    await pg.createDatabase("aoa_test");
-    connectionString = `postgresql://postgres:postgres@127.0.0.1:${port}/aoa_test`;
-    const sql = postgres(connectionString);
-    await sql`CREATE SCHEMA drizzle`;
-    await sql`CREATE TABLE drizzle.__drizzle_migrations (id serial PRIMARY KEY, hash text, created_at bigint)`;
-    await sql`INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ('test_hash', 1234567890)`;
-    await sql`CREATE TABLE public.test_users (id serial PRIMARY KEY, name text)`;
-    await sql`INSERT INTO public.test_users (name) VALUES ('alice wonderland')`;
-    await sql.end();
-  });
-
-  afterAll(async () => {
-    if (!pgStarted) return;
-    await pg.stop();
-  }, 30_000);
+  let pg: EmbeddedPostgres | undefined;
+  let client: ReturnType<typeof postgres> | undefined;
+  let port: number;
+  let initialised = false, startAttempted = false, started = false;
+  const fixture = createBackupFixture([
+    { name: "data-directory", async run() {
+      dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-backup-test-"));
+    } },
+    { name: "backup-directory", async run() {
+      backupDir = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-backup-files-"));
+    } },
+    { name: "port", async run() { port = await allocatePort(); } },
+    { name: "initialise", async run() {
+      pg = new EmbeddedPostgres({ databaseDir: dataDir!, port, password: "postgres" });
+      await pg.initialise(); initialised = true;
+    } },
+    { name: "start", async run() {
+      startAttempted = true;
+      await pg!.start(); started = true;
+    } },
+    { name: "create-database", async run() { await pg!.createDatabase("aoa_test"); } },
+    { name: "connect", async run() {
+      connectionString = `postgresql://postgres:postgres@127.0.0.1:${port}/aoa_test`;
+      client = postgres(connectionString);
+    } },
+    { name: "schema", async run() { const sql = client!; await sql`CREATE SCHEMA drizzle`; } },
+    { name: "journal-table", async run() { const sql = client!;
+      await sql`CREATE TABLE drizzle.__drizzle_migrations (id serial PRIMARY KEY, hash text, created_at bigint)`;
+    } },
+    { name: "journal-row", async run() { const sql = client!;
+      await sql`INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ('test_hash', 1234567890)`;
+    } },
+    { name: "users-table", async run() { const sql = client!;
+      await sql`CREATE TABLE public.test_users (id serial PRIMARY KEY, name text)`;
+    } },
+    { name: "users-row", async run() { const sql = client!;
+      await sql`INSERT INTO public.test_users (name) VALUES ('alice wonderland')`;
+    } },
+    { name: "close-seed-client", async run() { await client!.end(); client = undefined; } },
+  ], () => cleanupBackupResources({
+    closeClient: client ? () => client!.end({ timeout: 5 }) : undefined,
+    stop: started ? () => pg!.stop() : undefined,
+    unsafe: startAttempted && !started ? "start failed; retain directories"
+      : pg && !initialised ? "initialization incomplete; retain directories" : undefined,
+    directories: [dataDir, backupDir].filter((value): value is string => !!value),
+    remove: directory => fs.rm(directory, { recursive: true, force: true }),
+  }));
+  beforeAll(() => fixture.start(), 35_000);
+  afterAll(() => fixture.dispose(), 30_000);
 
   it("backs up and restores the drizzle migration journal", async () => {
     await runDatabaseBackup({

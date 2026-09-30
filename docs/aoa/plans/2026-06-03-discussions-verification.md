@@ -18,8 +18,8 @@
 
 | Name | Value |
 |---|---|
-| `V1` (trunk worktree) | `C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-v1` |
-| `QA` (new QA worktree) | `C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa` |
+| `V1` (trunk worktree) | `C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-v1` |
+| `QA` (new QA worktree) | `C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa` |
 | `INSTANCE_ROOT` | `C:\Users\TK\.aoa\instances\qa-disc` |
 | `QA_CONFIG` | `C:\Users\TK\.aoa\instances\qa-disc\config.json` |
 | `SERVER_LOG` | `C:\Users\TK\.aoa\instances\qa-disc\logs\` (pino file logs) + the captured background stdout |
@@ -27,17 +27,17 @@
 **Endpoints:**
 - **UI (drive everything here):** `http://localhost:5373` — Vite dev server; proxies `/api` and `/_plugins` → `http://localhost:3300`.
 - **API (health/direct):** `http://localhost:3300`
-- **DB:** `postgres://upstream:upstream@127.0.0.1:54440/upstream`
+- **DB:** `postgres://paperclip:paperclip@127.0.0.1:54440/paperclip`
 
 **DB query helper — `qa-sql.mjs`** (psql is NOT on PATH here; use the `postgres@3.4.8` package that ships in the worktree). Created in Task 2 at `QA\qa-sql.mjs`:
 ```js
 import postgres from "postgres";
-const sql = postgres("postgres://upstream:upstream@127.0.0.1:54440/upstream", { max: 1 });
+const sql = postgres("postgres://paperclip:paperclip@127.0.0.1:54440/paperclip", { max: 1 });
 const rows = await sql.unsafe(process.argv[2]);
 console.table(rows);
 await sql.end();
 ```
-Run any check with `pnpm -C "<QA>" exec node qa-sql.mjs "<SQL>"`. **Throughout this doc, every `psql "...:54440/upstream" -c "<SQL>"` line means: run `<SQL>` via this helper.** Ports in use elsewhere on this machine (orphan worktree instances): 54301/54330/54430 — QA deliberately uses **54440**.
+Run any check with `pnpm -C "<QA>" exec node qa-sql.mjs "<SQL>"`. **Throughout this doc, every `psql "...:54440/paperclip" -c "<SQL>"` line means: run `<SQL>` via this helper.** Ports in use elsewhere on this machine (orphan worktree instances): 54301/54330/54430 — QA deliberately uses **54440**.
 
 **Captured IDs** — after seeding (Task 3), record these into the findings doc and reuse them in every query:
 - `COMPANY_ID` (companies.id), `COMPANY_PREFIX` (the URL slug), the 8 crew `agents.id` by name.
@@ -64,29 +64,29 @@ Severity scale: **S1** blocks the feature · **S2** major degradation · **S3** 
 - [ ] **Step 1: Fetch latest trunk** (another session pushes to `feat/v1-combined` — base off the remote ref)
 
 ```bash
-git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-v1" fetch origin
+git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-v1" fetch origin
 ```
 Expected: fetch completes; `origin/feat/v1-combined` updated.
 
 - [ ] **Step 2: Create the isolated worktree off the freshest trunk**
 
 ```bash
-git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-v1" worktree add "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa" -b qa/discussions-verify origin/feat/v1-combined
+git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-v1" worktree add "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa" -b qa/discussions-verify origin/feat/v1-combined
 ```
 Expected: `Preparing worktree (new branch 'qa/discussions-verify')` + `HEAD is now at <sha>`.
 
 - [ ] **Step 3: Copy the spec + this plan into the QA worktree** (they are uncommitted in `V1`; bring them onto the qa branch)
 
 ```bash
-cp "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-v1\docs\aoa\plans\2026-06-03-discussions-verification-design.md" "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa\docs\aoa\plans\2026-06-03-discussions-verification-design.md"
-cp "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-v1\docs\aoa\plans\2026-06-03-discussions-verification.md" "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa\docs\aoa\plans\2026-06-03-discussions-verification.md"
+cp "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-v1\docs\aoa\plans\2026-06-03-discussions-verification-design.md" "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa\docs\aoa\plans\2026-06-03-discussions-verification-design.md"
+cp "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-v1\docs\aoa\plans\2026-06-03-discussions-verification.md" "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa\docs\aoa\plans\2026-06-03-discussions-verification.md"
 ```
 
 - [ ] **Step 4: Commit ONLY those two files on the qa branch** (NEVER `git add -A` — worktrees carry unrelated uncommitted work)
 
 ```bash
-git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa" add docs/aoa/plans/2026-06-03-discussions-verification-design.md docs/aoa/plans/2026-06-03-discussions-verification.md
-git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa" commit -m "docs(qa): discussions verification spec + plan
+git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa" add docs/aoa/plans/2026-06-03-discussions-verification-design.md docs/aoa/plans/2026-06-03-discussions-verification.md
+git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa" commit -m "docs(qa): discussions verification spec + plan
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ```
@@ -95,7 +95,7 @@ Expected: one commit on `qa/discussions-verify`. **Do NOT commit anything to `fe
 - [ ] **Step 5: Install deps in the worktree** (worktrees do not share `node_modules`)
 
 ```bash
-pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa" install
+pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa" install
 ```
 Expected: install completes. Note: the repo pins `embedded-postgres@18.1.0-beta.16` (patched) and `overrides` strip `sqlite3` — both expected.
 
@@ -124,7 +124,7 @@ Then create `C:\Users\TK\.aoa\instances\qa-disc\config.json` with EXACTLY this c
   "logging": { "mode": "file", "logDir": "~/.aoa/instances/qa-disc/logs" },
   "server": { "deploymentMode": "local_trusted", "exposure": "private", "host": "127.0.0.1", "port": 3300, "allowedHostnames": [], "serveUi": true },
   "auth": { "baseUrlMode": "auto" },
-  "storage": { "provider": "local_disk", "localDisk": { "baseDir": "~/.aoa/instances/qa-disc/data/storage" }, "s3": { "bucket": "upstream", "region": "us-east-1", "prefix": "", "forcePathStyle": false } },
+  "storage": { "provider": "local_disk", "localDisk": { "baseDir": "~/.aoa/instances/qa-disc/data/storage" }, "s3": { "bucket": "paperclip", "region": "us-east-1", "prefix": "", "forcePathStyle": false } },
   "secrets": { "provider": "local_encrypted", "strictMode": false, "localEncrypted": { "keyFilePath": "~/.aoa/instances/qa-disc/secrets/master.key" } }
 }
 ```
@@ -138,7 +138,7 @@ AOA_INSTANCE_ID=qa-disc \
 AOA_CONFIG="C:\Users\TK\.aoa\instances\qa-disc\config.json" \
 AOA_MIGRATION_AUTO_APPLY=true \
 PORT=3300 \
-pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa\server" exec tsx src/index.ts
+pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa\server" exec tsx src/index.ts
 ```
 PowerShell equivalent for the env vars (if using the PowerShell tool): set `$env:AOA_INSTANCE_ID="qa-disc"`, `$env:AOA_CONFIG="C:\Users\TK\.aoa\instances\qa-disc\config.json"`, `$env:AOA_MIGRATION_AUTO_APPLY="true"`, `$env:PORT="3300"` then run the `pnpm ... exec tsx src/index.ts`.
 
@@ -154,7 +154,7 @@ Expected: HTTP 200 with a JSON health/ok body (or the app's health shape). If 00
 - [ ] **Step 4: Verify the QA DB is reachable and empty**
 
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT count(*) AS companies FROM companies;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT count(*) AS companies FROM companies;"
 ```
 Expected: `companies = 0` (fresh DB). If the table is missing, migrations didn't run — fix before continuing.
 
@@ -162,7 +162,7 @@ Expected: `companies = 0` (fresh DB). If the table is missing, migrations didn't
 
 From `QA\ui`, launch in the background:
 ```bash
-VITE_BACKEND_PORT=3300 pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa\ui" exec vite --port 5373
+VITE_BACKEND_PORT=3300 pnpm -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa\ui" exec vite --port 5373
 ```
 Expected: Vite prints `Local: http://localhost:5373/`. (`VITE_BACKEND_PORT=3300` makes the `/api` proxy target the QA server, not the default 3100.)
 
@@ -200,18 +200,18 @@ At the crew step, accept the **default crew** and ensure the crew adapter resolv
 
 `/browse`: confirm redirect into the new company (Home). Read the URL → record `COMPANY_PREFIX`. Then:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT id, name, deployment_mode FROM companies;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT id, name, deployment_mode FROM companies;"
 ```
 Record `COMPANY_ID`.
 
 - [ ] **Step 7: VERIFY the crew exists, is codex, and is correctly roled** (core seed assertion)
 
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT name, kind, status, adapter_type FROM agents WHERE company_id='<COMPANY_ID>' AND kind='aoa' ORDER BY name;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT name, kind, status, adapter_type FROM agents WHERE company_id='<COMPANY_ID>' AND kind='aoa' ORDER BY name;"
 ```
 Expected: **8 rows** — Adjutant, Chronicler, Engineer, Memory Keeper, Navigator, Planner, Reviewer, Scout — each `kind='aoa'`, `adapter_type='codex_local'`, `status` idle/active (not `terminated`/`pending_approval`). Then confirm the real role key lives on the trigger (not the hardcoded `runtimeConfig.aoa.role='member'`):
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT a.name, t.config->>'role' AS trigger_role FROM agents a JOIN aoa_agent_triggers t ON t.agent_id=a.id WHERE a.company_id='<COMPANY_ID>' ORDER BY a.name;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT a.name, t.config->>'role' AS trigger_role FROM agents a JOIN aoa_agent_triggers t ON t.agent_id=a.id WHERE a.company_id='<COMPANY_ID>' ORDER BY a.name;"
 ```
 Expected: each agent's `trigger_role` matches its name (adjutant/scout/engineer/navigator/planner/memory_keeper/chronicler/reviewer).
 
@@ -227,11 +227,11 @@ Expected: each agent's `trigger_role` matches its name (adjutant/scout/engineer/
 
 `/browse`: Discussions → New (Write mode). Title `A-write`, body: "We need to decide the launch channel for the beta." Submit.
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT id,title,phase,use_controller_path,autonomy_level FROM discussions WHERE company_id='<COMPANY_ID>' ORDER BY created_at DESC LIMIT 1;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT id,title,phase,use_controller_path,autonomy_level FROM discussions WHERE company_id='<COMPANY_ID>' ORDER BY created_at DESC LIMIT 1;"
 ```
 Expected: a `discussions` row, `phase='discuss'`, `use_controller_path=true` (new threads take the controller path). Record `THREAD_A` id. Then:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT input_type,extraction_status,seq,author_agent_id FROM discussion_entries WHERE discussion_id='<THREAD_A>' ORDER BY seq;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT input_type,extraction_status,seq,author_agent_id FROM discussion_entries WHERE discussion_id='<THREAD_A>' ORDER BY seq;"
 ```
 Expected: one entry `input_type='write'`, `seq=1`, `author_agent_id IS NULL` (human-authored).
 
@@ -239,7 +239,7 @@ Expected: one entry `input_type='write'`, `seq=1`, `author_agent_id IS NULL` (hu
 
 After Step 1, watch for an Adjutant run (Assist dial → Adjutant may converse). Poll:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT agent_id,source,status,reason,payload->>'threadId' AS thread,requested_at FROM agent_wakeup_requests WHERE company_id='<COMPANY_ID>' ORDER BY requested_at DESC LIMIT 10;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT agent_id,source,status,reason,payload->>'threadId' AS thread,requested_at FROM agent_wakeup_requests WHERE company_id='<COMPANY_ID>' ORDER BY requested_at DESC LIMIT 10;"
 ```
 And grep the server log for the Adjutant controller run:
 ```bash
@@ -271,7 +271,7 @@ Expected: the MCP write routes per Decision #14 — authenticated write may crea
 
 - [ ] **Step 1: Adjutant answers a direct question** — `/browse`: in `THREAD_A`, post "Adjutant, what are the open questions before we can decide?" Wait for the Adjutant run. Expected: a crew entry by the Adjutant answering. Confirm `author_agent_id` = Adjutant, and that it is a normal chat entry (NOT a `systemNotice`).
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT seq,author_agent_id,left(raw_content,80) FROM discussion_entries WHERE discussion_id='<THREAD_A>' ORDER BY seq;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT seq,author_agent_id,left(raw_content,80) FROM discussion_entries WHERE discussion_id='<THREAD_A>' ORDER BY seq;"
 ```
 
 - [ ] **Step 2: Adjutant answers a follow-up** — post a follow-up referencing its answer ("Good — focus on the first one."). Expected: a contextual follow-up reply (the crew-context-bundle injects the last ~20 entries, so it should build on prior turns). Record continuity (does it reference earlier content?).
@@ -292,7 +292,7 @@ psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT seq,auth
 
 - [ ] **Step 2: @Scout** — post "@Scout research the top 3 competitors' onboarding." Wait. Expected: Scout dispatched → a Scout-authored reply. Verify:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT agent_id,source,status,payload->>'threadId' AS thread FROM agent_wakeup_requests WHERE company_id='<COMPANY_ID>' ORDER BY requested_at DESC LIMIT 5;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT agent_id,source,status,payload->>'threadId' AS thread FROM agent_wakeup_requests WHERE company_id='<COMPANY_ID>' ORDER BY requested_at DESC LIMIT 5;"
 ```
 and a new `discussion_entries` row with `author_agent_id` = Scout. Record dispatch→reply latency.
 
@@ -316,13 +316,13 @@ and a new `discussion_entries` row with `author_agent_id` = Scout. Record dispat
 
 - [ ] **Step 2: Observe parallel fan-out (round-table)** — poll the wakeup queue immediately:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT agent_id,source,status,coalesced_count,dedup_key,payload->>'threadId' AS thread,requested_at FROM agent_wakeup_requests WHERE company_id='<COMPANY_ID>' AND payload->>'threadId'='<THREAD_D>' ORDER BY requested_at;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT agent_id,source,status,coalesced_count,dedup_key,payload->>'threadId' AS thread,requested_at FROM agent_wakeup_requests WHERE company_id='<COMPANY_ID>' AND payload->>'threadId'='<THREAD_D>' ORDER BY requested_at;"
 ```
 Expected: **multiple** queued rows (one per convened agent), each `dedup_key = '<agentId>:<THREAD_D>:queued'`, dispatched ~together (round-table = `Promise.allSettled` parallel drain). Confirm in `SERVER_LOG`: `agent.dispatch` rows + a parallel drain (`drainPhase3`).
 
 - [ ] **Step 3: Observe the round-table replies land** — `/browse`: watch the thread fill with several distinct crew entries (independent takes). Verify:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT seq,author_agent_id,left(raw_content,60) FROM discussion_entries WHERE discussion_id='<THREAD_D>' AND author_agent_id IS NOT NULL ORDER BY seq;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT seq,author_agent_id,left(raw_content,60) FROM discussion_entries WHERE discussion_id='<THREAD_D>' AND author_agent_id IS NOT NULL ORDER BY seq;"
 ```
 Expected: ≥2 distinct `author_agent_id`s posting takes. Each take should reflect thread context (crew-context-bundle injects last-20 entries + summary + memory). Screenshot the multi-agent round table.
 
@@ -340,13 +340,13 @@ Expected: ≥2 distinct `author_agent_id`s posting takes. Each take should refle
 
 - [ ] **Step 1: Move toward scope** — post "Okay, let's turn this into work." Expected: the Adjutant/Planner proposes scope — a **scope_proposal** entry (`discussion_entries.input_type='scope_proposal'`, `proposal_status='pending'`) surfaced as a **propose_crew_work card** in the UI.
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT id,input_type,proposal_status,left(raw_content,80) FROM discussion_entries WHERE discussion_id='<THREAD_E>' AND input_type='scope_proposal' ORDER BY seq;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT id,input_type,proposal_status,left(raw_content,80) FROM discussion_entries WHERE discussion_id='<THREAD_E>' AND input_type='scope_proposal' ORDER BY seq;"
 ```
 Expected: exactly one `pending` proposal (the one-pending-per-thread unique index enforces this). Screenshot the card.
 
 - [ ] **Step 2: Approve the card → tasks materialize** — `/browse`: click Approve on the card (as founder). Expected: `proposal_status` → `approved`, and tasks are created.
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT id,title,status,task_scope,source FROM issues WHERE company_id='<COMPANY_ID>' ORDER BY created_at DESC LIMIT 10;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT id,title,status,task_scope,source FROM issues WHERE company_id='<COMPANY_ID>' ORDER BY created_at DESC LIMIT 10;"
 ```
 Expected: new `issues` rows linked to this thread (crew work → `task_scope='crew'`). Record count + titles + that they trace to the thread.
 
@@ -366,7 +366,7 @@ Expected: new `issues` rows linked to this thread (crew work → `task_scope='cr
 
 - [ ] **Step 1: Crew board renders all crew tasks** — `/browse`: open the Crew Board. Expected: every crew-scoped task from Group E shows as a card. Cross-check count vs:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT count(*) FILTER (WHERE task_scope='crew') AS crew, count(*) FILTER (WHERE task_scope='org') AS org FROM issues WHERE company_id='<COMPANY_ID>';"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT count(*) FILTER (WHERE task_scope='crew') AS crew, count(*) FILTER (WHERE task_scope='org') AS org FROM issues WHERE company_id='<COMPANY_ID>';"
 ```
 
 - [ ] **Step 2: Card chrome** — each card shows owner avatar, **source badge** (resolves to the thread/agent origin), and an **artifact chip** when an artifact is attached. Screenshot a card with each element. Missing source badge resolution = **S3**.
@@ -385,19 +385,19 @@ psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT count(*)
 
 - [ ] **Step 1: Dispatch the task** — trigger the task's agent (Drive thread tasks may auto-dispatch; otherwise use the task's run/dispatch affordance). Watch `heartbeat_runs`:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT id,agent_id,status,created_at FROM heartbeat_runs WHERE company_id='<COMPANY_ID>' ORDER BY created_at DESC LIMIT 5;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT id,agent_id,status,created_at FROM heartbeat_runs WHERE company_id='<COMPANY_ID>' ORDER BY created_at DESC LIMIT 5;"
 ```
 Expected: a run for the task's agent, transitioning queued→running→completed.
 
 - [ ] **Step 2: get_task → comment** — the agent should read the task context and post a run-summary comment (auto run-summary uses `issue_comments`). Verify:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT issue_id,left(body,80),created_at FROM issue_comments WHERE issue_id='<TASK_ID>' ORDER BY created_at DESC;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT issue_id,left(body,80),created_at FROM issue_comments WHERE issue_id='<TASK_ID>' ORDER BY created_at DESC;"
 ```
 Expected: a comment (duration/tokens/cost/outcome/files). Record.
 
 - [ ] **Step 3: artifact** — if the task produces a deliverable, confirm an `artifacts` + `artifact_versions` row (immutable v1) and the task's `artifact_id`/`task_outputs` link.
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT a.id,a.type,av.version_number,av.source FROM artifacts a JOIN artifact_versions av ON av.artifact_id=a.id WHERE a.company_id='<COMPANY_ID>' ORDER BY av.created_at DESC LIMIT 5;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT a.id,a.type,av.version_number,av.source FROM artifacts a JOIN artifact_versions av ON av.artifact_id=a.id WHERE a.company_id='<COMPANY_ID>' ORDER BY av.created_at DESC LIMIT 5;"
 ```
 
 - [ ] **Step 4: set_status + dial-gated transitions** — verify the agent advanced the task status, and that the transition respected the dial (e.g. auto-move to review/done at Drive vs awaiting-approval at Assist). Cross-check `issues.status`. Record.
@@ -412,7 +412,7 @@ psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT a.id,a.t
 
 - [ ] **Step 1: Summary card present + updates** — `/browse`: in `THREAD_D`, confirm the Chronicler thread-summary card renders and reflects recent content. Cross-check:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT left(summary_text,120), summary_next, summary_updated_at, routing_terms FROM discussions WHERE id='<THREAD_D>';"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT left(summary_text,120), summary_next, summary_updated_at, routing_terms FROM discussions WHERE id='<THREAD_D>';"
 ```
 Expected: `summary_text` populated, `summary_updated_at` recent, `routing_terms` a non-empty `string[]` of key entities. Record whether the card matches the DB.
 
@@ -448,7 +448,7 @@ Expected: `summary_text` populated, `summary_updated_at` recent, `routing_terms`
 
 - [ ] **Step 1: Memory Keeper proposes** — drive a thread to a clear decision ("Decision: we launch EU first."). Expected: the Memory Keeper proposes a memory item (status `pending` — agents cannot write memory directly; founder approves). Verify:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT layer,status,left(content,80),conversation_id FROM memory_items WHERE company_id='<COMPANY_ID>' ORDER BY created_at DESC LIMIT 5;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT layer,status,left(content,80),conversation_id FROM memory_items WHERE company_id='<COMPANY_ID>' ORDER BY created_at DESC LIMIT 5;"
 ```
 Expected: a `pending` proposal (it must NOT be auto-approved into identity/domain). Record. (Note: Memory feedback requires ≥3 occurrences — a single edit shouldn't propose; out of scope to force here.)
 
@@ -456,7 +456,7 @@ Expected: a `pending` proposal (it must NOT be auto-approved into identity/domai
 
 - [ ] **Step 3: Extraction** — confirm thread entries flow through LLM extraction → `discussion_extracted_items` (decision/task/insight/...). Reprocess an entry if extraction is manual-only:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT type,status,title FROM discussion_extracted_items i JOIN discussion_entries e ON i.discussion_entry_id=e.id WHERE e.discussion_id='<THREAD_E>' ORDER BY i.created_at DESC;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT type,status,title FROM discussion_extracted_items i JOIN discussion_entries e ON i.discussion_entry_id=e.id WHERE e.discussion_id='<THREAD_E>' ORDER BY i.created_at DESC;"
 ```
 Record extracted items + statuses.
 
@@ -506,13 +506,13 @@ Record extracted items + statuses.
 
 - [ ] **Step 2: Capture the FULL dispatch trace** — immediately and repeatedly snapshot the wakeup queue + log for this thread:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT requested_at,agent_id,source,status,reason,dedup_key FROM agent_wakeup_requests WHERE company_id='<COMPANY_ID>' AND payload->>'threadId'='<THREAD_RELAY>' ORDER BY requested_at;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT requested_at,agent_id,source,status,reason,dedup_key FROM agent_wakeup_requests WHERE company_id='<COMPANY_ID>' AND payload->>'threadId'='<THREAD_RELAY>' ORDER BY requested_at;"
 ```
 Grep `SERVER_LOG` for: each `agent.dispatch`, every `fireAdjutantWakeup` (entry-created → Adjutant re-wake), and the controller runner's `effectiveAutonomy` / `no-pending` / `no proactive Adjutant` lines.
 
 - [ ] **Step 3: Determine advance vs stall** — map the timeline of entries:
 ```bash
-psql "postgres://upstream:upstream@127.0.0.1:54440/upstream" -c "SELECT seq,author_agent_id,created_at,left(raw_content,60) FROM discussion_entries WHERE discussion_id='<THREAD_RELAY>' ORDER BY seq;"
+psql "postgres://paperclip:paperclip@127.0.0.1:54440/paperclip" -c "SELECT seq,author_agent_id,created_at,left(raw_content,60) FROM discussion_entries WHERE discussion_id='<THREAD_RELAY>' ORDER BY seq;"
 ```
 Decision criteria — record EXACTLY one verdict with evidence:
   - **ADVANCES:** after Scout posts (an *agent* entry), the Adjutant re-wakes and dispatches Engineer (building on Scout), then Planner — **with no human nudge between steps**. Evidence: `fireAdjutantWakeup` firing on agent-authored entry-created, sequential `agent.dispatch` rows, each agent's entry referencing the prior.
@@ -552,8 +552,8 @@ Decision criteria — record EXACTLY one verdict with evidence:
 
 - [ ] **Step 3: Write the report** — save to `QA\docs\aoa\plans\discussions-verification-FINDINGS.md` (already the running ledger; finalize it). Commit on `qa/discussions-verify` ONLY (never `feat/v1-combined`), staging just that file:
 ```bash
-git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa" add docs/aoa/plans/discussions-verification-FINDINGS.md
-git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-qa" commit -m "docs(qa): discussions verification findings + triage
+git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa" add docs/aoa/plans/discussions-verification-FINDINGS.md
+git -C "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-qa" commit -m "docs(qa): discussions verification findings + triage
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ```

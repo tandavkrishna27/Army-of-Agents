@@ -198,6 +198,7 @@ export function Lobby({
               stats={stats?.[company.id]}
               statsLoading={statsLoading}
               onClick={() => navigate(`/${company.issuePrefix}/home`)}
+              onOpenUniverse={() => navigate(`/${company.issuePrefix}/universe`)}
             />
           </div>
         ))}

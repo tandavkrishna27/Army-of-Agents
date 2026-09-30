@@ -13,6 +13,7 @@ import { expandRetrievalWithCompanyGraph } from "../../services/company-brain/re
 import { recordMemoryRetrievals } from "../../services/memory-retrieval-audit.js";
 import { actorForMcp, memoryAccessConditions } from "../../services/memory-access-sql.js";
 import { filterMemoryForActor } from "../../services/memory-access.js";
+import { recordSecurityDenial } from "../../services/security-denial-audit.js";
 
 async function handleMe(ctx: ToolContext): Promise<ToolResult> {
   const role = await ctx.resolveRole(ctx.companyId, ctx.actor.userId);
@@ -266,14 +267,53 @@ async function handleMemorySearch(
  *   - the item's status is not "approved"
  *   - the item is outside the caller's RBAC scope
  *
- * Logs the read attempt regardless of outcome (rank=1 for hits, no
- * audit row when item not found — there's nothing to record).
+ * Logs the read attempt regardless of outcome: a hit writes a `memory_retrievals`
+ * row (rank=1), and a REFUSAL writes an attributable `security.denied.memory_read`
+ * row via `recordSecurityDenial` (DE-19's audit clause — see `denyMemoryGet`).
+ * The response is identical for every refusal; only the audit row tells them apart.
  */
 async function handleMemoryGet(
   ctx: ToolContext,
   args: Record<string, unknown>,
 ): Promise<ToolResult> {
   const parsed = z.object({ id: z.string().uuid() }).parse(args);
+
+  /**
+   * DE-19, audit clause: "context retrieval and denials are recorded in the
+   * retrieval audit". Retrieval was already recorded (`recordMemoryRetrievals`
+   * below); the refusals were not, so a cross-tenant probe and a request that
+   * never happened left identical durable state — nothing. `E0-F013` filed that.
+   *
+   * The record is written to `activity_log`, NOT to `memory_retrievals`: that
+   * table's charter is "one row per item RETURNED", it bumps
+   * `memory_items.validationCount`, and it feeds the Workspace MemorySection and
+   * the company brain graph. Writing refusals into it would corrupt live
+   * consumers — the same mistake as overloading `worker_lease_rejections`, one
+   * step subtler.
+   *
+   * The response text is deliberately IDENTICAL for every reason. The refusal
+   * stays non-disclosing to the caller; the distinction lives in the audit row.
+   */
+  const denyMemoryGet = async (reason: string, control: string): Promise<ToolResult> => {
+    await recordSecurityDenial(ctx.db, {
+      companyId: ctx.companyId,
+      crossing: "DE-19",
+      surface: "memory_read",
+      reason,
+      actorType: ctx.actor.agentId ? "agent" : "user",
+      actorId: ctx.actor.agentId ?? ctx.actor.userId,
+      entityType: "memory_item",
+      entityId: parsed.id,
+      control,
+      details: {
+        tool: "memory.get",
+        actorSourceRaw: ctx.actor.source,
+        agentId: ctx.actor.agentId ?? null,
+        runId: ctx.actor.runId ?? null,
+      },
+    });
+    return notFoundResult("Memory item not found");
+  };
 
   // RBAC gate (P1-T5): resolve the actor, then apply the access conditions to the
   // by-id fetch so goal/task scope is resolved in-SQL — an out-of-scope item comes
@@ -286,13 +326,29 @@ async function handleMemoryGet(
   const accessConditions = memoryAccessConditions(ctx.db, actor);
 
   const item = await ctx.services.memorySvc.getById(ctx.companyId, parsed.id, accessConditions);
-  if (!item || item.status !== "approved") {
-    return notFoundResult("Memory item not found");
+  // Split from the single `!item || status !== "approved"` guard so the two
+  // reasons are DISTINGUISHABLE in the record. They were always distinct
+  // branches of the control; collapsing them in the audit would reproduce the
+  // count-only shape (DE-06/DE-29) this class exists to reject. The caller's
+  // response is unchanged — both still return the same opaque message.
+  if (!item) {
+    // Absent, another company's, or outside the caller's RBAC scope. The gate is
+    // in-SQL and deliberately non-disclosing, so these are not separable here —
+    // and saying so is more honest than inventing a finer reason than the
+    // control actually computes.
+    return denyMemoryGet("not_visible", "server/src/mcp/tools/read-tools.ts:handleMemoryGet gated fetch");
+  }
+  if (item.status !== "approved") {
+    return denyMemoryGet("not_approved", "server/src/mcp/tools/read-tools.ts:handleMemoryGet status gate");
   }
 
   const allowed = filterMemoryForActor([item], actor);
   if (allowed.length === 0) {
-    return notFoundResult("Memory item not found");
+    // Defence in depth: the post-fetch actor filter mirrors the in-SQL gate, so
+    // in a consistent tree this is unreachable. It is recorded with its own
+    // reason precisely so that a DIVERGENCE between the two gates becomes
+    // visible in the audit instead of silently passing as `not_visible`.
+    return denyMemoryGet("actor_filter_denied", "server/src/mcp/tools/read-tools.ts:handleMemoryGet actor filter");
   }
 
   void recordMemoryRetrievals(ctx.db, {

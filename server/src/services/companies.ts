@@ -1,7 +1,6 @@
-import { and, asc, eq, count, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, count, inArray, isNull, like, sql } from "drizzle-orm";
 import { isDeepStrictEqual } from "node:util";
 import type { Db } from "@armyofagents/db";
-import { DEFAULT_ORGANIZATION_ID } from "@armyofagents/shared";
 import { memoryFoldersService, seedCompanyRootFolder } from "./memory-folders.js";
 import { ensureInternalAgentConfig } from "./internal-agent/aoa-agents/ensure-internal-agent-config.js";
 import {
@@ -60,6 +59,7 @@ import {
   userRoles,
 } from "@armyofagents/db";
 import { notCrewAssigned } from "./issue-crew-scope.js";
+import { SECURITY_DENIAL_ACTION_PREFIX, notDenialNamespace } from "./activity-namespace.js";
 // Type-only (mirrors Fix 5's `import type { organizationAccessService }`): lets
 // `createWithOperator` accept a `buildAccess` factory typed against the access
 // service WITHOUT a runtime companies↔access import cycle.
@@ -72,6 +72,34 @@ type CompanyStatsEntry = {
   pendingApprovalCount: number;
   unreadNotificationCount: number;
 };
+
+/**
+ * TEN-006a / E2-D07 — fail-closed Organization resolution for Company writers.
+ *
+ * The Company writers no longer silently bucket an Organization-omitting create
+ * to DEFAULT_ORGANIZATION_ID (the removed fail-OPEN mechanism). The owning
+ * Organization is resolved EXPLICITLY by the caller — the self-hosted Default
+ * Org (`routes/companies.ts` `resolveCompanyOrganizationId`, non-enforced
+ * branch) or the real tenant (cloud_auth) — and passed in. A writer reached
+ * with no resolvable Organization fails CLOSED (throws) rather than fail-OPEN
+ * bucketing to the sentinel.
+ *
+ * DEFAULT_ORGANIZATION_ID itself remains the legitimate single-tenant Default
+ * Organization; a caller may still resolve to it EXPLICITLY. Only the *silent*
+ * `?? DEFAULT_ORGANIZATION_ID` default is removed here — the schema default drop
+ * is TEN-006b.
+ */
+function requireResolvedOrganizationId(data: { organizationId?: string | null }): string {
+  const organizationId = data.organizationId;
+  if (!organizationId) {
+    throw new Error(
+      "Company writer requires an explicitly resolved organizationId (TEN-006a): the caller " +
+        "must resolve the owning Organization (self-hosted Default Org or the real tenant) before " +
+        "writing; silent DEFAULT_ORGANIZATION_ID bucketing was removed (E2-D07).",
+    );
+  }
+  return organizationId;
+}
 
 export interface CreateCompanyOptions {
   /**
@@ -184,7 +212,7 @@ export function companyService(db: Db) {
     data: Omit<typeof companies.$inferInsert, "organizationId"> & { organizationId?: string },
   ) {
     if (!data.creationRequestId) return null;
-    const organizationId = data.organizationId ?? DEFAULT_ORGANIZATION_ID;
+    const organizationId = requireResolvedOrganizationId(data);
     const existing = await handle
       .select()
       .from(companies)
@@ -320,6 +348,10 @@ export function companyService(db: Db) {
     data: Omit<typeof companies.$inferInsert, "organizationId"> & { organizationId?: string },
     opts: CreateCompanyOptions = {},
   ) {
+    // Fail closed (TEN-006a / E2-D07): the caller must have resolved the owning
+    // Organization explicitly (self-hosted Default Org or the real tenant). No
+    // silent sentinel bucketing.
+    const organizationId = requireResolvedOrganizationId(data);
     const base = deriveIssuePrefixBase(data.name);
     let suffix = 1;
     while (suffix < 10000) {
@@ -329,9 +361,7 @@ export function companyService(db: Db) {
           .insert(companies)
           .values({
             ...data,
-            // Self-hosted single-tenant + company-portability import land in the
-            // sentinel Organization unless a real org context is supplied.
-            organizationId: data.organizationId ?? DEFAULT_ORGANIZATION_ID,
+            organizationId,
             issuePrefix: candidate,
           })
           .returning();
@@ -385,6 +415,10 @@ export function companyService(db: Db) {
     created: boolean;
     committedActivity: TActivity | null;
   }> {
+    // Fail closed (TEN-006a / E2-D07) before any read/write: the caller must
+    // have resolved the owning Organization explicitly. No silent sentinel
+    // bucketing on the atomic create or the advisory-lock key.
+    const organizationId = requireResolvedOrganizationId(data);
     const initialReplay = await resolveCompanyCreationReplay(db, data);
     if (initialReplay) {
       // A prior request may have committed immediately before the process died
@@ -411,7 +445,7 @@ export function companyService(db: Db) {
             // Organization may legitimately use the same random UUID because
             // the durable key is the composite (organizationId, requestId).
             await tx.execute(
-              sql`SELECT pg_advisory_xact_lock(hashtext('aoa:company-create'), hashtext(${`${data.organizationId ?? DEFAULT_ORGANIZATION_ID}:${data.creationRequestId}`}))`,
+              sql`SELECT pg_advisory_xact_lock(hashtext('aoa:company-create'), hashtext(${`${organizationId}:${data.creationRequestId}`}))`,
             );
             const replay = await resolveCompanyCreationReplay(tx as unknown as Db, data);
             if (replay) {
@@ -431,7 +465,7 @@ export function companyService(db: Db) {
             .insert(companies)
             .values({
               ...data,
-              organizationId: data.organizationId ?? DEFAULT_ORGANIZATION_ID,
+              organizationId,
               issuePrefix: candidate,
             })
             .returning();
@@ -620,7 +654,34 @@ export function companyService(db: Db) {
         await tx.delete(companySkills).where(eq(companySkills.companyId, id));
         // === Top-level: agents, activity log ===
         await tx.delete(agents).where(eq(agents.companyId, id));
-        await tx.delete(activityLog).where(eq(activityLog.companyId, id));
+        // ★ E0-F013 Decision 3.3 (Q5), founder-ruled 2026-09-11 — denial evidence
+        // survives a company delete. A `security.denied.*` row is the operator
+        // plane's ONLY copy of a refusal; a founder deleting their own tenant must
+        // not be able to erase their own probing with it. So do NOT blanket-delete
+        // this company's activity_log rows. Instead:
+        //   (1) NULL the reserved `security.denied.*` rows. The partial CHECK
+        //       `company_id IS NOT NULL OR action LIKE 'security.denied.%'` admits a
+        //       null company for EXACTLY these, so the nulled row stays legal and is
+        //       still returned by the operator reader `securityDenials` (company_id
+        //       is a filter there, never a scope).
+        //   (2) Delete the REMAINING (ordinary + retention/object-access) rows.
+        // The null-BEFORE-delete ordering is load-bearing given the FK is now
+        // `ON DELETE set null` (Decision 3.3): after (1)+(2) NO row still references
+        // this company, so the company delete's set-null fires on nothing. Nulling a
+        // NON-denial row would violate the CHECK and make the company undeletable —
+        // deleting the ordinary rows first is what prevents that.
+        await tx
+          .update(activityLog)
+          .set({ companyId: null })
+          .where(
+            and(
+              eq(activityLog.companyId, id),
+              like(activityLog.action, `${SECURITY_DENIAL_ACTION_PREFIX}%`),
+            ),
+          );
+        await tx
+          .delete(activityLog)
+          .where(and(eq(activityLog.companyId, id), notDenialNamespace()));
         const rows = await tx
           .delete(companies)
           .where(eq(companies.id, id))

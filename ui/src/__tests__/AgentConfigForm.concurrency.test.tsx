@@ -51,7 +51,7 @@ const baseAgent = {
   updatedAt: "2026-06-25T12:00:00.000Z",
 };
 
-describe("AgentConfigForm — optimistic concurrency token (Decision #104)", () => {
+describe("AgentConfigForm — optimistic concurrency token (Decision #125)", () => {
   it("includes expectedUpdatedAt (agent.updatedAt) in the save patch", async () => {
     const onSave = vi.fn();
     let save: (() => void) | null = null;

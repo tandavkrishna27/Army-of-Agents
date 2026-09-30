@@ -6,6 +6,7 @@ import {
   NOTIFICATION_PREFERENCES,
 } from "../constants.js";
 import { INBOUND_ROUTING_LEVELS } from "../inbound-routing.js";
+import { universeContextSchema } from "./universe-context.js";
 
 export const updateInternalAgentConfigSchema = z.object({
   executionMode: z.enum(AGENT_EXECUTION_MODES).optional(),
@@ -52,6 +53,7 @@ export const commanderContextSurfaceSchema = z.enum([
   "budget",
   "team",
   "settings",
+  "universe",
 ]);
 
 export const commanderContextScopeSchema = z.object({
@@ -78,6 +80,11 @@ export const chatMessageSchema = z.object({
   // Composer attachment asset IDs. The server resolves company-owned files and
   // delivers text-readable content into the turn (runtime delivery v1).
   attachmentAssetIds: z.array(z.string().uuid()).max(5).optional(),
+  universeContext: universeContextSchema.optional(),
+}).superRefine((value, ctx) => {
+  if (!value.universeContext) return;
+  if (value.contextScope?.surface !== "universe") ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["universeContext"], message: "Universe context requires the Universe surface" });
+  if (!value.conversationId || value.universeContext.conversationId !== value.conversationId) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["universeContext", "conversationId"], message: "Universe context must match the submitted conversation" });
 });
 
 export type ChatMessage = z.infer<typeof chatMessageSchema>;

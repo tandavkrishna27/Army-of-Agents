@@ -127,8 +127,8 @@ describe.skipIf(process.platform === "win32")("MCP connectors — live end-to-en
     //    the full company/agent service surface). ──────────────────────────────
     const companyId = await firstId(
       db.execute(sql`
-        INSERT INTO companies (name)
-        VALUES ('E2E Co')
+        INSERT INTO companies (organization_id, name)
+        VALUES ('00000000-0000-0000-0000-000000000001', 'E2E Co')
         RETURNING id
       `),
     );
@@ -272,8 +272,8 @@ describe.skipIf(process.platform === "win32")("MCP connectors — live end-to-en
       // row would collide on companies_issue_prefix_idx.
       const companyId = await firstId(
         db.execute(sql`
-          INSERT INTO companies (name, issue_prefix)
-          VALUES ('OAuth Fence Co', 'OAF')
+          INSERT INTO companies (organization_id, name, issue_prefix)
+          VALUES ('00000000-0000-0000-0000-000000000001', 'OAuth Fence Co', 'OAF')
           RETURNING id
         `),
       );

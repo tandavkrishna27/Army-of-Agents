@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState, type ChangeEvent } from "re
 import { Link, useLocation } from "react-router-dom";
 import type { IssueComment, Agent, FeedbackVote } from "@armyofagents/shared";
 import { Button } from "@/components/ui/button";
-import { AtSign, Mic, FilePlus2 } from "lucide-react";
+import { AtSign, Mic, Paperclip } from "lucide-react";
 import { Identity } from "./Identity";
 import { InlineEntitySelector, type InlineEntityOption } from "./InlineEntitySelector";
 import { MarkdownBody } from "./MarkdownBody";
@@ -651,7 +651,7 @@ export function CommentThread({
                 title="Attach file"
                 aria-label="Attach file"
               >
-                <FilePlus2 className="h-4 w-4" />
+                <Paperclip className="h-4 w-4" />
               </ComposerIconButton>
               <ComposerIconButton
                 onClick={() => {

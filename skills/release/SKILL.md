@@ -250,7 +250,7 @@ the scoped CLI package picks up the new version.
 The script discovers every non-private `@armyofagents/*` pnpm workspace and
 promotes each package's current version. Do not maintain a package list by
 hand: public workspaces do not all share one version. The legacy
-Private workspaces are outside AoA's npm publish graph.
+`@paperclipai/*` compatibility workspace is outside AoA's npm ownership.
 
 Promotion also creates the release commit, repository-level `v{version}` tag,
 and GitHub release. Push the commit and tag after the script succeeds:
@@ -377,7 +377,7 @@ Use:
 
 For issue-modifying calls, include:
 - `Authorization: Bearer $AOA_API_KEY`
-- `X-AoA-Run-Id: $AOA_RUN_ID`
+- `X-Aoa-Run-Id: $AOA_RUN_ID`
 
 ---
 

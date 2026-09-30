@@ -97,8 +97,8 @@ async function seedUser(email: string): Promise<string> {
 async function seedCompanyWithFounder(): Promise<{ companyId: string; founderId: string }> {
   const companyId = firstId(
     await db.execute(
-      sql`INSERT INTO companies (id, name, issue_prefix)
-          VALUES (gen_random_uuid(), 'D2 Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)))
+      sql`INSERT INTO companies (organization_id, id, name, issue_prefix)
+          VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'D2 Co', upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)))
           RETURNING id`,
     ),
   );
@@ -390,6 +390,10 @@ describe.skipIf(process.platform === "win32")("D2 import authz — real DB", () 
         include: { company: true, agents: true },
       } as never,
       null, // self-hosted board (no user)
+      // TEN-006a / E2-D07: a direct (non-route) self-hosted import must resolve
+      // the Default Org EXPLICITLY — the writer no longer silently buckets it.
+      undefined,
+      { organizationId: DEFAULT_ORGANIZATION_ID },
     );
     const orgOnCompany = rows<{ organization_id: string }>(
       await db.execute(sql`SELECT organization_id FROM companies WHERE id = ${result.company.id}`),

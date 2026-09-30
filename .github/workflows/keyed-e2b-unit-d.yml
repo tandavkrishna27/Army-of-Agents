@@ -1,0 +1,117 @@
+name: Keyed E2B — CLI-008 Unit D invocation shape
+
+# CLI-008 Unit D's LIVE lane. It answers the questions Unit D shipped without an
+# answer to: does the `sh -c` script the workload builder emits survive the
+# `shellJoin` collapse into e2b's single command-STRING API with its positional
+# parameters intact, does the staged prompt actually arrive on the CLI's stdin
+# through the in-script redirect, and does `--append-system-prompt-file` receive
+# the staged bundle path as its own argv element?
+#
+# Unit D's own design doc said no run of that shape had ever executed in a real
+# E2B sandbox, and Unit B shipped with the same gap. Everything was argued from
+# the legacy adapters and from `real-transport.ts`. This lane observes it.
+#
+# Deliberately SEPARATE from `keyed-e2b-conformance.yml` (CLI-001's lane),
+# mirroring `keyed-e2b-cdp-probe.yml`'s reasoning: a shape result should never be
+# buried inside another epic's suite, and re-firing this must not re-run theirs.
+#
+# ★ TRIGGERS. `workflow_dispatch` works from a non-default branch via
+# `gh workflow run --ref <branch>` — MEASURED on 2026-09-03 against
+# `keyed-e2b-conformance.yml`, which is not on `main` and dispatched fine (run
+# 33788025048, success). The sibling lanes' comments claiming dispatch "only
+# registers from the DEFAULT branch" are wrong, and are left alone here rather
+# than edited from this ticket. The push trigger is kept anyway so the lane
+# RE-FIRES BY ITSELF whenever the emitted shape changes — `task-run-sandbox-
+# invocation.ts` is in `paths` on purpose, so a future edit to the script cannot
+# quietly return this to argued-not-observed.
+#
+# OPERATOR ACTION: none. `E2B_API_KEY` already exists as a repo secret and is
+# available to same-repo branches. Without it the cases SKIP cleanly (never
+# faked) and this lane claims no result.
+
+on:
+  workflow_dispatch:
+    inputs:
+      e2b_template:
+        description: E2B sandbox template alias. Empty = bare "base".
+        required: false
+        default: ""
+        type: string
+  push:
+    branches:
+      - docs/replatform-program
+      # The proving branch for this ticket. Harmless once deleted — a push
+      # trigger on a branch that no longer exists never fires.
+      - claude/unit-d-e2b-live-verify
+    paths:
+      - ".github/keyed-e2b-unit-d-trigger"
+      - ".github/workflows/keyed-e2b-unit-d.yml"
+      - "packages/sandbox-e2b-provider/src/__tests__/keyed-cli-008-unit-d-invocation.test.ts"
+      # The module under test. A change to the emitted script re-fires the lane.
+      - "server/src/services/task-run-sandbox-invocation.ts"
+      # E7-F014. The lane now also pins WHICH SURFACE carries a non-zero exit, so
+      # the transport that decides it belongs in `paths` too — reverting the
+      # `CommandExitError` conversion must re-fire this lane, not pass silently.
+      - "packages/sandbox-e2b-provider/src/real-transport.ts"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keyed-e2b-unit-d
+  cancel-in-progress: false
+
+jobs:
+  keyed-e2b-unit-d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build dist-only leaves
+        # Mirrors `keyed-e2b-conformance.yml`'s proven block. The Unit D case
+        # itself needs none of these (its imports are `e2b`, two relative modules
+        # inside `src`, and one zero-import pure leaf under `server/src`), but the
+        # provider package DECLARES these workspace deps and the selective build
+        # is cheap next to a wrong-reason red.
+        run: |
+          pnpm --filter @armyofagents/worker-protocol build
+          pnpm --filter @armyofagents/worker-daemon build
+          pnpm --filter @armyofagents/sandbox-fake-provider build
+          pnpm --filter @armyofagents/sandbox-provider-contract build
+
+      - name: Run the Unit D invocation-shape cases against REAL E2B
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          E2B_TEMPLATE: ${{ inputs.e2b_template }}
+        run: pnpm --filter @armyofagents/sandbox-e2b-provider exec vitest run src/__tests__/keyed-cli-008-unit-d-invocation.test.ts
+
+      - name: Fail if the cases SKIPPED (a skip is not a pass)
+        # ★ THE POSITIVE CONTROL. `describe.skip` without a key is a GREEN vitest
+        # run, so a lane that lost its secret would report success while proving
+        # nothing — this programme's single most repeated defect class ("a check
+        # that nothing runs is not a check"). Assert the key was actually present.
+        if: always()
+        run: |
+          if [ -z "${E2B_API_KEY}" ]; then
+            echo "::error::E2B_API_KEY was empty — the Unit D cases SKIPPED and this lane proved NOTHING."
+            exit 1
+          fi
+          echo "E2B_API_KEY was present; the cases ran for real."
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}

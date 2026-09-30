@@ -112,8 +112,10 @@ describe("board auth CLI challenge terminal transitions", () => {
           }),
           insert: (table: unknown) => ({
             values: (values: any) => {
+              // insertActivityLog now calls .returning({ id }) — the audit-failure sim must
+              // reject at .returning, not at .values (else "returning is not a function").
               if (table === activityLog)
-                return Promise.reject(new Error("audit insert failed"));
+                return { returning: () => Promise.reject(new Error("audit insert failed")) };
               if (table !== boardApiKeys) throw new Error("unexpected insert");
               draft.key = { id: "board-key-new", ...values };
               return { returning: async () => [draft.key] };
@@ -173,7 +175,8 @@ describe("board auth CLI challenge terminal transitions", () => {
           insert: (table: unknown) => ({
             values: () =>
               table === activityLog
-                ? Promise.reject(new Error("audit insert failed"))
+                // insertActivityLog now chains .returning({ id }); reject there.
+                ? { returning: () => Promise.reject(new Error("audit insert failed")) }
                 : Promise.resolve(),
           }),
           update: (table: unknown) => ({

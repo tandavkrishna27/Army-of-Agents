@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
+import { Info, Orbit } from "lucide-react";
 import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { AgentPanelContent } from "../components/InternalAgentPanel";
@@ -14,11 +15,13 @@ import { cn } from "../lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 export function Commander() {
-  const { selectedCompanyId } = useCompany();
+  const { selectedCompanyId, selectedCompany } = useCompany();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
 
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  // The canonical panel/API retains company and conversation access validation.
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(() => searchParams.get("conversation") || null);
   // Task 11: on mobile/tablet (< 1024px) the sessions list lives in a left
   // drawer instead of an inline sidebar.
   const { useDrawerSessions } = useBreakpoint();
@@ -64,6 +67,13 @@ export function Commander() {
     // scrollbar; only the message list scrolls).
     <div className="flex flex-col h-full min-h-0">
 
+      {selectedCompany && (
+        <div className="flex justify-end px-4 py-2">
+          <Link to={`/${selectedCompany.issuePrefix}/universe${activeConversationId ? `?conversation=${encodeURIComponent(activeConversationId)}` : ""}`} className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">
+            <Orbit className="size-4" aria-hidden="true" /> Open Universe
+          </Link>
+        </div>
+      )}
       {/* Best-effort badge (non-claude_cli warning) */}
       {config?.cliTool && config.cliTool !== "claude_cli" && (
         <div className="px-5 py-1.5 bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-200 inline-flex items-center gap-1.5 shrink-0">

@@ -8,7 +8,7 @@ describe("codex_local environment diagnostics", () => {
   it("creates a missing working directory when cwd is absolute", async () => {
     const cwd = path.join(
       os.tmpdir(),
-      `aoa-codex-local-cwd-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      `paperclip-codex-local-cwd-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       "workspace",
     );
 
@@ -33,8 +33,8 @@ describe("codex_local environment diagnostics", () => {
   it("reports local Codex auth.json as ready when no API key is configured", async () => {
     const previousCodexHome = process.env.CODEX_HOME;
     const previousOpenAiKey = process.env.OPENAI_API_KEY;
-    const codexHome = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-codex-home-"));
-    const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-codex-cwd-"));
+    const codexHome = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-codex-home-"));
+    const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-codex-cwd-"));
 
     try {
       process.env.CODEX_HOME = codexHome;
@@ -72,8 +72,8 @@ describe("codex_local environment diagnostics", () => {
   it("warns (does not report usable auth) when OPENAI_API_KEY is only in the server env (Codex P2 / env-strip alignment)", async () => {
     const previousCodexHome = process.env.CODEX_HOME;
     const previousOpenAiKey = process.env.OPENAI_API_KEY;
-    const codexHome = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-codex-home-")); // NO auth.json written
-    const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-codex-cwd-"));
+    const codexHome = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-codex-home-")); // NO auth.json written
+    const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-codex-cwd-"));
 
     try {
       process.env.CODEX_HOME = codexHome;

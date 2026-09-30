@@ -105,8 +105,8 @@ describe.skipIf(process.platform !== "linux")("MT chain 0188->0192 on populated 
 
   it("0191/0192 execution_targets FK to organizations resolves (cross-phase integrity)", async () => {
     const org = rows(await db.execute(sql`INSERT INTO organizations (name, slug) VALUES ('Org T', 'org-t-chain') RETURNING id`))[0].id;
-    await expect(db.execute(sql`INSERT INTO execution_targets (organization_id, slug, kind, trust_class, status) VALUES (${org}, 'pool-chain', 'pooled_gvisor', 'shared_multitenant', 'offline')`)).resolves.toBeDefined();
-    await expect(db.execute(sql`INSERT INTO execution_targets (organization_id, slug, kind, trust_class, status) VALUES ('00000000-0000-0000-0000-0000000000ff', 'pool-bad', 'pooled_gvisor', 'shared_multitenant', 'offline')`)).rejects.toThrow();
+    await expect(db.execute(sql`INSERT INTO execution_targets (organization_id, slug, kind, trust_class, status, scope, target_authority_key) VALUES (${org}, 'pool-chain', 'pooled_gvisor', 'shared_multitenant', 'offline', 'organization', ${`organization:${org}`})`)).resolves.toBeDefined();
+    await expect(db.execute(sql`INSERT INTO execution_targets (organization_id, slug, kind, trust_class, status, scope, target_authority_key) VALUES ('00000000-0000-0000-0000-0000000000ff', 'pool-bad', 'pooled_gvisor', 'shared_multitenant', 'offline', 'organization', 'organization:00000000-0000-0000-0000-0000000000ff')`)).rejects.toThrow();
   });
 
   it("data integrity: NO company row is left with a NULL tenant column after the chain", async () => {

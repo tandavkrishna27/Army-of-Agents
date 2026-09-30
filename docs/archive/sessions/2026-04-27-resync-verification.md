@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** After landing 35 commits in the upstream project → AoA resync (`docs/superpowers/plans/2026-04-26-upstream-resync.md`), prove every shipped feature actually works end-to-end via integration tests, e2e Playwright specs, and a hands-on UX walkthrough — finding any regression before push.
+**Goal:** After landing 35 commits in the upstream Paperclip → AoA resync (`docs/superpowers/plans/2026-04-26-upstream-paperclip-resync.md`), prove every shipped feature actually works end-to-end via integration tests, e2e Playwright specs, and a hands-on UX walkthrough — finding any regression before push.
 
 **Architecture:** Five sequential phases. Phase A (static review) and Phase B (test gap audit) already executed via parallel read-only subagents on 2026-04-27 — findings folded into Phase C/D/E task list below. Phases C–E run task-by-task with the same two-stage review pipeline used for the resync itself (spec compliance → code quality). Phase F closes with full-suite verification + branch push.
 
@@ -19,7 +19,7 @@
 
 **Phase B — Test gap audit (5 HIGH-priority integration gaps that this plan fills):**
 1. T13 Bedrock — unit tests cover `isBedrockAuth`/`resolveClaudeBillingType` but NO test proves the full path: env vars set → executable args omit `--model` + result.provider = "aws_bedrock" + billingType = "metered_api"
-2. T14 Hermes — unit tests cover wrapper logic but NO spawn-capture test proves UPSTREAM_API_KEY + UPSTREAM_RUN_ID actually appear in the child process env
+2. T14 Hermes — unit tests cover wrapper logic but NO spawn-capture test proves PAPERCLIP_API_KEY + PAPERCLIP_RUN_ID actually appear in the child process env
 3. T17 Skill auto-enable — pure-function tests cover extraction/merge but NO test proves the full flow: issue with mention → DB lookup → runtime config has the right `aoaSkillSync.desiredSkills`
 4. T18 Project env — route + service tests pass, but NO test proves the heartbeat env merge precedence (project env between company and agent, agent wins on conflict)
 5. T21 Watchdog snooze — recording tests pass but NO test proves the de-duplication: sweep twice within snooze window → exactly 1 decision (not 2)
@@ -61,7 +61,7 @@ Phase E (UX walkthrough) is interactive — gates are descriptive observations, 
 |---|---|---|
 | `packages/db/src/__tests__/aoa-sentinels-migration.test.ts:121` | **Modified (3fa97b3)** | Phase A fix — pin idx assertion to specific value |
 | `packages/adapters/claude-local/src/__tests__/bedrock-integration.test.ts` | **Create** | T2 — full Bedrock path: env → args → biller |
-| `server/src/__tests__/hermes-spawn-env.test.ts` | **Create** | T3 — Hermes spawn captures env with UPSTREAM_* injected |
+| `server/src/__tests__/hermes-spawn-env.test.ts` | **Create** | T3 — Hermes spawn captures env with PAPERCLIP_* injected |
 | `server/src/__tests__/heartbeat-skill-auto-enable-integration.test.ts` | **Create** | T4 — full skill auto-enable: mention → DB → runtime config |
 | `server/src/__tests__/heartbeat-project-env-merge.test.ts` | **Create** | T5 — project env precedence (project < agent) in run env |
 | `server/src/__tests__/heartbeat-watchdog-snooze.test.ts` | **Create** | T6 — watchdog de-dup within snooze window |
@@ -187,7 +187,7 @@ EOF
 
 ### Task 2: T14 — Hermes spawn-env capture test
 
-**Why:** Existing tests verify the wrapper builds `nextEnv` with `UPSTREAM_API_KEY` and `UPSTREAM_RUN_ID` populated, but don't verify those variables actually reach the child process. A subtle bug — e.g., the wrapper sets the field but `runChildProcess` overrides it — would slip through.
+**Why:** Existing tests verify the wrapper builds `nextEnv` with `PAPERCLIP_API_KEY` and `PAPERCLIP_RUN_ID` populated, but don't verify those variables actually reach the child process. A subtle bug — e.g., the wrapper sets the field but `runChildProcess` overrides it — would slip through.
 
 **Files:**
 - Create: `server/src/__tests__/hermes-spawn-env.test.ts`
@@ -199,7 +199,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock the registry to capture what hermesExecute receives
 const capturedExecuteCall: any = { ctx: null };
-vi.mock("hermes-upstream-adapter/server", () => ({
+vi.mock("hermes-paperclip-adapter/server", () => ({
   hermesExecute: vi.fn(async (ctx) => {
     capturedExecuteCall.ctx = ctx;
     return { exitCode: 0, transcript: "" };
@@ -225,7 +225,7 @@ vi.mock("@armyofagents/db", () => {
 
 import { adapters } from "../adapters/registry";
 
-describe("Hermes adapter env injection — spawn captures UPSTREAM_*", () => {
+describe("Hermes adapter env injection — spawn captures PAPERCLIP_*", () => {
   beforeEach(() => {
     capturedExecuteCall.ctx = null;
     vi.clearAllMocks();
@@ -237,7 +237,7 @@ describe("Hermes adapter env injection — spawn captures UPSTREAM_*", () => {
     return hermes;
   }
 
-  it("injects UPSTREAM_API_KEY from ctx.authToken when adapter env is empty", async () => {
+  it("injects PAPERCLIP_API_KEY from ctx.authToken when adapter env is empty", async () => {
     const hermes = getHermesAdapter();
     await hermes.execute({
       runId: "r-1",
@@ -249,10 +249,10 @@ describe("Hermes adapter env injection — spawn captures UPSTREAM_*", () => {
       onLog: vi.fn(),
     } as any);
     const cfg = capturedExecuteCall.ctx?.agent?.adapterConfig;
-    expect(cfg?.env?.UPSTREAM_API_KEY).toBe("agent-jwt-xyz");
+    expect(cfg?.env?.PAPERCLIP_API_KEY).toBe("agent-jwt-xyz");
   });
 
-  it("always injects UPSTREAM_RUN_ID regardless of authToken state", async () => {
+  it("always injects PAPERCLIP_RUN_ID regardless of authToken state", async () => {
     const hermes = getHermesAdapter();
     await hermes.execute({
       runId: "r-2",
@@ -264,23 +264,23 @@ describe("Hermes adapter env injection — spawn captures UPSTREAM_*", () => {
       onLog: vi.fn(),
     } as any);
     const cfg = capturedExecuteCall.ctx?.agent?.adapterConfig;
-    expect(cfg?.env?.UPSTREAM_RUN_ID).toBe("r-2");
-    expect(cfg?.env?.UPSTREAM_API_KEY).toBeUndefined();
+    expect(cfg?.env?.PAPERCLIP_RUN_ID).toBe("r-2");
+    expect(cfg?.env?.PAPERCLIP_API_KEY).toBeUndefined();
   });
 
-  it("preserves explicit UPSTREAM_API_KEY from adapter config", async () => {
+  it("preserves explicit PAPERCLIP_API_KEY from adapter config", async () => {
     const hermes = getHermesAdapter();
     await hermes.execute({
       runId: "r-3",
       authToken: "would-be-injected",
-      agent: { id: "a-1", adapterConfig: { env: { UPSTREAM_API_KEY: "explicit-key" } } },
+      agent: { id: "a-1", adapterConfig: { env: { PAPERCLIP_API_KEY: "explicit-key" } } },
       runtime: {},
       config: {},
       context: {},
       onLog: vi.fn(),
     } as any);
     const cfg = capturedExecuteCall.ctx?.agent?.adapterConfig;
-    expect(cfg?.env?.UPSTREAM_API_KEY).toBe("explicit-key");
+    expect(cfg?.env?.PAPERCLIP_API_KEY).toBe("explicit-key");
   });
 });
 ```
@@ -293,9 +293,9 @@ Expected: 3/3 PASS.
 
 - [ ] **Step 3: Mutation test**
 
-Temporarily edit `server/src/adapters/registry.ts` Hermes execute wrapper: comment out the line `nextEnv.UPSTREAM_API_KEY = ctx.authToken;`. Re-run the test.
+Temporarily edit `server/src/adapters/registry.ts` Hermes execute wrapper: comment out the line `nextEnv.PAPERCLIP_API_KEY = ctx.authToken;`. Re-run the test.
 
-Expected: Test 1 FAILS (UPSTREAM_API_KEY is undefined now).
+Expected: Test 1 FAILS (PAPERCLIP_API_KEY is undefined now).
 
 Revert. Re-run. Expected: 3/3 PASS.
 
@@ -382,11 +382,11 @@ describe("Skill auto-enable — full extraction → merge integration", () => {
     expect(pref?.desiredSkills.sort()).toEqual(["new-skill-1", "new-skill-2", "pre-existing"]);
   });
 
-  it("dual-writes upstreamSkillSync for back-compat", () => {
+  it("dual-writes paperclipSkillSync for back-compat", () => {
     const out = applyRunScopedMentionedSkillKeys({} as any, ["x", "y"]);
     expect((out as any).aoaSkillSync).toBeDefined();
-    expect((out as any).upstreamSkillSync).toBeDefined();
-    expect((out as any).upstreamSkillSync).toEqual((out as any).aoaSkillSync);
+    expect((out as any).paperclipSkillSync).toBeDefined();
+    expect((out as any).paperclipSkillSync).toEqual((out as any).aoaSkillSync);
   });
 
   it("is a no-op when skillKeys array is empty", () => {
@@ -395,8 +395,8 @@ describe("Skill auto-enable — full extraction → merge integration", () => {
     expect(merged).toEqual(startingConfig);
   });
 
-  it("reads back compat field upstreamSkillSync when aoaSkillSync absent", () => {
-    const config = { upstreamSkillSync: { mode: "explicit", desiredSkills: ["legacy"] } };
+  it("reads back compat field paperclipSkillSync when aoaSkillSync absent", () => {
+    const config = { paperclipSkillSync: { mode: "explicit", desiredSkills: ["legacy"] } };
     const pref = readAoaSkillSyncPreference(config);
     expect(pref?.desiredSkills).toContain("legacy");
   });
@@ -750,11 +750,11 @@ test.describe("Sign-out flow", () => {
     await expect(page).toHaveURL(/\/(login|sign-in)/, { timeout: 5000 });
   });
 
-  test("Sign out section description includes 'AoA instance' (not 'Upstream')", async ({ page }) => {
+  test("Sign out section description includes 'AoA instance' (not 'Paperclip')", async ({ page }) => {
     await page.goto("/instance/settings");
     await page.getByRole("tab", { name: "General" }).click();
     await expect(page.getByText(/Sign out of this AoA instance/i)).toBeVisible();
-    await expect(page.getByText(/Upstream instance/i)).toHaveCount(0);
+    await expect(page.getByText(/Paperclip instance/i)).toHaveCount(0);
   });
 });
 ```
@@ -995,7 +995,7 @@ git commit -m "test(e2e): Backups tab visible + retention pickers render (T23)"
 
 - [ ] **W1: Sign-out (T6)**
   Navigate to Instance Settings → General. Verify Sign out section visible at bottom. Click it. Verify redirect to login page. Sign back in. Re-visit settings to confirm normal flow restored.
-  Observe: copy says "AoA instance" (not "Upstream"), button shows "Signing out..." while pending, no console errors.
+  Observe: copy says "AoA instance" (not "Paperclip"), button shows "Signing out..." while pending, no console errors.
 
 - [ ] **W2: Cheatsheet (T7)**
   From any page, press `?`. Verify modal opens. Verify all three sections (Inbox, Task detail, Global) render with the expected key bindings. Press Esc — verify closes.
@@ -1054,7 +1054,7 @@ For any W where a real issue surfaces:
 - [ ] **Step 1: Boot dev server**
 
 ```sh
-cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-2.5"
+cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5"
 pnpm dev
 ```
 
@@ -1094,7 +1094,7 @@ git commit -m "docs(audit): UX walkthrough findings for upstream resync (Phase E
 - [ ] **Step 1: Run all gates**
 
 ```sh
-cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-AoA\AoA-2.5"
+cd "C:\Users\TK\OneDrive\Desktop\Claude Data\Paperclip-AoA\AoA-2.5"
 pnpm typecheck
 pnpm exec node scripts/check-forbidden-tokens.mjs
 pnpm test:run
@@ -1134,8 +1134,8 @@ If desired, create a summary tag or open a draft PR:
 
 ```sh
 gh pr create --draft \
-  --title "upstream project → AoA resync (Tier 1 + Tier 2)" \
-  --body "Implements docs/superpowers/plans/2026-04-26-upstream-resync.md verified by docs/superpowers/plans/2026-04-27-resync-verification.md"
+  --title "Upstream Paperclip → AoA resync (Tier 1 + Tier 2)" \
+  --body "Implements docs/superpowers/plans/2026-04-26-upstream-paperclip-resync.md verified by docs/superpowers/plans/2026-04-27-resync-verification.md"
 ```
 
 **Effort:** 15 min  

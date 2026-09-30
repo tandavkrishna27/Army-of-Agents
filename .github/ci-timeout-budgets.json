@@ -1,0 +1,259 @@
+{
+  "$comment": [
+    "Every required-lane job cap in .github/workflows/pr.yml is DERIVED here, not chosen:",
+    "",
+    "    job  timeout-minutes == ceil((workBudgetSeconds + setupAllowanceSeconds) / 60)",
+    "    step timeout-minutes == ceil(setupAllowanceSeconds / 60)   (on the pnpm setup step)",
+    "",
+    "workBudgetSeconds bounds what THIS REPOSITORY does. setupAllowanceSeconds bounds a",
+    "third-party network fetch this repository does not control. They are separated because",
+    "one job cap cannot honestly bound both: E6-F014 measured the pnpm setup step going 4s ->",
+    "431s (~108x) while every job's own work stayed within 1.78x of its median, so a cap sized",
+    "for work + worst-observed-infrastructure hides a work regression by the entire size of the",
+    "infrastructure allowance -- and when it fires, GitHub blames whichever step happened to be",
+    "running at the wall rather than the step that spent the budget.",
+    "",
+    "WHAT scripts/check-ci-timeout-budgets.mjs REFUSES, stated as the clauses and nothing more:",
+    "a workBudgetSeconds above 2x -- or below 1x -- the measuredMaxWorkSeconds DECLARED beside it;",
+    "a setupAllowanceSeconds above 1.5x -- or below 1x -- the measuredMaxSetupSeconds DECLARED in",
+    "the setupAllowance block; a measured* block missing an ISO date, run ids, or n >= 5; a job or",
+    "step cap that is not the arithmetic above; a job running pnpm/action-setup with no entry here;",
+    "and a required-lane job that is neither budgeted nor exempt with a reason.",
+    "",
+    "★ WHAT IT DOES NOT SEE: A RAISE INSIDE THE CEILING. Every comparison above is against a",
+    "measurement declared in THIS FILE, in the same diff. No clause compares any number to a",
+    "PREVIOUSLY COMMITTED value, so the numbers below are not a floor for the next diff -- only the",
+    "ceilings are, and the room between is large. MEASURED 2026-09-05 by evaluating the guard",
+    "library against the real pr.yml with every declared number pushed to its own ceiling and NO",
+    "measured* field edited:",
+    "",
+    "    verify 1700 / 2184 s          e2e 1500 / 2092 s        e2e-pgvector 600 / 776 s",
+    "    browser 200 / 210 s           migrations 170 / 178 s   policy 170 / 176 s",
+    "    distributed-contract 120/128  lint 120 / 122 s         allowance 480 / 646.5 s (uniform)",
+    "",
+    "Taking all of it moves the eight derived job caps from 142 to 187 minutes in total (verify",
+    "37 -> 48, e2e 33 -> 46) and every step cap 8 -> 11, and the guard prints OK. Pinning a budget",
+    "to its previous value is not a clause this guard can carry: it is a pure function of one",
+    "commit's workflow plus this file, with no access to the prior revision of either. That would",
+    "be a different, diff-aware instrument. It is not built, and it is not claimed.",
+    "",
+    "★ AND A SECOND THING IT DOES NOT SEE: A REQUIRED-LANE JOB WITH NO CAP AT ALL. The coverage",
+    "clause skips a job whose timeout-minutes is absent, so such a job is neither budgeted nor exempt",
+    "nor reported -- it inherits GitHub's 360-minute default, while every job cap in this workflow",
+    "SUMS to 159 minutes. MEASURED 2026-09-05: deleting brand-check's timeout-minutes AND its exemption",
+    "together yields ok:true with zero findings. All eleven required-lane jobs currently carry a cap,",
+    "so this is a hole in the guard and not a defect in the tree. A job that runs pnpm/action-setup is",
+    "still caught by job_missing_budget whether it has a cap or not.",
+    "",
+    "★★★ CORRECTION 2026-09-05, after review. The first version of this manifest bounded only",
+    "the WORK dial. setupAllowanceSeconds was validated as `a positive finite number` and nothing",
+    "else, so editing this one uniform value 480 -> 3000 and the two caps it derives was a",
+    "measurement-free three-line diff that the guard PASSED: policy 11m -> 53m, its step cap 8 ->",
+    "50, on all eight jobs at once. That was strictly EASIER than the work-budget raise the guard",
+    "already refused, and strictly more damaging, because this number is uniform. The",
+    "setupAllowance block below is the measurement that hole was missing, and the 1.5x ceiling is",
+    "what now refuses 3000. It does not refuse 646 -- see the residue table above. No cap in this",
+    "file changed as part of that correction.",
+    "",
+    "★ WHAT THE SPLIT DOES NOT DO, stated because the first version of this manifest said it did.",
+    "The job cap does NOT bound the work. GitHub's timeout-minutes covers every step in the job, so",
+    "the allowance is ADDITIVE AND UNRESERVED: when the setup step runs at its 4s p50, the work may",
+    "spend the whole cap minus 4s. Measured worst work against (cap - p50 setup):",
+    "",
+    "    lint      596s vs   61s  9.8x      e2e-pgvector 1076s vs  388s  2.8x",
+    "    dist-ctr  596s vs   64s  9.3x      verify       2216s vs 1092s  2.0x",
+    "    policy    656s vs   88s  7.5x      e2e          1976s vs 1046s  1.9x",
+    "    migration 656s vs   89s  7.4x",
+    "    browser   716s vs  105s  6.8x",
+    "",
+    "That is the same SHAPE the paragraph above indicts a combined cap for. The split shrank the",
+    "magnitudes (seven caps went down) and made the infrastructure half fail under its own name,",
+    "but bounding realized work independently of setup would need a runtime comparison of the work",
+    "duration against workBudgetSeconds -- and nothing here does that. workBudgetSeconds is a",
+    "declared bound that the derivation and the ceiling use; it is NOT enforced against a running",
+    "job. Read the numbers above as the honest residue, not as a bound.",
+    "",
+    "MEASUREMENT PROVENANCE. All figures below come from the GitHub Actions jobs API over the 13",
+    "listed pr.yml runs on docs/replatform-program (2026-09-04). Work = job wall clock MINUS the",
+    "pnpm setup step, per job instance; measuredMaxWorkSeconds is the maximum of those.",
+    "",
+    "★ CAVEAT, stated rather than assumed. All 13 runs in the window had a WARM pnpm store cache:",
+    "`Install dependencies` measured 8-14 s and `Setup Node.js` (which restores the cache) 7-23 s in",
+    "every job. A branch with no cache to fall back on would pay more. Each workBudgetSeconds carries",
+    "at least ~56 s of headroom above its measured worst work for that reason, and the three tightest",
+    "jobs (policy, migrations, lint) were raised to ~82/81/59 s of headroom WITHOUT moving their",
+    "derived caps. If a cold-cache run ever reds one of these, the fix is a new measurement here --",
+    "not an edit to the cap."
+  ],
+  "workflow": ".github/workflows/pr.yml",
+  "requiredJobId": "ci-required",
+  "measurementRuns": [
+    "33882094462",
+    "33878665082",
+    "33876812145",
+    "33871449970",
+    "33869236742",
+    "33847376840",
+    "33842573550",
+    "33840970676",
+    "33799136579",
+    "33769476886",
+    "33762176003",
+    "33759535147",
+    "33757510288"
+  ],
+  "setupAllowance": {
+    "measuredMaxSetupSeconds": 431,
+    "measuredSampleSize": 156,
+    "measuredOn": "2026-09-04",
+    "measuredRuns": [
+      "33882094462",
+      "33878665082",
+      "33876812145",
+      "33871449970",
+      "33869236742",
+      "33847376840",
+      "33842573550",
+      "33840970676",
+      "33799136579",
+      "33769476886",
+      "33762176003",
+      "33759535147",
+      "33757510288"
+    ],
+    "note": "One measurement for one uniform number. 156 observations = 13 pr.yml runs x the 12 job instances that then carried `Setup pnpm` (verify is a 4-shard matrix). Worst observed anywhere: 431 s, in run 33842573550 (2026-09-04 06:34Z), inside the ~6-hour episode documented in the E6-F014 addendum; 4 s p50 across the window. Every job carries 480 -- the smallest whole minute above every one of the 156 observations, so adopting it changed no past outcome. Each job repeats it as setupAllowanceSeconds because the derivation is per-job and a job may one day earn its own allowance (see the `browser` note); every one of them is checked against THIS single measurement, because the measurement is workflow-wide and a per-job copy of it would be a per-job claim the evidence does not support. The 1.5x ceiling is deliberately tighter than the work budget's 2x, because this number is added to all eight caps at once. It is a ceiling, not a lock on the current value: 480 sits 166.5s below it, and moving up to 646 edits no measurement and reds nothing (see the residue table in $comment). ★ RE-MEASURED FIRST-HAND on 2026-09-05 rather than carried forward: the Actions jobs API over these 13 runs returns EXACTLY 156 steps named `Setup pnpm`, min 3 s, whole-window median 5 s, max 431 s (run 33842573550, job `verify (4)`), with ZERO observations above 480 and zero above the 646.5 s ceiling. Reconciling one number while I was there: the `4 s p50` quoted in the E3-F036/E6-F014 addenda is the QUIET-WINDOW p50 (the runs outside the ~6-hour episode); across all 156 including the episode the median is 5 s. Both are correct about different populations. The residue ratios elsewhere in this file are computed against a 4 s setup and are unchanged at 3 s or 5 s to the precision quoted."
+  },
+  "jobs": {
+    "policy": {
+      "workBudgetSeconds": 170,
+      "setupAllowanceSeconds": 480,
+      "measuredMaxWorkSeconds": 88,
+      "measuredSampleSize": 13,
+      "measuredOn": "2026-09-04",
+      "measuredRuns": [
+        "33882094462",
+        "33842573550",
+        "33840970676",
+        "33847376840",
+        "33757510288"
+      ],
+      "note": "Work 59/71/88 s (min/p50/max). Budget leaves ~82 s of headroom, which at ~1 s per guard step is room for dozens more guards AND absorbs a cold pnpm store (see the cold-cache caveat above). Derived cap is unchanged at 11 by this raise."
+    },
+    "verify": {
+      "workBudgetSeconds": 1700,
+      "setupAllowanceSeconds": 480,
+      "measuredMaxWorkSeconds": 1092,
+      "measuredSampleSize": 52,
+      "measuredOn": "2026-09-04",
+      "measuredRuns": [
+        "33882094462",
+        "33878665082",
+        "33876812145",
+        "33871449970",
+        "33869236742"
+      ],
+      "note": "4 shards x 13 runs. Work 703/902/1092 s. The previous 60-minute cap carried 42 minutes of undeclared slack above the worst measured work, and that slack once masked a real hang for weeks (CI-VERIFY-PARALLELIZATION.md). 37 restores the signal without touching any observed run."
+    },
+    "lint": {
+      "workBudgetSeconds": 120,
+      "setupAllowanceSeconds": 480,
+      "measuredMaxWorkSeconds": 61,
+      "measuredSampleSize": 13,
+      "measuredOn": "2026-09-04",
+      "measuredRuns": [
+        "33882094462",
+        "33878665082",
+        "33876812145",
+        "33871449970",
+        "33869236742"
+      ],
+      "note": "Work 48/56/61 s -- the tightest distribution in the workflow (max is 1.09x p50). Budget raised 110 -> 120 for cold-cache headroom; derived cap unchanged at 10."
+    },
+    "e2e": {
+      "workBudgetSeconds": 1500,
+      "setupAllowanceSeconds": 480,
+      "measuredMaxWorkSeconds": 1046,
+      "measuredSampleSize": 13,
+      "measuredOn": "2026-09-04",
+      "measuredRuns": [
+        "33882094462",
+        "33878665082",
+        "33876812145",
+        "33871449970",
+        "33869236742"
+      ],
+      "note": "The ONE cap in this manifest that goes UP (30 -> 33). Work 811/989/1046 s; at the worst measured work plus the worst measured pnpm setup the old 30-minute cap had only 323 s of margin, the thinnest real exposure of the nine -- not brand-check, which had the largest slack relative to its work but the most margin in absolute seconds."
+    },
+    "migrations": {
+      "workBudgetSeconds": 170,
+      "setupAllowanceSeconds": 480,
+      "measuredMaxWorkSeconds": 89,
+      "measuredSampleSize": 13,
+      "measuredOn": "2026-09-04",
+      "measuredRuns": [
+        "33882094462",
+        "33878665082",
+        "33876812145",
+        "33871449970",
+        "33869236742"
+      ],
+      "note": "Work 62/72/89 s. Includes an `Initialize containers` step (Postgres service) measured at 23/34 s, so container-pull variance is already inside the measurement. Derived cap unchanged at 11."
+    },
+    "e2e-pgvector": {
+      "workBudgetSeconds": 600,
+      "setupAllowanceSeconds": 480,
+      "measuredMaxWorkSeconds": 388,
+      "measuredSampleSize": 13,
+      "measuredOn": "2026-09-04",
+      "measuredRuns": [
+        "33882094462",
+        "33878665082",
+        "33876812145",
+        "33871449970",
+        "33869236742"
+      ],
+      "note": "Work 273/305/388 s."
+    },
+    "distributed-contract": {
+      "workBudgetSeconds": 120,
+      "setupAllowanceSeconds": 480,
+      "measuredMaxWorkSeconds": 64,
+      "measuredSampleSize": 13,
+      "measuredOn": "2026-09-04",
+      "measuredRuns": [
+        "33882094462",
+        "33878665082",
+        "33876812145",
+        "33871449970",
+        "33869236742"
+      ],
+      "note": "Work 41/50/64 s."
+    },
+    "browser": {
+      "workBudgetSeconds": 200,
+      "setupAllowanceSeconds": 480,
+      "measuredMaxWorkSeconds": 105,
+      "measuredSampleSize": 13,
+      "measuredOn": "2026-09-04",
+      "measuredRuns": [
+        "33882094462",
+        "33878665082",
+        "33876812145",
+        "33871449970",
+        "33869236742"
+      ],
+      "note": "Work 51/59/105 s. Contains a SECOND network fetch -- `playwright install --with-deps chromium`, measured 20/54 s -- which is inside the work figure rather than separately allowed. A 34 s spread is two orders of magnitude below the pnpm step's 419 s, so it does not yet earn its own allowance; if it ever does, give it one here rather than widening the job cap."
+    }
+  },
+  "exempt": {
+    "changes": {
+      "reason": "Dependency-free: checkout plus a git diff. No pnpm, no node_modules, no registry. Measured 7/9/11 s over the same 13 runs against a 5-minute cap."
+    },
+    "brand-check": {
+      "reason": "Dependency-free as of this change: its pnpm setup step was DELETED rather than capped, because the job never ran `pnpm install` and its one `pnpm exec node scripts/check-forbidden-tokens.mjs` was equivalent to plain `node` (the script imports only node: builtins). Measured 7/10/16 s of work; cap lowered 10 -> 5 to match the other two dependency-free jobs."
+    },
+    "worker-protocol-contract-bytes": {
+      "reason": "Dependency-free by construction (PRT-006): a no-install matrix that runs the generator's mutation corpus against committed bytes on Linux and Windows. Measured 9/10/15 s on ubuntu and 21/25/55 s on windows against a 5-minute cap."
+    }
+  }
+}

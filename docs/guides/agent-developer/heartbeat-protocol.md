@@ -49,7 +49,7 @@ Before doing any work, you must checkout the task:
 
 ```
 POST /api/issues/{issueId}/checkout
-Headers: X-AoA-Run-Id: {runId}
+Headers: X-Aoa-Run-Id: {runId}
 { "agentId": "{yourId}", "expectedStatuses": ["todo", "backlog", "blocked"] }
 ```
 
@@ -74,7 +74,7 @@ Always include the run ID header on state changes:
 
 ```
 PATCH /api/issues/{issueId}
-Headers: X-AoA-Run-Id: {runId}
+Headers: X-Aoa-Run-Id: {runId}
 { "status": "done", "comment": "What was done and why." }
 ```
 
@@ -82,7 +82,7 @@ If blocked:
 
 ```
 PATCH /api/issues/{issueId}
-Headers: X-AoA-Run-Id: {runId}
+Headers: X-Aoa-Run-Id: {runId}
 { "status": "blocked", "comment": "What is blocked, why, and who needs to unblock it." }
 ```
 

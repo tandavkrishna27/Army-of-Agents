@@ -25,7 +25,12 @@ vi.mock("../services/plugin-registry.js", () => ({
 import { errorHandler } from "../middleware/error-handler.js";
 import { pluginUiStaticRoutes } from "../routes/plugin-ui-static.js";
 import { setDeploymentMode } from "../config/deployment-mode.js";
-import { cloudPluginExecutionBlockedEnvelope } from "../services/cloud-plugin-execution.js";
+import {
+  CLOUD_PLUGIN_BLOCK_MESSAGE,
+  CLOUD_PLUGIN_EXECUTION_DOC_PATH,
+  PLUGIN_WORKER_BLOCKED_IN_CLOUD,
+  cloudPluginExecutionBlockedEnvelope,
+} from "../services/cloud-plugin-execution.js";
 
 const PLUGIN_ID = "11111111-1111-4111-8111-111111111111";
 const COMPANY_A = "company-a";
@@ -117,6 +122,27 @@ describe("tenant-scoped plugin UI assets", () => {
     // reaches the registry lookup / tenant-access check.
     expect(response.status).toBe(503);
     expect(response.body).toEqual(cloudPluginExecutionBlockedEnvelope());
+    expect(registry.getById).not.toHaveBeenCalled();
+  });
+
+  it("FND-008: the ui-static 503 carries the exact Decision #103 error/code/docs envelope", async () => {
+    setDeploymentMode("cloud_auth");
+    registry.getById.mockResolvedValue(readyPlugin(COMPANY_A));
+    const response = await appFor(actor([COMPANY_A])).get(
+      `/_plugins/${PLUGIN_ID}/ui/index.js`
+    );
+
+    // The browser-code (ui-static) surface is one of the registered plugin HTTP
+    // surfaces FND-008 keeps returning the stable 503 denial contract, not a 404.
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual({
+      error: CLOUD_PLUGIN_BLOCK_MESSAGE,
+      code: PLUGIN_WORKER_BLOCKED_IN_CLOUD,
+      docs: CLOUD_PLUGIN_EXECUTION_DOC_PATH,
+    });
+    expect(CLOUD_PLUGIN_EXECUTION_DOC_PATH).toBe(
+      "/docs/guides/cloud-plugin-execution"
+    );
     expect(registry.getById).not.toHaveBeenCalled();
   });
 

@@ -6,16 +6,16 @@ type PluginBridgeRegistry = {
 };
 
 type GlobalBridge = typeof globalThis & {
-  __aoaPluginBridge__?: PluginBridgeRegistry;
+  __paperclipPluginBridge__?: PluginBridgeRegistry;
 };
 
 function getBridgeRegistry(): PluginBridgeRegistry | undefined {
-  return (globalThis as GlobalBridge).__aoaPluginBridge__;
+  return (globalThis as GlobalBridge).__paperclipPluginBridge__;
 }
 
 function missingBridgeValueError(name: string): Error {
   return new Error(
-    `AoA plugin UI runtime is not initialized for "${name}". ` +
+    `Paperclip plugin UI runtime is not initialized for "${name}". ` +
       'Ensure the host loaded the plugin bridge before rendering this UI module.',
   );
 }
@@ -47,5 +47,5 @@ export function renderSdkUiComponent<TProps>(
     return component(props);
   }
 
-  throw new Error(`AoA plugin UI component "${name}" is not callable`);
+  throw new Error(`Paperclip plugin UI component "${name}" is not callable`);
 }

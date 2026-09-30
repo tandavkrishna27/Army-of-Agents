@@ -1,4 +1,4 @@
-# Task agent core heartbeat behavior tests (AoA port of the upstream project core.yaml).
+# Task agent core heartbeat behavior tests (AoA port of Paperclip core.yaml).
 # Assignment pickup, progress updates, blocked reporting, clean exit,
 # checkout-before-work, and 409 conflict handling. Ported against AoA's
 # `/api/issues/...` routes and AoA task status vocabulary.
@@ -77,7 +77,7 @@
     - type: contains
       value: "POST /api/issues"
     - type: contains
-      value: X-the upstream project-Run-Id
+      value: X-Aoa-Run-Id
       metric: run_id_header
 
 - description: "task-agent.core.conflict_handling - stops on 409, picks different task"

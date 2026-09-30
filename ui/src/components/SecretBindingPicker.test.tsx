@@ -19,6 +19,7 @@ describe("SecretBindingPicker", () => {
         name: "OpenAI API key",
         key: "OPENAI_API_KEY",
         status: "active",
+        resolutionScope: "general",
         managedMode: "aoa_managed",
         provider: "local_encrypted",
         providerConfigId: null,

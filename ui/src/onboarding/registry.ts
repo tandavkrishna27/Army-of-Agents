@@ -11,6 +11,7 @@ export type StepContext = {
   journey: OnboardingJourney;
   completedStates: OnboardingState[];
   deploymentMode?: "local_trusted" | "authenticated" | "cloud_auth";
+  distributedExecutionEnabled?: boolean;
   /**
    * The id of the Organization (multi-tenant account) created by
    * `CreateOrganizationStep` (Phase 2 Task 12), forwarded into the following

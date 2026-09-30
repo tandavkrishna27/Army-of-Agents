@@ -113,10 +113,10 @@ describe.skipIf(process.platform !== "linux")(
         );
       }
       companyAId = firstId(await db.execute<{ id: string }>(sql`
-        INSERT INTO companies (id, name, issue_prefix) VALUES (gen_random_uuid(), 'Scope Co A', 'SCA') RETURNING id
+        INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Scope Co A', 'SCA') RETURNING id
       `));
       companyBId = firstId(await db.execute<{ id: string }>(sql`
-        INSERT INTO companies (id, name, issue_prefix) VALUES (gen_random_uuid(), 'Scope Co B', 'SCB') RETURNING id
+        INSERT INTO companies (organization_id, id, name, issue_prefix) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Scope Co B', 'SCB') RETURNING id
       `));
       expect(companyAId).toBeTruthy();
       expect(companyBId).toBeTruthy();

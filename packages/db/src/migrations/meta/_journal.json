@@ -1454,8 +1454,589 @@
     {
       "idx": 207,
       "version": "7",
-      "when": 1790758741291,
-      "tag": "0207_left_photon",
+      "when": 1786273990093,
+      "tag": "0207_tenant_kernel_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 208,
+      "version": "7",
+      "when": 1786275474063,
+      "tag": "0208_tenant_kernel_services",
+      "breakpoints": true
+    },
+    {
+      "idx": 209,
+      "version": "7",
+      "when": 1786276838702,
+      "tag": "0209_tenant_composite_integrity",
+      "breakpoints": true
+    },
+    {
+      "idx": 210,
+      "version": "7",
+      "when": 1786283531037,
+      "tag": "0210_drop_sentinel_org_default",
+      "breakpoints": true
+    },
+    {
+      "idx": 211,
+      "version": "7",
+      "when": 1786285646199,
+      "tag": "0211_tenant_rls_enforcement",
+      "breakpoints": true
+    },
+    {
+      "idx": 212,
+      "version": "7",
+      "when": 1786291333765,
+      "tag": "0212_fk_dedup_tenant_oracle",
+      "breakpoints": true
+    },
+    {
+      "idx": 213,
+      "version": "7",
+      "when": 1786303368503,
+      "tag": "0213_e2_serving_role_correction",
+      "breakpoints": true
+    },
+    {
+      "idx": 214,
+      "version": "7",
+      "when": 1786307394017,
+      "tag": "0214_e2_serving_role_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 215,
+      "version": "7",
+      "when": 1786310274264,
+      "tag": "0215_e2_serving_role_audit_completion",
+      "breakpoints": true
+    },
+    {
+      "idx": 216,
+      "version": "7",
+      "when": 1786321924743,
+      "tag": "0216_job_control_submission",
+      "breakpoints": true
+    },
+    {
+      "idx": 217,
+      "version": "7",
+      "when": 1786321969588,
+      "tag": "0217_job_control_submission_constraints",
+      "breakpoints": true
+    },
+    {
+      "idx": 218,
+      "version": "7",
+      "when": 1786321981348,
+      "tag": "0218_job_control_submission_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 219,
+      "version": "7",
+      "when": 1786331668706,
+      "tag": "0219_worker_enrollment",
+      "breakpoints": true
+    },
+    {
+      "idx": 220,
+      "version": "7",
+      "when": 1786331763217,
+      "tag": "0220_worker_enrollment_constraints",
+      "breakpoints": true
+    },
+    {
+      "idx": 221,
+      "version": "7",
+      "when": 1786331770352,
+      "tag": "0221_worker_enrollment_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 222,
+      "version": "7",
+      "when": 1786337907601,
+      "tag": "0222_worker_profile_liveness",
+      "breakpoints": true
+    },
+    {
+      "idx": 223,
+      "version": "7",
+      "when": 1786344921279,
+      "tag": "0223_job_placement_authority",
+      "breakpoints": true
+    },
+    {
+      "idx": 224,
+      "version": "7",
+      "when": 1786344962481,
+      "tag": "0224_job_placement_authority_grants",
+      "breakpoints": true
+    },
+    {
+      "idx": 225,
+      "version": "7",
+      "when": 1786350460765,
+      "tag": "0225_job_attempt_lease_eligibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 226,
+      "version": "7",
+      "when": 1786350714854,
+      "tag": "0226_execution_target_profile_authority",
+      "breakpoints": true
+    },
+    {
+      "idx": 227,
+      "version": "7",
+      "when": 1786358317260,
+      "tag": "0227_job_leasing_authority",
+      "breakpoints": true
+    },
+    {
+      "idx": 228,
+      "version": "7",
+      "when": 1786358367465,
+      "tag": "0228_job_leasing_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 229,
+      "version": "7",
+      "when": 1786413281811,
+      "tag": "0229_milky_veda",
+      "breakpoints": true
+    },
+    {
+      "idx": 230,
+      "version": "7",
+      "when": 1786413429816,
+      "tag": "0230_reflective_gladiator",
+      "breakpoints": true
+    },
+    {
+      "idx": 231,
+      "version": "7",
+      "when": 1786413473009,
+      "tag": "0231_worker_lease_rejections_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 232,
+      "version": "7",
+      "when": 1786600841526,
+      "tag": "0232_distributed_cutover_markers",
+      "breakpoints": true
+    },
+    {
+      "idx": 233,
+      "version": "7",
+      "when": 1786600863806,
+      "tag": "0233_distributed_cutover_marker_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 234,
+      "version": "7",
+      "when": 1786665033454,
+      "tag": "0234_sloppy_the_watchers",
+      "breakpoints": true
+    },
+    {
+      "idx": 235,
+      "version": "7",
+      "when": 1786665071692,
+      "tag": "0235_job_events_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 236,
+      "version": "7",
+      "when": 1786667563902,
+      "tag": "0236_boring_ricochet",
+      "breakpoints": true
+    },
+    {
+      "idx": 237,
+      "version": "7",
+      "when": 1786667563903,
+      "tag": "0237_job_control_commands_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 238,
+      "version": "7",
+      "when": 1786671692347,
+      "tag": "0238_petite_psylocke",
+      "breakpoints": true
+    },
+    {
+      "idx": 239,
+      "version": "7",
+      "when": 1786671720596,
+      "tag": "0239_execution_target_revocations_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 240,
+      "version": "7",
+      "when": 1786689947503,
+      "tag": "0240_familiar_magneto",
+      "breakpoints": true
+    },
+    {
+      "idx": 241,
+      "version": "7",
+      "when": 1786689947504,
+      "tag": "0241_job_governance_projections_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 242,
+      "version": "7",
+      "when": 1786696597105,
+      "tag": "0242_tricky_network",
+      "breakpoints": true
+    },
+    {
+      "idx": 243,
+      "version": "7",
+      "when": 1786696597106,
+      "tag": "0243_job_authoritative_cost_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 244,
+      "version": "7",
+      "when": 1786700681822,
+      "tag": "0244_abnormal_war_machine",
+      "breakpoints": true
+    },
+    {
+      "idx": 245,
+      "version": "7",
+      "when": 1786700681823,
+      "tag": "0245_job_activity_audit_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 246,
+      "version": "7",
+      "when": 1786700681824,
+      "tag": "0246_job_output_projection",
+      "breakpoints": true
+    },
+    {
+      "idx": 247,
+      "version": "7",
+      "when": 1786700681825,
+      "tag": "0247_job_output_projection_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 248,
+      "version": "7",
+      "when": 1786734557753,
+      "tag": "0248_petite_star_brand",
+      "breakpoints": true
+    },
+    {
+      "idx": 249,
+      "version": "7",
+      "when": 1786740228236,
+      "tag": "0249_fine_miracleman",
+      "breakpoints": true
+    },
+    {
+      "idx": 250,
+      "version": "7",
+      "when": 1786745873985,
+      "tag": "0250_condemned_warbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 251,
+      "version": "7",
+      "when": 1786753853056,
+      "tag": "0251_broken_la_nuit",
+      "breakpoints": true
+    },
+    {
+      "idx": 252,
+      "version": "7",
+      "when": 1786759032384,
+      "tag": "0252_empty_black_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 253,
+      "version": "7",
+      "when": 1786759120296,
+      "tag": "0253_folder_grants_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 254,
+      "version": "7",
+      "when": 1786830105286,
+      "tag": "0254_round_arclight",
+      "breakpoints": true
+    },
+    {
+      "idx": 255,
+      "version": "7",
+      "when": 1786830112048,
+      "tag": "0255_worker_admission_rate_limit_rls",
+      "breakpoints": true
+    },
+    {
+      "idx": 256,
+      "version": "7",
+      "when": 1787127386672,
+      "tag": "0256_dizzy_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 257,
+      "version": "7",
+      "when": 1787133558461,
+      "tag": "0257_volatile_spencer_smythe",
+      "breakpoints": true
+    },
+    {
+      "idx": 258,
+      "version": "7",
+      "when": 1787154064511,
+      "tag": "0258_cuddly_pandemic",
+      "breakpoints": true
+    },
+    {
+      "idx": 259,
+      "version": "7",
+      "when": 1787286851224,
+      "tag": "0259_provider_credentials_app_select",
+      "breakpoints": true
+    },
+    {
+      "idx": 260,
+      "version": "7",
+      "when": 1787381909370,
+      "tag": "0260_cultured_taskmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 261,
+      "version": "7",
+      "when": 1787381909371,
+      "tag": "0261_instance_settings_app_select",
+      "breakpoints": true
+    },
+    {
+      "idx": 262,
+      "version": "7",
+      "when": 1787460124993,
+      "tag": "0262_chief_thaddeus_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 263,
+      "version": "7",
+      "when": 1787461094696,
+      "tag": "0263_brief_felicia_hardy",
+      "breakpoints": true
+    },
+    {
+      "idx": 264,
+      "version": "7",
+      "when": 1787503512356,
+      "tag": "0264_public_patch",
+      "breakpoints": true
+    },
+    {
+      "idx": 265,
+      "version": "7",
+      "when": 1787541311776,
+      "tag": "0265_productive_exodus",
+      "breakpoints": true
+    },
+    {
+      "idx": 266,
+      "version": "7",
+      "when": 1788240336663,
+      "tag": "0266_canary_preflight_evidence_fn",
+      "breakpoints": true
+    },
+    {
+      "idx": 267,
+      "version": "7",
+      "when": 1788272658445,
+      "tag": "0267_canary_preflight_evidence_org_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 268,
+      "version": "7",
+      "when": 1788328744120,
+      "tag": "0268_legacy_reconciliation_lease_read",
+      "breakpoints": true
+    },
+    {
+      "idx": 269,
+      "version": "7",
+      "when": 1788341112185,
+      "tag": "0269_groovy_lila_cheney",
+      "breakpoints": true
+    },
+    {
+      "idx": 270,
+      "version": "7",
+      "when": 1788343527289,
+      "tag": "0270_canary_preflight_lease_watermark",
+      "breakpoints": true
+    },
+    {
+      "idx": 271,
+      "version": "7",
+      "when": 1788367848868,
+      "tag": "0271_real_frightful_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 272,
+      "version": "7",
+      "when": 1788513475295,
+      "tag": "0272_browser_request_decision_binding",
+      "breakpoints": true
+    },
+    {
+      "idx": 273,
+      "version": "7",
+      "when": 1788523348119,
+      "tag": "0273_trust_rule_agent_binding",
+      "breakpoints": true
+    },
+    {
+      "idx": 274,
+      "version": "7",
+      "when": 1788967437919,
+      "tag": "0274_activity_log_denial_sink",
+      "breakpoints": true
+    },
+    {
+      "idx": 275,
+      "version": "7",
+      "when": 1788981618931,
+      "tag": "0275_service_instance_reconciler",
+      "breakpoints": true
+    },
+    {
+      "idx": 276,
+      "version": "7",
+      "when": 1788997702061,
+      "tag": "0276_activity_log_denial_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 277,
+      "version": "7",
+      "when": 1789004678842,
+      "tag": "0277_service_health_projection",
+      "breakpoints": true
+    },
+    {
+      "idx": 278,
+      "version": "7",
+      "when": 1789017627848,
+      "tag": "0278_service_instance_last_observed_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 279,
+      "version": "7",
+      "when": 1789039634296,
+      "tag": "0279_service_instance_terminalized_by",
+      "breakpoints": true
+    },
+    {
+      "idx": 280,
+      "version": "7",
+      "when": 1789093541700,
+      "tag": "0280_classy_warstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 281,
+      "version": "7",
+      "when": 1789093541701,
+      "tag": "0281_provider_credential_broker",
+      "breakpoints": true
+    },
+    {
+      "idx": 282,
+      "version": "7",
+      "when": 1789758062957,
+      "tag": "0282_internal_agent_runs_distributed_marker",
+      "breakpoints": true
+    },
+    {
+      "idx": 283,
+      "version": "7",
+      "when": 1789810371678,
+      "tag": "0283_universe_persistence",
+      "breakpoints": true
+    },
+    {
+      "idx": 284,
+      "version": "7",
+      "when": 1789818917055,
+      "tag": "0284_universe_receipts_checkpoints",
+      "breakpoints": true
+    },
+    {
+      "idx": 285,
+      "version": "7",
+      "when": 1789846091346,
+      "tag": "0285_red_omega_sentinel",
+      "breakpoints": true
+    },
+    {
+      "idx": 286,
+      "version": "7",
+      "when": 1789846408565,
+      "tag": "0286_magical_skin",
+      "breakpoints": true
+    },
+    {
+      "idx": 287,
+      "version": "7",
+      "when": 1789848225992,
+      "tag": "0287_old_dazzler",
+      "breakpoints": true
+    },
+    {
+      "idx": 288,
+      "version": "7",
+      "when": 1789853545578,
+      "tag": "0288_orange_spitfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 289,
+      "version": "7",
+      "when": 1789855147696,
+      "tag": "0289_married_oracle",
+      "breakpoints": true
+    },
+    {
+      "idx": 290,
+      "version": "7",
+      "when": 1789877464371,
+      "tag": "0290_mixed_thundra",
       "breakpoints": true
     }
   ]

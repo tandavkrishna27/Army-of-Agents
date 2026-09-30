@@ -199,7 +199,7 @@ compose() {
     "$@"
 }
 
-detect_aoa_base_url() {
+detect_paperclip_base_url() {
   local bridge_gateway candidate health_url
   bridge_gateway="$(docker network inspect openclaw-docker_default --format '{{(index .IPAM.Config 0).Gateway}}' 2>/dev/null || true)"
   for candidate in "$AOA_HOST_FROM_CONTAINER" "$bridge_gateway"; do
@@ -231,7 +231,7 @@ if [[ "$READY" != "1" ]]; then
   fail "gateway did not become healthy in ${OPENCLAW_WAIT_SECONDS}s"
 fi
 
-aoa_base_url="$(detect_aoa_base_url || true)"
+paperclip_base_url="$(detect_paperclip_base_url || true)"
 dashboard_output="$(compose run --rm openclaw-cli dashboard --no-open)"
 dashboard_url="$(grep -Eo 'https?://[^[:space:]]+#token=[^[:space:]]+' <<<"$dashboard_output" | head -n1 || true)"
 if [[ -z "$dashboard_url" ]]; then
@@ -258,9 +258,9 @@ State:
   OPENCLAW_RESET_STATE=$OPENCLAW_RESET_STATE
 AoA URL for OpenClaw container:
 EOF
-  if [[ -n "$aoa_base_url" ]]; then
+  if [[ -n "$paperclip_base_url" ]]; then
     cat <<EOF
-  $aoa_base_url
+  $paperclip_base_url
   (Use this base URL for invite/onboarding links from inside OpenClaw Docker.)
 EOF
   else
@@ -291,9 +291,9 @@ State:
   OPENCLAW_RESET_STATE=$OPENCLAW_RESET_STATE
 AoA URL for OpenClaw container:
 EOF
-  if [[ -n "$aoa_base_url" ]]; then
+  if [[ -n "$paperclip_base_url" ]]; then
     cat <<EOF
-  $aoa_base_url
+  $paperclip_base_url
   (Use this base URL for invite/onboarding links from inside OpenClaw Docker.)
 EOF
   else

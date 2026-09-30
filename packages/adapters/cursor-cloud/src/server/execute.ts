@@ -7,16 +7,16 @@ import {
   readAdapterExecutionTarget,
 } from "@armyofagents/adapter-utils/execution-target";
 import {
-  DEFAULT_AOA_AGENT_PROMPT_TEMPLATE,
+  DEFAULT_PAPERCLIP_AGENT_PROMPT_TEMPLATE,
   asBoolean,
   asString,
-  buildAoaEnv,
+  buildPaperclipEnv,
   joinPromptSections,
   parseObject,
-  readAoaIssueWorkModeFromContext,
-  renderAoaWakePrompt,
+  readPaperclipIssueWorkModeFromContext,
+  renderPaperclipWakePrompt,
   renderTemplate,
-  stringifyAoaWakePayload,
+  stringifyPaperclipWakePayload,
 } from "@armyofagents/adapter-utils/server-utils";
 
 type ModelSelection = { id: string };
@@ -143,8 +143,8 @@ function buildWakeEnv(ctx: AdapterExecutionContext, configEnv: Record<string, st
   const { runId, agent, context, authToken } = ctx;
   const env: Record<string, string> = {
     ...configEnv,
-    ...buildAoaEnv(agent),
-    AOA_RUN_ID: runId,
+    ...buildPaperclipEnv(agent),
+    PAPERCLIP_RUN_ID: runId,
   };
 
   const wakeTaskId = trimNullable(context.taskId) ?? trimNullable(context.issueId);
@@ -155,30 +155,30 @@ function buildWakeEnv(ctx: AdapterExecutionContext, configEnv: Record<string, st
   const linkedIssueIds = Array.isArray(context.issueIds)
     ? context.issueIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
     : [];
-  const wakePayloadJson = stringifyAoaWakePayload(context.aoaWake);
-  const issueWorkMode = readAoaIssueWorkModeFromContext(context);
+  const wakePayloadJson = stringifyPaperclipWakePayload(context.paperclipWake);
+  const issueWorkMode = readPaperclipIssueWorkModeFromContext(context);
 
-  if (wakeTaskId) env.AOA_TASK_ID = wakeTaskId;
-  if (wakeReason) env.AOA_WAKE_REASON = wakeReason;
-  if (wakeCommentId) env.AOA_WAKE_COMMENT_ID = wakeCommentId;
-  if (approvalId) env.AOA_APPROVAL_ID = approvalId;
-  if (approvalStatus) env.AOA_APPROVAL_STATUS = approvalStatus;
-  if (linkedIssueIds.length > 0) env.AOA_LINKED_ISSUE_IDS = linkedIssueIds.join(",");
-  if (wakePayloadJson) env.AOA_WAKE_PAYLOAD_JSON = wakePayloadJson;
-  if (issueWorkMode) env.AOA_ISSUE_WORK_MODE = issueWorkMode;
-  if (!trimNullable(env.AOA_API_KEY) && authToken) {
-    env.AOA_API_KEY = authToken;
+  if (wakeTaskId) env.PAPERCLIP_TASK_ID = wakeTaskId;
+  if (wakeReason) env.PAPERCLIP_WAKE_REASON = wakeReason;
+  if (wakeCommentId) env.PAPERCLIP_WAKE_COMMENT_ID = wakeCommentId;
+  if (approvalId) env.PAPERCLIP_APPROVAL_ID = approvalId;
+  if (approvalStatus) env.PAPERCLIP_APPROVAL_STATUS = approvalStatus;
+  if (linkedIssueIds.length > 0) env.PAPERCLIP_LINKED_ISSUE_IDS = linkedIssueIds.join(",");
+  if (wakePayloadJson) env.PAPERCLIP_WAKE_PAYLOAD_JSON = wakePayloadJson;
+  if (issueWorkMode) env.PAPERCLIP_ISSUE_WORK_MODE = issueWorkMode;
+  if (!trimNullable(env.PAPERCLIP_API_KEY) && authToken) {
+    env.PAPERCLIP_API_KEY = authToken;
   }
 
-  const workspace = parseObject(context.aoaWorkspace);
+  const workspace = parseObject(context.paperclipWorkspace);
   const workspaceMappings: Array<[string, unknown]> = [
-    ["AOA_WORKSPACE_CWD", workspace.cwd],
-    ["AOA_WORKSPACE_SOURCE", workspace.source],
-    ["AOA_WORKSPACE_ID", workspace.workspaceId],
-    ["AOA_WORKSPACE_REPO_URL", workspace.repoUrl],
-    ["AOA_WORKSPACE_REPO_REF", workspace.repoRef],
-    ["AOA_WORKSPACE_BRANCH", workspace.branch],
-    ["AOA_WORKSPACE_WORKTREE_PATH", workspace.worktreePath],
+    ["PAPERCLIP_WORKSPACE_CWD", workspace.cwd],
+    ["PAPERCLIP_WORKSPACE_SOURCE", workspace.source],
+    ["PAPERCLIP_WORKSPACE_ID", workspace.workspaceId],
+    ["PAPERCLIP_WORKSPACE_REPO_URL", workspace.repoUrl],
+    ["PAPERCLIP_WORKSPACE_REPO_REF", workspace.repoRef],
+    ["PAPERCLIP_WORKSPACE_BRANCH", workspace.branch],
+    ["PAPERCLIP_WORKSPACE_WORKTREE_PATH", workspace.worktreePath],
     ["AGENT_HOME", workspace.agentHome],
   ];
   for (const [key, value] of workspaceMappings) {
@@ -227,14 +227,14 @@ async function buildInstructionsPrefix(
   }
 }
 
-function renderAoaEnvNote(env: Record<string, string>): string {
+function renderPaperclipEnvNote(env: Record<string, string>): string {
   const keys = Object.keys(env)
-    .filter((key) => key.startsWith("AOA_"))
+    .filter((key) => key.startsWith("PAPERCLIP_"))
     .sort();
   if (keys.length === 0) return "";
   return [
-    "AoA runtime note:",
-    `The following AOA_* environment variables are available in the cloud agent shell: ${keys.join(", ")}`,
+    "Paperclip runtime note:",
+    `The following PAPERCLIP_* environment variables are available in the cloud agent shell: ${keys.join(", ")}`,
     "Use them directly instead of assuming they are absent.",
   ].join("\n");
 }
@@ -396,7 +396,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     };
   }
 
-  const workspace = parseObject(context.aoaWorkspace);
+  const workspace = parseObject(context.paperclipWorkspace);
   const repoUrl =
     asString(config.repoUrl, "").trim() ||
     asString(workspace.repoUrl, "").trim();
@@ -450,7 +450,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       }
     : null);
   const canReuseSession = sessionMatches(session, envType, envName, repos);
-  const promptTemplate = asString(config.promptTemplate, DEFAULT_AOA_AGENT_PROMPT_TEMPLATE);
+  const promptTemplate = asString(config.promptTemplate, DEFAULT_PAPERCLIP_AGENT_PROMPT_TEMPLATE);
   const bootstrapPromptTemplate = asString(config.bootstrapPromptTemplate, "");
   const templateData = {
     agentId: agent.id,
@@ -462,7 +462,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     context,
   };
   const instructions = await buildInstructionsPrefix(config, onLog);
-  const wakePrompt = renderAoaWakePrompt(context.aoaWake, { resumedSession: canReuseSession });
+  const wakePrompt = renderPaperclipWakePrompt(context.paperclipWake, { resumedSession: canReuseSession });
   const renderedBootstrapPrompt =
     !canReuseSession && bootstrapPromptTemplate.trim().length > 0
       ? renderTemplate(bootstrapPromptTemplate, templateData).trim()
@@ -471,20 +471,20 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     canReuseSession && wakePrompt.length > 0
       ? ""
       : renderTemplate(promptTemplate, templateData).trim();
-  const aoaEnvNote = renderAoaEnvNote(remoteEnv);
+  const paperclipEnvNote = renderPaperclipEnvNote(remoteEnv);
   const prompt = joinPromptSections([
     instructions.prefix,
     renderedBootstrapPrompt,
     wakePrompt,
-    aoaEnvNote,
+    paperclipEnvNote,
     renderedPrompt,
   ]);
-  const sessionHandoffNote = asString(context.aoaSessionHandoffMarkdown, "").trim();
+  const sessionHandoffNote = asString(context.paperclipSessionHandoffMarkdown, "").trim();
   const finalPrompt = joinPromptSections([prompt, sessionHandoffNote]);
 
   const agentOptions = buildAgentOptions({
     apiKey,
-    name: `AoA ${agent.name}`,
+    name: `Paperclip ${agent.name}`,
     model,
     envType,
     envName,

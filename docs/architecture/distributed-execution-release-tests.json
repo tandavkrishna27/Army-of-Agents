@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "note": "Release-test deferral manifest for the E0 foundation checker (REL-FOUNDATION-GATE, GO-BOOK S9 unit 1). Every REL ticket NAMED by a Critical/High crossing in distributed-execution-threat-controls.json that is NOT yet written on disk (docs/replatform/epics/E11-hardening-release/tickets/<REL-ID>-design.md) MUST appear in `deferred` with a non-empty reason. When a ticket's design doc lands, its entry MUST be removed in the SAME commit \u00e2\u20ac\u201d the stale-deferral guard reds otherwise. REL-004 is written and therefore is NOT declared here. An ABSENT manifest is a FAIL (fail-closed), not an empty allow-list.",
+  "deferred": {
+    "REL-001": {
+      "reason": "End-to-end cross-tenant and secret-exposure adversarial gate across coding+browser+service. Deps BRW-006 (Sprint 7) and SVC-007 (Sprint 8) are unshipped \u00e2\u20ac\u201d the hostile-tenant browser/service adversarial suite cannot be authored before those workloads exist (program-design.md #### REL-001)."
+    },
+    "REL-002": {
+      "reason": "Multi-tenant load/fairness/SLO model with worker churn and object-store latency. Dep SVC-006 (Sprint 8) is unshipped \u00e2\u20ac\u201d there is no service-reconciliation limit to model yet (program-design.md #### REL-002)."
+    },
+    "REL-005": {
+      "reason": "Private-beta campaign + evidence pack + the kill-switch write path (GO-BOOK S5 debt row). Depends on REL-001/002/003/004 \u00e2\u20ac\u201d the last Sprint-9 unit; deferred until all four land (program-design.md #### REL-005)."
+    }
+  }
+}

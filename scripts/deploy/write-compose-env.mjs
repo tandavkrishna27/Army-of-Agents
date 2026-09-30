@@ -53,8 +53,8 @@ const values = new Map([
   ["AOA_TRUST_PROXY", "1"],
   ["AOA_MIGRATION_AUTO_APPLY", "true"],
   ["AOA_MARKETPLACE_SKILLS_WRITE_ROOT", "legacy"],
-  ["AOA_POSTGRES_USER", "aoa"],
-  ["AOA_POSTGRES_DB", "aoa"],
+  ["AOA_POSTGRES_USER", "paperclip"],
+  ["AOA_POSTGRES_DB", "paperclip"],
   ...requiredNames.map((name) => [name, process.env[name]]),
 ]);
 

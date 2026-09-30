@@ -45,11 +45,11 @@ describe("buildInviteOnboardingTextDocument", () => {
     expect(text).toContain("Suggested AoA base URLs to try");
     expect(text).toContain("http://localhost:3100");
     expect(text).toContain("host.docker.internal");
-    expect(text).toContain("aoaApiUrl");
+    expect(text).toContain("paperclipApiUrl");
     expect(text).toContain("You MUST include agentDefaultsPayload.headers.x-openclaw-auth");
     expect(text).toContain("will fail with 401 Unauthorized");
-    expect(text).toContain("set the first reachable candidate as agentDefaultsPayload.aoaApiUrl");
-    expect(text).toContain("~/.openclaw/workspace/aoa-claimed-api-key.json");
+    expect(text).toContain("set the first reachable candidate as agentDefaultsPayload.paperclipApiUrl");
+    expect(text).toContain("~/.openclaw/workspace/paperclip-claimed-api-key.json");
     expect(text).toContain("AOA_API_KEY");
     expect(text).toContain("saved token field");
   });

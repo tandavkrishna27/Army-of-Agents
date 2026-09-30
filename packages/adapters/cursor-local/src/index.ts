@@ -52,7 +52,7 @@ export const agentConfigurationDoc = `# cursor agent configuration
 Adapter: cursor
 
 Use when:
-- You want AoA to run Cursor Agent CLI locally as the agent runtime
+- You want Paperclip to run Cursor Agent CLI locally as the agent runtime
 - You want Cursor chat session resume across heartbeats via --resume
 - You want structured stream output in run logs via --output-format stream-json
 
@@ -79,6 +79,6 @@ Notes:
 - Runs are executed with: agent -p --output-format stream-json ...
 - Prompts are piped to Cursor via stdin.
 - Sessions are resumed with --resume when stored session cwd matches current cwd.
-- AoA auto-injects local skills into "~/.cursor/skills" when missing, so Cursor can discover "$aoa" and related skills on local runs.
-- AoA auto-adds --yolo unless one of --trust/--yolo/-f is already present in extraArgs.
+- Paperclip auto-injects local skills into "~/.cursor/skills" when missing, so Cursor can discover "$paperclip" and related skills on local runs.
+- Paperclip auto-adds --yolo unless one of --trust/--yolo/-f is already present in extraArgs.
 `;

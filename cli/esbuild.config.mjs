@@ -1,5 +1,5 @@
 /**
- * esbuild configuration for building the AoA CLI for npm.
+ * esbuild configuration for building the paperclipai CLI for npm.
  *
  * Bundles all workspace packages (@armyofagents/*) into a single file.
  * External npm packages remain as regular dependencies.

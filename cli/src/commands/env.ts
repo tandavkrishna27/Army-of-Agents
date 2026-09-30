@@ -166,7 +166,7 @@ function collectDeploymentEnvRows(config: AoaConfig | null, configPath: string):
   const storageS3Bucket =
     process.env.AOA_STORAGE_S3_BUCKET ??
     config?.storage?.s3?.bucket ??
-    "aoa";
+    "paperclip";
   const storageS3Region =
     process.env.AOA_STORAGE_S3_REGION ??
     config?.storage?.s3?.region ??

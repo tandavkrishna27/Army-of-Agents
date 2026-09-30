@@ -313,7 +313,7 @@ fail all render the card (codex may be slow to cold-start).
 # EVIDENCE — CAPTURED LIVE (ChatGPT-codex instance, :3100). Raw: docs/aoa/evidence/ps-4-probe-and-concurrency.txt
 # POST /api/companies/{cid}/adapters/codex_local/test-environment  {adapterConfig:{model:"gpt-5.3-codex"}}
 #   → HTTP 200 (15203ms)  status: "pass"
-#      ✓ Working directory is valid: C:\Users\TK\…\Upstream-A…
+#      ✓ Working directory is valid: C:\Users\TK\…\Paperclip-A…
 #      ✓ Command is executable: codex
 #      ✓ Codex auth.json is available for local authentication.   ← ChatGPT local auth detected
 #      ✓ "hello"                                                   ← end-to-end smoke turn returned
@@ -558,7 +558,7 @@ DB** (bypassing the save validation), then trigger a run. At run time
 > event with `eventType: "error"` (`heartbeat.ts:4114-4120`).
 
 Direct config write (use the embedded-PG `psql` for the live instance — DB
-`upstream`; adjust connection per the running-instance notes). The intent is a
+`paperclip`; adjust connection per the running-instance notes). The intent is a
 **deliberate, isolated** mutation of one seeded agent's stored model:
 
 ```bash

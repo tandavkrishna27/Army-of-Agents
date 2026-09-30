@@ -4,11 +4,13 @@
   "description": "AoA (Army of Agents) CLI — orchestrate AI agent teams to run a business",
   "type": "module",
   "bin": {
-    "aoa": "./dist/index.js"
+    "aoa": "./dist/index.js",
+    "paperclipai": "./dist/index.js"
   },
   "keywords": [
     "aoa",
     "army-of-agents",
+    "paperclip",
     "ai",
     "agents",
     "orchestration",

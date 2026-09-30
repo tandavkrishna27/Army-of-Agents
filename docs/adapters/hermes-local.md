@@ -13,12 +13,12 @@ The `hermes_local` adapter runs Hermes Agent (by Nous Research) locally via the 
 
 ## Wire Protocol
 
-The AoA-owned Hermes adapter uses AoA runtime values. The adapter **always** injects:
+Hermes uses a Paperclip-compatible wire protocol. The adapter **always** injects:
 
-- `AOA_RUN_ID` — current heartbeat run ID
-- `AOA_API_KEY` — agent JWT (when not explicitly configured; explicit key takes precedence)
+- `PAPERCLIP_RUN_ID` — current heartbeat run ID
+- `PAPERCLIP_API_KEY` — agent JWT (when not explicitly configured; explicit key takes precedence)
 
-The AoA-owned adapter supplies these values to the local Hermes execution. See [wire contracts](../architecture/wire-compat.md).
+**Do not rename these to `AOA_*`** — they are wire-protocol contracts with the `hermes-paperclip-adapter` package and must stay as-is. See [paperclip-migration.md](../paperclip-migration.md).
 
 ## Configuration Fields
 

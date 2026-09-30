@@ -145,15 +145,31 @@ interface UpdateCall {
   set: Record<string, unknown> | null;
 }
 
-function createMockDb() {
+/**
+ * @param updateWins when true, an UPDATE chain's `.returning()` resolves to a row
+ *   so `setRunStatus` reports that it WON the terminal-status race. The default is
+ *   true because that is the ordinary case; pass false to model a row that a
+ *   concurrent cancel or projection already terminalized.
+ *
+ *   This distinction only became observable with the CLI-006 R1b guard. Before it,
+ *   the reaper ran its recovery chain unconditionally, so a harness that resolved
+ *   every write to `[]` (i.e. "the write lost") still exercised the whole chain and
+ *   nothing noticed the mismatch.
+ */
+function createMockDb(updateWins = true) {
   const updateCalls: UpdateCall[] = [];
 
   function makeChain(currentUpdate?: UpdateCall): any {
     const handler: ProxyHandler<any> = {
       get(_target, prop) {
         if (prop === "then") {
-          // Thenable: resolve to [] so `.then(rows => rows[0] ?? null)` → null.
-          return (resolve: (v: unknown) => unknown) => resolve([]);
+          // Thenable. On an UPDATE chain, resolve to one row when the write is
+          // modelled as winning, so `.then(rows => rows[0] ?? null)` yields a row;
+          // otherwise [] → null (row gone or already terminal). SELECT chains keep
+          // resolving to [] — the activeRuns query is served separately by
+          // createServiceWithRuns.
+          return (resolve: (v: unknown) => unknown) =>
+            resolve(currentUpdate && updateWins ? [{ id: "run_x", companyId: "co_1", status: "failed" }] : []);
         }
         if (prop === "transaction") {
           return async (fn: (tx: unknown) => unknown) => fn(makeChain());
@@ -260,6 +276,133 @@ describe("reapOrphanedRuns — A-H6 concurrency-clamp queued runs", () => {
     await svc.reapOrphanedRuns({ staleThresholdMs: 0 });
 
     expect(processLostCalls(updateCalls).length).toBeGreaterThanOrEqual(1);
+  });
+
+  // ── CLI-006 (R1) — the reaper must not reap a distributed-owned run ────────
+  //
+  // A canary run hands execution to a worker attempt and suppresses its own
+  // adapter, so it has NO child process and never appears in `runningProcesses`
+  // — the map guard above cannot protect it. Left unguarded, the reaper marks it
+  // `process_lost` after the staleness window, releases the issue lock, and
+  // PROMOTES A DEFERRED WAKE INTO A NEW RUN — a second executor on the same issue
+  // while the attempt is still running. Any attempt longer than the window (i.e.
+  // essentially every real agent run) would be double-executed.
+  //
+  // The attempt is the terminal authority for these runs; the projector
+  // terminalizes them. The reaper must stand down.
+  it("does NOT reap a stale distributed-owned run in the periodic path (R1)", async () => {
+    const run = staleRun({
+      id: "run_distributed",
+      status: "running",
+      executionOwner: "distributed",
+      distributedJobId: "job_1",
+      distributedAttemptId: "attempt_1",
+    });
+    const { db, updateCalls } = createMockDb();
+    const svc = createServiceWithRuns(db, [run]);
+
+    await svc.reapOrphanedRuns({ staleThresholdMs: PERIODIC_THRESHOLD });
+
+    expect(processLostCalls(updateCalls)).toHaveLength(0);
+  });
+
+  // The startup path is the MORE dangerous one: it runs with staleThresholdMs = 0,
+  // so without this guard a control-plane restart fails EVERY in-flight handed-off
+  // run at once — precisely the case surviving a restart is supposed to cover.
+  it("does NOT reap a distributed-owned run on startup either (R1)", async () => {
+    const run = staleRun({
+      id: "run_distributed_boot",
+      status: "running",
+      executionOwner: "distributed",
+      distributedJobId: "job_2",
+      distributedAttemptId: "attempt_2",
+    });
+    const { db, updateCalls } = createMockDb();
+    const svc = createServiceWithRuns(db, [run]);
+
+    await svc.reapOrphanedRuns({ staleThresholdMs: 0 });
+
+    expect(processLostCalls(updateCalls)).toHaveLength(0);
+  });
+
+  // The guard must be narrow: a legacy run is unaffected by its existence.
+  it("STILL reaps a stale legacy run when a distributed run is also present", async () => {
+    const distributed = staleRun({
+      id: "run_distributed_mixed",
+      status: "running",
+      executionOwner: "distributed",
+    });
+    const legacy = staleRun({ id: "run_legacy_mixed", status: "running" });
+    const { db, updateCalls } = createMockDb();
+    const svc = createServiceWithRuns(db, [distributed, legacy]);
+
+    await svc.reapOrphanedRuns({ staleThresholdMs: PERIODIC_THRESHOLD });
+
+    const reaped = processLostCalls(updateCalls);
+    expect(reaped.length).toBeGreaterThanOrEqual(1);
+  });
+
+  // ── CLI-006 (R1b) — honour the terminal latch before recovering ────────────
+  //
+  // `setRunStatus` returns null whenever it did NOT win the transition: the row
+  // is gone, the flip was a no-op against a terminal row, or it fell through to
+  // the metadata-only patch. All three mean a concurrent cancel or a projection
+  // finished this run between the activeRuns select and the reaper's write.
+  //
+  // Running the recovery chain anyway fires releaseIssueExecutionAndPromote —
+  // which promotes a deferred wake into a NEW run — and marks the agent failed,
+  // against a run that just completed on its own.
+  it("skips recovery side effects when its terminal write LOST the race (R1b)", async () => {
+    const run = staleRun({ id: "run_lost_race", status: "running" });
+    const { db } = createMockDb(false); // the row was already terminal
+    const svc = createServiceWithRuns(db, [run]);
+
+    await svc.reapOrphanedRuns({ staleThresholdMs: PERIODIC_THRESHOLD });
+
+    // The prompt cancellation is the first link of the recovery chain; if the
+    // guard holds, none of the chain runs.
+    expect(cancelActiveForRunMock).not.toHaveBeenCalled();
+  });
+
+  it("DOES run recovery side effects when its terminal write won", async () => {
+    const run = staleRun({ id: "run_won_race", status: "running" });
+    const { db } = createMockDb(true);
+    const svc = createServiceWithRuns(db, [run]);
+
+    await svc.reapOrphanedRuns({ staleThresholdMs: PERIODIC_THRESHOLD });
+
+    expect(cancelActiveForRunMock).toHaveBeenCalled();
+  });
+
+  // ── CLI-006 — finalizeDistributedRun ──────────────────────────────────────
+  //
+  // The projector wins the terminal latch, then calls this to discharge the rest
+  // of what the legacy completion path would have done. It must never throw: it
+  // is invoked from an after-commit projection hook whose failure must not cost
+  // the worker's ACK.
+  it("finalizeDistributedRun is a no-op for an unknown run", async () => {
+    const { db, updateCalls } = createMockDb();
+    const svc = createServiceWithRuns(db, []);
+    await expect(
+      svc.finalizeDistributedRun({ runId: "missing", outcome: "succeeded", errorMessage: null }),
+    ).resolves.toBeUndefined();
+    expect(updateCalls).toHaveLength(0);
+  });
+
+  it("finalizeDistributedRun never throws when a substep fails", async () => {
+    const run = staleRun({ id: "run_finalize", status: "running", executionOwner: "distributed" });
+    // A db whose every write rejects — each substep must be caught independently.
+    const throwingDb: any = new Proxy(function () {}, {
+      get(_t, prop) {
+        if (prop === "then") return undefined;
+        if (prop === "transaction") return async () => { throw new Error("db down"); };
+        return () => throwingDb;
+      },
+    });
+    const svc = createServiceWithRuns(throwingDb, [run]);
+    await expect(
+      svc.finalizeDistributedRun({ runId: run.id as string, outcome: "failed", errorMessage: "boom" }),
+    ).resolves.toBeUndefined();
   });
 
   it("does NOT reap a `queued` run that IS in runningProcesses (periodic)", async () => {

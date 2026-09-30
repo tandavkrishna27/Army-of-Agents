@@ -183,8 +183,8 @@ describe.skipIf(
     const crewTeamId = randomUUID();
 
     await db.execute(sql`
-      INSERT INTO companies (id, name, issue_prefix)
-      VALUES (${companyId}, 'D21 Cascade Co', ${nextIssuePrefix()})
+      INSERT INTO companies (organization_id, id, name, issue_prefix)
+      VALUES ('00000000-0000-0000-0000-000000000001', ${companyId}, 'D21 Cascade Co', ${nextIssuePrefix()})
     `);
     await db.execute(sql`
       INSERT INTO projects (id, company_id, name, type)

@@ -205,7 +205,7 @@ describe.skipIf(process.platform === "win32")(
 
       co = firstId(
         await db.execute<{ id: string }>(sql`
-          INSERT INTO companies (id, name) VALUES (gen_random_uuid(), 'U2a Memtools Co') RETURNING id`),
+          INSERT INTO companies (organization_id, id, name) VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'U2a Memtools Co') RETURNING id`),
       );
       deptD1 = firstId(
         await db.execute<{ id: string }>(sql`

@@ -96,8 +96,8 @@ export {
   ensureAdapterExecutionTargetRuntimeCommandInstalled,
   maybeRunSandboxInstallCommand,
   adapterExecutionTargetUsesManagedHome,
-  adapterExecutionTargetUsesAoABridge,
-  startAdapterExecutionTargetAoABridge,
+  adapterExecutionTargetUsesPaperclipBridge,
+  startAdapterExecutionTargetPaperclipBridge,
 } from "./execution-target.js";
 export { sanitizeRemoteExecutionEnv } from "./remote-execution-env.js";
 export { buildSandboxEnvAllowlist } from "./sandbox-env-allowlist.js";
@@ -168,6 +168,8 @@ export {
   containsAoaSecretPlaceholder,
   aoaSecretPlaceholderVars,
   aoaSecretPlaceholderFor,
+  brokeredAoaHttpEntry,
+  type BrokeredAoaHttpEntry,
   stdioSpecCarriesSecretPlaceholder,
   withSynthesizedBearerHeader,
 } from "./mcp-server-spec.js";

@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "note": "Audit-debt ratchet for docs/architecture/distributed-execution-threat-controls.json, read by scripts/check-threat-control-audit-debt.mjs (required `policy` job). WHY IT EXISTS: before W20 the foundation checker validated the SHAPE of deliveryStatus and imposed no cap, deadline or count on `unaudited`, and scripts/check-finding-ownership.mjs globs only docs/replatform/epics/*/findings.md so this register was structurally invisible to the ownership census. Twenty-eight Critical/High controls could therefore sit unaudited forever with policy green, and one of them (DE-11) sat `unaudited` while a committed hand audit of that same crossing concluded all four of its controls were absent. This file carries the pinned numbers; the guard carries the rules. AN ABSENT FILE IS A FAIL (fail-closed), not an empty allow-list.",
+  "ceilings": {
+    "unauditedCriticalHigh": 0,
+    "$comment": "The number of Critical/High crossings that may carry deliveryStatus `unaudited`. A CEILING, never a target: it may be lowered by auditing a crossing, and lowering it is the ONLY edit this guard accepts in that direction. Raising it, or adding a new unaudited Critical/High row above it, is refused. ★ THE PIN IS NOW ZERO AND THAT IS NOT GOOD NEWS. Every one of the thirty crossings has been audited, and exactly one of thirty came back whole. Going from twenty-eight unaudited to zero moved this register from UNKNOWN to KNOWN-BAD: twenty-five rows are `partial` (audited, and carrying at least one control that is not there) and four are `not-delivered`. A zero here means nothing is unmeasured; it does NOT mean anything holds. The ratchet's remaining job is the AUDITED-FLOOR and DELIVERED-FLOOR arms: no crossing may return to `unaudited`, and DE-02 may not stop being `delivered`."
+  },
+  "auditedFloor": {
+    "$comment": "Crossings that HAVE been audited. Each must never return to `unaudited` — that would discard a recorded measurement, which is the one direction this vocabulary must not travel. DE-02 and DE-08 were audited by W4U2; DE-01/03/04/05/06/07/09/10/11/12/13/14 by W20; DE-15 through DE-30 by W20B, from the sixteen completed audits an orchestration bug had silently truncated out of W20's landing commit. The floor is now every crossing in the register.",
+    "ids": [
+      "DE-01",
+      "DE-02",
+      "DE-03",
+      "DE-04",
+      "DE-05",
+      "DE-06",
+      "DE-07",
+      "DE-08",
+      "DE-09",
+      "DE-10",
+      "DE-11",
+      "DE-12",
+      "DE-13",
+      "DE-14",
+      "DE-15",
+      "DE-16",
+      "DE-17",
+      "DE-18",
+      "DE-19",
+      "DE-20",
+      "DE-21",
+      "DE-22",
+      "DE-23",
+      "DE-24",
+      "DE-25",
+      "DE-26",
+      "DE-27",
+      "DE-28",
+      "DE-29",
+      "DE-30"
+    ]
+  },
+  "deliveredFloor": {
+    "$comment": "Crossings recorded `delivered` on a measurement. Each must STILL be `delivered`. This is the anti-regression arm: a delivered row silently dropping back to `unaudited` (or to `partial`) is a loss of established fact and reds here. Pinning the SET rather than a count means the guard names which row regressed.",
+    "ids": [
+      "DE-02"
+    ]
+  },
+  "ownerTicketDeferrals": {
+    "$comment": "A crossing that is not `delivered` must name at least one ownerTicket with a file on disk, so its exit route terminates somewhere. NO crossing needs a deferral today: DE-12 was the only one, and its entry was REMOVED in the SVC-002 design-landing commit because SVC-002 now has SVC-002-terrain.md and SVC-002-design.md on disk, exactly as that entry's own closing sentence instructed. The guard reds on a stale deferral, which is what made it self-cleaning. This object is deliberately left in place, empty, rather than deleted: the shape and this comment are what tell the next author that declaring the debt here is the sanctioned move — the `unowned`-with-reason pattern this repo already uses for release tests — rather than an option nobody knew about. NOTE the deliberately narrower rule: the guard requires ONE on-disk owner ticket, not that every named ticket exists. TWENTY-TWO of thirty rows also charter their exit to an unwritten REL ticket (REL-001/002/005, zero files each) -- counted at 4d5507a80 by W20B over ownerTickets plus releaseTest; the figure previously written here was twenty-four, which no measurement supports, and it is corrected rather than left as a plausible-sounding number nobody re-derived. That debt is declared separately and already in docs/architecture/distributed-execution-release-tests.json, and enforcing it here would red the tree without adding a fact the repo does not already record. ★ DE-12 IS NOT THEREBY DELIVERED. Its deliveryStatus stays `partial`, its control is `desired-state reconciler, generation, active fence`, and SVC-002 is a DESIGN document, not an implementation — nothing about the crossing's measured evidence changed. What changed is only that its audit route now terminates somewhere at one end."
+  }
+}

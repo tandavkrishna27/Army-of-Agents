@@ -1,3 +1,4 @@
+import "./env-compat.js"; // side-effect: mirror PAPERCLIP_* env to AOA_* for migration
 import { readConfigFile } from "./config-file.js";
 import { existsSync } from "node:fs";
 import { config as loadDotenv } from "dotenv";
@@ -22,6 +23,10 @@ import {
   resolveDefaultStorageDir,
   resolveHomeAwarePath,
 } from "./home-paths.js";
+import {
+  assertHostedExecutionStartupSafe,
+  type HostedExecutionStartupSafetyOutcome,
+} from "./config/distributed-execution.js";
 
 const AOA_ENV_FILE_PATH = resolveAoaEnvPath();
 if (existsSync(AOA_ENV_FILE_PATH)) {
@@ -32,6 +37,24 @@ type DatabaseMode = "embedded-postgres" | "postgres";
 
 export interface Config {
   deploymentMode: DeploymentMode;
+  /**
+   * FND-005: default-off deployment gate for the distributed execution rollout.
+   * Enabling it never starts a worker or registers a distributed route by
+   * itself — the Organization rollout flag (E3/E10) and per-workload flag remain
+   * separately required (see `resolveDistributedExecutionRollout`). The reserved
+   * public-ingress and cloud-plugin surfaces are NOT config booleans: their env
+   * sentinels are hard-negatives that stop startup via
+   * `assertHostedExecutionStartupSafe`.
+   */
+  distributedExecutionEnabled: boolean;
+  /**
+   * DE-14: what `assertHostedExecutionStartupSafe` DECIDED on this load, carried
+   * out so the entrypoint records the assertion's own outcome instead of
+   * re-deriving it from the same environment. A refusal never reaches here — it
+   * throws out of `loadConfig` and is recorded by
+   * `loadConfigWithStartupSafetyAudit` on the way past.
+   */
+  hostedExecutionStartupSafety: HostedExecutionStartupSafetyOutcome;
   deploymentExposure: DeploymentExposure;
   host: string;
   port: number;
@@ -67,6 +90,7 @@ export interface Config {
   storageS3Bucket: string;
   storageS3Region: string;
   storageS3Endpoint: string | undefined;
+  storageS3PresignEndpoint: string | undefined;
   storageS3Prefix: string;
   storageS3ForcePathStyle: boolean;
   heartbeatSchedulerEnabled: boolean;
@@ -153,9 +177,21 @@ export function loadConfig(): Config {
   const companyWorkspaceBaseDir = resolveHomeAwarePath(
     process.env.AOA_COMPANY_WORKSPACE_DIR ?? resolveDefaultCompanyWorkspaceBaseDir(),
   );
-  const storageS3Bucket = process.env.AOA_STORAGE_S3_BUCKET ?? fileStorage?.s3?.bucket ?? "aoa";
+  const storageS3Bucket = process.env.AOA_STORAGE_S3_BUCKET ?? fileStorage?.s3?.bucket ?? "paperclip";
   const storageS3Region = process.env.AOA_STORAGE_S3_REGION ?? fileStorage?.s3?.region ?? "us-east-1";
-  const storageS3Endpoint = process.env.AOA_STORAGE_S3_ENDPOINT ?? fileStorage?.s3?.endpoint ?? undefined;
+  // A BLANK env value means UNSET (use the AWS default host), never a literal ""
+  // endpoint — a "" would make the S3 presign path reject the valid AWS default as
+  // "not https". Apply env-over-file precedence FIRST (`??` so a set-but-blank env
+  // still overrides a stored file endpoint), THEN normalize blank/whitespace to
+  // undefined — so `AOA_STORAGE_S3_ENDPOINT=""` selects the AWS default even when a
+  // config file has a (possibly non-https) MinIO/R2 endpoint.
+  const storageS3Endpoint =
+    (process.env.AOA_STORAGE_S3_ENDPOINT ?? fileStorage?.s3?.endpoint)?.trim() || undefined;
+  // DAT-002 — worker-facing https endpoint used ONLY to mint presigned artifact
+  // grant URLs (distinct from the internal control-plane endpoint above).
+  const storageS3PresignEndpoint =
+    (process.env.AOA_STORAGE_S3_PRESIGN_ENDPOINT ?? fileStorage?.s3?.presignEndpoint)?.trim() ||
+    undefined;
   const storageS3Prefix = process.env.AOA_STORAGE_S3_PREFIX ?? fileStorage?.s3?.prefix ?? "";
   const storageS3ForcePathStyle =
     process.env.AOA_STORAGE_S3_FORCE_PATH_STYLE !== undefined
@@ -168,6 +204,29 @@ export function loadConfig(): Config {
       ? (deploymentModeFromEnvRaw as DeploymentMode)
       : null;
   const deploymentMode: DeploymentMode = deploymentModeFromEnv ?? fileConfig?.server.deploymentMode ?? "local_trusted";
+  // FND-005: resolve the default-off distributed-execution deployment flag and
+  // assert hosted-execution startup safety immediately after the deployment mode
+  // is known. A truthy excluded surface (public ingress / cloud plugin) stops
+  // startup in every mode; the process-wide unsandboxed override is rejected in
+  // cloud_auth. Neither branch starts a scheduler, adapter, distributed route, or
+  // worker — the reserved distributed routes stay unregistered when absent/false.
+  // ★ DE-14 — THE FLAG IS READ *THROUGH* THE ASSERTION, NOT BESIDE IT, and the
+  // order matters. This line used to be a separate
+  // `readDistributedExecutionDeploymentFlag(process.env)` call sitting BEFORE the
+  // assertion. That reader throws a PLAIN `Error` on a non-boolean value, so
+  // `AOA_DISTRIBUTED_EXECUTION_ENABLED=banana` refused startup one line too early
+  // — before the assertion could classify it — and the recorder at the entrypoint
+  // saw an unrelated load failure and wrote no
+  // `distributed_execution.startup_safety.refused` line. The classified
+  // `env_flag_unparseable` branch was therefore PRODUCTION-UNREACHABLE for this
+  // one flag: a reason code that nothing could emit. Found by external review on
+  // PR #416. The assertion already reads the same flag and now RETURNS it, so
+  // there is exactly one read and the refusal cannot outrun the record.
+  const hostedExecutionStartupSafety = assertHostedExecutionStartupSafe({
+    deploymentMode,
+    env: process.env,
+  });
+  const distributedExecutionEnabled = hostedExecutionStartupSafety.distributedExecutionEnabled;
   const deploymentExposureFromEnvRaw = process.env.AOA_DEPLOYMENT_EXPOSURE;
   const deploymentExposureFromEnv =
     deploymentExposureFromEnvRaw &&
@@ -258,6 +317,8 @@ export function loadConfig(): Config {
 
   return {
     deploymentMode,
+    distributedExecutionEnabled,
+    hostedExecutionStartupSafety,
     deploymentExposure,
     host: process.env.HOST ?? fileConfig?.server.host ?? "127.0.0.1",
     port: Number(process.env.PORT) || fileConfig?.server.port || 3100,
@@ -300,6 +361,7 @@ export function loadConfig(): Config {
     storageS3Bucket,
     storageS3Region,
     storageS3Endpoint,
+    storageS3PresignEndpoint,
     storageS3Prefix,
     storageS3ForcePathStyle,
     heartbeatSchedulerEnabled: process.env.HEARTBEAT_SCHEDULER_ENABLED !== "false",

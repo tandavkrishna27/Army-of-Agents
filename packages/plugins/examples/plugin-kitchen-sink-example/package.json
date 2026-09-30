@@ -1,13 +1,13 @@
 {
   "name": "@armyofagents/plugin-kitchen-sink-example",
   "version": "0.1.0",
-  "description": "Reference plugin that demonstrates the full AoA plugin surface area in one package",
+  "description": "Reference plugin that demonstrates the full Paperclip plugin surface area in one package",
   "type": "module",
   "private": true,
   "exports": {
     ".": "./src/index.ts"
   },
-  "aoaPlugin": {
+  "paperclipPlugin": {
     "manifest": "./dist/manifest.js",
     "worker": "./dist/worker.js",
     "ui": "./dist/ui/"

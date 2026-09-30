@@ -16,6 +16,7 @@ import {
   type Db,
   type HomeBoardLayoutItem,
 } from "@armyofagents/db";
+import { insertTestCompany } from "./helpers/insert-test-company.js";
 import { HOME_BOARD_LAYOUT_SCHEMA_VERSION } from "@armyofagents/shared";
 import { homeBoardLayoutService } from "../services/home-board-layout.js";
 
@@ -65,7 +66,7 @@ describe.skipIf(process.platform === "win32")("home_board_layouts migration + co
 
   async function seedCompanyWithOwner(id: string, ownerId: string, issuePrefix: string) {
     const now = new Date();
-    await db.insert(companies).values({
+    await insertTestCompany(db, {
       id,
       name: `Home Board Layout ${issuePrefix}`,
       issuePrefix,

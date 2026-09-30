@@ -1,6 +1,7 @@
 # AoA E2E Tests
 
-Playwright harness for end-to-end smoke testing of AoA's onboarding wizard.
+Playwright harness for end-to-end smoke testing. Ported from Paperclip's
+`tests/e2e/` and adapted for AoA's onboarding wizard.
 
 ## Layout
 
@@ -52,8 +53,11 @@ pnpm exec playwright test --config=tests/e2e/playwright.config.ts --list
 | `DATABASE_URL`         | —       | Optional external Postgres URL. Required to run e2e on Windows.      |
 | `ANTHROPIC_API_KEY`    | —       | Required only when `AOA_E2E_SKIP_LLM=false`.                         |
 
-> Note: `tests/e2e/playwright.config.ts` reads `AOA_E2E_*` environment
-> variables directly. Set those names before running e2e.
+> Note: `tests/e2e/playwright.config.ts` reads `AOA_E2E_*` env vars
+> directly — the runtime env-compat layer that mirrors `PAPERCLIP_*`
+> for the server/cli does NOT cover the Playwright runner. If your
+> shell exports `PAPERCLIP_E2E_PORT` or similar, rename them to
+> `AOA_E2E_*` before running e2e.
 
 ## How the harness boots a server
 

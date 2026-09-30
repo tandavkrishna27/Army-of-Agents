@@ -59,6 +59,7 @@ import { issueService } from "./issues.js";
 import { executePinnedRequest, validateAndResolveFetchUrl } from "./outbound-url-guard.js";
 import { projectService } from "./projects.js";
 import { routineService } from "./routines.js";
+import { lockBudgetAuthority } from "./budget-capacity.js";
 
 const DEFAULT_INCLUDE: CompanyPortabilityInclude = {
   company: true,
@@ -1076,7 +1077,7 @@ export function companyPortabilityService(db: Db) {
 
     const parsed = parseGitHubTreeUrl(source.url);
     let ref = parsed.ref;
-    const manifestRelativePath = [parsed.basePath, "aoa.manifest.json"].filter(Boolean).join("/");
+    const manifestRelativePath = [parsed.basePath, "paperclip.manifest.json"].filter(Boolean).join("/");
     let manifest: CompanyPortabilityManifest | null = null;
     const warnings: ImportWarning[] = [];
     try {
@@ -2208,8 +2209,14 @@ export function companyPortabilityService(db: Db) {
           ? (sourceManifest.company?.agentCompletionReviewGuardrail ?? false)
           : false,
         // D2/H3: the owning Organization is server-resolved + authorized in the
-        // route (mirrors POST /). undefined -> createWithOperator falls back to
-        // the DEFAULT sentinel (self-hosted single-tenant), unchanged.
+        // route (mirrors POST /) — the self-hosted Default Org for the
+        // isolation-not-enforced path, or the real tenant in cloud_auth — and
+        // passed here as opts.organizationId. TEN-006a / E2-D07: the fail-OPEN
+        // sentinel default is GONE — if no Organization was resolved (a direct
+        // non-route caller), createWithOperator now fails CLOSED rather than
+        // silently bucketing to the sentinel. (`?? undefined` only normalizes a
+        // null opts value to undefined for the writer's `organizationId?: string`
+        // field; it is not a fallback.)
         organizationId: opts?.organizationId ?? undefined,
       }, { requestedByUserId: actorUserId ?? null }, actorUserId, (tx) => accessService(tx));
       targetCompany = created.company;
@@ -3193,10 +3200,14 @@ export function companyPortabilityService(db: Db) {
         const batch = pendingInserts.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
         const batchSlugs = pendingSlugs.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
         if (batch.length === 0) continue;
-        const returned = (await db
-          .insert(costEvents)
-          .values(batch as never)
-          .returning({ id: costEvents.id })) as { id: string }[];
+        const returned = await db.transaction(async (tx) => {
+          const txDb = tx as unknown as Db;
+          await lockBudgetAuthority(txDb, targetCompany.id);
+          return (await txDb
+            .insert(costEvents)
+            .values(batch as never)
+            .returning({ id: costEvents.id })) as { id: string }[];
+        });
         for (let j = 0; j < returned.length && j < batchSlugs.length; j++) {
           const slug = batchSlugs[j];
           const newId = returned[j]?.id;

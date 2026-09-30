@@ -1,0 +1,378 @@
+name: aoa-staging
+
+# =============================================================================
+# DEP-006 — Staging deployment-intent manifest (ADDITIVE + DORMANT).
+#
+# This is a DEPLOYMENT-INTENT template, NOT a live-test topology and NOT a CI
+# bring-up default. It is never brought up by any self-contained CI lane; the
+# static contract is enforced by scripts/check-staging-manifest.mjs (always-on
+# pr.yml `policy`) and the render is validated by
+# tests/d1/e6f-12-staging-render.test.mjs (`docker compose config`, Linux/CI).
+#
+# Contrast with docker-compose.d1.yml (the hermetic D1 live-test stack with an
+# EMBEDDED postgres/minio/toxiproxy/fake-provider): staging uses EXTERNAL DB,
+# object storage, realtime, and admission stores — expressed as x-external
+# injected endpoint pointers, never embedded services — and splits the fleet
+# into two failure domains.
+#
+# Topology (design §1, D1):
+#   domain-a: control-plane   + worker-a1 + worker-a2
+#   domain-b: control-plane-b + worker-b1 + worker-b2
+#   shared:   migrate (one-shot) + adapter-manager (provider-control surface)
+#
+# Provider-control boundary (design §2.5 / D3): the E2B_API_KEY provider-control
+# credential is injected (rotatable — orchestrator secret store, not a baked
+# image layer) ONLY into the adapter-management surface on provider-ctl-net, and
+# is ABSENT from every control-plane / worker / migrate surface. Real-E2B
+# rotation/revocation/old-key-denial rehearsal is contracted against DEP-008's
+# hostile reference and deferred to CLI-001/D2 (crosswalk CM-010/CM-012).
+#
+# Images: control-plane / worker / adapter-manager consume admitted signed
+# digests injected via ${AOA_STAGING_*_IMAGE}. They are NEVER hardcoded here.
+# =============================================================================
+
+# External stores are injected endpoint POINTERS, not embedded services. The
+# orchestrator supplies the real endpoints at deploy time; the realtime + admission
+# stores are shared across BOTH failure domains (a single logical DB backs the
+# DEP-009 shared admission counter).
+x-external:
+  database: "${AOA_STAGING_DATABASE_URL}"
+  object-store: "${AOA_STAGING_S3_ENDPOINT}"
+  realtime: "${AOA_STAGING_REALTIME_URL}"
+  admission-store: "${AOA_STAGING_DATABASE_URL}"
+
+services:
+  # --- privileged migration one-shot (DEP-003) -------------------------------
+  # Runs migrations against the EXTERNAL database, THEN exits. Every control-plane
+  # and worker gates on its successful completion (migration-first, §2.1).
+  migrate:
+    image: "${AOA_STAGING_CONTROL_PLANE_IMAGE:-ghcr.io/meteoritelabs/aoa-control-plane:staging}"
+    entrypoint: ["/usr/local/bin/migrate-entrypoint.sh"]
+    command: []
+    environment:
+      DATABASE_URL: "${AOA_STAGING_MIGRATION_DATABASE_URL}"
+    labels:
+      com.aoa.failure-domain: "shared"
+    networks:
+      - store-egress-net
+
+  # --- control plane, failure domain A ---------------------------------------
+  control-plane:
+    image: "${AOA_STAGING_CONTROL_PLANE_IMAGE:-ghcr.io/meteoritelabs/aoa-control-plane:staging}"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3100"
+      AOA_DEPLOYMENT_MODE: "cloud_auth"
+      # Wires the DEP-009 fail-closed SHARED admission limiter path (§2.4). No
+      # process-local / in-memory admission env exists anywhere in this manifest.
+      AOA_DISTRIBUTED_EXECUTION_ENABLED: "true"
+      DATABASE_URL: "${AOA_STAGING_DATABASE_URL}"
+      AOA_APP_DATABASE_URL: "${AOA_STAGING_APP_DATABASE_URL}"
+      AOA_OPERATOR_DATABASE_URL: "${AOA_STAGING_OPERATOR_DATABASE_URL}"
+      AOA_WORKER_SESSION_SIGNING_KEY: "${AOA_STAGING_WORKER_SESSION_SIGNING_KEY}"
+      # DEP-012 Slice 4+5 — the control-plane ed25519 PRIVATE mint key (the matched pair
+      # with the adapter-manager PUBLIC key; verified at C0 by `pnpm verify:cp-am-keypair`
+      # BEFORE the canary) + the AM↔CP bearer the lease-truth route checks. The key file is
+      # mounted out-of-band; the bearer is injected (rotatable), never baked.
+      AOA_CONTROL_PLANE_SIGNING_KEY_FILE: "/run/secrets/control-plane-signing-key"
+      AOA_ADAPTER_MANAGER_TRUTH_SHARED_SECRET: "${AOA_STAGING_ADAPTER_MANAGER_TRUTH_SHARED_SECRET}"
+      AOA_WORKER_POLL_RATE_LIMIT_MAX: "20000"
+      AOA_WORKER_POLL_RATE_LIMIT_WINDOW_MS: "60000"
+      AOA_STORAGE_PROVIDER: "s3"
+      AOA_STORAGE_S3_ENDPOINT: "${AOA_STAGING_S3_ENDPOINT}"
+      AOA_STORAGE_S3_PRESIGN_ENDPOINT: "${AOA_STAGING_S3_PRESIGN_ENDPOINT}"
+      AOA_STORAGE_S3_BUCKET: "${AOA_STAGING_S3_BUCKET}"
+      AOA_STORAGE_S3_REGION: "${AOA_STAGING_S3_REGION:-us-east-1}"
+      AOA_STORAGE_S3_FORCE_PATH_STYLE: "true"
+    labels:
+      com.aoa.failure-domain: "domain-a"
+      com.aoa.autoscaling-min: "1"
+      com.aoa.autoscaling-max: "3"
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        order: "start-first"
+        max_failure_ratio: 0
+      rollback_config:
+        parallelism: 1
+        order: "stop-first"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3100/api/health || exit 1"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    stop_grace_period: "30s"
+    networks:
+      - control-net
+      - store-egress-net
+
+  # --- control plane, failure domain B (interchangeable replica) -------------
+  control-plane-b:
+    image: "${AOA_STAGING_CONTROL_PLANE_IMAGE:-ghcr.io/meteoritelabs/aoa-control-plane:staging}"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3100"
+      AOA_DEPLOYMENT_MODE: "cloud_auth"
+      AOA_DISTRIBUTED_EXECUTION_ENABLED: "true"
+      DATABASE_URL: "${AOA_STAGING_DATABASE_URL}"
+      AOA_APP_DATABASE_URL: "${AOA_STAGING_APP_DATABASE_URL}"
+      AOA_OPERATOR_DATABASE_URL: "${AOA_STAGING_OPERATOR_DATABASE_URL}"
+      # Cross-replica session portability: the SAME signing key as control-plane.
+      AOA_WORKER_SESSION_SIGNING_KEY: "${AOA_STAGING_WORKER_SESSION_SIGNING_KEY}"
+      # DEP-012 Slice 4+5 — the SAME control-plane mint key + AM↔CP bearer as control-plane
+      # (an interchangeable replica: a cap minted at either CP verifies at the shared AM).
+      AOA_CONTROL_PLANE_SIGNING_KEY_FILE: "/run/secrets/control-plane-signing-key"
+      AOA_ADAPTER_MANAGER_TRUTH_SHARED_SECRET: "${AOA_STAGING_ADAPTER_MANAGER_TRUTH_SHARED_SECRET}"
+      AOA_WORKER_POLL_RATE_LIMIT_MAX: "20000"
+      AOA_WORKER_POLL_RATE_LIMIT_WINDOW_MS: "60000"
+      AOA_STORAGE_PROVIDER: "s3"
+      AOA_STORAGE_S3_ENDPOINT: "${AOA_STAGING_S3_ENDPOINT}"
+      AOA_STORAGE_S3_PRESIGN_ENDPOINT: "${AOA_STAGING_S3_PRESIGN_ENDPOINT}"
+      AOA_STORAGE_S3_BUCKET: "${AOA_STAGING_S3_BUCKET}"
+      AOA_STORAGE_S3_REGION: "${AOA_STAGING_S3_REGION:-us-east-1}"
+      AOA_STORAGE_S3_FORCE_PATH_STYLE: "true"
+    labels:
+      com.aoa.failure-domain: "domain-b"
+      com.aoa.autoscaling-min: "1"
+      com.aoa.autoscaling-max: "3"
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        order: "start-first"
+        max_failure_ratio: 0
+      rollback_config:
+        parallelism: 1
+        order: "stop-first"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3100/api/health || exit 1"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    stop_grace_period: "30s"
+    networks:
+      - control-net
+      - store-egress-net
+
+  # --- workers, failure domain A ---------------------------------------------
+  # Workers carry NO DB credential and NO provider-control credential. They reach
+  # the control plane + the object store (presigned artifact URLs) over egress; all
+  # provider lifecycle is brokered through the adapter-management surface.
+  worker-a1:
+    image: "${AOA_STAGING_WORKER_IMAGE:-ghcr.io/meteoritelabs/aoa-worker:staging}"
+    environment:
+      AOA_WORKER_TARGET_PROFILE_ID: "staging-worker-a1"
+      AOA_WORKER_TARGET_SCOPE: "organization"
+      AOA_WORKER_CONTROL_PLANE_URL: "${AOA_STAGING_CONTROL_PLANE_URL}"
+      AOA_WORKER_S3_ENDPOINT: "${AOA_STAGING_S3_PRESIGN_ENDPOINT}"
+      AOA_WORKER_KEY_STORE_MODE: "mounted_secret"
+      AOA_WORKER_HEALTH_PORT: "9464"
+      AOA_WORKER_ENROLLMENT_CODE_FILE: "/run/secrets/worker-enrollment-code"
+    labels:
+      com.aoa.failure-domain: "domain-a"
+      com.aoa.autoscaling-min: "2"
+      com.aoa.autoscaling-max: "8"
+      com.aoa.drain-hook: "SIGTERM: stop polling; finish/relinquish in-flight leases within the visibility timeout; exit 0"
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        order: "start-first"
+        max_failure_ratio: 0
+      rollback_config:
+        parallelism: 1
+        order: "stop-first"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9464/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    stop_grace_period: "120s"
+    stop_signal: "SIGTERM"
+    networks:
+      - control-net
+      - store-egress-net
+
+  worker-a2:
+    image: "${AOA_STAGING_WORKER_IMAGE:-ghcr.io/meteoritelabs/aoa-worker:staging}"
+    environment:
+      AOA_WORKER_TARGET_PROFILE_ID: "staging-worker-a2"
+      AOA_WORKER_TARGET_SCOPE: "organization"
+      AOA_WORKER_CONTROL_PLANE_URL: "${AOA_STAGING_CONTROL_PLANE_URL}"
+      AOA_WORKER_S3_ENDPOINT: "${AOA_STAGING_S3_PRESIGN_ENDPOINT}"
+      AOA_WORKER_KEY_STORE_MODE: "mounted_secret"
+      AOA_WORKER_HEALTH_PORT: "9464"
+      AOA_WORKER_ENROLLMENT_CODE_FILE: "/run/secrets/worker-enrollment-code"
+    labels:
+      com.aoa.failure-domain: "domain-a"
+      com.aoa.autoscaling-min: "2"
+      com.aoa.autoscaling-max: "8"
+      com.aoa.drain-hook: "SIGTERM: stop polling; finish/relinquish in-flight leases within the visibility timeout; exit 0"
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        order: "start-first"
+        max_failure_ratio: 0
+      rollback_config:
+        parallelism: 1
+        order: "stop-first"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9464/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    stop_grace_period: "120s"
+    stop_signal: "SIGTERM"
+    networks:
+      - control-net
+      - store-egress-net
+
+  # --- workers, failure domain B ---------------------------------------------
+  worker-b1:
+    image: "${AOA_STAGING_WORKER_IMAGE:-ghcr.io/meteoritelabs/aoa-worker:staging}"
+    environment:
+      AOA_WORKER_TARGET_PROFILE_ID: "staging-worker-b1"
+      AOA_WORKER_TARGET_SCOPE: "organization"
+      AOA_WORKER_CONTROL_PLANE_URL: "${AOA_STAGING_CONTROL_PLANE_URL}"
+      AOA_WORKER_S3_ENDPOINT: "${AOA_STAGING_S3_PRESIGN_ENDPOINT}"
+      AOA_WORKER_KEY_STORE_MODE: "mounted_secret"
+      AOA_WORKER_HEALTH_PORT: "9464"
+      AOA_WORKER_ENROLLMENT_CODE_FILE: "/run/secrets/worker-enrollment-code"
+    labels:
+      com.aoa.failure-domain: "domain-b"
+      com.aoa.autoscaling-min: "2"
+      com.aoa.autoscaling-max: "8"
+      com.aoa.drain-hook: "SIGTERM: stop polling; finish/relinquish in-flight leases within the visibility timeout; exit 0"
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        order: "start-first"
+        max_failure_ratio: 0
+      rollback_config:
+        parallelism: 1
+        order: "stop-first"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9464/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    stop_grace_period: "120s"
+    stop_signal: "SIGTERM"
+    networks:
+      - control-net
+      - store-egress-net
+
+  worker-b2:
+    image: "${AOA_STAGING_WORKER_IMAGE:-ghcr.io/meteoritelabs/aoa-worker:staging}"
+    environment:
+      AOA_WORKER_TARGET_PROFILE_ID: "staging-worker-b2"
+      AOA_WORKER_TARGET_SCOPE: "organization"
+      AOA_WORKER_CONTROL_PLANE_URL: "${AOA_STAGING_CONTROL_PLANE_URL}"
+      AOA_WORKER_S3_ENDPOINT: "${AOA_STAGING_S3_PRESIGN_ENDPOINT}"
+      AOA_WORKER_KEY_STORE_MODE: "mounted_secret"
+      AOA_WORKER_HEALTH_PORT: "9464"
+      AOA_WORKER_ENROLLMENT_CODE_FILE: "/run/secrets/worker-enrollment-code"
+    labels:
+      com.aoa.failure-domain: "domain-b"
+      com.aoa.autoscaling-min: "2"
+      com.aoa.autoscaling-max: "8"
+      com.aoa.drain-hook: "SIGTERM: stop polling; finish/relinquish in-flight leases within the visibility timeout; exit 0"
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        order: "start-first"
+        max_failure_ratio: 0
+      rollback_config:
+        parallelism: 1
+        order: "stop-first"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9464/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    stop_grace_period: "120s"
+    stop_signal: "SIGTERM"
+    networks:
+      - control-net
+      - store-egress-net
+
+  # --- adapter-management surface (the provider-control boundary) ------------
+  # The ONLY surface that holds the E2B provider-control credential and the ONLY
+  # surface on provider-ctl-net. E2B_API_KEY is INJECTED from the orchestrator
+  # secret store (rotatable without an image rebuild), never baked. It is ABSENT
+  # from every control-plane / worker / migrate surface above.
+  adapter-manager:
+    image: "${AOA_STAGING_ADAPTER_MANAGER_IMAGE:-ghcr.io/meteoritelabs/aoa-adapter-manager:staging}"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8090"
+      AOA_DEPLOYMENT_MODE: "cloud_auth"
+      E2B_API_KEY: "${AOA_STAGING_E2B_API_KEY}"
+      E2B_DOMAIN: "${AOA_STAGING_E2B_DOMAIN:-}"
+      # DEP-012 Slice 4+5 — the provider-host boot envs. Without these three the bin
+      # REFUSES to boot (it is the provider host + the gate authority): the real e2b
+      # provider, its template, and the mounted ed25519 control-plane PUBLIC key that gates
+      # every networked create (matched to the CP mint key — verified at C0 by
+      # `pnpm verify:cp-am-keypair` before the canary). The pubkey is mounted out-of-band.
+      AOA_ADAPTER_MANAGER_SANDBOX_PROVIDER: "e2b"
+      AOA_ADAPTER_MANAGER_E2B_TEMPLATE: "${AOA_STAGING_E2B_TEMPLATE}"
+      AOA_ADAPTER_MANAGER_CONTROL_PLANE_PUBLIC_KEY_FILE: "/run/secrets/adapter-manager-cp-pubkey"
+      # The AM↔CP shared-secret bearer (P3). Sent on the lease-truth POST; the CP truth
+      # route checks it (fail-closed). Injected (rotatable), never baked. Real mTLS is a
+      # filed production follow-up — staging uses DISPOSABLE provider keys until then.
+      AOA_ADAPTER_MANAGER_TRUTH_SHARED_SECRET: "${AOA_STAGING_ADAPTER_MANAGER_TRUTH_SHARED_SECRET}"
+    labels:
+      com.aoa.failure-domain: "shared"
+      com.aoa.autoscaling-min: "1"
+      com.aoa.autoscaling-max: "3"
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        order: "start-first"
+        max_failure_ratio: 0
+      rollback_config:
+        parallelism: 1
+        order: "stop-first"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8090/healthz || exit 1"]
+      interval: "10s"
+      timeout: "5s"
+      retries: 30
+    stop_grace_period: "30s"
+    networks:
+      - control-net
+      - provider-ctl-net
+
+networks:
+  # Internal control mesh (control plane <-> workers <-> adapter-manager).
+  control-net:
+    internal: true
+  # Egress to the EXTERNAL database + object store (CP + workers + migrate).
+  store-egress-net:
+    internal: false
+  # Egress to the EXTERNAL provider control API (adapter-manager ONLY).
+  provider-ctl-net:
+    internal: false

@@ -48,7 +48,7 @@ The new helper sits next to `seedFoldersOnDepartmentCreate` because they share t
 - [ ] **Step 1: Branch safety**
 
 ```bash
-cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-2.5/.claude/worktrees/memory-phase-6-0"
+cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5/.claude/worktrees/memory-phase-6-0"
 git rev-parse --abbrev-ref HEAD
 ```
 
@@ -208,7 +208,7 @@ If the companies service file path is different from `server/src/services/compan
 - [ ] **Step 1: Branch safety**
 
 ```bash
-cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-2.5/.claude/worktrees/memory-phase-6-0"
+cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5/.claude/worktrees/memory-phase-6-0"
 git rev-parse --abbrev-ref HEAD
 ```
 
@@ -441,7 +441,7 @@ git commit -m "feat(db): backfill memory_folders for existing companies and depa
 - [ ] **Step 1: Branch safety**
 
 ```bash
-cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Upstream-AoA/AoA-2.5/.claude/worktrees/memory-phase-6-0"
+cd "C:/Users/TK/OneDrive/Desktop/Claude Data/Paperclip-AoA/AoA-2.5/.claude/worktrees/memory-phase-6-0"
 git rev-parse --abbrev-ref HEAD
 ```
 

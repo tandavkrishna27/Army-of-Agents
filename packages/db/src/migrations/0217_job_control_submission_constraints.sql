@@ -1,0 +1,1 @@
+ALTER TABLE "job_attempts" ALTER COLUMN "company_id" SET NOT NULL;

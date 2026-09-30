@@ -119,8 +119,8 @@ describe.skipIf(process.platform === "win32")(
 
       // Seed company
       companyId = firstId(await db.execute<{ id: string }>(sql`
-        INSERT INTO companies (id, name, issue_prefix)
-        VALUES (gen_random_uuid(), 'Provider Switching Test Co', 'PST')
+        INSERT INTO companies (organization_id, id, name, issue_prefix)
+        VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Provider Switching Test Co', 'PST')
         RETURNING id
       `));
       expect(companyId).toBeTruthy();
@@ -285,8 +285,8 @@ describe.skipIf(process.platform === "win32")(
 
       // Seed a second company with its own codex_local agent
       const company2Id = firstId(await db.execute<{ id: string }>(sql`
-        INSERT INTO companies (id, name, issue_prefix)
-        VALUES (gen_random_uuid(), 'Provider Switching Test Co 2', 'PS2')
+        INSERT INTO companies (organization_id, id, name, issue_prefix)
+        VALUES ('00000000-0000-0000-0000-000000000001', gen_random_uuid(), 'Provider Switching Test Co 2', 'PS2')
         RETURNING id
       `));
 

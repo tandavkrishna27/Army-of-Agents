@@ -253,6 +253,7 @@ export function internalAgentRoutes(db: Db, storageService?: RuntimeAttachmentSt
           contextScope: req.body.contextScope ?? undefined,
           clientSubmissionId: req.body.clientSubmissionId ?? undefined,
           attachmentAssetIds: req.body.attachmentAssetIds ?? undefined,
+          universeContext: req.body.universeContext ?? undefined,
         });
 
         for await (const chunk of stream) {
@@ -1354,6 +1355,21 @@ export function internalAgentRoutes(db: Db, storageService?: RuntimeAttachmentSt
         .offset(offset);
 
       res.json({ messages, conversationId: convId });
+    },
+  );
+
+  // Read-only canonical observation used after a lost Commander Send response.
+  router.get(
+    "/companies/:companyId/internal-agent/conversations/:convId/submissions/:clientSubmissionId",
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const convId = req.params.convId as string;
+      const clientSubmissionId = req.params.clientSubmissionId as string;
+      await assertCompanyAccess(db, req, companyId);
+      await loadOwnedConversation(db, req, companyId, convId);
+      if (!clientSubmissionId || clientSubmissionId.length > 200) throw badRequest("Invalid client submission id");
+      res.setHeader("Cache-Control", "no-store");
+      res.json(await conversationService(db).getSubmissionOutcome(convId, clientSubmissionId));
     },
   );
 

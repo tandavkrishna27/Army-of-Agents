@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, integer, timestamp, boolean, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, integer, timestamp, boolean, uniqueIndex, unique, jsonb } from "drizzle-orm/pg-core";
 import { organizations } from "./organizations.js";
 
 export const companies = pgTable(
@@ -8,17 +8,16 @@ export const companies = pgTable(
     // Phase 1 tenant FK. RESTRICT: an Organization cannot be deleted while it
     // still owns companies (org teardown is out of Phase 1 scope). Injected on
     // every existing row by migration 0188.
-    // DB-level DEFAULT = the sentinel org: belt-and-suspenders so ANY missed
-    // writer (raw e2e seeds, portability edge paths, future migrations) lands
-    // in the default org instead of hitting a NOT NULL violation. SET DEFAULT
-    // does NOT rewrite existing rows, so 0188's explicit backfill still runs.
-    // TRACKING (0188 follow-up): this sentinel DEFAULT is intentionally fail-OPEN
-    // for the single-org world — an insert omitting organization_id buckets into
-    // the sentinel org rather than erroring. It MUST be dropped (so a NULL trips
-    // the NOT NULL constraint = fail closed) BEFORE multi-org write paths go live.
-    // NOT dropped in #316: that first needs every company-insert path audited to
-    // set organization_id explicitly. Keep the .default(...) chain until then.
-    organizationId: uuid("organization_id").notNull().default("00000000-0000-0000-0000-000000000001").references(() => organizations.id, { onDelete: "restrict" }),
+    // FAIL-CLOSED (TEN-006b, migration 0210 — ref E2-D07): the fail-OPEN sentinel
+    // DB DEFAULT ('00000000-0000-0000-0000-000000000001') was DROPPED. It used to
+    // bucket any writer that omitted organization_id into the Default Org; now an
+    // omitting writer trips this NOT NULL (23502) = fail closed. Every writer must
+    // resolve the Organization EXPLICITLY (TEN-006a swept every Company-insert site
+    // + the writers throw `requireResolvedOrganizationId` before the insert). The
+    // sentinel value survives as the legitimate single-tenant Default Org
+    // (DEFAULT_ORGANIZATION_ID, @armyofagents/shared) — resolved explicitly by the
+    // self-hosted path, never silently defaulted here. Do NOT re-add `.default(...)`.
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     // Optional client-generated replay anchor for company creation. The same
     // request may only materialize once inside its owning Organization.
     creationRequestId: uuid("creation_request_id"),
@@ -79,5 +78,12 @@ export const companies = pgTable(
       table.organizationId,
       table.creationRequestId,
     ),
+    // TEN-004 (CAV-005-safe, ADDITIVE ONLY): FK-target composite unique on
+    // (organization_id, id) so the new-path `jobs`/`services` composite
+    // (organization_id, company_id) FKs can bind to companies and prove a
+    // company shares the referencing row's tenant. This is a plain additive
+    // unique — NO RLS, NO other companies column/behavior touched. `id` is the
+    // PK so the pair is trivially unique; this exists solely to be an FK target.
+    organizationIdUq: unique("companies_org_id_uq").on(table.organizationId, table.id),
   }),
 );

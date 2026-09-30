@@ -9,7 +9,7 @@ import { resolveCommandContext } from "../commands/client/common.js";
 const ORIGINAL_ENV = { ...process.env };
 
 function createTempPath(name: string): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aoa-cli-common-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-cli-common-"));
   return path.join(dir, name);
 }
 

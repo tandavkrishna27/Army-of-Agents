@@ -1,0 +1,16 @@
+{
+  "$comment": [
+    "DEP-001 signed-digest allowlist (TEST ROOT ONLY — never release trust).",
+    "Consumed by scripts/lib/image-admission.mjs via scripts/verify-image-admission.mjs.",
+    "`entries` is EMPTY on purpose: no image has been built+signed yet (the",
+    "container build is Linux/CI-only and currently billing-blocked). An empty",
+    "allowlist admits NOTHING (fail-closed). docker/images/sign.sh APPENDS one",
+    "entry per image after a reproducible build signs its manifest digest with the",
+    "test cosign key; each entry is {image, digest: sha256:<64hex>, sourceRevision:",
+    "<git sha>, signature: <base64 ECDSA-P256/SHA256 of the canonical simple-",
+    "signing payload>}.",
+    "REL-004 replaces this test root with the real release trust root."
+  ],
+  "trustRoot": "docker/images/trust-root.pub.pem",
+  "entries": []
+}
