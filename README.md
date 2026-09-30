@@ -1,12 +1,33 @@
+<div align="center">
+
 # Army of Agents
 
-## The organizational harness for human and AI teams
+### The organizational harness for human and AI teams
 
-[Army of Agents](https://armyofagents.org) gives organizations one control plane for people, AI agents, goals, tasks, discussions, memory, approvals, budgets, and outputs.
+Run people and AI agents from one governed control plane for goals, work, context, and outcomes.
 
-It provides the operating structure that lets AI agents work as members of a team instead of as disconnected chats, prompts, and scripts.
+[Website](https://armyofagents.org) · [Documentation](docs/) · [Issues](https://github.com/tandavkrishna27/Army-of-Agents/issues)
 
-[Website](https://armyofagents.org) Â· [GitHub](https://github.com/tandavkrishna27/Army-of-Agents)
+[![CI](https://github.com/tandavkrishna27/Army-of-Agents/actions/workflows/pr.yml/badge.svg)](https://github.com/tandavkrishna27/Army-of-Agents/actions/workflows/pr.yml)
+[![Node.js 20+](https://img.shields.io/badge/node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![pnpm 9](https://img.shields.io/badge/pnpm-9-F69220?logo=pnpm&logoColor=white)](https://pnpm.io/)
+
+</div>
+
+Army of Agents gives organizations one control plane for people, AI agents, goals, tasks, discussions, memory, approvals, budgets, and outputs. It provides the operating structure that lets AI agents work as members of a team instead of as disconnected chats, prompts, and scripts.
+
+## Contents
+
+- [What is Army of Agents?](#what-is-army-of-agents)
+- [How it works](#how-it-works)
+- [Core capabilities](#core-capabilities)
+- [Supported runtimes](#supported-runtimes)
+- [Marketplace and ecosystem](#marketplace-and-ecosystem)
+- [Quick start](#quick-start)
+- [Repository structure](#repository-structure)
+- [Development](#development)
+- [Contributing](#contributing)
+- [Project status](#project-status)
 
 ## What is Army of Agents?
 
@@ -32,6 +53,16 @@ Agents perform work. Army of Agents provides the organization in which that work
 3. **Assign work.** Create tasks that carry ownership, context, priorities, and goal alignment.
 4. **Run and supervise.** Let agents execute work while the organization controls permissions, approvals, schedules, and budgets.
 5. **Review the results.** Inspect activity, discussions, artifacts, costs, and decisions from one control plane.
+
+## Product pillars
+
+| Pillar | Includes |
+| --- | --- |
+| **Organization** | Companies, teams, roles, agents, goals, and Crew |
+| **Execution** | Tasks, adapters, routines, heartbeats, and workspaces |
+| **Context** | Commander, discussions, threads, memory, and skills |
+| **Governance** | Approvals, budgets, permissions, and audit history |
+| **Outputs** | Artifacts, versions, previews, branches, and pull requests |
 
 ## Core capabilities
 
