@@ -65,7 +65,7 @@ export function commanderLoginRoutes(db: Db): Router {
           ...policy,
           ...detected,
           enabled: false,
-          reason: `Installed ${provider === "openai" ? "Codex" : "Claude"} version is unsupported by this AOA image. Rebuild with the pinned CLI version.`,
+          reason: `Installed ${provider === "openai" ? "Codex" : "Claude"} version ${detected.cliVersion ?? "unknown"} is outside the versions supported by this AOA adapter. Upgrade or downgrade the CLI, then retry.`,
         };
       }
       return { ...policy, ...detected };

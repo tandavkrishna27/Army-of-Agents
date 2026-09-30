@@ -114,6 +114,9 @@ describe("CLI authentication topology", () => {
       detectProviderCli("openai", async () => ({ stdout: "codex-cli 0.145.3" })),
     ).resolves.toMatchObject({ cliInstalled: true, cliVersionSupported: true });
     await expect(
+      detectProviderCli("openai", async () => ({ stdout: "codex-cli 0.154.0" })),
+    ).resolves.toMatchObject({ cliInstalled: true, cliVersionSupported: true });
+    await expect(
       detectProviderCli("openai", async () => ({ stdout: "codex-cli 0.999.0" })),
     ).resolves.toMatchObject({ cliInstalled: true, cliVersionSupported: false });
     await expect(
