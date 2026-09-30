@@ -284,7 +284,14 @@ export async function detectProviderCli(
   run: (command: string, args: string[]) => Promise<{ stdout: string; stderr?: string }> = async (
     command,
     args,
-  ) => execFile(command, args, { timeout: 5_000 }),
+  ) =>
+    execFile(command, args, {
+      timeout: 5_000,
+      // npm installs Windows CLIs as .cmd shims. Node cannot spawn those
+      // shims directly with execFile on Windows; use the platform shell for
+      // this fixed executable name and fixed version argument only.
+      ...(process.platform === "win32" ? { shell: true } : {}),
+    }),
 ): Promise<{ cliInstalled: boolean; cliVersion: string | null; cliVersionSupported: boolean }> {
   const command = resolveProviderCliCommand(provider, process.platform);
   try {
