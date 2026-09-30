@@ -256,10 +256,6 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
 
     steps:
       - name: Checkout repository
@@ -279,8 +275,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Vitest shard ${{ matrix.shard }}/4
-        run: pnpm test:run --shard=${{ matrix.shard }}/4
+      - name: Run Vitest
+        # Do not shard the root Vitest workspace here. The suite contains
+        # project-level mocks and setup assumptions that pass as a full run but
+        # fail when Vitest arbitrarily slices tests across all workspace
+        # projects. Keep this lane reliable; typecheck/build/e2e still run in
+        # separate jobs for parallel CI feedback.
+        run: pnpm test:run
 
   build:
     runs-on: ubuntu-latest
