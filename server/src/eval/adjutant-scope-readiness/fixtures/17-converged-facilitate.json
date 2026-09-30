@@ -1,0 +1,21 @@
+{
+  "id": "17-converged-facilitate",
+  "input": {
+    "thread": {
+      "id": "fixture-17",
+      "phase": "discuss",
+      "intent": ["planning", "build"],
+      "summaryText": null,
+      "entries": [
+        { "id": "e1", "rawContent": "Let's add CSV export to the budget page. Founders keep asking for it.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "Agreed. Export the current filtered view, one row per cost event, with the running total.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "Yes — button next to the date filter, streams the file so big ranges don't blow memory.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e4", "rawContent": "Perfect. That's the whole thing. Let's get it built.", "authorAgentId": null, "createdBy": "user-2" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "category": "propose-scope" }
+  }
+}

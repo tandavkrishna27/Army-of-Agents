@@ -1,0 +1,99 @@
+# Advisory E2E lane for the thread-v2 (crew) real-agent loop.
+#
+# This workflow is ADVISORY — it runs nightly and on demand but NEVER on
+# pull_request. It must not block PRs. The gated test inside
+# server/src/__tests__/thread-v2-real-e2e.integration.test.ts self-skips
+# when THREAD_V2_E2E or DATABASE_URL is absent, so it is always safe to run
+# in normal CI without credentials.
+#
+# The AUTHORITATIVE per-release gate for the real-LLM loop is the manual
+# checklist at docs/qa/thread-v2-release-checklist.md. This automated lane
+# exists as an early-warning signal — flakiness here does not constitute a
+# blocking failure.
+#
+# Operator note: this job requires ANTHROPIC_API_KEY set as a repository
+# secret. Fork PRs never have access to that secret, which is why this
+# workflow does NOT trigger on pull_request.
+
+name: Thread v2 E2E (advisory)
+
+on:
+  schedule:
+    # Nightly at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+# Allow only one concurrent run of this advisory lane.
+concurrency:
+  group: thread-v2-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  thread-v2-e2e:
+    name: Thread v2 real-agent E2E (advisory)
+    runs-on: ubuntu-latest
+    # Advisory: a failure here is informational, not a blocking gate.
+    continue-on-error: true
+    timeout-minutes: 30
+
+    # Skip entirely on forks — ANTHROPIC_API_KEY is not available to fork
+    # triggers and the job would fail immediately with a credential error.
+    if: github.repository == github.event.repository.full_name
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: aoa_test
+          POSTGRES_PASSWORD: aoa_test
+          POSTGRES_DB: aoa_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aoa_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages/db (drizzle config reads from dist/)
+        run: pnpm --filter @armyofagents/db build
+
+      - name: Apply all migrations from scratch
+        env:
+          DATABASE_URL: postgres://aoa_test:aoa_test@localhost:5432/aoa_test
+        run: pnpm db:migrate
+
+      - name: Install Claude CLI
+        # The Claude Code CLI (@anthropic-ai/claude-code) is required for the
+        # claude_local adapter used in the real-agent test. If the package name
+        # or install mechanism changes, update this step accordingly. The test
+        # self-skips gracefully if the CLI is not on PATH (it falls back to the
+        # THREAD_V2_E2E gate), but the job would then produce a vacuous green.
+        # Operators who cannot use npm global installs should ensure `claude` is
+        # on PATH before the test step by other means (e.g. pre-built runner image).
+        run: npm install --global @anthropic-ai/claude-code
+
+      - name: Run thread-v2 real-agent E2E (advisory)
+        env:
+          THREAD_V2_E2E: "1"
+          DATABASE_URL: postgres://aoa_test:aoa_test@localhost:5432/aoa_test
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: pnpm test:run thread-v2-real-e2e

@@ -1,0 +1,62 @@
+name: aoa-quickstart
+
+services:
+  aoa:
+    image: ${AOA_IMAGE:-aoa:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
+    restart: unless-stopped
+    ports:
+      - "${AOA_BIND_ADDRESS:-0.0.0.0}:${AOA_PORT:-3100}:3100"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3100"
+      SERVE_UI: "true"
+      AOA_HOME: /aoa
+      AOA_INSTANCE_ID: ${AOA_INSTANCE_ID:-default}
+      AOA_CONFIG: /aoa/instances/${AOA_INSTANCE_ID:-default}/config.json
+      AOA_INSTALL_PROFILE: ${AOA_INSTALL_PROFILE:-hosted_multi_tenant}
+      AOA_NETWORK_LOCATION: ${AOA_NETWORK_LOCATION:-}
+      AOA_TRUST_BOUNDARY: ${AOA_TRUST_BOUNDARY:-}
+      AOA_EXECUTION_OWNERSHIP: ${AOA_EXECUTION_OWNERSHIP:-}
+      AOA_EXECUTION_TARGET_ID: ${AOA_EXECUTION_TARGET_ID:-control-plane}
+      AOA_CODEX_DEVICE_AUTH: ${AOA_CODEX_DEVICE_AUTH:-false}
+      AOA_CLAUDE_PASTE_AUTH: ${AOA_CLAUDE_PASTE_AUTH:-false}
+      AOA_SCOPED_CLI_AUTH: ${AOA_SCOPED_CLI_AUTH:-false}
+      # Like the main stack, quickstart runs in `authenticated` mode and needs
+      # Google OAuth credentials — the first Google sign-in becomes instance
+      # admin. It binds 0.0.0.0 for Docker port publishing, and local_trusted
+      # is loopback-only (server refuses 0.0.0.0), so Docker cannot run keyless:
+      # use the native `aoa` CLI for a keyless loopback trial instead.
+      AOA_DEPLOYMENT_MODE: ${AOA_DEPLOYMENT_MODE:-authenticated}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      AOA_DEPLOYMENT_EXPOSURE: ${AOA_DEPLOYMENT_EXPOSURE:-private}
+      AOA_PUBLIC_URL: ${AOA_PUBLIC_URL:-}
+      AOA_AUTH_PUBLIC_BASE_URL: ${AOA_AUTH_PUBLIC_BASE_URL:-}
+      AOA_AUTH_BASE_URL_MODE: ${AOA_AUTH_BASE_URL_MODE:-}
+      AOA_ALLOWED_HOSTNAMES: ${AOA_ALLOWED_HOSTNAMES:-}
+      AOA_TRUST_PROXY: ${AOA_TRUST_PROXY:-false}
+      AOA_MIGRATION_AUTO_APPLY: ${AOA_MIGRATION_AUTO_APPLY:-true}
+      AOA_MIGRATION_PROMPT: ${AOA_MIGRATION_PROMPT:-}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+      AOA_AGENT_JWT_SECRET: ${AOA_AGENT_JWT_SECRET:-}
+      AOA_STORAGE_PROVIDER: ${AOA_STORAGE_PROVIDER:-local_disk}
+      AOA_SECRETS_PROVIDER: ${AOA_SECRETS_PROVIDER:-local_encrypted}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      CURSOR_API_KEY: ${CURSOR_API_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS \"http://127.0.0.1:$${PORT:-3100}/api/health\" >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    volumes:
+      - ${AOA_DATA_DIR:-./data/docker-aoa}:/aoa

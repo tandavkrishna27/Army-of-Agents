@@ -1,0 +1,2 @@
+ALTER TABLE "companies" ADD COLUMN "commander_adapter_config" jsonb DEFAULT '{}'::jsonb NOT NULL;--> statement-breakpoint
+ALTER TABLE "companies" ADD COLUMN "crew_adapter_config" jsonb DEFAULT '{}'::jsonb NOT NULL;

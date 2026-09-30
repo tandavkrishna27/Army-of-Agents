@@ -1,0 +1,5 @@
+{
+  "id": "16-delegate-handoff-negative-office-hours",
+  "input": { "prompt": "should we even build checkout redesign?", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/office-hours" }
+}

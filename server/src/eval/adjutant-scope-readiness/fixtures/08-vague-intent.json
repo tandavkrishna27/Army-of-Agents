@@ -1,0 +1,20 @@
+{
+  "id": "08-vague-intent",
+  "input": {
+    "thread": {
+      "id": "fixture-8",
+      "phase": "discuss",
+      "intent": [],
+      "summaryText": null,
+      "entries": [
+        { "id": "e1", "rawContent": "we should do something about onboarding", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "agreed, it's been bugging me too", "authorAgentId": null, "createdBy": "user-2" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "rubric": "Should return 'ask-clarifying' — the humans agree there's an issue but haven't named the specific problem, target user, or success metric. A focused question would help them converge.",
+    "value": { "category": "ask-clarifying" }
+  }
+}

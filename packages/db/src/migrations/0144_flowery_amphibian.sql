@@ -1,0 +1,1 @@
+ALTER TABLE "thread_orchestration_state" ADD COLUMN "consecutive_commit_failures" integer DEFAULT 0 NOT NULL;

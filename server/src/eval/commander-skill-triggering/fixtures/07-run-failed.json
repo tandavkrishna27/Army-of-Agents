@@ -1,0 +1,5 @@
+{
+  "id": "07-run-failed",
+  "input": { "prompt": "Our agent's run failed overnight and I can't tell why", "userRole": "team_lead" },
+  "expected": { "type": "exact", "value": "skill:aoa/investigate" }
+}

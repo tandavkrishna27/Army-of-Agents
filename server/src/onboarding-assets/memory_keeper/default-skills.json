@@ -1,0 +1,4 @@
+{
+  "_comment": "Catalog skill IDs to install when this crew role is created. Deep skill sourcing is deferred (spec §11); start empty.",
+  "skills": []
+}

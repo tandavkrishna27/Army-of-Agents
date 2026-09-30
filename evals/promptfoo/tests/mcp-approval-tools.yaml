@@ -1,0 +1,86 @@
+# MCP approval tool behavioral tests (Phase C.5).
+# Covers the 10 approval tools wrapping AoA's approvals + issue-approvals +
+# approval-comments subsystem:
+#   Reads:  list-approvals, get-approval, get-approval-tasks,
+#           list-approval-comments, list-task-approvals
+#   Writes: create-approval, approval-decision, add-approval-comment,
+#           link-task-approval, unlink-task-approval
+#
+# RBAC semantics enforced at the MCP layer:
+#   - founder: full CRUD on approvals in company
+#   - team_lead: can decide approvals with at least one linked task in their
+#                project scope; can create approvals only when linking a task
+#                in scope
+#   - team_member: read-only on approvals they can see; can comment; cannot
+#                  create, decide, link, or unlink
+
+- description: "mcp.approval.list - agent lists pending approvals when founder asks what's awaiting decision"
+  vars:
+    companyId: company-eval-01
+    userRole: founder
+    pageContext: mcp
+  prompt: "The founder asks their external Claude Code client: 'What approvals are pending decision in my company right now?' Emit the MCP tool call."
+  assert:
+    - type: contains
+      value: "list-approvals"
+      metric: mcp_approval_list_usage
+    - type: contains
+      value: "pending"
+      metric: uses_status_filter
+    - type: not-contains
+      value: "get-approval"
+      metric: no_single_get_for_list_query
+
+- description: "mcp.approval.decide - agent routes a decision through approval-decision with the right action and note"
+  vars:
+    companyId: company-eval-01
+    userRole: founder
+    pageContext: mcp
+  prompt: "The founder says: 'Approve the budget override request (approval id 8d2e...) with note \"Approved for Q2 campaign\".' Emit the MCP tool call."
+  assert:
+    - type: contains
+      value: "approval-decision"
+      metric: mcp_approval_decide_usage
+    - type: contains
+      value: "approve"
+      metric: preserves_action
+    - type: contains
+      value: "decisionNote"
+      metric: passes_decision_note
+    - type: not-contains
+      value: "update-task"
+      metric: no_wrong_mutation_tool
+
+- description: "mcp.approval.create - agent opens a new approval with linked task when team lead asks"
+  vars:
+    companyId: company-eval-01
+    userRole: team_lead
+    pageContext: mcp
+  prompt: "A team lead says: 'Open a budget override approval request for task TASK-42. Budget overrun: $500. Reason: tooling cost spike.' Emit the MCP tool call."
+  assert:
+    - type: contains
+      value: "create-approval"
+      metric: mcp_create_approval_usage
+    - type: contains
+      value: "budget_override_required"
+      metric: preserves_approval_type
+    - type: contains
+      value: "issueIds"
+      metric: links_to_task
+
+- description: "mcp.approval.comment - agent posts an approval comment when asked for clarification"
+  vars:
+    companyId: company-eval-01
+    userRole: team_member
+    pageContext: mcp
+  prompt: "A team member says: 'Leave a comment on approval APV-77 asking the founder whether this can be deferred to next week.' Emit the MCP tool call."
+  assert:
+    - type: contains
+      value: "add-approval-comment"
+      metric: mcp_approval_comment_usage
+    - type: contains
+      value: "body"
+      metric: passes_body
+    - type: not-contains
+      value: "approval-decision"
+      metric: no_decide_when_commenting

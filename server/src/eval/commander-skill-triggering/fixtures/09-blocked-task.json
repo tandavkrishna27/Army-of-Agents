@@ -1,0 +1,5 @@
+{
+  "id": "09-blocked-task",
+  "input": { "prompt": "This task has been stuck for two days, what's going on?", "userRole": "team_member" },
+  "expected": { "type": "exact", "value": "skill:aoa/investigate" }
+}

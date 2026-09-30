@@ -1,0 +1,58 @@
+{
+  "id": "10-rich-scope",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-10",
+      "summary": "Cross-functional initiative: ship a marketplace package install flow. Six concrete tasks across research, schema, backend, frontend, docs, and QA — mixed dependencies, some tasks have acceptance criteria from product, others are blank and the Planner should invent defaults.",
+      "proposedTasks": [
+        {
+          "title": "Survey how peer marketplaces (VS Code, Raycast) handle install confirmation UX",
+          "acceptanceCriteria": [
+            "Capture pre-install permission disclosure pattern",
+            "Note post-install verification + telemetry pattern"
+          ]
+        },
+        {
+          "title": "Add marketplace_install_operations table + insert/finalize service"
+        },
+        {
+          "title": "Implement POST /marketplace/install endpoint backed by the new service",
+          "acceptanceCriteria": [
+            "Validates target package + version",
+            "Writes a row and returns operationId before download begins"
+          ]
+        },
+        {
+          "title": "Build the install confirmation modal in the marketplace UI"
+        },
+        {
+          "title": "Document the install flow in docs/guides/board-operator/marketplace.md"
+        },
+        {
+          "title": "End-to-end Playwright test for the install flow",
+          "acceptanceCriteria": [
+            "Test installs a known fixture package end-to-end",
+            "Test asserts a row is written and the UI shows the success state"
+          ]
+        }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "value": {
+      "checks": [
+        "all 6 tasks present",
+        "no invented tasks",
+        "dependency graph is acyclic (no task depends on itself or a later one circularly)",
+        "schema (task 2) before backend (task 3) before UI (task 4)",
+        "research (task 1) sequenced before UI (task 4)",
+        "Playwright test (task 6) depends on UI (task 4) at minimum",
+        "tasks without acceptance criteria get plausible invented bullets",
+        "Sequencing paragraph mentions parallelisable batches"
+      ]
+    },
+    "rubric": "Pass when ALL of the following hold in the markdown plan: (a) all 6 task titles appear and no new tasks are invented; (b) the dependency graph encoded in 'Depends on:' lines is acyclic; (c) the schema task (2) is listed as a dependency of the backend task (3), and the backend task (3) is listed as a dependency of the UI task (4); (d) the research task (1) is sequenced before the UI task (4) — either directly or transitively via 'Depends on:'; (e) the Playwright test (6) has the UI task (4) as a dependency; (f) tasks without acceptance criteria in the input have at least one concrete acceptance criterion in the plan; (g) the Sequencing paragraph mentions which tasks can run in parallel (e.g. docs can land alongside the build). Score 1.0 if all checks pass, 0.7 if 5-6 of 7 pass, 0.4 if 3-4 of 7 pass, 0.0 if a task is dropped or the graph is cyclic."
+  }
+}

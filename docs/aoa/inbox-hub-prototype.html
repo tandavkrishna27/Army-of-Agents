@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AoA Inbox Hub — interactive prototype</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css" />
+<style>
+  :root{
+    --bg:#ffffff;--bg2:#f6f6f3;--bg3:#efeee8;--border:#e7e5dd;--border2:#d8d5cb;
+    --text:#1f1f1d;--muted:#6c6b64;--faint:#9b9990;
+    --info:#2563eb;--info-bg:#e9f0fe;--success:#15803d;--success-bg:#e7f4ec;
+    --warn:#b45309;--warn-bg:#fbf0dc;--danger:#b91c1c;--danger-bg:#fbe9e9;
+    --accent:#5b50d6;--accent-bg:#eeedfb;--r:10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#16161a;--bg2:#1d1d22;--bg3:#26262c;--border:#2c2c33;--border2:#3a3a42;
+    --text:#ececf0;--muted:#a4a3ac;--faint:#76757e;
+    --info:#6ea8ff;--info-bg:#1b2740;--success:#5fce93;--success-bg:#14301f;
+    --warn:#e6a84a;--warn-bg:#3a2a10;--danger:#f08a8a;--danger-bg:#3a1717;
+    --accent:#9a91f0;--accent-bg:#23213a;}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;color:var(--text);background:var(--bg2);font-size:14px;line-height:1.45}
+  .app{display:flex;height:100vh;overflow:hidden}
+  .appbar{width:204px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;flex:none}
+  .brand{height:52px;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--border);font-weight:600}
+  .brand .sq{width:18px;height:18px;border-radius:6px;background:var(--accent)}
+  .navsec{padding:10px 8px}
+  .navlbl{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;padding:6px 8px}
+  .navitem{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:var(--r);color:var(--text);cursor:pointer;font-size:13.5px}
+  .navitem:hover{background:var(--bg2)}
+  .navitem.active{background:var(--accent-bg);color:var(--accent)}
+  .navitem i{font-size:17px;color:var(--muted)}
+  .navitem.active i{color:var(--accent)}
+  .navitem .badge{margin-left:auto;font-size:11px;background:var(--accent);color:#fff;border-radius:9px;padding:0 6px;min-width:17px;height:17px;display:flex;align-items:center;justify-content:center}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .topbar{height:52px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:14px;padding:0 16px;flex:none}
+  .search{flex:1;max-width:420px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;color:var(--muted);font-size:13px}
+  .icbtn{position:relative;width:34px;height:34px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
+  .icbtn .dot{position:absolute;top:-5px;right:-5px;background:var(--danger);color:#fff;font-size:10px;border-radius:9px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none}
+  .inbox{flex:1;display:flex;min-height:0}
+  .rail{width:178px;background:var(--bg);border-right:1px solid var(--border);padding:10px 8px;flex:none}
+  .lane{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:var(--r);cursor:pointer;font-size:13.5px}
+  .lane:hover{background:var(--bg2)}
+  .lane.active{background:var(--accent-bg);color:var(--accent)}
+  .lane i{font-size:16px;color:var(--muted)}
+  .lane.active i{color:var(--accent)}
+  .lane .cnt{margin-left:auto;font-size:11px;color:var(--faint)}
+  .lane.active .cnt{color:var(--accent)}
+  .raildiv{height:1px;background:var(--border);margin:9px 6px}
+  .center{flex:1;display:flex;min-width:0}
+  .listpane{width:392px;border-right:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column;flex:none;min-height:0}
+  .listhead{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:9px}
+  .listhead .row1{display:flex;align-items:center;gap:8px}
+  .listhead h3{margin:0;font-size:15px;font-weight:600}
+  .listhead .cnt{font-size:12px;color:var(--faint)}
+  .listtools{margin-left:auto;display:flex;gap:12px;color:var(--muted);font-size:12.5px}
+  .listtools span{cursor:pointer;display:flex;align-items:center;gap:5px}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;width:max-content}
+  .seg button{border:0;background:transparent;padding:5px 12px;font-size:12.5px;color:var(--muted);cursor:pointer}
+  .seg button.on{background:var(--accent-bg);color:var(--accent)}
+  .list{overflow-y:auto;flex:1}
+  .item{display:flex;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+  .item:hover{background:var(--bg2)}
+  .item.active{background:var(--accent-bg)}
+  .item .cb{display:none;margin-top:3px}
+  body.selecting .item .cb{display:block}
+  .item .lead{margin-top:2px;flex:none;width:18px;display:flex;justify-content:center}
+  .item .lead i{font-size:16px;color:var(--muted)}
+  .udot{width:7px;height:7px;border-radius:50%;background:var(--info);margin-top:5px}
+  .item .body{flex:1;min-width:0}
+  .item .t{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item.unread .t{font-weight:600}
+  .item .s{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .acts{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap}
+  .item.resolved{opacity:.6}
+  .chip{font-size:11px;padding:2px 8px;border-radius:var(--r);align-self:center;white-space:nowrap}
+  .btn{font-size:12px;padding:4px 9px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg);cursor:pointer;color:var(--text)}
+  .btn.ok{border-color:#bfe3cd;color:var(--success)}
+  .btn.no{border-color:#eecaca;color:var(--danger)}
+  .btn.pri{border-color:#c4bff2;color:var(--accent)}
+  .bulkbar{display:none;padding:9px 14px;border-bottom:1px solid var(--border);background:var(--bg2);align-items:center;gap:10px;font-size:12.5px}
+  body.selecting .bulkbar{display:flex}
+  .viewer{flex:1;background:var(--bg);display:flex;flex-direction:column;min-width:0}
+  .tabs{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);padding:8px 10px;overflow-x:auto}
+  .tab{display:flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg2);font-size:12.5px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+  .tab.on{background:var(--accent-bg);color:var(--accent);border-color:#c4bff2}
+  .tab .x{font-size:14px;opacity:.6}
+  .tab .x:hover{opacity:1}
+  .collapse{margin-left:auto;flex:none}
+  .vbody{padding:16px 18px;overflow-y:auto;flex:1}
+  .vempty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--faint);gap:8px;text-align:center}
+  .vhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .vhead h2{margin:0;font-size:17px;font-weight:600}
+  .vmeta{font-size:12.5px;color:var(--muted);margin:4px 0 14px}
+  .vcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:11px 12px;font-size:13px}
+  .evi{display:flex;gap:9px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:9px 11px;font-size:12.5px;color:var(--muted);margin:14px 0}
+  .evi i{font-size:16px;color:var(--warn)}
+  .vacts{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}
+  textarea{width:100%;min-height:64px;border:1px solid var(--border);border-radius:var(--r);padding:8px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--text);resize:vertical}
+  /* home (center panel) */
+  .home{flex:1;background:var(--bg);padding:18px 22px;overflow-y:auto;min-width:0}
+  .homehead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+  .homehead h2{margin:0;font-size:19px}
+  .homehead .sub{color:var(--muted);font-size:13px;margin-top:3px}
+  .apilot{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:var(--r);padding:6px 8px 6px 12px;background:var(--bg2);flex:none}
+  .apilot .lab{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .pins{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .pin{display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:var(--r);padding:7px 11px;font-size:12.5px;background:var(--bg2);cursor:pointer}
+  .pin i{font-size:15px;color:var(--accent)}
+  .mcs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .mc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px}
+  .mc .l{font-size:12.5px;color:var(--muted)}
+  .mc .n{font-size:26px;font-weight:600;margin-top:3px}
+  .home h4{font-size:13px;color:var(--muted);font-weight:600;margin:20px 0 8px;text-transform:uppercase;letter-spacing:.03em}
+  .panelbox{border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+  .agentcard{display:flex;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;margin-top:12px}
+  .agentcard .av{width:34px;height:34px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;flex:none}
+  .hidden{display:none!important}
+  .note{font-size:12px;color:var(--faint);padding:10px 8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="appbar">
+    <div class="brand"><span class="sq"></span> Meteorite Labs</div>
+    <div class="navsec">
+      <div class="navitem"><i class="ti ti-home"></i> Home</div>
+      <div class="navitem active"><i class="ti ti-inbox"></i> Inbox <span class="badge">5</span></div>
+      <div class="navitem"><i class="ti ti-message"></i> Commander</div>
+    </div>
+    <div class="navsec">
+      <div class="navlbl">Work</div>
+      <div class="navitem"><i class="ti ti-circle-dot"></i> Tasks</div>
+      <div class="navitem"><i class="ti ti-robot"></i> Agents</div>
+      <div class="navitem"><i class="ti ti-target"></i> Goals</div>
+    </div>
+    <div class="navsec" style="margin-top:auto">
+      <div class="navitem"><i class="ti ti-settings"></i> Settings</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="search"><i class="ti ti-search"></i> Search the hub…</div>
+      <div style="flex:1"></div>
+      <div class="icbtn"><i class="ti ti-bell"></i><span class="dot">5</span></div>
+      <div class="avatar">TK</div>
+    </header>
+
+    <section class="inbox">
+      <nav class="rail" id="rail">
+        <div class="lane" data-lane="home"><i class="ti ti-layout-dashboard"></i> Home</div>
+        <div class="raildiv"></div>
+        <div class="lane active" data-lane="waiting"><i class="ti ti-player-pause"></i> Waiting on you <span class="cnt">5</span></div>
+        <div class="lane" data-lane="notifications"><i class="ti ti-bell"></i> Notifications <span class="cnt">12</span></div>
+        <div class="lane" data-lane="suggestions"><i class="ti ti-bulb"></i> Suggestions <span class="cnt">3</span></div>
+        <div class="raildiv"></div>
+        <div class="lane" data-lane="mail"><i class="ti ti-mail"></i> Mail <span class="cnt">3</span></div>
+      </nav>
+
+      <div class="center" id="center">
+        <div class="listpane" id="listpane">
+          <div class="listhead">
+            <div class="row1"><h3 id="lane-title">Waiting on you</h3><span class="cnt" id="lane-count">5</span>
+              <div class="listtools">
+                <span id="select-toggle"><i class="ti ti-checkbox"></i> Select</span>
+                <span><i class="ti ti-arrows-sort"></i> Sort</span>
+              </div>
+            </div>
+            <div id="seg-wrap"></div>
+          </div>
+          <div class="bulkbar"><span><strong id="selcount">2</strong> selected</span><button class="btn ok">Approve</button><button class="btn">Snooze</button><button class="btn">Dismiss</button></div>
+          <div class="list" id="list"></div>
+        </div>
+
+        <div class="home hidden" id="home"></div>
+
+        <div class="viewer" id="viewer">
+          <div class="tabs" id="tabs"></div>
+          <div class="vbody" id="vbody"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const ICON={hire:"ti-user-plus",blocked:"ti-help-circle",review:"ti-eye",budget:"ti-coin",email:"ti-mail",grp:"ti-stack-2",mention:"ti-at",routines:"ti-repeat",failed:"ti-alert-triangle",s1:"ti-clock",s2:"ti-target",s3:"ti-scale",m1:"ti-mail",m2:"ti-receipt",m3:"ti-user"};
+function chip(t,tone){return `<span class="chip" style="background:var(--${tone}-bg);color:var(--${tone})">${t}</span>`;}
+function evi(t){return `<div class="evi"><i class="ti ti-bulb"></i><span><strong style="color:var(--text);font-weight:600">Why you're seeing this · </strong>${t}</span></div>`;}
+
+const ITEMS={
+  hire:{lane:"waiting",unread:1,title:"Hire agent: Atlas",sub:"Engineer · via Navigator · 2h",
+    rowActs:[["Approve","ok"],["Reject","no"]],head:["Hire agent","Pending","warn"],meta:"Requested by Navigator · 2h ago",
+    body:`<div class="vcard"><div style="display:flex;gap:9px;align-items:center;margin-bottom:8px"><div class="avatar">AT</div><div><div style="font-weight:600">Atlas · Engineer</div><div style="color:var(--muted);font-size:12.5px">code, review · claude_local</div></div></div></div>`+evi("Board approval is required for new hires. Autopilot is Medium, so this was escalated to you."),
+    acts:[["Approve","ok"],["Revise",""],["Reject","no"],["<i class='ti ti-clock'></i> Snooze",""]]},
+  blocked:{lane:"waiting",unread:1,title:"Navigator needs your input",sub:'Task "Ship pricing page" · 1h',
+    rowActs:[["Answer","pri"]],head:["Agent needs input","Blocked","danger"],meta:"Navigator · 1h ago",
+    body:`<div class="vcard">Annual or monthly as the default pricing toggle? I'll ship either once you decide.</div>`+evi("Navigator paused this task and cannot continue without your call.")+`<textarea placeholder="Reply to Navigator…"></textarea>`,
+    acts:[["Send reply","pri"],["<i class='ti ti-clock'></i> Snooze",""]]},
+  review:{lane:"waiting",unread:0,title:"Review: Q3 landing page",sub:"Atlas · artifact v3 · 3h",
+    rowActs:[["Review",""]],head:["Review request","Ready","info"],meta:"Atlas · 3h ago",
+    body:`<div class="vcard"><div style="font-weight:600">Q3 landing page — v3</div><div style="color:var(--muted);font-size:12.5px;margin-top:3px">Code · 14 files · preview ready</div></div>`+evi("Atlas marked v3 ready and requested your sign-off before merge."),
+    acts:[["Open artifact",""],["Approve","ok"],["Request changes",""]]},
+  budget:{lane:"waiting",unread:0,claimed:1,title:"Budget override: Marketing",sub:"$200 → $500 · claimed by Sam",
+    rowActs:[],head:["Budget override","Pending","warn"],meta:"Marketing · 5h ago",
+    body:`<div class="evi" style="background:var(--info-bg);border-color:#bcd3fb"><i class="ti ti-user-check" style="color:var(--info)"></i><span>Sam is handling this. You can take over if needed.</span></div>`+`<div class="vcard">Monthly cap $200 → requested $500 · paid ad test for launch.</div>`,
+    acts:[["Take over",""]]},
+  email:{lane:"waiting",unread:1,title:"Approve email to Acme",sub:"Scout drafted a reply · 4h",
+    rowActs:[["Review draft",""]],head:["Approve to send","Draft","warn"],meta:"Scout · 4h ago",
+    body:`<div class="vcard"><div style="color:var(--muted)">To · <span style="color:var(--text)">priya@acme.com</span> · as <span style="color:var(--text)">you</span></div><div style="margin-top:7px;border-top:1px solid var(--border);padding-top:7px">Hi Priya — we can start the pilot the week of the 14th. I've attached the onboarding checklist…</div></div>`+evi("Below Scout's auto-send confidence threshold, so it needs your OK."),
+    acts:[["Send","ok"],["Edit",""],["Discard",""]]},
+  grp:{lane:"notifications",unread:0,group:1,title:"Atlas · 5 runs completed",sub:"grouped · last 1h",
+    rowActs:[],head:["5 runs completed","Grouped","success"],meta:"Atlas · last 1h",
+    body:`<div class="vcard">Fix login bug · Update deps · Write tests · Refactor auth · Patch CSS<div style="color:var(--muted);font-size:12.5px;margin-top:6px">Total 18m · $0.41</div></div>`,acts:[["Open all",""]]},
+  mention:{lane:"notifications",unread:1,title:"Sam mentioned you",sub:'"Q3 planning" · 2h',
+    rowActs:[],head:["Mention","New","info"],meta:"Sam · 2h ago",body:`<div class="vcard">"@you can you confirm the launch date before Friday?"</div>`,acts:[["Open discussion",""]]},
+  failed:{lane:"notifications",unread:1,title:"Run failed: data import",sub:"Chronicler · 2h",
+    rowActs:[["Retry",""]],head:["Run failed","Failed","danger"],meta:"Chronicler · 2h ago",body:`<div class="vcard">Import job exited 1 — connection timeout.</div>`,acts:[["Retry",""],["Open task",""]]},
+  routines:{lane:"notifications",unread:0,group:1,title:"9 routine runs succeeded",sub:"grouped · today",
+    rowActs:[],head:["9 routines","Grouped","success"],meta:"today",body:`<div class="vcard">All scheduled routines ran cleanly.</div>`,acts:[]},
+  s1:{lane:"suggestions",unread:0,title:"3 tasks idle 5+ days",sub:"Marketing",rowActs:[],head:["Stale work","Opportunity","info"],meta:"Marketing · found by Triage agent",
+    body:`<div class="vcard">3 Marketing tasks haven't moved in 5+ days.</div>`+evi("Detected by your inbox agent during today's scan."),acts:[["Take a look",""],["Dismiss",""]]},
+  s2:{lane:"suggestions",unread:0,title:'No goal covers "Support"',sub:"Goal gap",rowActs:[],head:["Goal gap","Opportunity","info"],meta:"found by Triage agent",
+    body:`<div class="vcard">Support tasks exist with no goal tracking them.</div>`,acts:[["Create goal",""],["Dismiss",""]]},
+  s3:{lane:"suggestions",unread:0,title:"Atlas is overloaded",sub:"8 active tasks",rowActs:[],head:["Workload","Opportunity","info"],meta:"found by Triage agent",
+    body:`<div class="vcard">Atlas has 8 active tasks; others idle.</div>`,acts:[["Rebalance",""],["Dismiss",""]]},
+  m1:{lane:"mail",unread:1,title:"Priya Shah · Acme",sub:"Re: pilot timeline · 4h",rowActs:[],head:["Re: pilot timeline","Inbox","info"],meta:"priya@acme.com · 4h ago",
+    body:`<div class="evi" style="background:var(--accent-bg);border-color:#c4bff2"><i class="ti ti-inbox" style="color:var(--accent)"></i><span>A drafted reply for this thread is waiting in <strong style="color:var(--text)">Waiting on you</strong>.</span></div>`+`<div class="vcard" style="line-height:1.6">Thanks — can we start the pilot the week of the 14th? Looking forward to getting going.</div>`,
+    acts:[["Reply","pri"],["Forward",""],["Archive",""]]},
+  m2:{lane:"mail",unread:0,title:"AWS Billing",sub:"Your invoice is ready · 1d",rowActs:[],head:["Your invoice is ready","Inbox","info"],meta:"billing@aws.com · 1d ago",
+    body:`<div class="vcard" style="line-height:1.6">Your June invoice for $342.10 is now available.</div>`,acts:[["Reply","pri"],["Archive",""]]},
+  m3:{lane:"mail",unread:0,title:"Dana · candidate",sub:"Following up on the role · 2d",rowActs:[],head:["Following up on the role","Inbox","info"],meta:"dana@mail.com · 2d ago",
+    body:`<div class="vcard" style="line-height:1.6">Wanted to check in on next steps for the design role.</div>`,acts:[["Reply","pri"],["Archive",""]]},
+};
+const LANES={
+  waiting:{title:"Waiting on you",ids:["hire","blocked","review","budget","email"],seg:["All","Mine","Team"]},
+  notifications:{title:"Notifications",ids:["grp","mention","failed","routines"],seg:["All","Mine","Team"]},
+  suggestions:{title:"Suggestions",ids:["s1","s2","s3"],seg:["All","Mine","Team"]},
+  mail:{title:"Mail",ids:["m1","m2","m3"],seg:["Inbox","Sent","Drafts"]},
+};
+
+let curLane="waiting", openTabs=["hire"], activeTab="hire";
+const $=s=>document.querySelector(s),list=$("#list"),tabs=$("#tabs"),vbody=$("#vbody");
+
+function rowHTML(id){const it=ITEMS[id];
+  const lead=it.unread?`<span class="udot"></span>`:`<i class="ti ${ICON[id]}"></i>`;
+  const right=it.claimed?`<span class="chip" style="color:var(--info)"><i class="ti ti-user-check"></i></span>`:it.group?`<i class="ti ti-chevron-right" style="color:var(--faint);align-self:center"></i>`:"";
+  const acts=(it.rowActs||[]).map(a=>`<button class="btn ${a[1]}">${a[0]}</button>`).join("");
+  return `<div class="item ${it.unread?'unread':''} ${activeTab===id?'active':''}" data-id="${id}"><input type="checkbox" class="cb"><div class="lead">${lead}</div><div class="body"><div class="t">${it.title}</div><div class="s">${it.sub}</div>${acts?`<div class="acts">${acts}</div>`:""}</div>${right}</div>`;}
+function renderList(){const L=LANES[curLane];$("#lane-title").textContent=L.title;$("#lane-count").textContent=L.ids.length;list.innerHTML=L.ids.map(rowHTML).join("");}
+function renderSeg(){const L=LANES[curLane];$("#seg-wrap").innerHTML=`<div class="seg" id="scope">${L.seg.map((s,i)=>`<button class="${i===0?'on':''}">${s}</button>`).join("")}</div>`;}
+
+function renderTabs(){
+  if(!openTabs.length){tabs.innerHTML=`<span style="font-size:12.5px;color:var(--faint);padding:4px">No items open</span><button class="icbtn collapse" id="collapse" style="width:30px;height:30px"><i class="ti ti-layout-sidebar-right-collapse"></i></button>`;return;}
+  tabs.innerHTML=openTabs.map(id=>`<div class="tab ${id===activeTab?'on':''}" data-tab="${id}"><i class="ti ${ICON[id]}" style="font-size:14px"></i><span>${ITEMS[id].title}</span><i class="ti ti-x x" data-close="${id}"></i></div>`).join("")+`<button class="icbtn collapse" id="collapse" title="Collapse viewer" style="width:30px;height:30px"><i class="ti ti-layout-sidebar-right-collapse"></i></button>`;}
+function renderViewer(){const it=ITEMS[activeTab];
+  if(!it){vbody.innerHTML=`<div class="vempty"><i class="ti ti-click" style="font-size:26px"></i><div>Select an item to open it here</div></div>`;return;}
+  const acts=(it.acts||[]).map(a=>`<button class="btn ${a[1]}">${a[0]}</button>`).join("");
+  vbody.innerHTML=`<div class="vhead"><h2>${it.head[0]}</h2>${chip(it.head[1],it.head[2])}</div><div class="vmeta">${it.meta}</div>${it.body}<div class="vacts">${acts}</div>`;}
+function openItem(id){if(!openTabs.includes(id))openTabs.push(id);activeTab=id;renderTabs();renderViewer();renderList();}
+function closeTab(id){const i=openTabs.indexOf(id);if(i>-1)openTabs.splice(i,1);if(activeTab===id)activeTab=openTabs[Math.max(0,i-1)]||null;renderTabs();renderViewer();renderList();}
+
+function homeHTML(){
+  const mc=(l,n)=>`<div class="mc"><div class="l">${l}</div><div class="n">${n}</div></div>`;
+  const mini=(t,s,r)=>`<div class="item" style="cursor:default"><div class="lead"><span class="udot"></span></div><div class="body"><div class="t">${t}</div><div class="s">${s}</div></div>${r}</div>`;
+  const pin=(i,t)=>`<div class="pin"><i class="ti ${i}"></i> ${t}</div>`;
+  return `<div class="homehead"><div><h2>Good afternoon, TK</h2><div class="sub">Here's what your workforce needs from you today.</div></div>
+    <div class="apilot"><span class="lab"><i class="ti ti-robot"></i> Autopilot</span><div class="seg"><button>Off</button><button>Low</button><button class="on">Medium</button><button>High</button></div></div></div>
+  <div class="pins">${pin("ti-pin","High-priority")}${pin("ti-coin","Budget approvals")}${pin("ti-mail","Customer email")}</div>
+  <div class="mcs">${mc("Waiting on you","5")}${mc("Handled for you today","12")}${mc("Resolved this week","38")}</div>
+  <h4>Needs you most</h4>
+  <div class="panelbox">
+    ${mini("Navigator needs your input","blocked · 1h",`<span class="chip" style="background:var(--danger-bg);color:var(--danger)">Blocked</span>`)}
+    ${mini("Hire agent: Atlas","via Navigator · 2h",`<button class="btn ok">Approve</button>`)}
+    ${mini("Approve email to Acme","Scout draft · 4h",`<button class="btn">Review</button>`)}
+  </div>
+  <div class="agentcard"><div class="av"><i class="ti ti-robot"></i></div><div><div style="font-weight:600">Triage agent</div><div style="color:var(--muted);font-size:12.5px;margin-top:2px">Today it triaged 12 items, drafted 3 replies, and grouped 9 runs. 2 items snoozed, returning tomorrow.</div><button class="btn pri" style="margin-top:9px">Ask about my queue</button></div></div>`;}
+
+function setLane(key){curLane=key;
+  document.querySelectorAll(".lane[data-lane]").forEach(l=>l.classList.toggle("active",l.dataset.lane===key));
+  const isHome=key==="home";
+  $("#listpane").classList.toggle("hidden",isHome);
+  $("#home").classList.toggle("hidden",!isHome);
+  if(isHome){$("#home").innerHTML=homeHTML();return;}
+  renderSeg();renderList();}
+
+$("#rail").addEventListener("click",e=>{const l=e.target.closest(".lane[data-lane]");if(l)setLane(l.dataset.lane);});
+list.addEventListener("click",e=>{if(e.target.closest(".cb"))return;const it=e.target.closest(".item");if(it)openItem(it.dataset.id);});
+tabs.addEventListener("click",e=>{const c=e.target.closest("[data-close]");if(c){e.stopPropagation();closeTab(c.dataset.close);return;}
+  if(e.target.closest("#collapse")){$("#viewer").classList.toggle("hidden");return;}
+  const t=e.target.closest("[data-tab]");if(t){activeTab=t.dataset.tab;renderTabs();renderViewer();renderList();}});
+$("#select-toggle").addEventListener("click",()=>document.body.classList.toggle("selecting"));
+$("#seg-wrap").addEventListener("click",e=>{const b=e.target.closest("button");if(b){b.parentNode.querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");}});
+
+renderSeg();renderTabs();renderViewer();renderList();
+</script>
+</body>
+</html>

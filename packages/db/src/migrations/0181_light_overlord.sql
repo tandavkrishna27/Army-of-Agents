@@ -1,0 +1,1 @@
+ALTER TABLE "teams" ALTER COLUMN "parent_project_id" DROP NOT NULL;

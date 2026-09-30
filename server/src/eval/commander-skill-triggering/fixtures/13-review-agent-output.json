@@ -1,0 +1,5 @@
+{
+  "id": "13-review-agent-output",
+  "input": { "prompt": "can you check the work the coder agent did on the auth task?", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/review-agent-output" }
+}

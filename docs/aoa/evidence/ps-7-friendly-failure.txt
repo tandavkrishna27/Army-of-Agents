@@ -1,0 +1,28 @@
+Provider-switching walkthrough — Scenario 7 REAL evidence (friendly failure surface, Unit E)
+Captured live on the local_trusted instance (AOA_HOME ~/.aoa-ps, :3100).
+Company 69aa10c6-0d33-434b-8d29-ac2331a59f22 ("Meteorite Labs").
+
+Steps (deliberate, isolated mutation of ONE seeded throwaway agent):
+  1. POST /api/companies/{cid}/agents {name:"PS Break Run",adapterType:"codex_local",adapterConfig:{model:"gpt-5.5"}}
+       → 201  agent 604abaf8-fb2f-4a9a-a9e5-4adebfcc0970
+  2. UPDATE agents SET adapter_config = jsonb_set(adapter_config,'{model}','"gpt-5 && rm"')
+       WHERE id='604abaf8-…'   (forces a shell-unsafe model past the save schema — that one row only)
+       → adapter_config.model now = "gpt-5 && rm"
+  3. POST /api/agents/604abaf8-…/wakeup {source:"on_demand",triggerDetail:"manual",reason:"ps-7-break-run"}
+       → HTTP 202
+  4. Terminal heartbeat_runs row for the run:
+       run         79e5c712
+       status      failed
+       error_code  adapter_failed
+       error       Unsafe model identifier: "gpt-5 && rm"
+  5. Cleanup: DELETE /api/agents/604abaf8-…?companyId={cid}  → 200  (throwaway removed)
+
+→ At run time resolveRunScopedModel → resolveModel throws ShellUnsafeModelError
+  (model-resolution.ts:15-20,57). The runner's top-level catch records a FAILED run with a
+  friendly, sanitized reason — NOT a raw stack trace — persisted to heartbeat_runs.error with
+  errorCode "adapter_failed" (heartbeat.ts:4088 log, :4099-4101 persisted error+code, :4114-4120 run event).
+
+Companion (codex trust-gate failures observed earlier on the same agent BEFORE the
+--skip-git-repo-check fix — also surfaced as friendly run-record reasons, not stack traces):
+  run fd2cc5df / 7c12b1ad / dcfcb436 / 85209b27  status=failed
+    error = "Not inside a trusted directory and --skip-git-repo-check was not specified."

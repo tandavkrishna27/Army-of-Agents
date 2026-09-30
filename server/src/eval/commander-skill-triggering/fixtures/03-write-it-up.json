@@ -1,0 +1,5 @@
+{
+  "id": "03-write-it-up",
+  "input": { "prompt": "Can you turn this into a ticket the engineer can pick up? We already decided to do it.", "userRole": "team_lead" },
+  "expected": { "type": "exact", "value": "skill:aoa/spec" }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "memory_items" ADD COLUMN "embedding_retries" integer DEFAULT 0 NOT NULL;

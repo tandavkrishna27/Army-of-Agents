@@ -1,0 +1,26 @@
+{
+  "id": "13-extensive-conversation",
+  "input": {
+    "thread": {
+      "id": "fixture-13",
+      "phase": "discuss",
+      "intent": ["research", "planning", "build"],
+      "summaryText": "Team aligned on cutting trial onboarding from 7 steps to 3.",
+      "entries": [
+        { "id": "e1", "rawContent": "Our trial onboarding has 7 steps. Most users drop off at step 4 (workspace setup).", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "I pulled the funnel — 38% completion across all 7. Step 4 alone loses 22 points.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "What's in step 4 specifically?", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e4", "rawContent": "Workspace name + invite teammates + pick a template. Three sub-steps disguised as one.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e5", "rawContent": "Let's collapse it. Default workspace name from company, skip invites for solo trials, autoselect 'blank' template.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e6", "rawContent": "Agreed. That trims 7 → 4. Can we cut more?", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e7", "rawContent": "Step 2 (email verify) and step 6 (billing preview) feel removable for trials.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e8", "rawContent": "Yes — defer both to post-trial. Final: 3 steps. Let's build it.", "authorAgentId": null, "createdBy": "user-2" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "rubric": "Should return 'propose-scope'. The team has fully aligned: problem named, data cited, target cut from 7 to 3 steps, specific steps to remove are listed, and someone explicitly said 'let's build it'. A scope_proposal with 2–4 tasks is the obvious next move.",
+    "value": { "category": "propose-scope" }
+  }
+}

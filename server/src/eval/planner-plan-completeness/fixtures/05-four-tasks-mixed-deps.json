@@ -1,0 +1,54 @@
+{
+  "id": "05-four-tasks-mixed-deps",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-5",
+      "summary": "Ship the new Saved Views feature. Backend persistence and the URL parameter parser are independent and can land in parallel; the React UI depends on both; the QA pass depends on the UI.",
+      "proposedTasks": [
+        {
+          "title": "Add saved_views DB table + CRUD service",
+          "acceptanceCriteria": [
+            "Schema includes id, ownerId, name, filterJson, createdAt",
+            "Service exposes create / list / update / delete"
+          ]
+        },
+        {
+          "title": "Parse ?view=<id> URL parameter into the active filter set",
+          "acceptanceCriteria": [
+            "Reading ?view=abc applies the corresponding saved view on page load",
+            "Invalid view IDs fall back to the default filter"
+          ]
+        },
+        {
+          "title": "Build the Saved Views dropdown UI in the Tasks list header",
+          "acceptanceCriteria": [
+            "Dropdown lists current user's saved views",
+            "Selecting a view applies the filter AND updates the URL ?view=<id>",
+            "Save current as new view writes through the service"
+          ]
+        },
+        {
+          "title": "Manual QA pass on the full Saved Views flow",
+          "acceptanceCriteria": [
+            "Create, switch, delete a view across two browser sessions",
+            "Verify URL deep-link works when shared",
+            "File any blockers as new tasks"
+          ]
+        }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "value": {
+      "dependencyGraph": {
+        "1": [],
+        "2": [],
+        "3": [1, 2],
+        "4": [3]
+      }
+    },
+    "rubric": "Pass when the markdown plan keeps all 4 tasks AND the 'Depends on:' lines reflect: task 1 'Depends on: none', task 2 'Depends on: none', task 3 'Depends on: 1, 2' (order-agnostic — '2, 1' is fine), task 4 'Depends on: 3'. The Sequencing paragraph should mention that tasks 1 and 2 can run in parallel. Score 1.0 on clean pass (all 4 deps correct), 0.7 if 3 of 4 dependency lines correct, 0.4 if 2 of 4, 0.0 if a task is dropped or 0/1 of 4 deps correct."
+  }
+}

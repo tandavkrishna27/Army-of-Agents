@@ -1,0 +1,16 @@
+{
+  "id": "08-task-mention",
+  "input": {
+    "thread": {
+      "id": "fixture-thread-8",
+      "companyId": "fixture-company-1",
+      "entries": [
+        { "id": "e1", "rawContent": "Sarah, can you set up CI for the new agents-runtime package by Friday? We need lint + unit tests gated on PRs before the team starts merging next week.", "createdAt": "2026-05-29T09:00:00.000Z" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "contains",
+    "value": ["task"]
+  }
+}

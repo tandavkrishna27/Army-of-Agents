@@ -1,0 +1,1 @@
+ALTER TABLE "agent_runtime_decisions" ADD COLUMN "answer_idempotency_key" text;

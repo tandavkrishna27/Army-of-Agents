@@ -1,0 +1,44 @@
+{
+  "id": "08-assignee-routing",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-8",
+      "summary": "Three follow-ups from the support escalation discussion — one is research (look up how peers handle the issue), one is implementation (ship the fix), one is post-incident memory hygiene (extract lessons learned into the memory store).",
+      "proposedTasks": [
+        {
+          "title": "Research how peers handle webhook retry semantics for partial failures",
+          "acceptanceCriteria": [
+            "Survey 3-4 known-good implementations (Stripe, GitHub, Linear)",
+            "Note their backoff curves and dead-letter behaviour"
+          ]
+        },
+        {
+          "title": "Implement webhook retry with exponential backoff + DLQ for /webhooks/intake",
+          "acceptanceCriteria": [
+            "Retries follow research-supported curve",
+            "Failed-after-N goes to DLQ with surfaced error context"
+          ]
+        },
+        {
+          "title": "Extract lessons learned from the outage into pending memory items",
+          "acceptanceCriteria": [
+            "Surface the failure pattern, the root cause, and the mitigation as separate memory candidates",
+            "Mark them suggestedLayer: domain (delivery semantics is a how-we-do-X fact)"
+          ]
+        }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "value": {
+      "expectedAssignees": {
+        "1": "Scout",
+        "2": "Engineer",
+        "3": "Memory Keeper"
+      }
+    },
+    "rubric": "Pass when the markdown plan keeps all 3 tasks AND the 'Suggested assignee:' lines route correctly by function: task 1 (research) -> Scout, task 2 (implementation) -> Engineer, task 3 (memory extraction) -> Memory Keeper. Allow case-insensitive matching on agent names. Score 1.0 if all 3 are right, 0.66 if 2 of 3 are right, 0.33 if 1 of 3, 0.0 otherwise."
+  }
+}

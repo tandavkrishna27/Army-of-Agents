@@ -1,0 +1,5 @@
+{
+  "id": "14-review-agent-output-negative-whats-blocked",
+  "input": { "prompt": "what's blocked?", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/daily-triage" }
+}

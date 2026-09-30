@@ -1,0 +1,2 @@
+ALTER TABLE "thread_agent_actions" ADD COLUMN "attempt_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "thread_agent_actions" ADD COLUMN "max_attempts" integer DEFAULT 3 NOT NULL;

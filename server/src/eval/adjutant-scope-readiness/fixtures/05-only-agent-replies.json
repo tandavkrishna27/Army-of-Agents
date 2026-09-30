@@ -1,0 +1,21 @@
+{
+  "id": "05-only-agent-replies",
+  "input": {
+    "thread": {
+      "id": "fixture-5",
+      "phase": "discuss",
+      "intent": ["research"],
+      "summaryText": "Adjutant previously asked: which customer segment should we prioritize for onboarding research?",
+      "entries": [
+        { "id": "e1", "rawContent": "Quick reminder — the Adjutant asked which segment to prioritize.", "authorAgentId": "agent-adjutant", "createdBy": null },
+        { "id": "e2", "rawContent": "Scout here: I can pull recent NPS detractors if helpful.", "authorAgentId": "agent-scout", "createdBy": null },
+        { "id": "e3", "rawContent": "Engineer standing by once a segment is named.", "authorAgentId": "agent-engineer", "createdBy": null }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "rubric": "Should return 'wait' because no human entries have been posted since the Adjutant's last action. Agent-only chatter does not constitute progress.",
+    "value": { "category": "wait" }
+  }
+}

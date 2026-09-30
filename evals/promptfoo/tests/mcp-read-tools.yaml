@@ -1,0 +1,38 @@
+# MCP read tool behavioral tests (Phase C.1).
+# Covers the new 5 read tools: me, list-agents, get-agent, list-projects, get-project.
+# Checks that an external MCP client (Claude Code / Cursor / internal agent acting as caller)
+# picks the right tool for a given natural-language request.
+
+- description: "mcp.read.me - external client uses 'me' to introspect its own identity"
+  vars:
+    companyId: company-eval-01
+    userRole: founder
+    pageContext: mcp
+  prompt: "The agent must determine 'who am I and what company am I in' via the AoA MCP server. Which tool does it call?"
+  assert:
+    - type: contains
+      value: "me"
+      metric: mcp_me_tool_usage
+    - type: not-contains
+      value: "whoami"
+      metric: no_hallucinated_tool_name
+    - type: not-contains
+      value: "get-user"
+      metric: no_generic_user_fetch
+
+- description: "mcp.read.list_agents - external client queries agents with status filter"
+  vars:
+    companyId: company-eval-01
+    userRole: founder
+    pageContext: mcp
+  prompt: "The founder asks their external Claude Code client: 'which agents are currently active in our company?'. Emit the MCP tool call."
+  assert:
+    - type: contains
+      value: "list-agents"
+      metric: mcp_list_agents_usage
+    - type: contains
+      value: "status"
+      metric: applies_status_filter
+    - type: not-contains
+      value: "list_all_agents"
+      metric: no_wrong_tool_name

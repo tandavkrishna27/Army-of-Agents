@@ -1,0 +1,21 @@
+{
+  "id": "12-rich-thread",
+  "input": {
+    "thread": {
+      "id": "fixture-thread-12",
+      "companyId": "fixture-company-1",
+      "entries": [
+        { "id": "e1", "rawContent": "Wrapping up the redesign discussion — here's where we landed.", "createdAt": "2026-05-29T09:00:00.000Z" },
+        { "id": "e2", "rawContent": "Decision: shipping the new onboarding flow with a 3-step wizard. We tested 5-step and 2-step in usability sessions and 3-step had the highest completion rate. Locking it in.", "createdAt": "2026-05-29T09:05:00.000Z" },
+        { "id": "e3", "rawContent": "Decision #2: defaulting new accounts to the 'team' tier, not 'solo'. The data shows 71% of trial-to-paid conversions upgrade to team within 30 days anyway — leading with team reduces a friction step.", "createdAt": "2026-05-29T09:06:00.000Z" },
+        { "id": "e4", "rawContent": "Insight worth saving: the biggest unlock from the user interviews was that founders don't think about 'departments' as a concept — they think about 'who's doing what'. Our taxonomy fights that. We should reframe departments as 'pods' or 'teams' in the v2 nav.", "createdAt": "2026-05-29T09:10:00.000Z" },
+        { "id": "e5", "rawContent": "Reference: pulled this Pendo benchmark for SaaS onboarding completion — https://pendo.io/benchmarks/onboarding-2024 — the 3-step finding actually matches their cross-customer median. Worth bookmarking.", "createdAt": "2026-05-29T09:12:00.000Z" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "value": { "types": ["decision", "decision", "insight", "reference"] },
+    "rubric": "Pass when the actual extracted candidates contain at least 2 items of type 'decision' (the 3-step onboarding wizard, the team-tier default), at least 1 item of type 'insight' (the founders-don't-think-in-departments framing), and at least 1 item of type 'reference' (the Pendo benchmark link). Extra items are fine if they capture real content from the thread. Score 1.0 on clean pass (all four required types/counts present), 0.7 if 3 of 4 required signals present, 0.4 if 2 of 4, 0.0 if 0 or 1."
+  }
+}

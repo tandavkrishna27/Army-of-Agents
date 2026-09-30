@@ -1,0 +1,5 @@
+{
+  "id": "11-daily-triage",
+  "input": { "prompt": "what should I focus on today?", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/daily-triage" }
+}

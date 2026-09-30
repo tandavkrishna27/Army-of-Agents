@@ -1,0 +1,15 @@
+PROVIDER-SWITCHING — Scenarios 2 & 3 (save-side) — CAPTURED LIVE 2026-06-24, :3100 local_trusted.
+
+seed: POST /companies/{cid}/agents codex_local gpt-5.5 -> status 201 id=ad958921-13bc-4124-9314-d2c043cb8ecd
+
+Scenario 2a (claude_local + gpt-5.5, cross-family): HTTP 400  (expect 400)
+  body: {"error":"Validation error","details":[{"code":"custom","path":["adapterConfig","model"],"message":"Model \"gpt-5.5\" (openai) does not match adapter claude_local (claude)."}]}
+
+Scenario 2b (codex_local + "gpt-5 && rm", shell-unsafe): HTTP 400  (expect 400)
+  body: {"error":"Validation error","details":[{"code":"custom","path":["adapterConfig","model"],"message":"Unsafe model identifier: gpt-5 && rm"}]}
+
+Scenario 3 (codex_local + gpt-5.3-codex on ChatGPT auth): HTTP 200  (expect 200 + warnings[])
+  warnings: ["\"gpt-5.3-codex\" is not supported on a ChatGPT Codex login; using gpt-5.5."]
+  persisted adapterConfig.model: "gpt-5.3-codex"  (save persists requested model as-is)
+
+cleanup: DELETE PS Save QA agent -> HTTP 200

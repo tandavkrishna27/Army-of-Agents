@@ -1,0 +1,36 @@
+{
+  "id": "02-two-independent-tasks",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-2",
+      "summary": "Two small UX polish items the design team asked for before the next release — they don't touch the same code paths so either can ship first.",
+      "proposedTasks": [
+        {
+          "title": "Tighten spacing on the agent card grid",
+          "acceptanceCriteria": [
+            "Card gap reduces from 24px to 16px on desktop",
+            "Grid stays single-column under 640px viewport"
+          ]
+        },
+        {
+          "title": "Replace placeholder avatars with initials chips on the Discussions list",
+          "acceptanceCriteria": [
+            "Initials chip shows first letter of agent name",
+            "Background color is deterministic per agent (hash of agent ID)"
+          ]
+        }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "contains",
+    "value": [
+      "Goal",
+      "### 1.",
+      "### 2.",
+      "Depends on: none",
+      "Sequencing"
+    ]
+  }
+}

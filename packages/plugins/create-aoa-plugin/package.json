@@ -1,0 +1,39 @@
+{
+  "name": "@armyofagents/create-aoa-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://github.com/meteoritelabs/aoa",
+  "bugs": {
+    "url": "https://github.com/meteoritelabs/aoa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/meteoritelabs/aoa",
+    "directory": "packages/plugins/create-aoa-plugin"
+  },
+  "type": "module",
+  "bin": {
+    "create-aoa-plugin": "./dist/index.js"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts src/index.test.ts"
+  },
+  "dependencies": {
+    "@armyofagents/plugin-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.6"
+  }
+}

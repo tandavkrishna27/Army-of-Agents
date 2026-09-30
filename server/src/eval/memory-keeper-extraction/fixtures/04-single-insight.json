@@ -1,0 +1,16 @@
+{
+  "id": "04-single-insight",
+  "input": {
+    "thread": {
+      "id": "fixture-thread-4",
+      "companyId": "fixture-company-1",
+      "entries": [
+        { "id": "e1", "rawContent": "Ran the funnel numbers for last week. Trial users are dropping off hard at step 4 (workspace setup) — 62% abandon there. Step 1-3 conversion is fine. The workspace setup screen is our conversion bottleneck.", "createdAt": "2026-05-29T09:00:00.000Z" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "types": ["insight"] }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "id": "02-side-bet",
+  "input": { "prompt": "Should we spin up this side project? I honestly don't know who'd even use it", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/office-hours" }
+}

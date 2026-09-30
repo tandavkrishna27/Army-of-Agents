@@ -1,0 +1,67 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "universe-harness",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "pnpm",
+        "-C",
+        ".worktrees\\universe-interface",
+        "--filter",
+        "@armyofagents/ui",
+        "exec",
+        "vite",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "5190",
+        "--strictPort"
+      ],
+      "port": 5190
+    },
+    {
+      "name": "threads",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d \"..\\AoA-threads\" && set PORT=3102 && set AOA_UI_DEV_MIDDLEWARE=true && set AOA_MIGRATION_AUTO_APPLY=true && pnpm dev"
+      ],
+      "port": 3102
+    },
+    {
+      "name": "app",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set AOA_MIGRATION_AUTO_APPLY=true && cd server && pnpm exec tsx src\\index.ts"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "server",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set AOA_MIGRATION_AUTO_APPLY=true && pnpm dev"],
+      "port": 3100
+    },
+    {
+      "name": "ui",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "pnpm", "--filter", "ui", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "mock",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "pnpm", "dlx", "serve", ".superpowers", "-l", "5174"],
+      "port": 5174
+    },
+    {
+      "name": "commander-mockup",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "pnpm", "dlx", "serve", ".claude", "-l", "4788"],
+      "port": 4788
+    }
+  ]
+}

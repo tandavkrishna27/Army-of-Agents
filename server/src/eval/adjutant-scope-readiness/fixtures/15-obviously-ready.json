@@ -1,0 +1,19 @@
+{
+  "id": "15-obviously-ready",
+  "input": {
+    "thread": {
+      "id": "fixture-15",
+      "phase": "discuss",
+      "intent": ["build"],
+      "summaryText": "Founder is ready to ship the export feature.",
+      "entries": [
+        { "id": "e1", "rawContent": "OK, let's build this. Requirements:\n1. JSON export of all company data\n2. CSV export of tasks + agents only\n3. Download button in Settings → Data\n4. Audit log entry on every export", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "Agreed on all four. I'll review when the first cut lands.", "authorAgentId": null, "createdBy": "user-2" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "category": "propose-scope" }
+  }
+}

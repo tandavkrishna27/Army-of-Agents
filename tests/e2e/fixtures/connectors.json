@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "e2e-notes-http",
+      "displayName": "E2E Notes",
+      "description": "Deterministic e2e connector: remote HTTP, verified publisher, needs an API token before agents can use it.",
+      "serverName": "e2e-notes",
+      "transport": "http",
+      "url": "https://mcp.e2e.invalid/notes",
+      "headerTemplateKeys": ["Authorization"],
+      "requiresSecret": true,
+      "secretLabel": "Notes API token",
+      "docsUrl": "https://example.invalid/e2e-notes",
+      "trust": { "tier": "verified" }
+    },
+    {
+      "id": "e2e-search-http",
+      "displayName": "E2E Search",
+      "description": "Deterministic e2e connector: remote HTTP, verified, no credential required — installs straight to active.",
+      "serverName": "e2e-search",
+      "transport": "http",
+      "url": "https://mcp.e2e.invalid/search",
+      "requiresSecret": false,
+      "trust": { "tier": "verified" }
+    },
+    {
+      "id": "e2e-local-stdio",
+      "displayName": "E2E Local Tool",
+      "description": "Deterministic e2e connector: stdio, unverified publisher — runs a command on the host, so it requires explicit command-bound consent.",
+      "serverName": "e2e-local-tool",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@e2e/local-tool@1.0.0"],
+      "envTemplateKeys": ["E2E_LOCAL_TOOL_TOKEN"],
+      "requiresSecret": false,
+      "trust": { "tier": "unverified" }
+    }
+  ]
+}

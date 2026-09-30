@@ -1,0 +1,650 @@
+name: PR
+
+permissions:
+  contents: read
+
+on:
+  # No branches: filter — every PR into ANY base branch is gated. This is the
+  # fix for the porting-era allow-list that silently ran zero checks on
+  # stacked / feature-to-feature PRs. `ready_for_review` is listed so that
+  # marking a draft PR ready re-fires the workflow and the draft-guarded jobs
+  # (see each job's `if:`) run for real before merge.
+  #
+  # NOTE: `edited` is deliberately NOT listed. Adding it would re-run on
+  # title/body edits too, and skipping the jobs there produces skipped-success
+  # required checks (GitHub treats a skipped required job as passing) that can
+  # satisfy branch protection without real CI. Retarget re-runs are a Phase 1.1
+  # follow-up via the aggregator-gate pattern. Until then, push a commit (or
+  # "Update branch") after retargeting to re-trigger the gate.
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  # push only on main: post-merge signal + warms the pnpm cache. Feature
+  # branches get their signal from the PR run, not a duplicate push run.
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: pr-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Cheap change-detector: decides whether the heavy suite needs to run.
+  # docs-only (code=false) iff EVERY changed file is under docs/ or is a
+  # ROOT-LEVEL *.md (README/CLAUDE/AGENTS). Any .github/** file, any nested
+  # *.md (runtime assets like server/src/onboarding-assets/**/*.md, fixtures,
+  # package READMEs), or any other path => code=true => full CI. Uses
+  # --no-renames so a code file moved into docs/ still classifies its (deleted)
+  # source as code. On push (main) code is always true. Skips on draft.
+  changes:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.detect.outputs.code }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Detect non-doc changes
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "push event -> code=true"
+            exit 0
+          fi
+          changed="$(git diff --no-renames --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}")"
+          if [ -z "$changed" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "empty diff -> code=true (fail safe)"
+            exit 0
+          fi
+          code=false
+          if printf '%s\n' "$changed" | grep -qE '^\.github/'; then
+            code=true        # any .github/** file (incl .github/*.md) => full CI
+          elif printf '%s\n' "$changed" | grep -qEv '^docs/|^[^/]+\.md$'; then
+            code=true        # anything not under docs/ and not a ROOT-LEVEL *.md
+                             # (nested .md may be runtime assets/fixtures => code)
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "changed files:"; printf '%s\n' "$changed"
+          echo "=> code=$code"
+
+  policy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Block manual lockfile edits
+        if: github.event_name == 'pull_request'
+        run: |
+          changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}")"
+          if printf '%s\n' "$changed" | grep -qx 'pnpm-lock.yaml'; then
+            manifest_pattern='(^|/)package\.json$|^pnpm-workspace\.yaml$|^\.npmrc$|^pnpmfile\.(cjs|js|mjs)$'
+            if printf '%s\n' "$changed" | grep -Eq "$manifest_pattern"; then
+              echo "Lockfile edit accompanies manifest changes — allowed."
+            else
+              echo "Do not commit pnpm-lock.yaml in pull requests without manifest changes. CI owns lockfile-only updates."
+              exit 1
+            fi
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Validate Dockerfile deps stage
+        run: |
+          missing=0
+
+          # Extract only the deps stage from the Dockerfile
+          deps_stage="$(awk '/^FROM .* AS deps$/{found=1; next} found && /^FROM /{exit} found{print}' Dockerfile)"
+
+          if [ -z "$deps_stage" ]; then
+            echo "::error::Could not extract deps stage from Dockerfile (expected 'FROM ... AS deps')"
+            exit 1
+          fi
+
+          # Derive workspace search roots from pnpm-workspace.yaml (exclude dev-only packages)
+          search_roots="$(grep '^ *- ' pnpm-workspace.yaml | sed 's/^ *- //' | sed 's/\*$//' | grep -v 'examples' | tr '\n' ' ')"
+
+          if [ -z "$search_roots" ]; then
+            echo "::error::Could not derive workspace roots from pnpm-workspace.yaml"
+            exit 1
+          fi
+
+          # Check all workspace package.json files are copied in the deps stage
+          for pkg in $(find $search_roots -maxdepth 2 -name package.json -not -path '*/examples/*' -not -path '*/node_modules/*' 2>/dev/null | sort -u); do
+            dir="$(dirname "$pkg")"
+            if ! echo "$deps_stage" | grep -q "^COPY ${dir}/package.json"; then
+              echo "::error::Dockerfile deps stage missing: COPY ${pkg} ${dir}/"
+              missing=1
+            fi
+          done
+
+          # Check patches directory is copied if it exists
+          if [ -d patches ] && ! echo "$deps_stage" | grep -q '^COPY patches/'; then
+            echo "::error::Dockerfile deps stage missing: COPY patches/ patches/"
+            missing=1
+          fi
+
+          if [ "$missing" -eq 1 ]; then
+            echo "Dockerfile deps stage is out of sync. Update it to include the missing files."
+            exit 1
+          fi
+
+      - name: Validate dependency resolution when manifests change
+        if: github.event_name == 'pull_request'
+        run: |
+          changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}")"
+          manifest_pattern='(^|/)package\.json$|^pnpm-workspace\.yaml$|^\.npmrc$|^pnpmfile\.(cjs|js|mjs)$'
+          if printf '%s\n' "$changed" | grep -Eq "$manifest_pattern"; then
+            pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+          fi
+
+  brand-check:
+    needs: [policy]
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Check tracked content and paths for former-brand tokens
+        run: |
+          python3 <<'PYEOF'
+          import os
+          import re
+          import subprocess
+          import sys
+
+          token = re.compile(rb"p[a]per[\s_-]*clip", re.IGNORECASE)
+          paths = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
+          hits = []
+          for path in filter(None, paths):
+              display = os.fsdecode(path)
+              if token.search(path):
+                  hits.append(f"path: {display}")
+              try:
+                  data = open(path, "rb").read()
+              except FileNotFoundError:
+                  continue
+              for match in token.finditer(data):
+                  number = data.count(b"\n", 0, match.start()) + 1
+                  hits.append(f"content: {display}:{number}")
+          if hits:
+              print("::error::Former-brand token found in tracked tree")
+              print("\n".join(hits))
+              sys.exit(1)
+          print("Tracked content and path scan passed")
+          PYEOF
+
+      - name: Check AoA environment variable documentation
+        run: |
+          declared_env=$(grep -rhoE 'process\.env\.AOA_[A-Z_]+' \
+            --include='*.ts' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            server/src cli/src packages 2>/dev/null \
+            | sed 's/process\.env\.//' | sort -u)
+          documented_env=$(grep -oE 'AOA_[A-Z_]+' docs/deploy/environment-variables.md 2>/dev/null | sort -u)
+          missing_env=$(comm -23 <(printf '%s\n' "$declared_env") <(printf '%s\n' "$documented_env") || true)
+          if [ -n "$missing_env" ]; then
+            echo "::error::AoA environment variables used by code are missing from docs/deploy/environment-variables.md:"
+            printf '%s\n' "$missing_env"
+            exit 1
+          fi
+
+  # verify and e2e run independently of policy. Failing policy (e.g.,
+  # contributor accidentally committed pnpm-lock.yaml) should not mask
+  # verify's test failures or e2e's UI failures — contributors deserve
+  # to see all their PR's failure signal, not just the first gate.
+  # Branch protection rules require ALL of policy/verify/e2e/brand-check
+  # to pass for merge — that's the right gate, not a pipeline dependency.
+  verify:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    # Full server + ui + embedded-PG integration suites now run ~37 min (test
+    # phase alone), and the build step needs ~8 more — 45 left no margin (a green
+    # 17.4k-test run was canceled mid-build at 45m18s). 60 adds durable headroom.
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm -r typecheck
+
+      - name: Run tests
+        run: pnpm test:run
+
+      - name: Build
+        run: pnpm build
+
+      - name: Tool contract freshness
+        run: |
+          pnpm gen:tools:check
+          pnpm gen:tools:md:check
+
+  # Type-aware lint gate (Phase 3, B4). The ONLY guard that catches a dropped
+  # `await` on the now-async assertCompanyAccess — a silent cross-tenant IDOR
+  # that `tsc` cannot see (a discarded `Promise<void>` is a valid statement, so
+  # typecheck passes while the 403 is bypassed). @typescript-eslint/
+  # no-floating-promises flags exactly that. ESLint is platform-independent, so
+  # the required Linux lane is sufficient. Routed through ci-required (never an
+  # independently-required branch-protection check), per the aggregator-gate rule.
+  lint:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint server (no-floating-promises IDOR guard)
+        run: pnpm --filter @armyofagents/server lint
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Pin marketplace catalog fixture for stable e2e
+        # `pnpm build` ran prebuild → fetched the live CDN catalog, which
+        # evolves independently of this repo. Override with a frozen fixture
+        # so e2e assertions don't depend on whichever items are currently on
+        # the CDN. Server reads the snapshot lazily on first /api/marketplace
+        # request, so overwriting before `Run e2e tests` is sufficient.
+        run: cp tests/e2e/fixtures/marketplace-catalog.json ui/src/aoa-marketplace-snapshot.json
+
+      - name: Install Playwright
+        run: |
+          # OS libraries for chromium (apt). Always works on the runner.
+          npx playwright install-deps chromium
+          # Browser binaries. cdn.playwright.dev intermittently stalls on the
+          # Chrome-for-Testing archives (multi-minute hangs that exhaust this
+          # job's timeout before any test runs). Try the normal install with a
+          # bounded timeout; if it stalls, fall back to Google's Chrome-for-
+          # Testing storage, which serves the byte-identical binaries. The
+          # normal path self-heals once the CDN recovers. (CI-4 hardening.)
+          if ! timeout 150 npx playwright install chromium; then
+            echo "::warning::playwright browser install via cdn.playwright.dev stalled or failed; falling back to Google Chrome-for-Testing storage"
+            bash tests/e2e/scripts/install-chromium-from-google.sh
+          fi
+
+      - name: Generate AoA config
+        run: |
+          mkdir -p ~/.aoa/instances/default
+          cat > ~/.aoa/instances/default/config.json << 'CONF'
+          {
+            "$meta": { "version": 1, "updatedAt": "2026-01-01T00:00:00.000Z", "source": "onboard" },
+            "database": { "mode": "embedded-postgres" },
+            "logging": { "mode": "file" },
+            "server": { "deploymentMode": "local_trusted", "host": "127.0.0.1", "port": 3100 },
+            "auth": { "baseUrlMode": "auto" },
+            "storage": { "provider": "local_disk" },
+            "secrets": { "provider": "local_encrypted", "strictMode": false }
+          }
+          CONF
+
+      - name: Run e2e tests
+        env:
+          # Gates LLM-dependent e2e specs only; server keyless-boot safety is handled by the embedding-worker fix, not this flag.
+          AOA_E2E_SKIP_LLM: "true"
+        run: pnpm run test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            tests/e2e/playwright-report/
+            tests/e2e/test-results/
+          retention-days: 14
+
+  # Validates that all migrations apply cleanly from scratch against a
+  # fresh postgres + that the journal chain integrity is intact. Catches
+  # the bug pattern from PR #94 (renumbered migrations had a broken
+  # prevId chain that would have failed on first-DB apply but no CI test
+  # caught it pre-merge).
+  migrations:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: aoa_test
+          POSTGRES_PASSWORD: aoa_test
+          POSTGRES_DB: aoa_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aoa_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages/db (drizzle config reads from dist/)
+        run: pnpm --filter @armyofagents/db build
+
+      - name: Apply all migrations from scratch
+        env:
+          DATABASE_URL: postgres://aoa_test:aoa_test@localhost:5432/aoa_test
+        run: pnpm db:migrate
+
+      - name: Verify migration chain integrity
+        run: |
+          python <<'PYEOF'
+          import json
+          from pathlib import Path
+
+
+          def load_json_with_bom(path):
+              # Some snapshots are committed with a UTF-8 BOM (\xef\xbb\xbf).
+              # `utf-8-sig` strips the BOM before decoding.
+              return json.loads(path.read_bytes().decode("utf-8-sig"))
+
+
+          meta_dir = Path("packages/db/src/migrations/meta")
+          journal = load_json_with_bom(meta_dir / "_journal.json")
+
+          # Check 1: idx values are 0..N-1, contiguous (catches PR #94-style
+          # renumber bugs where a migration is dropped or duplicated in the
+          # journal).
+          ids = [e["idx"] for e in journal["entries"]]
+          expected = list(range(len(ids)))
+          assert ids == expected, (
+              f"Journal idx not contiguous: first 5 = {ids[:5]}, expected {expected[:5]}"
+          )
+
+          # Check 2: every journal entry must have a matching SQL file.
+          missing_sql = []
+          for entry in journal["entries"]:
+              sql_path = meta_dir.parent / f"{entry['tag']}.sql"
+              if not sql_path.exists():
+                  missing_sql.append(entry["tag"])
+          assert not missing_sql, f"Missing SQL files: {missing_sql}"
+
+          # Check 3: each snapshot's prevId matches the previous snapshot's id.
+          # Snapshot files are auto-generated by `drizzle-kit generate` and many
+          # historical migrations never had their snapshots committed (drizzle
+          # only consults snapshots for `generate`, not for `migrate` runtime
+          # apply — so missing snapshots are not a runtime hazard). We therefore
+          # ONLY validate the chain among snapshots that ARE committed: a break
+          # here is the PR #94 signal (a committed snapshot whose prevId points
+          # to a stale predecessor).
+          #
+          # KNOWN LIMITATION: gap-then-corruption is not catchable here.
+          # If an attacker drops snapshot B AND alters C's prevId to point to a
+          # stale id (e.g., A's pre-renumber id), this check cannot distinguish
+          # that from the legitimate case where B was renumbered and its
+          # snapshot was never committed but C correctly points through the
+          # gap to B's renumbered id. Drizzle-kit produces this pattern
+          # legitimately (see commit b5570de — PR #94's chain repair). To
+          # detect this attack would require maintaining an out-of-band
+          # "expected predecessor ids" manifest, which is outside the scope of
+          # this CI check. Reviewer flagged this in the v2 plan retrospective
+          # (2026-05-05); the check stays as-is intentionally.
+          prev_id = None
+          checked = 0
+          for entry in journal["entries"]:
+              snap_path = meta_dir / f"{entry['idx']:04d}_snapshot.json"
+              if not snap_path.exists():
+                  prev_id = None  # break chain context across the gap
+                  continue
+              snap = load_json_with_bom(snap_path)
+              if prev_id is not None and snap["prevId"] != prev_id:
+                  raise AssertionError(
+                      f"Chain broken at {entry['tag']} (idx {entry['idx']}): "
+                      f"prevId={snap['prevId']} expected={prev_id}"
+                  )
+              prev_id = snap["id"]
+              checked += 1
+
+          print(
+              f"OK: {len(ids)} journal entries, "
+              f"{checked} snapshots chain-checked, all SQL files present"
+          )
+          PYEOF
+
+  # Runs the embedding WRITE + RETRIEVAL e2e specs against a pgvector-enabled
+  # Postgres (AOA_E2E_PGVECTOR=1). The standard `e2e` job uses embedded-postgres
+  # which has NO pgvector, so the indexing/retrieval half of the Memory feature
+  # never executes there. This lane is the only thing that exercises the vector
+  # write path (the createdAt->Date worker coercion) and cosine-distance
+  # retrieval — without it, that whole class of bug is invisible to CI.
+  e2e-pgvector:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aoa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Pin marketplace catalog fixture for stable e2e
+        run: cp tests/e2e/fixtures/marketplace-catalog.json ui/src/aoa-marketplace-snapshot.json
+
+      - name: Install Playwright
+        run: |
+          npx playwright install-deps chromium
+          if ! timeout 150 npx playwright install chromium; then
+            echo "::warning::playwright browser install via cdn.playwright.dev stalled or failed; falling back to Google Chrome-for-Testing storage"
+            bash tests/e2e/scripts/install-chromium-from-google.sh
+          fi
+
+      # NO ~/.aoa config.json generation here (unlike the `e2e` job). The
+      # playwright webServer (`pnpm aoa onboard --yes --run`) selects Postgres
+      # from DATABASE_URL; writing an embedded-postgres config.json would
+      # override it and run WITHOUT pgvector, silently SKIPPING every
+      # AOA_E2E_PGVECTOR-gated test and turning this lane into a green no-op.
+      - name: Run pgvector e2e specs
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/aoa
+          AOA_E2E_PGVECTOR: "1"
+          AOA_E2E_SKIP_LLM: "true"
+        run: >-
+          pnpm exec playwright test --config=tests/e2e/playwright.config.ts
+          tests/e2e/embedding-reindex.spec.ts
+          tests/e2e/memory-index-status.spec.ts
+          tests/e2e/semantic-retrieval.spec.ts
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: playwright-report-pgvector
+          path: |
+            tests/e2e/playwright-report/
+            tests/e2e/test-results/
+          retention-days: 14
+
+  # Single required status check. Branch protection requires ONLY this job.
+  # Runs ALWAYS (`!cancelled()`), even when upstream jobs fail or skip, and
+  # computes the verdict explicitly so a `skipped` job cannot silently pass —
+  # closing the Phase 1 skip-success class. On a draft PR `changes` is skipped,
+  # so this gate goes RED (drafts are unmergeable; a passing required check
+  # there would be the footgun). Marking ready re-runs everything for real.
+  ci-required:
+    needs: [changes, policy, brand-check, verify, lint, e2e, e2e-pgvector, migrations]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Evaluate required gate
+        env:
+          R_CODE: ${{ needs.changes.outputs.code }}
+          R_CHANGES: ${{ needs.changes.result }}
+          R_POLICY: ${{ needs.policy.result }}
+          R_BRAND: ${{ needs['brand-check'].result }}
+          R_VERIFY: ${{ needs.verify.result }}
+          R_LINT: ${{ needs.lint.result }}
+          R_E2E: ${{ needs.e2e.result }}
+          R_E2E_PGVECTOR: ${{ needs['e2e-pgvector'].result }}
+          R_MIGRATIONS: ${{ needs.migrations.result }}
+        run: |
+          echo "code=$R_CODE | changes=$R_CHANGES policy=$R_POLICY brand-check=$R_BRAND verify=$R_VERIFY lint=$R_LINT e2e=$R_E2E e2e-pgvector=$R_E2E_PGVECTOR migrations=$R_MIGRATIONS"
+          fail=0
+          # Detector must have succeeded. Skipped (draft) => red, by design.
+          if [ "$R_CHANGES" != "success" ]; then
+            echo "::error::changes detector not success ($R_CHANGES) — draft or detector failure"
+            fail=1
+          fi
+          # Always-on cheap gates must pass.
+          for kv in "policy=$R_POLICY" "brand-check=$R_BRAND"; do
+            name="${kv%%=*}"; res="${kv#*=}"
+            [ "$res" = "success" ] || { echo "::error::$name=$res (required)"; fail=1; }
+          done
+          # Fail closed on an unexpected detector output (defense in depth):
+          # if changes succeeded, code MUST be exactly true or false.
+          if [ "$R_CHANGES" = "success" ] && [ "$R_CODE" != "true" ] && [ "$R_CODE" != "false" ]; then
+            echo "::error::invalid changes.outputs.code ($R_CODE)"
+            fail=1
+          fi
+          # Heavy jobs required to pass ONLY when code changed. On a docs-only
+          # PR (code=false) they are skipped, which is allowed.
+          if [ "$R_CODE" = "true" ]; then
+            for kv in "verify=$R_VERIFY" "lint=$R_LINT" "e2e=$R_E2E" "e2e-pgvector=$R_E2E_PGVECTOR" "migrations=$R_MIGRATIONS"; do
+              name="${kv%%=*}"; res="${kv#*=}"
+              [ "$res" = "success" ] || { echo "::error::$name=$res (required for code changes)"; fail=1; }
+            done
+          fi
+          [ "$fail" = "0" ] && echo "ci-required: PASS"
+          exit $fail

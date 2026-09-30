@@ -1,0 +1,217 @@
+{
+  "contractVersion": "1.0.0",
+  "cases": [
+    {
+      "name": "valid credential-free HTTP connector",
+      "schemaValid": true,
+      "input": {
+        "schemaVersion": "1.0.0",
+        "entries": [
+          {
+            "id": "context7",
+            "displayName": "Context7",
+            "serverName": "context7",
+            "transport": "http",
+            "url": "https://mcp.context7.com/mcp"
+          }
+        ]
+      },
+      "expected": {
+        "acceptedIds": ["context7"],
+        "droppedIds": [],
+        "malformed": false,
+        "trustTiersById": {
+          "context7": "community"
+        }
+      }
+    },
+    {
+      "name": "valid stdio connector",
+      "schemaValid": true,
+      "input": {
+        "schemaVersion": "1.0.0",
+        "entries": [
+          {
+            "id": "postgres",
+            "displayName": "Postgres",
+            "serverName": "postgres",
+            "transport": "stdio",
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-postgres@0.6.2"],
+            "envTemplateKeys": ["POSTGRES_URL"],
+            "requiresSecret": true,
+            "trust": {
+              "tier": "verified"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "acceptedIds": ["postgres"],
+        "droppedIds": [],
+        "malformed": false,
+        "trustTiersById": {
+          "postgres": "verified"
+        }
+      }
+    },
+    {
+      "name": "reserved server names are dropped",
+      "schemaValid": false,
+      "input": {
+        "schemaVersion": "1.0.0",
+        "entries": [
+          {
+            "id": "reserved",
+            "displayName": "Reserved",
+            "serverName": "aoa",
+            "transport": "http",
+            "url": "https://example.test/mcp"
+          }
+        ]
+      },
+      "expected": {
+        "acceptedIds": [],
+        "droppedIds": ["reserved"],
+        "malformed": false
+      }
+    },
+    {
+      "name": "value-bearing aliases drop the whole entry",
+      "schemaValid": false,
+      "input": {
+        "schemaVersion": "1.0.0",
+        "entries": [
+          {
+            "id": "smuggled",
+            "displayName": "Smuggled",
+            "serverName": "smuggled",
+            "transport": "http",
+            "url": "https://example.test/mcp",
+            "headers": {
+              "Authorization": "Bearer secret"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "acceptedIds": [],
+        "droppedIds": ["smuggled"],
+        "malformed": false
+      }
+    },
+    {
+      "name": "duplicate ids are first-wins",
+      "schemaValid": true,
+      "input": {
+        "schemaVersion": "1.0.0",
+        "entries": [
+          {
+            "id": "duplicate",
+            "displayName": "First",
+            "serverName": "first",
+            "transport": "http",
+            "url": "https://first.example.test/mcp"
+          },
+          {
+            "id": "duplicate",
+            "displayName": "Second",
+            "serverName": "second",
+            "transport": "http",
+            "url": "https://second.example.test/mcp"
+          }
+        ]
+      },
+      "expected": {
+        "acceptedIds": ["duplicate"],
+        "droppedIds": ["duplicate"],
+        "malformed": false,
+        "displayNamesById": {
+          "duplicate": "First"
+        }
+      }
+    },
+    {
+      "name": "additive unknown fields are stripped and entry survives",
+      "schemaValid": true,
+      "input": {
+        "schemaVersion": "1.0.0",
+        "entries": [
+          {
+            "id": "future",
+            "displayName": "Future",
+            "serverName": "future",
+            "transport": "http",
+            "url": "https://future.example.test/mcp",
+            "iconUrl": "https://future.example.test/icon.png"
+          }
+        ]
+      },
+      "expected": {
+        "acceptedIds": ["future"],
+        "droppedIds": [],
+        "malformed": false,
+        "absentKeysById": {
+          "future": ["iconUrl"]
+        }
+      }
+    },
+    {
+      "name": "transport incoherence is dropped",
+      "schemaValid": false,
+      "input": {
+        "schemaVersion": "1.0.0",
+        "entries": [
+          {
+            "id": "incoherent",
+            "displayName": "Incoherent",
+            "serverName": "incoherent",
+            "transport": "http",
+            "url": "https://example.test/mcp",
+            "command": "npx"
+          }
+        ]
+      },
+      "expected": {
+        "acceptedIds": [],
+        "droppedIds": ["incoherent"],
+        "malformed": false
+      }
+    },
+    {
+      "name": "invalid template keys are dropped",
+      "schemaValid": false,
+      "input": {
+        "schemaVersion": "1.0.0",
+        "entries": [
+          {
+            "id": "bad-key",
+            "displayName": "Bad Key",
+            "serverName": "bad-key",
+            "transport": "http",
+            "url": "https://example.test/mcp",
+            "headerTemplateKeys": ["Authorization: Bearer secret"]
+          }
+        ]
+      },
+      "expected": {
+        "acceptedIds": [],
+        "droppedIds": ["bad-key"],
+        "malformed": false
+      }
+    },
+    {
+      "name": "unintelligible envelopes are malformed",
+      "schemaValid": false,
+      "input": {
+        "schemaVersion": "1.0.0",
+        "items": []
+      },
+      "expected": {
+        "acceptedIds": [],
+        "droppedIds": [],
+        "malformed": true
+      }
+    }
+  ]
+}

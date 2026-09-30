@@ -1,0 +1,21 @@
+{
+  "id": "12-full-alignment",
+  "input": {
+    "thread": {
+      "id": "fixture-12",
+      "phase": "discuss",
+      "intent": ["planning", "build"],
+      "summaryText": null,
+      "entries": [
+        { "id": "e1", "rawContent": "Goal: ship a Slack notification integration so customers get pinged on agent runs.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "Yes. OAuth install, channel picker, configurable event filters.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "Let's start with run completion + budget breach events. Add others later.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e4", "rawContent": "Sounds good. Plumbing in the existing notification service should be straightforward.", "authorAgentId": null, "createdBy": "user-2" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "category": "propose-scope" }
+  }
+}

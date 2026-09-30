@@ -1,0 +1,25 @@
+import type { CreateConfigValues } from "@armyofagents/adapter-utils";
+
+export const defaultCreateValues: CreateConfigValues = {
+  adapterType: "codex_local",
+  cwd: "",
+  instructionsFilePath: "",
+  promptTemplate: "",
+  model: "",
+  thinkingEffort: "",
+  chrome: false,
+  dangerouslySkipPermissions: false,
+  search: false,
+  fastMode: false,
+  dangerouslyBypassSandbox: false,
+  command: "",
+  args: "",
+  extraArgs: "",
+  envVars: "",
+  envBindings: {},
+  url: "",
+  bootstrapPrompt: "",
+  maxTurnsPerRun: 80,
+  heartbeatEnabled: false,
+  intervalSec: 300,
+};

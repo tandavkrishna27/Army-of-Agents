@@ -1,0 +1,21 @@
+{
+  "id": "14-rich-with-research",
+  "input": {
+    "thread": {
+      "id": "fixture-14",
+      "phase": "discuss",
+      "intent": ["research", "planning"],
+      "summaryText": null,
+      "entries": [
+        { "id": "e1", "rawContent": "Quick research dump on competitor pricing pages:\n- Linear: 3 tiers, annual toggle, FAQ collapsed\n- Vercel: 3 tiers, calculator widget, prominent enterprise CTA\n- Stripe: 2 tiers + custom, pay-as-you-go emphasis\nCommon thread: 3-tier card grid + clear annual savings.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "Great summary. Let's do: 3-tier card layout, annual toggle with 20% savings copy, FAQ at the bottom, enterprise CTA in nav. Engineer can start this week.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "Yes — and make sure mobile collapses to a horizontal scroller for the cards.", "authorAgentId": null, "createdBy": "user-1" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "rubric": "Should return 'propose-scope'. The team has done the research, picked a concrete pattern (3-tier cards, annual toggle, FAQ, enterprise CTA), and named the mobile constraint. A scope_proposal with 2–4 tasks (e.g. cards, toggle, FAQ, mobile layout) is appropriate.",
+    "value": { "category": "propose-scope" }
+  }
+}

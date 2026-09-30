@@ -1,0 +1,404 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-05-01T00:00:00.000Z",
+  "itemCount": 5,
+  "items": [
+    {
+      "id": "plugin:aoa-curated/aoa-plugin-discord",
+      "type": "plugin",
+      "name": "Discord",
+      "description": "Discord notifications and bidirectional integration \u00e2\u20ac\u201d push notifications on agent events, receive slash commands, approve requests with buttons, gather community intelligence, run multi-agent sessions in threads, and deploy proactive suggestions",
+      "version": "1.0.0",
+      "source": {
+        "adapter": "aoa-curated",
+        "url": "https://github.com/MeteoriteLabs/aoa-marketplace/tree/5142e26c8c4a359668c08ee79ddc1c1aec7b20e6/plugins/aoa-plugin-discord",
+        "locator": "plugins/aoa-plugin-discord",
+        "commitSha": "5142e26c8c4a359668c08ee79ddc1c1aec7b20e6"
+      },
+      "npm": {
+        "packageName": "@armyofagents/aoa-plugin-discord",
+        "version": "1.0.0"
+      },
+      "trust": {
+        "tier": "verified",
+        "source": "aoa-curated"
+      },
+      "status": "active",
+      "addedAt": "2026-05-04T06:17:38.980Z",
+      "capabilities": [
+        {
+          "id": "companies.read",
+          "description": "Read AoA company data for per-company channel routing"
+        },
+        {
+          "id": "projects.read",
+          "description": "Read AoA project data for issue context and channel routing"
+        },
+        {
+          "id": "issues.read",
+          "description": "Read AoA issues to post notifications and populate Discord embeds"
+        },
+        {
+          "id": "issue.comments.read",
+          "description": "Read AoA issue comments for bridging to Discord threads"
+        },
+        {
+          "id": "issues.create",
+          "description": "Create AoA issues from Discord slash commands"
+        },
+        {
+          "id": "issues.update",
+          "description": "Update AoA issue status from Discord approval buttons and commands"
+        },
+        {
+          "id": "agents.read",
+          "description": "Read AoA agent status for /clip status and /clip agents commands"
+        },
+        {
+          "id": "agent.sessions.create",
+          "description": "Start new agent sessions from Discord threads"
+        },
+        {
+          "id": "agent.sessions.send",
+          "description": "Send messages to agent sessions from Discord threads"
+        },
+        {
+          "id": "agent.sessions.close",
+          "description": "Close agent sessions initiated from Discord"
+        },
+        {
+          "id": "agents.invoke",
+          "description": "Invoke AoA agents from Discord slash commands and handoffs"
+        },
+        {
+          "id": "events.subscribe",
+          "description": "Listen for issue, approval, and agent lifecycle events"
+        },
+        {
+          "id": "plugin.state.read",
+          "description": "Read stored channel mappings, session registry, and escalation state"
+        },
+        {
+          "id": "plugin.state.write",
+          "description": "Store channel mappings, session registry, intelligence signals, and escalation state"
+        },
+        {
+          "id": "http.outbound",
+          "description": "Send HTTPS requests to discord.com APIs"
+        },
+        {
+          "id": "secrets.read-ref",
+          "description": "Resolve Discord bot token and AoA board API key from the secrets store"
+        },
+        {
+          "id": "webhooks.receive",
+          "description": "Receive Discord interaction payloads (slash commands, button clicks)"
+        },
+        {
+          "id": "activity.log.write",
+          "description": "Log approval decisions and agent actions to the AoA activity log"
+        },
+        {
+          "id": "metrics.write",
+          "description": "Emit notification count, command, and intelligence metrics"
+        },
+        {
+          "id": "agent.tools.register",
+          "description": "Expose discord_signals, escalate_to_human, handoff_to_agent, discuss_with_agent, register_custom_command, and register_watch tools to AoA agents"
+        },
+        {
+          "id": "jobs.schedule",
+          "description": "Register recurring jobs for intelligence scans, escalation timeouts, and daily digests"
+        },
+        {
+          "id": "events.emit",
+          "description": "Emit plugin events for cross-plugin coordination (e.g. ACP handoff)"
+        }
+      ],
+      "category": "integrations",
+      "tags": [
+        "official"
+      ],
+      "featured": true
+    },
+    {
+      "id": "plugin:aoa-curated/aoa-plugin-github-issues",
+      "type": "plugin",
+      "name": "GitHub Issues",
+      "description": "Bidirectional GitHub Issues sync \u00e2\u20ac\u201d create, update, and resolve GitHub issues from AoA tasks",
+      "version": "1.0.0",
+      "source": {
+        "adapter": "aoa-curated",
+        "url": "https://github.com/MeteoriteLabs/aoa-marketplace/tree/5142e26c8c4a359668c08ee79ddc1c1aec7b20e6/plugins/aoa-plugin-github-issues",
+        "locator": "plugins/aoa-plugin-github-issues",
+        "commitSha": "5142e26c8c4a359668c08ee79ddc1c1aec7b20e6"
+      },
+      "npm": {
+        "packageName": "@armyofagents/aoa-plugin-github-issues",
+        "version": "1.0.0"
+      },
+      "trust": {
+        "tier": "verified",
+        "source": "aoa-curated"
+      },
+      "status": "active",
+      "addedAt": "2026-05-04T06:17:38.986Z",
+      "capabilities": [
+        {
+          "id": "issues.read",
+          "description": "Read AoA issues to detect status changes for sync"
+        },
+        {
+          "id": "issues.update",
+          "description": "Update AoA issue status when a linked GitHub issue changes"
+        },
+        {
+          "id": "issue.comments.read",
+          "description": "Read AoA issue comments for bridging to GitHub"
+        },
+        {
+          "id": "issue.comments.create",
+          "description": "Post bridged GitHub comments to AoA issues"
+        },
+        {
+          "id": "plugin.state.read",
+          "description": "Read stored issue link mappings"
+        },
+        {
+          "id": "plugin.state.write",
+          "description": "Store and update issue link mappings"
+        },
+        {
+          "id": "events.subscribe",
+          "description": "Listen for issue.updated and issue.comment_added events"
+        },
+        {
+          "id": "http.outbound",
+          "description": "Send HTTPS requests to api.github.com"
+        },
+        {
+          "id": "secrets.read-ref",
+          "description": "Resolve your GitHub personal access token from the secrets store"
+        },
+        {
+          "id": "webhooks.receive",
+          "description": "Receive issue and comment events from GitHub webhooks"
+        },
+        {
+          "id": "agent.tools.register",
+          "description": "Expose search, link, and unlink tools to AoA agents"
+        },
+        {
+          "id": "instance.settings.register",
+          "description": "Register the GitHub Issues configuration page"
+        },
+        {
+          "id": "ui.detailTab.register",
+          "description": "Show the GitHub Issues detail tab on AoA issue pages"
+        }
+      ],
+      "category": "integrations",
+      "tags": [
+        "official"
+      ],
+      "featured": true
+    },
+    {
+      "id": "plugin:aoa-curated/aoa-plugin-slack",
+      "type": "plugin",
+      "name": "Slack",
+      "description": "Slack notifications and bidirectional sync \u00e2\u20ac\u201d post when issues are created, completed, or need approval",
+      "version": "1.0.0",
+      "source": {
+        "adapter": "aoa-curated",
+        "url": "https://github.com/MeteoriteLabs/aoa-marketplace/tree/5142e26c8c4a359668c08ee79ddc1c1aec7b20e6/plugins/aoa-plugin-slack",
+        "locator": "plugins/aoa-plugin-slack",
+        "commitSha": "5142e26c8c4a359668c08ee79ddc1c1aec7b20e6"
+      },
+      "npm": {
+        "packageName": "@armyofagents/aoa-plugin-slack",
+        "version": "1.0.0"
+      },
+      "trust": {
+        "tier": "verified",
+        "source": "aoa-curated"
+      },
+      "status": "active",
+      "addedAt": "2026-05-04T06:17:38.987Z",
+      "capabilities": [
+        {
+          "id": "slack.send_message",
+          "description": "Post messages to Slack channels in your workspace"
+        },
+        {
+          "id": "slack.read_channels",
+          "description": "Read message history from Slack channels you grant access to"
+        },
+        {
+          "id": "network.outbound",
+          "description": "Send HTTPS requests to slack.com APIs"
+        }
+      ],
+      "category": "integrations",
+      "tags": [
+        "official"
+      ],
+      "featured": true
+    },
+    {
+      "id": "plugin:aoa-curated/aoa-plugin-telegram",
+      "type": "plugin",
+      "name": "Telegram",
+      "description": "Telegram notifications and bidirectional integration \u00e2\u20ac\u201d push notifications on agent events, receive bot commands, approve requests with inline buttons, run multi-agent sessions in threads, handle media intake, and deploy proactive suggestion watches",
+      "version": "1.0.0",
+      "source": {
+        "adapter": "aoa-curated",
+        "url": "https://github.com/MeteoriteLabs/aoa-marketplace/tree/5142e26c8c4a359668c08ee79ddc1c1aec7b20e6/plugins/aoa-plugin-telegram",
+        "locator": "plugins/aoa-plugin-telegram",
+        "commitSha": "5142e26c8c4a359668c08ee79ddc1c1aec7b20e6"
+      },
+      "npm": {
+        "packageName": "@armyofagents/aoa-plugin-telegram",
+        "version": "1.0.0"
+      },
+      "trust": {
+        "tier": "verified",
+        "source": "aoa-curated"
+      },
+      "status": "active",
+      "addedAt": "2026-05-04T06:17:38.992Z",
+      "capabilities": [
+        {
+          "id": "companies.read",
+          "description": "Read AoA company data for per-company chat routing"
+        },
+        {
+          "id": "projects.read",
+          "description": "Read AoA project data for issue context and forum topic routing"
+        },
+        {
+          "id": "issues.read",
+          "description": "Read AoA issues to post notifications and populate Telegram messages"
+        },
+        {
+          "id": "issues.create",
+          "description": "Create AoA issues from Telegram bot commands"
+        },
+        {
+          "id": "issues.update",
+          "description": "Update AoA issue status from Telegram approval callbacks and commands"
+        },
+        {
+          "id": "issue.comments.read",
+          "description": "Read AoA issue comments for bridging inbound Telegram replies"
+        },
+        {
+          "id": "issue.comments.create",
+          "description": "Create AoA issue comments from inbound Telegram replies"
+        },
+        {
+          "id": "agents.read",
+          "description": "Read AoA agent status for /status and /agents commands"
+        },
+        {
+          "id": "agents.invoke",
+          "description": "Invoke AoA agents from Telegram commands and handoffs"
+        },
+        {
+          "id": "agent.sessions.create",
+          "description": "Start new agent sessions from Telegram threads"
+        },
+        {
+          "id": "agent.sessions.list",
+          "description": "List active agent sessions for a thread"
+        },
+        {
+          "id": "agent.sessions.send",
+          "description": "Send messages to agent sessions from Telegram"
+        },
+        {
+          "id": "agent.sessions.close",
+          "description": "Close agent sessions initiated from Telegram"
+        },
+        {
+          "id": "agent.tools.register",
+          "description": "Expose escalate_to_human, handoff_to_agent, discuss_with_agent, and register_watch tools to AoA agents"
+        },
+        {
+          "id": "events.subscribe",
+          "description": "Listen for issue, approval, and agent lifecycle events"
+        },
+        {
+          "id": "events.emit",
+          "description": "Emit plugin events for cross-plugin coordination (e.g. ACP handoff)"
+        },
+        {
+          "id": "plugin.state.read",
+          "description": "Read stored chat mappings, session registry, and escalation state"
+        },
+        {
+          "id": "plugin.state.write",
+          "description": "Store chat mappings, session registry, watch state, and escalation state"
+        },
+        {
+          "id": "http.outbound",
+          "description": "Send HTTPS requests to api.telegram.org"
+        },
+        {
+          "id": "secrets.read-ref",
+          "description": "Resolve Telegram bot token and AoA board API key from the secrets store"
+        },
+        {
+          "id": "activity.log.write",
+          "description": "Log approval decisions and agent actions to the AoA activity log"
+        },
+        {
+          "id": "metrics.write",
+          "description": "Emit notification count, command, and escalation metrics"
+        },
+        {
+          "id": "jobs.schedule",
+          "description": "Register recurring jobs for digest delivery, escalation timeouts, and proactive watches"
+        },
+        {
+          "id": "instance.settings.register",
+          "description": "Register per-instance configuration schema"
+        },
+        {
+          "id": "ui.page.register",
+          "description": "Register the Telegram settings UI page"
+        }
+      ],
+      "category": "integrations",
+      "tags": [
+        "official"
+      ],
+      "featured": true
+    },
+    {
+      "id": "skill:anthropic/template",
+      "type": "skill",
+      "name": "template-skill",
+      "description": "Replace with description of the skill and when Claude should use it.",
+      "version": "1.0.0",
+      "source": {
+        "adapter": "anthropic-skills",
+        "url": "https://github.com/anthropics/skills/tree/main/template",
+        "locator": "template"
+      },
+      "trust": {
+        "tier": "verified",
+        "source": "anthropic-skills"
+      },
+      "status": "active",
+      "addedAt": "2026-05-04T06:17:54.587Z",
+      "category": "productivity",
+      "tags": [
+        "official"
+      ],
+      "content": {
+        "inline": "---\nname: template-skill\ndescription: Replace with description of the skill and when Claude should use it.\n---\n\n# Insert instructions below\n"
+      }
+    }
+  ]
+}

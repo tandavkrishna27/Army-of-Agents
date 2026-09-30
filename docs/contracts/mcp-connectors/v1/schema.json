@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://armyofagents.org/contracts/mcp-connectors/v1/schema.json",
+  "title": "AoA MCP connector catalog v1",
+  "type": "object",
+  "required": ["schemaVersion", "entries"],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "trust": {
+      "type": "object",
+      "properties": {
+        "tier": {
+          "enum": ["verified", "community", "unverified"],
+          "default": "community"
+        }
+      },
+      "additionalProperties": true
+    },
+    "entry": {
+      "type": "object",
+      "required": ["id", "displayName", "serverName", "transport"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "serverName": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "not": {
+            "enum": ["aoa", "playwright"]
+          }
+        },
+        "transport": {
+          "enum": ["http", "stdio"]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "headerTemplateKeys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9!#$%&'*+.^_`|~-]+$"
+          },
+          "default": []
+        },
+        "envTemplateKeys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "default": []
+        },
+        "requiresSecret": {
+          "type": "boolean",
+          "default": false
+        },
+        "requiresOAuth": {
+          "type": "boolean",
+          "default": false
+        },
+        "secretLabel": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "docsUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "trust": {
+          "$ref": "#/$defs/trust"
+        },
+        "headers": false,
+        "env": false,
+        "headerTemplate": false,
+        "envTemplate": false
+      },
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "transport": {
+                "const": "http"
+              }
+            },
+            "required": ["transport"]
+          },
+          "then": {
+            "required": ["url"],
+            "not": {
+              "required": ["command"]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "transport": {
+                "const": "stdio"
+              }
+            },
+            "required": ["transport"]
+          },
+          "then": {
+            "required": ["command"],
+            "not": {
+              "required": ["url"]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

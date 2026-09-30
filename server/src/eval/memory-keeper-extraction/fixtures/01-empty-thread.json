@@ -1,0 +1,14 @@
+{
+  "id": "01-empty-thread",
+  "input": {
+    "thread": {
+      "id": "fixture-thread-1",
+      "companyId": "fixture-company-1",
+      "entries": []
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "types": [] }
+  }
+}

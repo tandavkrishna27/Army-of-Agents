@@ -1,0 +1,28 @@
+{
+  "id": "06-acceptance-criteria-passthrough",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-6",
+      "summary": "Add an 'Archive thread' action to the Discussions sidebar so old threads can be hidden without deletion. The acceptance criteria below are the ones product wrote — keep them verbatim.",
+      "proposedTasks": [
+        {
+          "title": "Add archive action to thread row context menu",
+          "acceptanceCriteria": [
+            "Right-clicking a thread row shows an 'Archive' menu item",
+            "Selecting Archive moves the thread to the 'Archived' collapsible section",
+            "Archived threads remain searchable but are hidden from the default list"
+          ]
+        }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "contains",
+    "value": [
+      "Right-clicking a thread row shows an 'Archive' menu item",
+      "Selecting Archive moves the thread to the 'Archived' collapsible section",
+      "Archived threads remain searchable but are hidden from the default list"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "09-multiple-conflicting-ideas",
+  "input": {
+    "thread": {
+      "id": "fixture-9",
+      "phase": "discuss",
+      "intent": ["planning"],
+      "summaryText": null,
+      "entries": [
+        { "id": "e1", "rawContent": "I think we should double down on the API and let customers build their own dashboards.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "Honestly I'd rather build a polished default dashboard ourselves — most customers won't code.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "Both are real options. API-first scales, default UI converts faster.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e4", "rawContent": "We can't do both this quarter. Need to pick.", "authorAgentId": null, "createdBy": "user-2" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "rubric": "Should return 'ask-clarifying' — the humans have surfaced a fork in the road but haven't picked a direction. A clarifying question (e.g. 'which customer segment are we optimizing for?') would unblock convergence faster than waiting.",
+    "value": { "category": "ask-clarifying" }
+  }
+}

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "team_members_one_lead_uq" ON "team_members" USING btree ("team_id") WHERE role = 'lead';

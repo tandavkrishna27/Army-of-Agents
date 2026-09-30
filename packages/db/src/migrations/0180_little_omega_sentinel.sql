@@ -1,0 +1,1 @@
+ALTER TABLE "internal_agent_config" ALTER COLUMN "autonomy_level" SET DEFAULT 1;

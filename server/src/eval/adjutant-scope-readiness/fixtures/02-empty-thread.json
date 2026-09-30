@@ -1,0 +1,16 @@
+{
+  "id": "02-empty-thread",
+  "input": {
+    "thread": {
+      "id": "fixture-2",
+      "phase": "discuss",
+      "intent": [],
+      "summaryText": null,
+      "entries": []
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "category": "wait" }
+  }
+}

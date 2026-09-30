@@ -1,0 +1,58 @@
+{
+  "name": "@armyofagents/cli",
+  "version": "0.2.7",
+  "description": "AoA (Army of Agents) CLI — orchestrate AI agent teams to run a business",
+  "type": "module",
+  "bin": {
+    "aoa": "./dist/index.js"
+  },
+  "keywords": [
+    "aoa",
+    "army-of-agents",
+    "ai",
+    "agents",
+    "orchestration",
+    "cli"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/meteoritelabs/aoa.git",
+    "directory": "cli"
+  },
+  "homepage": "https://github.com/meteoritelabs/aoa",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "node --input-type=module -e \"import esbuild from 'esbuild'; import config from './esbuild.config.mjs'; await esbuild.build(config);\" && chmod +x dist/index.js",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.0",
+    "@armyofagents/adapter-claude-local": "workspace:*",
+    "@armyofagents/adapter-codex-local": "workspace:*",
+    "@armyofagents/adapter-cursor-local": "workspace:*",
+    "@armyofagents/adapter-gemini-local": "workspace:*",
+    "@armyofagents/adapter-opencode-local": "workspace:*",
+    "@armyofagents/adapter-openclaw": "workspace:*",
+    "@armyofagents/adapter-utils": "workspace:*",
+    "@armyofagents/db": "workspace:*",
+    "@armyofagents/server": "workspace:*",
+    "@armyofagents/shared": "workspace:*",
+    "drizzle-orm": "0.45.2",
+    "dotenv": "^17.0.1",
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "tsx": "^4.22.4",
+    "typescript": "^5.7.3"
+  }
+}

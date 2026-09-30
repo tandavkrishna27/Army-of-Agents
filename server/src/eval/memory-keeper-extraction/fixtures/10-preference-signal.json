@@ -1,0 +1,16 @@
+{
+  "id": "10-preference-signal",
+  "input": {
+    "thread": {
+      "id": "fixture-thread-10",
+      "companyId": "fixture-company-1",
+      "entries": [
+        { "id": "e1", "rawContent": "Heads up for the team: I really prefer dark mode for code review sessions — easier on the eyes during long PR walkthroughs. Please use the dark theme when we screen-share review meetings.", "createdAt": "2026-05-29T09:00:00.000Z" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "contains",
+    "value": ["preference"]
+  }
+}

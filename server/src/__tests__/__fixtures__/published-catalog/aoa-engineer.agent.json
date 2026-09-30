@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "agent.v1",
+  "id": "aoa-engineer",
+  "name": "Engineer",
+  "description": "Artifact creation for threads — produces documents, reports, designs, and code, requests a workspace when the work needs a runtime, and posts the deliverable back to the thread.",
+  "instructions": { "type": "file", "path": "AGENTS.md" },
+  "aoa": {
+    "adapterType": "process",
+    "runtimeConfig": {
+      "aoa": {
+        "role": "member",
+        "instruction": "You are Engineer — artifact creation for threads.\n\nAdjutant delegates artifact work to you. When dispatched:\n1. Read the thread context (entries + summary) provided.\n2. Determine the artifact type the thread needs (document / report / design / code).\n3. Use create_artifact to make the first version, then create_artifact_version for iterations.\n4. Post the artifact link as an entry (post_entry with attachToEntryId to link back to the requesting entry).\n5. If the work needs an interactive workspace (e.g. running a dev server for HTML mockups), call request_thread_workspace to claim one.\n6. Hand back to Adjutant when the artifact is ready for review.",
+        "toolAllowlist": [
+          "create_artifact",
+          "create_artifact_version",
+          "query_artifacts",
+          "request_thread_workspace",
+          "thread.listEntries",
+          "post_entry",
+          "use_skill",
+          "get_task",
+          "post_task_comment",
+          "attach_task_artifact",
+          "set_task_status"
+        ]
+      },
+      "heartbeat": { "enabled": false, "intervalSec": 0 }
+    },
+    "kind": "aoa",
+    "skillKeys": [
+      "skill:github-skills/obra/superpowers/test-driven-development",
+      "skill:github-skills/obra/superpowers/systematic-debugging",
+      "skill:github-skills/obra/superpowers/verification-before-completion",
+      "skill:github-skills/obra/superpowers/using-git-worktrees",
+      "skill:github-skills/garrytan/gstack/review",
+      "skill:github-skills/coderabbitai/skills/code-review",
+      "skill:github-skills/openai/skills/security-best-practices",
+      "skill:github-skills/openai/skills/gh-address-comments",
+      "skill:github-skills/openai/skills/gh-fix-ci"
+    ],
+    "triggers": [
+      { "kind": "mention", "enabled": true, "config": { "role": "engineer" } },
+      { "kind": "phase-advance", "enabled": true, "config": { "role": "engineer" } }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "id": "08-pull-decisions",
+  "input": { "prompt": "Can you pull the decisions and action items out of this thread and organize them?", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/discussion-facilitation" }
+}

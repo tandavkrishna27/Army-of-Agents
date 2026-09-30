@@ -1,0 +1,1 @@
+ALTER TABLE "internal_agent_conversations" ADD COLUMN "sort_order" integer;

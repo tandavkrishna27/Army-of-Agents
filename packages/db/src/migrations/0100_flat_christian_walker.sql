@@ -1,0 +1,1 @@
+ALTER TABLE "agents" ADD COLUMN "kind" text DEFAULT 'org' NOT NULL;

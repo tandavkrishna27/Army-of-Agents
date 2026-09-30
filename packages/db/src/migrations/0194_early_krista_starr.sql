@@ -1,0 +1,1 @@
+ALTER TABLE "execution_targets" ADD COLUMN "worker_token_hash" text;

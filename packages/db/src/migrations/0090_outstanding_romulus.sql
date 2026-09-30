@@ -1,0 +1,1 @@
+ALTER TABLE "internal_agent_config" ADD COLUMN "cheap_model" text;

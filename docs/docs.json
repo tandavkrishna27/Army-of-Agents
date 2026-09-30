@@ -1,0 +1,182 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "AoA",
+  "description": "The control plane for autonomous AI companies",
+  "theme": "mint",
+  "colors": {
+    "primary": "#2563EB",
+    "light": "#3B82F6",
+    "dark": "#1D4ED8"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "dark": "/images/logo-dark.svg",
+    "light": "/images/logo-light.svg"
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/meteoritelabs/aoa"
+    }
+  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Get Started",
+        "groups": [
+          {
+            "group": "Introduction",
+            "pages": [
+              "start/what-is-aoa",
+              "start/quickstart",
+              "start/core-concepts",
+              "start/architecture",
+              "start/upstream-vs-aoa",
+              "start/openclaw-integration"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Board Operator",
+            "pages": [
+              "guides/board-operator/dashboard",
+              "guides/board-operator/inbox",
+              "guides/board-operator/work-questions",
+              "guides/board-operator/discussions",
+              "guides/board-operator/composer",
+              "guides/board-operator/commander",
+              "guides/board-operator/creating-a-company",
+              "guides/board-operator/inviting-and-joining",
+              "guides/board-operator/managing-agents",
+              "guides/board-operator/org-structure",
+              "guides/board-operator/managing-tasks",
+              "guides/board-operator/routines",
+              "guides/board-operator/approvals",
+              "guides/board-operator/memory",
+              "guides/board-operator/artifacts",
+              "guides/board-operator/costs-and-budgets",
+              "guides/board-operator/activity-log",
+              "guides/board-operator/oauth-connectors",
+              "guides/board-operator/marketplace-recovery",
+              "guides/board-operator/execution-workspaces",
+              "guides/cloud-plugin-execution"
+            ]
+          },
+          {
+            "group": "Agent Developer",
+            "pages": [
+              "guides/agent-developer/how-agents-work",
+              "guides/agent-developer/heartbeat-protocol",
+              "guides/agent-developer/writing-a-skill",
+              "guides/agent-developer/task-workflow",
+              "guides/agent-developer/comments-and-communication",
+              "guides/agent-developer/handling-approvals",
+              "guides/agent-developer/cost-reporting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deploy",
+        "groups": [
+          {
+            "group": "Deployment",
+            "pages": [
+              "deploy/overview",
+              "deploy/local-development",
+              "deploy/tailscale-private-access",
+              "deploy/docker",
+              "deploy/docker-research",
+              "deploy/docker-runtime-research-changelog",
+              "deploy/deployment-modes",
+              "deploy/database",
+              "deploy/secrets",
+              "deploy/storage",
+              "deploy/environment-variables",
+              "deploy/upgrade-guide",
+              "deploy/distribution",
+              "deploy/telemetry"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Adapters",
+        "groups": [
+          {
+            "group": "Agent Adapters",
+            "pages": [
+              "adapters/overview",
+              "adapters/runtime",
+              "adapters/claude-local",
+              "adapters/codex-local",
+              "adapters/cursor",
+              "adapters/opencode-local",
+              "adapters/openclaw",
+              "adapters/gemini-local",
+              "adapters/hermes-local",
+              "adapters/process",
+              "adapters/http",
+              "adapters/creating-an-adapter"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "REST API",
+            "pages": [
+              "api/overview",
+              "api/authentication",
+              "api/onboarding",
+              "api/companies",
+              "api/team",
+              "api/agents",
+              "api/issues",
+              "api/work-questions",
+              "api/discussions",
+              "api/hub",
+              "api/internal-agent",
+              "api/approvals",
+              "api/goals-and-projects",
+              "api/memory",
+              "api/artifacts",
+              "api/workspaces",
+              "api/environments",
+              "api/routines",
+              "api/costs",
+              "api/secrets",
+              "api/activity",
+              "api/dashboard",
+              "api/marketplace-and-plugins",
+              "api/mcp",
+              "api/workflow-templates"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "CLI",
+        "groups": [
+          {
+            "group": "CLI Reference",
+            "pages": [
+              "cli/overview",
+              "cli/setup-commands",
+              "cli/control-plane-commands"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footerSocials": {
+    "github": "https://github.com/meteoritelabs/aoa"
+  }
+}

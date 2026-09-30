@@ -1,0 +1,42 @@
+{
+  "id": "09-all-tasks-present",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-9",
+      "summary": "Onboarding revamp — five concrete deliverables product committed to in the kickoff. The Planner MUST keep every task; the Dispatcher will turn them into work items 1:1.",
+      "proposedTasks": [
+        {
+          "title": "Rewrite the welcome screen copy with new value-prop framing",
+          "acceptanceCriteria": ["Reads in under 30 seconds", "Names the three concrete outcomes founders get"]
+        },
+        {
+          "title": "Replace the company-creation wizard with a single-screen form",
+          "acceptanceCriteria": ["Form collects name, slug, deployment mode in one screen"]
+        },
+        {
+          "title": "Add a 'Skip and explore' option to the agent-hire step",
+          "acceptanceCriteria": ["Skip puts the founder on Home with a starter checklist instead of the agent picker"]
+        },
+        {
+          "title": "Wire analytics events for each onboarding step transition",
+          "acceptanceCriteria": ["Each step emits a stepCompleted event with stepName + durationMs"]
+        },
+        {
+          "title": "Update the Onboarding section of the user docs",
+          "acceptanceCriteria": ["Screenshots refreshed", "Copy mirrors the new welcome-screen language"]
+        }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "contains",
+    "value": [
+      "Rewrite the welcome screen copy with new value-prop framing",
+      "Replace the company-creation wizard with a single-screen form",
+      "Add a 'Skip and explore' option to the agent-hire step",
+      "Wire analytics events for each onboarding step transition",
+      "Update the Onboarding section of the user docs"
+    ]
+  }
+}

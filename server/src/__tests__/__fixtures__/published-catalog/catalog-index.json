@@ -1,0 +1,2907 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-07-24T19:52:15.166Z",
+  "items": [
+    {
+      "id": "agent:aoa-curated/aoa-adjutant",
+      "type": "agent",
+      "status": "active",
+      "requires": [
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/office-hours"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/dispatching-parallel-agents"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/writing-plans"
+        }
+      ]
+    },
+    {
+      "id": "agent:aoa-curated/aoa-chronicler",
+      "type": "agent",
+      "status": "active",
+      "requires": []
+    },
+    {
+      "id": "agent:aoa-curated/aoa-engineer",
+      "type": "agent",
+      "status": "active",
+      "requires": [
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/test-driven-development"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/systematic-debugging"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/verification-before-completion"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/using-git-worktrees"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/review"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/coderabbitai/skills/code-review"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/security-best-practices"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/gh-address-comments"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/gh-fix-ci"
+        }
+      ]
+    },
+    {
+      "id": "agent:aoa-curated/aoa-librarian",
+      "type": "agent",
+      "status": "active",
+      "requires": [
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/setup-gbrain"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/sync-gbrain"
+        }
+      ]
+    },
+    {
+      "id": "agent:aoa-curated/aoa-memory-keeper",
+      "type": "agent",
+      "status": "active"
+    },
+    {
+      "id": "agent:aoa-curated/aoa-navigator",
+      "type": "agent",
+      "status": "active"
+    },
+    {
+      "id": "agent:aoa-curated/aoa-planner",
+      "type": "agent",
+      "status": "active",
+      "requires": [
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/writing-plans"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/spec"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/brainstorming"
+        }
+      ]
+    },
+    {
+      "id": "agent:aoa-curated/aoa-reviewer",
+      "type": "agent",
+      "status": "active",
+      "requires": [
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/review"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/coderabbitai/skills/code-review"
+        }
+      ]
+    },
+    {
+      "id": "agent:aoa-curated/aoa-scout",
+      "type": "agent",
+      "status": "active",
+      "requires": [
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/investigate"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/brainstorming"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/systematic-debugging"
+        }
+      ]
+    },
+    {
+      "id": "agent:aoa-curated/aoa-steward",
+      "type": "agent",
+      "status": "active",
+      "requires": []
+    },
+    {
+      "id": "agent:aoa-curated/github-issue-triager",
+      "type": "agent",
+      "status": "active",
+      "requires": [
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/writing-plans"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/systematic-debugging"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/coderabbitai/skills/code-review"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/gh-address-comments"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/security-best-practices"
+        },
+        {
+          "type": "plugin",
+          "id": "plugin:aoa-curated/aoa-plugin-github-issues",
+          "versionRange": "^1.0.0"
+        }
+      ]
+    },
+    {
+      "id": "agent:aoa-curated/senior-engineer",
+      "type": "agent",
+      "status": "active",
+      "requires": [
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/brainstorming"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/writing-plans"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/using-git-worktrees"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/test-driven-development"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/systematic-debugging"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/dispatching-parallel-agents"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/subagent-driven-development"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/executing-plans"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/requesting-code-review"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/receiving-code-review"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/verification-before-completion"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/finishing-a-development-branch"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/coderabbitai/skills/code-review"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/security-best-practices"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/openai-docs"
+        }
+      ]
+    },
+    {
+      "id": "plugin:aoa-curated/aoa-plugin-discord",
+      "type": "plugin",
+      "status": "active"
+    },
+    {
+      "id": "plugin:aoa-curated/aoa-plugin-github-issues",
+      "type": "plugin",
+      "status": "active"
+    },
+    {
+      "id": "plugin:aoa-curated/aoa-plugin-slack",
+      "type": "plugin",
+      "status": "active"
+    },
+    {
+      "id": "plugin:aoa-curated/aoa-plugin-telegram",
+      "type": "plugin",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/algorithmic-art",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/brand-guidelines",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/canvas-design",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/doc-coauthoring",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/docx",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/frontend-design",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/internal-comms",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/mcp-builder",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/pdf",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/pptx",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/skill-creator",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/slack-gif-creator",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/theme-factory",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/web-artifacts-builder",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/webapp-testing",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:anthropic/xlsx",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:aoa-curated/aoa-design-shotgun-html",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:aoa-curated/aoa-thread-extract",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/blueprint",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wordpress-router",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-abilities-api",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-abilities-audit",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-abilities-verify",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-block-development",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-block-themes",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-interactivity-api",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-patterns",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-performance",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-phpstan",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-playground",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-plugin-development",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-plugin-directory-guidelines",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-project-triage",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-rest-api",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wp-wpcli-and-ops",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/WordPress/agent-skills/wpds",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/angular/skills/angular-developer",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/angular/skills/angular-new-app",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/apollo-client",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/apollo-connectors",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/apollo-federation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/apollo-ios",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/apollo-kotlin",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/apollo-mcp-server",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/apollo-router",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/apollo-router-plugin-creator",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/apollo-server",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/graphql-operations",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/graphql-schema",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/rover",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/rust-best-practices",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/apollographql/skills/skill-creator",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/auth0/agent-skills/auth0",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/answers",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/bx",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/images-search",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/llm-context",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/local-descriptions",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/local-pois",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/news-search",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/search",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/spellcheck",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/suggest",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/videos-search",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/brave/brave-search-skills/web-search",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/agents-sdk",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/cloudflare",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/cloudflare-email-service",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/cloudflare-one",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/cloudflare-one-migrations",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/durable-objects",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/sandbox-sdk",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/turnstile-spin",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/web-perf",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/workers-best-practices",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/cloudflare/skills/wrangler",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/coderabbitai/skills/autofix",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/coderabbitai/skills/code-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/SKILL.md",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/agent-observability/agent-observability-auto-experiment",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/agent-observability/agent-observability-eval-bootstrap",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/agent-observability/agent-observability-eval-pipeline",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/agent-observability/agent-observability-experiment-analyzer",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/agent-observability/agent-observability-experiment-py-bootstrap",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/agent-observability/agent-observability-replay-trace",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/agent-observability/agent-observability-session-classify",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/agent-observability/agent-observability-trace-rca",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/k8s-ssi/agent-install",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/k8s-ssi/enable-ssi",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/k8s-ssi/onboarding-summary",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/k8s-ssi/troubleshoot-ssi",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/k8s-ssi/verify-ssi",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/linux-ssi/agent-install",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/linux-ssi/enable-ssi",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/linux-ssi/onboarding-summary",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/linux-ssi/troubleshoot-ssi",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/linux-ssi/verify-ssi",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apm/service-remapping",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-apps/datadog-app",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-audit",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-audit/ai-activity-audit",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-audit/compliance-report",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-audit/cost-spike-investigation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-audit/key-compromise",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-audit/security-investigation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-browser-sdk",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-browser-sdk/upgrade-v5",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-browser-sdk/upgrade-v6",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-browser-sdk/upgrade-v7",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-docs",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-logs",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-monitors",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-pup",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-security/csm/ownership-agent",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-software-delivery/triage-flaky-test",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/datadog-labs/agent-skills/dd-software-delivery/unblock-pr",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/eas-app-stores",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/eas-hosting",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/eas-observe",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/eas-simulator",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/eas-update-insights",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/eas-workflows",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-app-clip",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-brownfield",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-data-fetching",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-dev-client",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-dom",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-examples",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-module",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-native-ui",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-project-structure",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-router",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-skill-feedback",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-tailwind-setup",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-ui",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-upgrade",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/expo/skills/expo-web-to-native",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-code-connect",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-create-new-file",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-design-to-code",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-generate-design",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-generate-diagram",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-generate-library",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-implement-motion",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-swiftui",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-use",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-use-figjam",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-use-motion",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/figma/mcp-server-guide/figma-use-slides",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-ai-logic-basics",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-app-hosting-basics",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-auth-basics",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-basics",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-crashlytics",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-data-connect-basics",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-firestore",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-hosting-basics",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-remote-config-basics",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/firebase-security-rules-auditor",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/firebase/agent-skills/xcode-project-setup",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-add-unit-test",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-build-cli-app",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-collect-coverage",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-fix-runtime-errors",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-generate-test-mocks",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-migrate-to-checks-package",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-resolve-package-conflicts",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-run-static-analysis",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-setup-ffi-assets",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-use-ffigen",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-use-pattern-matching",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/dart-use-primary-constructors",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-add-integration-test",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-add-widget-preview",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-add-widget-test",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-apply-architecture-best-practices",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-build-responsive-layout",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-fix-layout-issues",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-implement-json-serialization",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-setup-declarative-routing",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-setup-localization",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/flutter/skills/flutter-use-http-package",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/SKILL.md",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/autoplan",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/benchmark",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/benchmark-models",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/browse",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/browser-skills/hackernews-frontpage",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/canary",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/careful",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/codex",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/connect-chrome",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/context-restore",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/context-save",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/cso",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/design-consultation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/design-html",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/design-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/design-shotgun",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/devex-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/diagram",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/document-generate",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/document-release",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/freeze",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/gstack-upgrade",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/guard",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/health",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/investigate",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/ios-clean",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/ios-design-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/ios-fix",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/ios-qa",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/ios-sync",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/land-and-deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/landing-report",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/learn",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/make-pdf",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/office-hours",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/open-gstack-browser",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/openclaw/skills/gstack-openclaw-ceo-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/openclaw/skills/gstack-openclaw-investigate",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/openclaw/skills/gstack-openclaw-office-hours",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/openclaw/skills/gstack-openclaw-retro",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/pair-agent",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/plan-ceo-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/plan-design-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/plan-devex-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/plan-eng-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/plan-tune",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/qa",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/qa-only",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/retro",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/scrape",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/setup-browser-cookies",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/setup-deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/setup-gbrain",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/ship",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/skillify",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/spec",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/sync-gbrain",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/garrytan/gstack/unfreeze",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/google-gemini/gemini-skills/gemini-api-dev",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/google-gemini/gemini-skills/gemini-interactions-api",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/google-gemini/gemini-skills/gemini-live-api-dev",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/google-gemini/gemini-skills/gemini-omni-flash-api",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-admin-reports",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-calendar",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-calendar-agenda",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-calendar-insert",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-chat",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-chat-send",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-classroom",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-docs",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-docs-write",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-drive",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-drive-upload",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-events",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-events-renew",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-events-subscribe",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-forms",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-gmail",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-gmail-forward",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-gmail-read",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-gmail-reply",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-gmail-reply-all",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-gmail-send",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-gmail-triage",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-gmail-watch",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-keep",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-meet",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-modelarmor",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-modelarmor-create-template",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-modelarmor-sanitize-prompt",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-modelarmor-sanitize-response",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-people",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-script",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-script-push",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-shared",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-sheets",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-sheets-append",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-sheets-read",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-slides",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-tasks",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-workflow",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-workflow-email-to-task",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-workflow-file-announce",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-workflow-meeting-prep",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-workflow-standup-report",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/gws-workflow-weekly-digest",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-content-creator",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-customer-support",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-event-coordinator",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-exec-assistant",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-hr-coordinator",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-it-admin",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-project-manager",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-researcher",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-sales-ops",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/persona-team-lead",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-backup-sheet-as-csv",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-batch-invite-to-event",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-block-focus-time",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-bulk-download-folder",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-collect-form-responses",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-compare-sheet-tabs",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-copy-sheet-for-new-month",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-classroom-course",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-doc-from-template",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-events-from-sheet",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-expense-tracker",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-feedback-form",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-gmail-filter",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-meet-space",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-presentation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-shared-drive",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-task-list",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-create-vacation-responder",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-draft-email-from-doc",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-email-drive-link",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-find-free-time",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-find-large-files",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-forward-labeled-emails",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-generate-report-from-sheet",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-label-and-archive-emails",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-log-deal-update",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-organize-drive-folder",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-plan-weekly-schedule",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-post-mortem-setup",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-reschedule-meeting",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-review-meet-participants",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-review-overdue-tasks",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-save-email-attachments",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-save-email-to-doc",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-schedule-recurring-event",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-send-team-announcement",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-share-doc-and-notify",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-share-event-materials",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-share-folder-with-team",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-sync-contacts-to-sheet",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/googleworkspace/cli/recipe-watch-drive-changes",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/hf-cli",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/hf-cloud-aws-context-discovery",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/hf-cloud-python-env-setup",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/hf-cloud-sagemaker-deployment-planner",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/hf-cloud-sagemaker-iam-preflight",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/hf-cloud-sagemaker-production-defaults",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/hf-cloud-serving-image-selection",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/hf-mem",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-best",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-community-evals",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-datasets",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-gradio",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-llm-trainer",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-local-models",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-lora-space-builder",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-paper-publisher",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-papers",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-spaces",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-tool-builder",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-trackio",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-vision-trainer",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/huggingface-zerogpu",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/train-sentence-transformers",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/transformers-js",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/huggingface/skills/trl-training",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/makenotion/notion-cookbook/knowledge-capture",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/makenotion/notion-cookbook/meeting-intelligence",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/makenotion/notion-cookbook/research-documentation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/makenotion/notion-cookbook/spec-to-implementation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/airunway-aks-setup",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/appinsights-instrumentation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-ai",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-aigateway",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-app-onboard",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-app-onboard-prereq",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-app-onboard/deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-app-onboard/prepare",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-app-onboard/scaffold",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-cloud-migrate",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-compliance",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-compute",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-cost",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-diagnostics",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-enterprise-infra-planner",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-kubernetes",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-kubernetes/azure-kubernetes-automatic-readiness",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-kusto",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-messaging",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-prepare",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-quotas",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-reliability",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-resource-lookup",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-resource-visualizer",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-storage",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-upgrade",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/azure-validate",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/entra-agent-id",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/entra-app-registration",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/microsoft-foundry",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/microsoft-foundry/finetuning",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/microsoft-foundry/models/deploy-model",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/microsoft-foundry/models/deploy-model/capacity",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/microsoft-foundry/models/deploy-model/customize",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/microsoft-foundry/models/deploy-model/preset",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/microsoft/azure-skills/python-appservice-deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/neondatabase/agent-skills/claimable-postgres",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/neondatabase/agent-skills/neon",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/neondatabase/agent-skills/neon-ai-gateway",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/neondatabase/agent-skills/neon-functions",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/neondatabase/agent-skills/neon-object-storage",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/neondatabase/agent-skills/neon-postgres",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/neondatabase/agent-skills/neon-postgres-branches",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/neondatabase/agent-skills/neon-postgres-egress-optimizer",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-access-control",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-agent-runner",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-ai-gateway",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-blobs",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-caching",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-config",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-database",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-edge-functions",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-forms",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-frameworks",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-functions",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-identity",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-image-cdn",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/netlify/context-and-tools/netlify-mcp-servers",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/brainstorming",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/dispatching-parallel-agents",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/executing-plans",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/finishing-a-development-branch",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/receiving-code-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/requesting-code-review",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/subagent-driven-development",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/systematic-debugging",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/test-driven-development",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/using-git-worktrees",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/using-superpowers",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/verification-before-completion",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/writing-plans",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/obra/superpowers/writing-skills",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/aspnet-core",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/chatgpt-apps",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/cli-creator",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/cloudflare-deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/define-goal",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/figma",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/figma-code-connect-components",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/figma-create-design-system-rules",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/figma-create-new-file",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/figma-generate-design",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/figma-generate-library",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/figma-implement-design",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/figma-use",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/gh-address-comments",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/gh-fix-ci",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/hatch-pet",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/jupyter-notebook",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/linear",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/migrate-to-codex",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/netlify-deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/notion-knowledge-capture",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/notion-meeting-intelligence",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/notion-research-documentation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/notion-spec-to-implementation",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/openai-docs",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/pdf",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/playwright",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/playwright-interactive",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/render-deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/screenshot",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/security-best-practices",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/security-ownership-map",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/security-threat-model",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/sentry",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/speech",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/transcribe",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/vercel-deploy",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/winui-app",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/openai/skills/yeet",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/redis/agent-skills/iris-development",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/redis/agent-skills/redis-clustering",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/redis/agent-skills/redis-connections",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/redis/agent-skills/redis-core",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/redis/agent-skills/redis-observability",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/redis/agent-skills/redis-search",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/redis/agent-skills/redis-security",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/redis/agent-skills/redis-semantic-cache",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/resend/resend-skills/agent-email-inbox",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/resend/resend-skills/email-best-practices",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/resend/resend-skills/react-email",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/resend/resend-skills/resend",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/resend/resend-skills/resend-cli",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/stripe/ai/connect-recommend",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/stripe/ai/stripe-best-practices",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/stripe/ai/stripe-directory",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/stripe/ai/stripe-docs",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/stripe/ai/stripe-projects",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "skill:github-skills/stripe/ai/upgrade-stripe",
+      "type": "skill",
+      "status": "active"
+    },
+    {
+      "id": "team:aoa-curated/default-crew",
+      "type": "team",
+      "status": "active",
+      "requires": [
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-adjutant"
+        },
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-scout"
+        },
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-engineer"
+        },
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-navigator"
+        },
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-planner"
+        },
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-memory-keeper"
+        },
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-chronicler"
+        },
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-reviewer"
+        },
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-librarian"
+        },
+        {
+          "type": "agent",
+          "id": "agent:aoa-curated/aoa-steward"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/setup-gbrain"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/sync-gbrain"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/office-hours"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/investigate"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/review"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/garrytan/gstack/spec"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/dispatching-parallel-agents"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/writing-plans"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/brainstorming"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/systematic-debugging"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/test-driven-development"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/verification-before-completion"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/obra/superpowers/using-git-worktrees"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/coderabbitai/skills/code-review"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/security-best-practices"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/gh-address-comments"
+        },
+        {
+          "type": "skill",
+          "id": "skill:github-skills/openai/skills/gh-fix-ci"
+        }
+      ]
+    }
+  ]
+}

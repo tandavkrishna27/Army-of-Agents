@@ -1,0 +1,44 @@
+Provider-switching walkthrough — Scenario 4 REAL evidence
+Captured live on the local_trusted instance (AOA_HOME ~/.aoa-ps, :3100), ChatGPT-codex auth.
+Company 69aa10c6-0d33-434b-8d29-ac2331a59f22 ("Meteorite Labs"), org codex agent
+f46535c6-92ac-4e75-9fcb-894a5679ce5f ("Director", adapterConfig.model=gpt-5.5 post-backfill).
+
+================================================================================
+4a — Test-environment probe (the real adapter probe the "Test environment" button runs)
+================================================================================
+POST /api/companies/69aa10c6-.../adapters/codex_local/test-environment
+body: { "adapterConfig": { "model": "gpt-5.3-codex" } }
+
+  HTTP 200   (15203 ms — spawns the real codex CLI; cold-start latency expected)
+  status: "pass"
+  checks:
+    ✓ "Working directory is valid: C:\Users\TK\OneDrive\Desktop\Claude Data\Upstream-A…"
+    ✓ "Command is executable: codex"
+    ✓ "Codex auth.json is available for local authentication."   ← ChatGPT local auth detected
+    ✓ "hello"                                                     ← end-to-end smoke turn returned
+
+Full raw body: docs/aoa/evidence/ps-4a-test-environment.json
+Note: captured at the API layer (the exact route the UI "Test environment" button POSTs).
+The UI button→card path itself is covered by the e2e gate
+(tests/e2e/provider-switching.spec.ts:233-255, "test-connection button runs and renders a result").
+
+================================================================================
+4b — Concurrency clamp: queues, does NOT return 429
+================================================================================
+Two near-simultaneous wakeups at the same org agent (HEARTBEAT_MAX_CONCURRENT_RUNS_DEFAULT = 1):
+
+  POST /api/agents/f46535c6-.../wakeup  {source:"on_demand",triggerDetail:"manual",reason:"ps-4b-concurrency-1"}
+  POST /api/agents/f46535c6-.../wakeup  {source:"on_demand",triggerDetail:"manual",reason:"ps-4b-concurrency-2"}
+
+  wakeup 1 → HTTP 202  {"status":"queued","id":"a67435ae-1d06-4a02-9d14-b3d188d2b0d3"}
+  wakeup 2 → HTTP 202  {"status":"queued","id":"3da35561-800b-41fe-8b87-b14a36bdc69e"}
+  NEITHER returned 429.
+
+Settled DB state (heartbeat_runs, FIFO promotion under the clamp):
+  run a67435ae   status=running    created 16:16:47.000   (earlier → promoted to the single slot)
+  run 3da35561   status=queued     created 16:16:47.001   (1 ms later → waits for the slot)
+
+→ Exactly one running + one queued. The clamp QUEUES; it never rejects.
+Source: queued-vs-running decision heartbeat.ts:2112-2143; clamp constant heartbeat.ts:137.
+The only 429 in the codebase is the express per-route rate limiter
+(server/src/middleware/rate-limit.ts:117) — a different mechanism, not the switching engine.

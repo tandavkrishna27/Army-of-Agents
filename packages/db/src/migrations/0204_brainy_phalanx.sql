@@ -1,0 +1,1 @@
+ALTER TABLE "cost_events" ALTER COLUMN "agent_id" DROP NOT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE "workspace_runtime_services" ADD COLUMN "health_checked_at" timestamp with time zone;

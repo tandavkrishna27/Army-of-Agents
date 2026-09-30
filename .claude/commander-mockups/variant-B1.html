@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>B1 — Phase 5 — simpler sessions + chat caption — AoA Commander</title>
+<link rel="stylesheet" href="./_tokens.css" />
+<style>
+
+/* ── Phase 5 layout reset ── */
+.app-frame { height: 100vh; overflow: hidden; }
+
+/* ── NEW Sessions rail header ── */
+.sessions-header {
+  padding: 10px 10px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+/* Full-width primary button */
+.btn-new-chat {
+  width: 100%;
+  height: 32px;
+  background: var(--brand);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px;
+  font-family: var(--font-sans);
+  font-size: 0.78rem; font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+.btn-new-chat:hover { background: var(--brand-hover); }
+/* Full-width ghost search button */
+.btn-search-sessions {
+  width: 100%;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--dim);
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+.btn-search-sessions:hover { background: var(--hd); color: var(--text); }
+/* Status + collapse row */
+.sessions-status-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 2px 0 8px;
+}
+
+/* ── Session circle indicators ── */
+.session-circle {
+  flex-shrink: 0;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+.session-circle.inactive {
+  background: transparent;
+  border: 1.5px solid var(--very-dim);
+}
+.session-circle.active {
+  background: var(--brand);
+  border: none;
+}
+/* Pin icon replaces circle for pinned rows */
+.session-pin-icon {
+  flex-shrink: 0;
+  width: 12px; height: 12px;
+  margin-right: 10px;
+}
+
+/* ── Session row — updated (no border-left, no bg-tint) ── */
+.session-row {
+  display: flex; align-items: center;
+  gap: 0;
+  padding: 0 12px;
+  height: 32px;
+  cursor: pointer;
+  position: relative;
+  transition: background 120ms;
+  border-left: 2px solid transparent; /* reset from _tokens.css */
+  background: transparent;
+}
+.session-row:hover { background: color-mix(in srgb, var(--hd) 70%, transparent); }
+/* Active row: edge-to-edge bg + border highlight (NO margin/padding offset).
+   This keeps the dot + title at the same X position as inactive rows so the
+   left edge of indicators lines up vertically down the list. */
+.session-row.active {
+  background: color-mix(in srgb, var(--card-2) 80%, transparent);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  /* keep padding identical to inactive rows so dot + text align */
+}
+.session-row .row-content { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.session-row .title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--dim);
+}
+.session-row.active .title { font-weight: 500; color: var(--text); }
+
+/* ── Overflow button on session rows ── */
+.session-row .overflow-btn {
+  position: absolute; top: 8px; right: 6px;
+  width: 22px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--dim);
+  background: transparent;
+  border: none; border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 100ms;
+}
+.session-row:hover .overflow-btn { opacity: 1; }
+.session-row.menu-open .overflow-btn { opacity: 1; background: var(--card); color: var(--text); }
+
+/* Drag state */
+.session-row.dragging {
+  opacity: 0.45;
+  transform: rotate(-1deg);
+}
+.drop-target-line {
+  height: 2px;
+  background: var(--brand);
+  border-radius: 2px;
+  margin: 0 12px;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--brand) 50%, transparent);
+}
+
+/* ── ⋮ Overflow popover ── */
+.overflow-popover {
+  position: absolute;
+  top: 6px; left: calc(100% + 4px);
+  z-index: 200;
+  width: 148px;
+  background: var(--card-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+.overflow-popover .pop-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  color: var(--text);
+  cursor: pointer;
+}
+.overflow-popover .pop-item:hover { background: var(--hd); }
+.overflow-popover .pop-item.danger { color: var(--error); }
+.overflow-popover .pop-item.hovered { background: var(--hd); }
+.overflow-popover .pop-sep {
+  height: 1px; background: var(--border-soft);
+  margin: 2px 0;
+}
+
+/* ── Session group label ── */
+.session-group {
+  padding: 10px 12px 3px;
+}
+
+/* ── Chat pane caption strip ── */
+.chat-pane-header {
+  height: 44px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.chat-pane-header .session-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-pane-header .session-meta {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--dim);
+  font-family: var(--font-mono);
+}
+
+/* ── Chat pane ── */
+.chat-pane-inner {
+  display: flex; flex-direction: column;
+  height: 100%;
+}
+
+/* ── Message hover demo ── */
+.msg-wrapper {
+  position: relative;
+}
+.msg-hover-actions {
+  position: absolute;
+  top: -6px; right: 0;
+  display: flex; gap: 3px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 5px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+.msg-hover-actions.user-side { right: 0; }
+.msg-hover-action {
+  width: 24px; height: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--dim);
+  border-radius: 4px;
+  cursor: pointer;
+  border: none; background: transparent;
+}
+.msg-hover-action:hover { color: var(--text); background: var(--hd); }
+
+/* ── Confirmation card pulse ── */
+@keyframes pulse-border {
+  0%, 100% { border-color: color-mix(in srgb, var(--warning) 35%, transparent); }
+  50%       { border-color: color-mix(in srgb, var(--warning) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning) 10%, transparent); }
+}
+.confirm-card-v2 {
+  align-self: flex-start;
+  max-width: 76%;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+  border-radius: 10px;
+  display: flex; flex-direction: column; gap: 8px;
+  animation: pulse-border 2.2s ease-in-out infinite;
+}
+.confirm-card-v2 .head {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.78rem; font-weight: 600;
+  color: color-mix(in srgb, var(--warning) 80%, white);
+}
+.confirm-card-v2 .tool-name {
+  font-family: var(--font-mono); font-size: 0.82rem;
+  color: var(--text); font-weight: 600;
+}
+.confirm-card-v2 .params {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text);
+}
+.confirm-card-v2 .params .key { color: var(--dim); }
+.confirm-card-v2 .entity-line {
+  font-size: 0.76rem;
+  color: var(--dim);
+}
+.confirm-card-v2 .entity-line strong {
+  color: color-mix(in srgb, var(--warning) 90%, white);
+  font-weight: 500;
+}
+.confirm-card-v2 .actions { display: flex; gap: 8px; padding-top: 2px; }
+
+/* ── New input box ── */
+.input-card {
+  margin: 0 16px 14px;
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: visible;
+  position: relative;
+}
+.input-card textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 12px 14px 8px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 56px;
+  max-height: 140px;
+}
+.input-card textarea::placeholder { color: var(--very-dim); }
+.input-controls {
+  display: flex; align-items: center; gap: 4px;
+  padding: 6px 10px 8px;
+  border-top: 1px solid var(--border-soft);
+}
+.input-controls .spacer { flex: 1; }
+
+/* Circle buttons in input */
+.btn-circle {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-circle-brand { background: var(--brand); color: white; }
+.btn-circle-brand:hover { background: var(--brand-hover); }
+
+/* Ghost text buttons */
+.btn-text-ghost {
+  height: 28px; padding: 0 8px;
+  border: none; background: transparent;
+  color: var(--very-dim);
+  font-family: var(--font-sans); font-size: 0.78rem;
+  border-radius: 5px; cursor: pointer;
+}
+.btn-text-ghost:hover { color: var(--dim); background: var(--hd); }
+
+/* Autonomy pill */
+.autonomy-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--brand-wash);
+  border: 1px solid color-mix(in srgb, var(--brand) 28%, transparent);
+  color: var(--brand);
+  font-size: 0.72rem; font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+/* ── Generic popover floating ── */
+.popover {
+  position: absolute;
+  z-index: 300;
+  background: var(--card-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  overflow: hidden;
+  min-width: 210px;
+}
+.popover-header {
+  padding: 8px 12px 4px;
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--very-dim);
+  border-bottom: 1px solid var(--border-soft);
+}
+.popover-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 12px;
+  font-size: 0.8rem; color: var(--text);
+  cursor: pointer;
+}
+.popover-item:hover, .popover-item.hovered { background: var(--hd); }
+.popover-item .item-desc { font-size: 0.72rem; color: var(--dim); margin-top: 1px; }
+.popover-item-stack { display: flex; flex-direction: column; }
+.popover-sep { height: 1px; background: var(--border-soft); margin: 2px 0; }
+.popover-group-label {
+  padding: 6px 12px 2px;
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--very-dim);
+}
+.popover-item .agent-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  display: inline-block; flex-shrink: 0;
+}
+.popover-item .avatar-initials {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--data-slate);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 600; color: white;
+  flex-shrink: 0;
+}
+
+/* Autonomy dropdown specifics */
+.auto-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 0.8rem; color: var(--text);
+  cursor: pointer;
+}
+.auto-item:hover, .auto-item.active { background: var(--hd); }
+.auto-item.disabled { color: var(--very-dim); cursor: default; }
+.auto-item .auto-label { font-weight: 500; }
+.auto-item .auto-desc { font-size: 0.72rem; color: var(--dim); }
+.auto-item.disabled .auto-label, .auto-item.disabled .auto-desc { color: var(--very-dim); }
+.auto-caption {
+  padding: 6px 12px 8px;
+  font-size: 0.72rem; color: var(--very-dim);
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ── Annotations ── */
+.ann {
+  position: absolute;
+  font-size: 0.62rem; font-weight: 500;
+  padding: 2px 7px;
+  border: 1px dashed var(--data-amber);
+  border-radius: 4px;
+  color: var(--data-amber);
+  background: color-mix(in srgb, var(--data-amber) 6%, transparent);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 400;
+  letter-spacing: 0.01em;
+}
+
+/* ── Section separator label ── */
+.mockup-label {
+  padding: 14px 20px 8px;
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+/* ── Collapsed strip mockup ── */
+.collapsed-strip-mockup {
+  display: flex;
+  background: var(--bg);
+  border-top: 2px solid var(--border);
+  height: 260px;
+  position: relative;
+}
+.collapsed-strip {
+  width: 40px;
+  background: var(--card-2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.strip-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; border: none;
+}
+.strip-btn-brand { background: var(--brand); color: white; }
+.strip-btn-brand:hover { background: var(--brand-hover); }
+.strip-btn-ghost { background: transparent; color: var(--very-dim); border: 1px solid var(--border); }
+.strip-btn-ghost:hover { background: var(--hd); color: var(--dim); }
+.strip-divider { width: 20px; height: 1px; background: var(--border); }
+.strip-session-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--very-dim);
+  position: relative;
+  cursor: pointer;
+}
+.strip-session-icon.active {
+  color: var(--brand);
+  background: var(--brand-wash);
+}
+.strip-session-icon.active::before {
+  content: '';
+  position: absolute; left: -6px; top: 6px; bottom: 6px;
+  width: 2px; border-radius: 0 2px 2px 0;
+  background: var(--brand);
+}
+.strip-session-icon.hovered { background: var(--hd); color: var(--dim); }
+.strip-count {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 0.65rem; color: var(--very-dim);
+  padding-bottom: 4px;
+}
+
+/* Strip tooltip */
+.strip-tooltip {
+  position: absolute;
+  left: 44px; top: 50%;
+  transform: translateY(-50%);
+  background: var(--card-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  padding: 7px 11px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  white-space: nowrap;
+  z-index: 50;
+}
+.strip-tooltip .tt-title { font-size: 0.8rem; font-weight: 500; color: var(--text); }
+.strip-tooltip .tt-meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--very-dim); margin-top: 1px; }
+
+.collapsed-annotation-area {
+  flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 20px 28px;
+  gap: 10px;
+}
+.ann-line {
+  font-size: 0.75rem; color: var(--dim); line-height: 1.6;
+}
+.ann-line strong { color: var(--text); font-weight: 500; }
+
+/* Tooltip for collapsed demo relative positioning */
+.strip-icon-wrapper {
+  position: relative;
+}
+
+/* ── Tool call pill (inline) ── */
+.tool-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  color: var(--dim);
+  font-family: var(--font-mono);
+}
+.tool-pill .running-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--brand);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── SEARCH VARIANTS SECTION ── */
+.search-section {
+  background: var(--bg);
+  border-top: 2px solid var(--border);
+  padding: 24px 32px 40px;
+}
+.search-variant-frame {
+  width: 620px;
+  flex-shrink: 0;
+}
+.search-variant-label {
+  font-size: 0.7rem; font-weight: 600;
+  color: var(--very-dim);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.search-variant-caption {
+  margin-top: 12px;
+  font-size: 0.76rem; color: var(--dim); line-height: 1.5;
+  max-width: 580px;
+}
+
+/* Mini Commander frame for search variants */
+.mini-commander {
+  display: flex;
+  height: 480px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.mini-nav {
+  width: 56px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0; gap: 8px; flex-shrink: 0;
+}
+.mini-nav-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--brand); margin-bottom: 4px;
+}
+.mini-nav-icon {
+  width: 24px; height: 24px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--very-dim);
+}
+.mini-nav-icon.active { color: var(--brand); background: var(--brand-wash); }
+.mini-sessions-pane {
+  width: 160px;
+  background: var(--card-2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.mini-sessions-header {
+  padding: 8px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex; flex-direction: column; gap: 5px;
+}
+.mini-btn-new-chat {
+  width: 100%; height: 26px;
+  background: var(--brand); border: none; border-radius: 5px;
+  color: white; font-size: 0.68rem; font-weight: 500;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  cursor: pointer;
+}
+.mini-btn-search {
+  width: 100%; height: 26px;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 5px; color: var(--dim); font-size: 0.68rem;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  cursor: pointer;
+}
+.mini-session-row {
+  display: flex; align-items: center;
+  padding: 6px 8px; gap: 6px;
+  cursor: pointer;
+}
+.mini-session-row:hover { background: var(--hd); }
+.mini-circle { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.mini-circle.inactive { background: transparent; border: 1.5px solid var(--very-dim); }
+.mini-circle.active { background: var(--brand); }
+.mini-session-title { font-size: 0.66rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-session-title.bold { font-weight: 600; color: var(--text); }
+.mini-group-label {
+  padding: 6px 8px 2px;
+  font-size: 0.55rem; font-weight: 600; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--very-dim);
+}
+.mini-chat-pane {
+  flex: 1;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  opacity: 0.35;
+}
+.mini-chat-line {
+  width: 80%; height: 8px; background: var(--card);
+  border-radius: 4px; margin: 4px 0;
+}
+.mini-chat-line.short { width: 55%; }
+.mini-chat-line.user { width: 60%; background: var(--brand-wash); align-self: flex-end; margin-right: 10%; }
+
+/* Inline search active state */
+.inline-search-input-row {
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; height: 26px;
+  background: var(--field);
+  border: 1px solid var(--brand);
+  border-radius: 5px;
+  padding: 0 8px;
+  box-shadow: 0 0 0 2px var(--brand-focus-ring);
+}
+.inline-search-input-row input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: var(--font-sans); font-size: 0.72rem;
+  color: var(--text);
+}
+.inline-search-input-row input::placeholder { color: var(--very-dim); }
+.inline-cancel-btn {
+  background: transparent; border: none; color: var(--dim);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0;
+  font-size: 0.7rem;
+}
+
+/* Pin SVG inline helper */
+.pin-svg { fill: var(--very-dim); }
+.pin-svg.brand { fill: var(--brand); }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MOCKUP 1 — Main 3-column layout (full height)
+════════════════════════════════════════════════════════════════════ -->
+<div class="app-frame" style="position: relative;">
+
+  <!-- ═════ LEFT NAV RAIL (200px) ═════ -->
+  <aside class="nav-rail">
+    <div style="padding: 14px 14px 10px; display: flex; align-items: center; justify-content: space-between;">
+      <span class="wordmark">AoA<span class="dot">.</span></span>
+    </div>
+
+    <div class="nav-section">
+      <button class="btn btn-primary btn-sm" style="width: 100%; justify-content: flex-start; gap: 8px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        New task
+      </button>
+    </div>
+
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Home
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></svg>
+      Inbox <span style="margin-left: auto; font-family: var(--font-mono); font-size: 0.68rem; color: var(--brand);">9</span>
+    </div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"/><path d="m9 12 2 2 4-4"/></svg>
+      Commander
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      Discussions
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+      Tasks
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21v-2a7 7 0 0 1 14 0v2"/></svg>
+      Agents
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
+      Routines
+    </div>
+
+    <div class="nav-section" style="padding-top: 14px;">
+      <div class="t-small-caps" style="display: flex; justify-content: space-between; align-items: center;">
+        Departments
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      </div>
+    </div>
+    <div class="nav-item" style="gap: 8px;">
+      <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--data-indigo); display: inline-block; flex-shrink: 0;"></span>
+      Engineering
+    </div>
+    <div class="nav-item" style="gap: 8px;">
+      <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--data-teal); display: inline-block; flex-shrink: 0;"></span>
+      Marketing
+    </div>
+
+    <div class="nav-section" style="padding-top: 14px;">
+      <div class="t-small-caps">Company</div>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Vision &amp; Mission
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </div>
+
+    <div style="margin-top: auto; padding: 12px 14px; border-top: 1px solid var(--border-soft); display: flex; align-items: center; gap: 8px;">
+      <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--data-indigo); display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 600; color: white; flex-shrink: 0;">TK</div>
+      <div style="display: flex; flex-direction: column; min-width: 0;">
+        <span style="font-size: 0.78rem; font-weight: 500;">Tandav Krishna</span>
+        <span class="t-mono-meta">founder</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═════ SESSIONS RAIL (220px) ═════ -->
+  <aside class="sessions-rail" style="position: relative; overflow: visible;">
+
+    <!-- NEW sessions header: two full-width buttons + status row -->
+    <div class="sessions-header">
+      <!-- Full-width New chat button -->
+      <button class="btn-new-chat">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        New chat
+      </button>
+      <!-- Full-width ghost search button -->
+      <button class="btn-search-sessions">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+        Search sessions
+      </button>
+      <!-- Status + collapse row -->
+      <div class="sessions-status-row">
+        <span style="display: inline-flex; align-items: center; gap: 4px;">
+          <span class="status-dot"></span>
+          <span style="font-size: 0.68rem; color: var(--dim);">online</span>
+        </span>
+        <button class="btn btn-icon-sm btn-ghost" title="Collapse sessions" style="border: none;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Annotation: new header -->
+    <div class="ann" style="top: 4px; left: 226px;">Full-width create + search header</div>
+
+    <div style="overflow-y: auto; flex: 1;">
+
+      <!-- PINNED group -->
+      <div class="session-group">
+        <div class="t-small-caps" style="display: flex; align-items: center; gap: 5px;">
+          <!-- Pin icon SVG -->
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--very-dim)" stroke="none"><path d="M16 2v2l-1 1v5l3 2v2h-5v6l-1 1-1-1v-6H6v-2l3-2V5L8 4V2z"/></svg>
+          Pinned
+        </div>
+      </div>
+      <!-- Pinned + inactive row -->
+      <div class="session-row">
+        <!-- Pin icon replaces circle -->
+        <svg class="session-pin-icon" viewBox="0 0 24 24" fill="var(--very-dim)" stroke="none">
+          <path d="M16 2v2l-1 1v5l3 2v2h-5v6l-1 1-1-1v-6H6v-2l3-2V5L8 4V2z"/>
+        </svg>
+        <div class="row-content">
+          <div class="title">Q2 OKR brainstorm</div>
+        </div>
+        <button class="overflow-btn" title="More options">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </div>
+
+      <!-- Annotation: pinned indicator -->
+      <div class="ann" style="top: 102px; left: 226px;">Pinned = pin icon (replaces circle)</div>
+
+      <!-- TODAY group -->
+      <div class="session-group" style="padding-top: 12px;">
+        <div class="t-small-caps">Today</div>
+      </div>
+
+      <!-- Active session — filled brand circle, card treatment -->
+      <div class="session-row active">
+        <span class="session-circle active"></span>
+        <div class="row-content">
+          <div class="title">Vision update — future of work</div>
+        </div>
+        <button class="overflow-btn" title="More options">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </div>
+      <!-- Annotation: active indicator -->
+      <div class="ann" style="top: 188px; left: 226px;">Active = filled ● + bordered card (no bold)</div>
+
+      <!-- "Morning standup" row — overflow menu OPEN as demo -->
+      <div class="session-row menu-open" style="position: relative;">
+        <span class="session-circle inactive"></span>
+        <div class="row-content">
+          <div class="title">Morning standup synthesis</div>
+        </div>
+        <button class="overflow-btn" style="opacity:1; background: var(--hd); color: var(--text);" title="More options">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+        <!-- Overflow popover — open as static demo -->
+        <div class="overflow-popover">
+          <div class="pop-item hovered">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--dim)" stroke="none"><path d="M16 2v2l-1 1v5l3 2v2h-5v6l-1 1-1-1v-6H6v-2l3-2V5L8 4V2z"/></svg>
+            Pin
+          </div>
+          <div class="pop-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Rename
+          </div>
+          <div class="pop-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg> Archive
+          </div>
+          <div class="pop-sep"></div>
+          <div class="pop-item danger">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete
+          </div>
+        </div>
+      </div>
+      <!-- Annotation: overflow menu -->
+      <div class="ann" style="top: 240px; left: 226px;">⋮ menu open</div>
+
+      <!-- Inactive session indicator annotation -->
+      <div class="ann" style="top: 222px; left: 226px; top: 222px;">Inactive = outline circle</div>
+
+      <!-- Drag demo: Engineering hire plan dragging, with drop target -->
+      <div class="drop-target-line" style="margin-top: 2px;"></div>
+      <div class="session-row dragging">
+        <span class="session-circle inactive"></span>
+        <div class="row-content">
+          <div class="title">Engineering hire plan</div>
+        </div>
+      </div>
+      <!-- Annotation: drag reorder -->
+      <div class="ann" style="top: 318px; left: 226px;">drag to reorder</div>
+
+      <!-- YESTERDAY group -->
+      <div class="session-group" style="padding-top: 12px;">
+        <div class="t-small-caps">Yesterday</div>
+      </div>
+      <div class="session-row">
+        <span class="session-circle inactive"></span>
+        <div class="row-content">
+          <div class="title">Memory cleanup</div>
+        </div>
+        <button class="overflow-btn" title="More options">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═════ CHAT PANE (flex fill) ═════ -->
+  <main class="chat-pane" style="position: relative; overflow: visible;">
+    <div class="chat-pane-inner">
+
+      <!-- Caption strip -->
+      <div class="chat-pane-header">
+        <div class="session-title">Vision update — future of work</div>
+        <div class="session-meta">just now · 4 msgs · 41k ctx · $0.26</div>
+      </div>
+
+      <!-- Message list -->
+      <div class="msg-list" style="padding-top: 20px;">
+
+        <!-- User message — hover state showing Edit action -->
+        <div class="msg msg-user msg-wrapper">
+          <div class="msg-bubble">Update our company vision to: We are building the future of work.</div>
+          <div class="msg-hover-actions user-side">
+            <button class="msg-hover-action" title="Edit">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="ann" style="position: relative; top: -16px; right: -10px; float: right; clear: both;">user msg hover → Edit</div>
+
+        <!-- Assistant message — hover state showing Copy/Retry/Edit-retry -->
+        <div class="msg msg-assistant msg-wrapper" style="position: relative;">
+          <div class="msg-bubble">
+            Got it. I'll route this through <code style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--brand);">update_company_identity</code> with a confirmation gate — that tool always asks before writing.
+            <div class="tool-pill">
+              <span class="running-dot"></span>
+              update_company_identity
+              <span style="color: var(--very-dim);">● running</span>
+            </div>
+          </div>
+          <div class="msg-hover-actions" style="top: -8px; right: -2px; left: auto;">
+            <button class="msg-hover-action" title="Copy">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button class="msg-hover-action" title="Retry">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+            <button class="msg-hover-action" title="Edit and retry">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="ann" style="position:relative; float:left; clear:both; top: -8px; left: 0px;">assistant hover → Copy · Retry · Edit&amp;retry</div>
+        <div style="clear:both;"></div>
+
+        <!-- Confirmation card — pulsing -->
+        <div class="confirm-card-v2">
+          <div class="head">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Action requires approval</span>
+            <span class="pill pill-amber" style="margin-left: auto; font-size: 0.67rem;">founder gate</span>
+          </div>
+          <div class="tool-name">update_company_identity</div>
+          <div class="params">
+            <div><span class="key">vision:</span> "We are building the future of work."</div>
+            <div><span class="key">mission:</span> <span style="color: var(--very-dim);">(unchanged, null)</span></div>
+          </div>
+          <div class="entity-line">This will update <strong>AoA Online</strong></div>
+          <div class="actions">
+            <button class="btn btn-primary btn-sm">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Approve
+            </button>
+            <button class="btn btn-sm btn-ghost" style="border-color: var(--border);">Cancel</button>
+          </div>
+        </div>
+        <div class="ann" style="position:relative; float:left; clear:both; top: -4px;">pulse-glow border · entity line · founder gate</div>
+        <div style="clear:both;"></div>
+
+        <!-- User follow-up -->
+        <div class="msg msg-user">
+          <div class="msg-bubble">After this, also help me draft a one-line mission.</div>
+        </div>
+
+        <!-- Assistant thinking -->
+        <div class="msg msg-assistant">
+          <div class="msg-bubble" style="display: flex; gap: 6px; align-items: center; color: var(--dim);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></path></svg>
+            <span class="t-caption">Thinking…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═════ NEW INPUT BOX ═════ -->
+      <div style="position: relative; padding: 0 16px 16px;">
+
+        <!-- + attach popover -->
+        <div class="popover" id="attach-pop" style="bottom: 76px; left: 16px; width: 200px;">
+          <div class="popover-header">Attach</div>
+          <div class="popover-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg><span>Upload file</span></div>
+          <div class="popover-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><span>Add image</span></div>
+          <div class="popover-item hovered"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg><span>Paste content</span></div>
+          <div class="popover-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Add URL</span></div>
+          <div class="popover-sep"></div>
+          <div class="popover-group-label">Recent files</div>
+          <div class="popover-item" style="font-size: 0.76rem; color: var(--dim);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Q2-OKRs-draft.pdf</span></div>
+          <div class="popover-item" style="font-size: 0.76rem; color: var(--dim);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>vision-v3.md</span></div>
+        </div>
+        <div class="ann" style="bottom: 78px; left: 220px;">+ attach menu open</div>
+
+        <!-- /skill popover -->
+        <div class="popover" id="skill-pop" style="bottom: 76px; left: 58px; width: 240px;">
+          <div class="popover-header">Available skills</div>
+          <div class="popover-item hovered" style="align-items: flex-start;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top: 2px; flex-shrink: 0;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <div class="popover-item-stack">
+              <span style="font-size: 0.78rem; font-weight: 500; font-family: var(--font-mono);">aoa/brainstorm</span>
+              <span class="item-desc">Brainstorm a product or feature</span>
+            </div>
+          </div>
+          <div class="popover-item" style="align-items: flex-start;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top: 2px; flex-shrink: 0;"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>
+            <div class="popover-item-stack">
+              <span style="font-size: 0.78rem; font-weight: 500; font-family: var(--font-mono);">aoa/identity-setup</span>
+              <span class="item-desc">Set up company identity</span>
+            </div>
+          </div>
+          <div class="popover-item" style="align-items: flex-start;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top: 2px; flex-shrink: 0;"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+            <div class="popover-item-stack">
+              <span style="font-size: 0.78rem; font-weight: 500; font-family: var(--font-mono);">aoa/sprint-planning</span>
+              <span class="item-desc">Plan a sprint</span>
+            </div>
+          </div>
+        </div>
+        <div class="ann" style="bottom: 78px; left: 302px;">/skill hover popover</div>
+
+        <!-- @mention popover — DEFERRED this phase (button is a disabled placeholder; popover shown for future reference only) -->
+        <div class="popover" id="mention-pop" style="bottom: 76px; left: 112px; width: 200px; opacity: 0.5;">
+          <div class="popover-header">Mention — coming soon</div>
+          <div class="popover-group-label">Agents</div>
+          <div class="popover-item"><span class="agent-dot" style="background: var(--data-green);"></span><span>Engineering Agent</span></div>
+          <div class="popover-item hovered"><span class="agent-dot" style="background: var(--data-teal);"></span><span>Research Agent</span></div>
+          <div class="popover-sep"></div>
+          <div class="popover-group-label">Humans</div>
+          <div class="popover-item"><span class="avatar-initials" style="background: var(--data-indigo);">TK</span><span>Tandav Krishna</span></div>
+          <div class="popover-item"><span class="avatar-initials" style="background: var(--data-magenta);">AM</span><span>Anika Mehta</span></div>
+        </div>
+        <div class="ann" style="bottom: 78px; left: 316px;">@mention popover</div>
+
+        <!-- Autonomy dropdown removed (autonomy pill cut entirely) -->
+
+        <!-- The actual input card -->
+        <div class="input-card">
+          <textarea placeholder="Ask the agent…" rows="2"></textarea>
+          <div class="input-controls">
+            <!-- + add menu: FUNCTIONAL (opens skill picker + attach). Skills are
+                 reached via the + menu or by typing "/" in the textarea — there
+                 is no standalone /skill button in the shipped design. -->
+            <button class="btn-circle btn-circle-brand" title="Add — skills, attach">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            </button>
+            <!-- @mention + voice: disabled placeholders ("Coming soon") -->
+            <button class="btn-text-ghost" title="Coming soon" disabled style="opacity: 0.4; cursor: not-allowed;">@mention</button>
+            <button class="btn-text-ghost" title="Coming soon" disabled style="padding: 0 6px; opacity: 0.4; cursor: not-allowed;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+            </button>
+            <div class="spacer"></div>
+            <!-- autonomy pill removed -->
+            <button class="btn-circle btn-circle-brand" title="Send (Cmd+Enter)" style="margin-left: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="ann" style="bottom: -2px; left: 16px;">input: textarea + controls · [+] menu + slash functional · @mention/voice disabled · no autonomy pill</div>
+      </div>
+
+    </div><!-- end chat-pane-inner -->
+  </main>
+
+</div><!-- end app-frame -->
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MOCKUP 2 — Collapsed sessions sidebar icon strip
+════════════════════════════════════════════════════════════════════ -->
+<div class="mockup-label">Collapsed sessions sidebar — icon strip</div>
+
+<div class="collapsed-strip-mockup">
+
+  <!-- The 40px strip -->
+  <div class="collapsed-strip">
+    <!-- + button: primary brand, prominent (same as expanded "New chat") -->
+    <button class="strip-btn strip-btn-brand" title="New chat">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    </button>
+    <!-- Search icon ghost (was full-width button, now iconified) -->
+    <button class="strip-btn strip-btn-ghost" title="Search sessions">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+    </button>
+    <div class="strip-divider"></div>
+
+    <!-- Session icons stack -->
+    <div class="strip-session-icon active">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div class="strip-session-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <!-- Hovered session — has tooltip -->
+    <div class="strip-icon-wrapper">
+      <div class="strip-session-icon hovered">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <div class="strip-tooltip" style="top: 50%; transform: translateY(-50%); left: 36px;">
+        <div class="tt-title">Morning standup synthesis</div>
+        <div class="tt-meta">2h ago · 17 msgs</div>
+      </div>
+    </div>
+    <div class="strip-session-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div class="strip-session-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+
+    <!-- Count -->
+    <div class="strip-count">5</div>
+  </div>
+
+  <!-- Annotation area -->
+  <div class="collapsed-annotation-area">
+    <div class="ann-line"><strong>40px collapsed strip</strong> — sessions rail collapses to icon-only mode</div>
+    <div class="ann-line"><strong>[+] brand-red</strong> = New chat, prominent; search icon below it (ghost border)</div>
+    <div class="ann-line"><strong>Red bar on left</strong> = active session indicator; icons match full sidebar</div>
+    <div class="ann-line"><strong>Hover tooltip</strong> → title + meta floats to the right of the icon</div>
+    <div class="ann-line"><strong>5</strong> = total session count (mono, dimmed)</div>
+    <div class="ann-line" style="color: var(--very-dim); font-size: 0.7rem; margin-top: 6px;">Expand: click ‹› chevron or drag to resize back to 220px</div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SEARCH INTERACTIONS — inline filter (clicked state)
+════════════════════════════════════════════════════════════════════ -->
+<div class="mockup-label">Search: inline filter (clicked state)</div>
+
+<div class="search-section">
+
+  <!-- ── Inline filter demo ── -->
+  <div class="search-variant-frame">
+    <div class="search-variant-label">Search: inline filter (clicked state)</div>
+
+    <div class="mini-commander">
+      <!-- Nav -->
+      <div class="mini-nav">
+        <div class="mini-nav-dot"></div>
+        <div class="mini-nav-icon active">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <div class="mini-nav-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/></svg>
+        </div>
+        <div class="mini-nav-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/></svg>
+        </div>
+      </div>
+
+      <!-- Sessions pane — search button morphed to input -->
+      <div class="mini-sessions-pane">
+        <div class="mini-sessions-header">
+          <button class="mini-btn-new-chat">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            New chat
+          </button>
+          <!-- Search button morphed into inline input -->
+          <div class="inline-search-input-row">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+            <input type="text" placeholder="Type to filter…" value="vision" />
+            <button class="inline-cancel-btn" title="Clear search">✕</button>
+          </div>
+        </div>
+
+        <!-- Filtered results only — no groups without matches shown -->
+        <div style="padding: 4px 0;">
+          <div class="mini-group-label">Today</div>
+          <div class="mini-session-row" style="background: color-mix(in srgb, var(--hd) 70%, transparent);">
+            <div class="mini-circle active"></div>
+            <span class="mini-session-title bold">Vision update — future…</span>
+          </div>
+          <!-- No pinned or yesterday rows because no "vision" match there -->
+          <div style="padding: 8px 8px 4px; font-size: 0.62rem; color: var(--very-dim); font-family: var(--font-mono);">
+            2 results for "vision"
+          </div>
+          <div class="mini-session-row">
+            <div class="mini-circle inactive"></div>
+            <span class="mini-session-title">Vision &amp; mission draft</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat pane (normal, unblocked) -->
+      <div class="mini-chat-pane" style="opacity: 0.5;">
+        <div class="mini-chat-line user"></div>
+        <div class="mini-chat-line" style="width:72%;"></div>
+        <div class="mini-chat-line short"></div>
+        <div class="mini-chat-line user"></div>
+        <div class="mini-chat-line" style="width:60%;"></div>
+      </div>
+    </div>
+
+    <div class="search-variant-caption">
+      Search button morphs into an inline input that filters the list in-place. No modal interruption — the chat pane stays visible and unblocked.
+    </div>
+  </div>
+
+</div><!-- end search-section -->
+
+<!-- ── Variant label ── -->
+<div style="position: fixed; bottom: 12px; right: 12px; background: var(--card-2); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--dim); z-index: 500;">
+  B1 · Phase 5 — simpler sessions + chat caption
+</div>
+
+</body>
+</html>

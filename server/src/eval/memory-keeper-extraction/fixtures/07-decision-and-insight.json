@@ -1,0 +1,18 @@
+{
+  "id": "07-decision-and-insight",
+  "input": {
+    "thread": {
+      "id": "fixture-thread-7",
+      "companyId": "fixture-company-1",
+      "entries": [
+        { "id": "e1", "rawContent": "Pulled the latest support tickets — 38% of last month's tickets were about export failing on large CSVs. That's our number-one inbound issue.", "createdAt": "2026-05-29T09:00:00.000Z" },
+        { "id": "e2", "rawContent": "Given that volume, we're committing to streaming CSV export as a Q3 priority. No more in-memory buffering. This is decided — Engineering will scope it.", "createdAt": "2026-05-29T09:05:00.000Z" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "value": { "types": ["decision", "insight"] },
+    "rubric": "Pass when the actual extracted candidates include at least one item of type 'decision' (committing to streaming CSV export) AND at least one item of type 'insight' (CSV export complaints being 38% of tickets / the #1 inbound issue). The decision and insight may appear in either order. Tolerate small additional items but the decision and insight must both be present. Score 1.0 on clean pass, 0.5 if only one of the two types is present, 0.0 if neither."
+  }
+}

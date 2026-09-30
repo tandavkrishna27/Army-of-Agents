@@ -1,0 +1,33 @@
+{
+  "id": "03-implement-then-test",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-3",
+      "summary": "Add server-side rate limiting to the public /api/contact endpoint and verify the limits hold under burst load. Ship the limiter first, then a test suite that proves it.",
+      "proposedTasks": [
+        {
+          "title": "Implement IP-based rate limiter middleware on /api/contact (10 req/min)",
+          "acceptanceCriteria": [
+            "Limiter rejects 11th request within 60s with 429",
+            "Limiter resets after 60s window expires",
+            "Limits are configurable via env var CONTACT_RATE_LIMIT_PER_MIN"
+          ]
+        },
+        {
+          "title": "Write integration tests for the rate limiter",
+          "acceptanceCriteria": [
+            "Test confirms 10 sequential requests succeed",
+            "Test confirms 11th within window returns 429",
+            "Test confirms window reset behaviour"
+          ]
+        }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "value": { "expectedDependency": "task 2 depends on task 1" },
+    "rubric": "Pass when the markdown plan keeps both tasks (rate limiter implementation and integration tests, in that order) AND task 2's 'Depends on:' line lists task 1 (either 'Depends on: 1' or equivalent — case-insensitive). The Engineer should be the suggested assignee on the implementation; tests can be Engineer too. Fail if task 2 is marked 'Depends on: none' or if either task is dropped. Score 1.0 on clean pass, 0.6 if both tasks present but dependency missing, 0.0 if a task is dropped."
+  }
+}

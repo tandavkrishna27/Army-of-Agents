@@ -1,0 +1,24 @@
+{
+  "id": "16-long-but-unconverged",
+  "input": {
+    "thread": {
+      "id": "fixture-16",
+      "phase": "discuss",
+      "intent": ["planning"],
+      "summaryText": null,
+      "entries": [
+        { "id": "e1", "rawContent": "We keep losing trial users on day 2. Want to fix activation.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "Could be onboarding friction. Could be the empty-state. Could be pricing scaring them.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "Maybe a guided checklist? Or a sample project pre-loaded?", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e4", "rawContent": "Or we just email them. Lots of options, not sure which moves the needle.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e5", "rawContent": "We should look at where exactly they drop in the funnel first.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e6", "rawContent": "Agreed it's worth understanding before we build anything.", "authorAgentId": null, "createdBy": "user-2" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "rubric": "QA-BUG-015 regression: a LONG, active discuss thread is NOT the same as a READY one. The humans are still diverging — many options floated, no direction picked, and they explicitly say they want to understand the funnel 'before we build anything'. The correct call is 'ask-clarifying' (e.g. which drop-off point to target) or 'wait'. It must NOT be 'propose-scope' — proposing tasks here would scope prematurely off raw exploration. Pass if the category is 'ask-clarifying' or 'wait'; fail if it is 'propose-scope'.",
+    "value": { "category": "ask-clarifying" }
+  }
+}

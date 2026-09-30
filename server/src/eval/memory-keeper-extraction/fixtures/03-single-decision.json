@@ -1,0 +1,17 @@
+{
+  "id": "03-single-decision",
+  "input": {
+    "thread": {
+      "id": "fixture-thread-3",
+      "companyId": "fixture-company-1",
+      "entries": [
+        { "id": "e1", "rawContent": "We've been going back and forth on the dashboard styling. Tailwind vs Chakra vs custom CSS.", "createdAt": "2026-05-29T09:00:00.000Z" },
+        { "id": "e2", "rawContent": "Decision made: we'll use Tailwind for the dashboard. Faster iteration, better tree-shaking, matches what the rest of the app uses. Locking this in.", "createdAt": "2026-05-29T09:05:00.000Z" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "types": ["decision"] }
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "workspace_runtime_services" ADD COLUMN "identity_version" integer;

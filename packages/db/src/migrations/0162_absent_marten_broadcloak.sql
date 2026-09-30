@@ -1,0 +1,1 @@
+ALTER TABLE "agent_runtime_decisions" ADD COLUMN "command_hash" text;

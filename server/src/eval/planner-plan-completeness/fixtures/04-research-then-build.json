@@ -1,0 +1,33 @@
+{
+  "id": "04-research-then-build",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-4",
+      "summary": "We're updating the pricing page for the team plan. First we need a competitive scan of how peers position their team tier (anchor price, feature list, social proof), then a design refresh that incorporates the findings.",
+      "proposedTasks": [
+        {
+          "title": "Research how 5 comparable SaaS products position their team tier pricing",
+          "acceptanceCriteria": [
+            "Capture anchor price, included seats, key features per competitor",
+            "Note any 'social proof' patterns (logos, testimonials, case studies)",
+            "Deliver a short markdown summary"
+          ]
+        },
+        {
+          "title": "Update /pricing page team tier section with refreshed positioning",
+          "acceptanceCriteria": [
+            "Hero copy reflects research-backed positioning",
+            "Feature list reordered by most-emphasised across competitors",
+            "Adds a 'trusted by' logo row if research surfaces that as a common pattern"
+          ]
+        }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "value": { "expectedSequencing": "research first, then build" },
+    "rubric": "Pass when (a) both tasks appear in the plan, (b) task 1 is assigned to Scout (research function), (c) task 2 is assigned to Engineer (build function), and (d) task 2's 'Depends on:' line names task 1. The Sequencing paragraph should explain that the research must complete before the pricing page update can begin. Score 1.0 on clean pass, 0.7 if assignees are correct but dependency is missing, 0.3 if dependency is correct but assignees swapped, 0.0 if a task is dropped."
+  }
+}

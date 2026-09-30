@@ -1,0 +1,18 @@
+{
+  "id": "09-multiple-decisions",
+  "input": {
+    "thread": {
+      "id": "fixture-thread-9",
+      "companyId": "fixture-company-1",
+      "entries": [
+        { "id": "e1", "rawContent": "Three architecture calls we're making today and not relitigating: 1) Auth provider — we're going with Clerk, not Auth0. Cleaner React-first DX and our scale fits the pricing tier. 2) Background jobs — adopting BullMQ on Redis. We tried Inngest, it's nice but adds a vendor dependency we don't want yet. 3) Email transactional sender — switching from SendGrid to Resend. Better deliverability metrics in our test sends.", "createdAt": "2026-05-29T09:00:00.000Z" },
+        { "id": "e2", "rawContent": "All three locked in. Ship it.", "createdAt": "2026-05-29T09:01:00.000Z" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "value": { "decisionCount": 3 },
+    "rubric": "Pass when the actual extracted candidates contain exactly 3 items of type 'decision' (Clerk for auth, BullMQ for jobs, Resend for email). Tolerate at most 1 non-decision item if it captures something concrete from the thread. Fail if there are fewer than 3 decisions, or more than 4 decisions. Score 1.0 on clean pass (exactly 3 decisions, ≤1 extras), 0.6 if 2 decisions present, 0.0 otherwise."
+  }
+}

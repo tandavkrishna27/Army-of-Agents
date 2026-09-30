@@ -1,0 +1,470 @@
+name: Deploy replatform campaign
+
+# This is deliberately a separate lane from deploy-testing.yml. The testing
+# lane targets the legacy testing host and the monolith compose contract; this
+# lane targets the E7-1 campaign overlay on the replatform host.
+#
+# The target host is expected to be bootstrapped once by the operator with:
+#   - /opt/aoa/docker/campaign/.env.campaign (not tracked)
+#   - /opt/campaign/cp-extra.env (not tracked)
+#   - /opt/campaign/secrets/* (not tracked)
+#   - the existing aoa-staging Postgres/project volumes and enrolled worker
+#
+# This workflow supplies the rotating Google/E2B values from GitHub Secrets,
+# builds the selected source revision remotely, and recreates only the campaign
+# slice. It never commits or prints secret values.
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_sha:
+        description: Full 40-character commit SHA from docs/replatform-program
+        required: true
+        type: string
+      e2b_template:
+        description: Existing E2B template ID/name for the adapter-manager
+        required: false
+        default: aoa-base
+        type: string
+      start_worker:
+        description: Start the already-enrolled campaign worker after the rollout
+        required: false
+        default: true
+        type: boolean
+      cleanup_builder_cache:
+        description: If disk is low, prune Docker build cache (never volumes)
+        required: false
+        default: false
+        type: boolean
+
+permissions: {}
+
+concurrency:
+  group: deploy-replatform-campaign
+  cancel-in-progress: false
+
+env:
+  DEPLOY_HOST: 204.168.148.126
+  DEPLOY_PORT: "22"
+  DEPLOY_USER: root
+  DEPLOY_ROOT: /opt/aoa
+  CAMPAIGN_ROOT: /opt/campaign
+  COMPOSE_PROJECT: aoa-staging
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/docs/replatform-program'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout the replatform branch history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: docs/replatform-program
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate the selected revision
+        id: revision
+        env:
+          DEPLOY_SHA_INPUT: ${{ inputs.deploy_sha }}
+        run: |
+          set -euo pipefail
+          sha="$DEPLOY_SHA_INPUT"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "::error::deploy_sha must be 40 lowercase hexadecimal characters"
+            exit 1
+          }
+          git cat-file -e "$sha^{commit}"
+          branch_sha="$(git rev-parse origin/docs/replatform-program)"
+          git merge-base --is-ancestor "$sha" "$branch_sha" || {
+            echo "::error::$sha is not an ancestor of docs/replatform-program"
+            exit 1
+          }
+          test -f docker-compose.staging.yml
+          test -f docker/campaign/docker-compose.campaign.yml
+          test -f docker/control-plane/Dockerfile
+          test -f docker/adapter-manager/Dockerfile
+          test -f docker/worker/Dockerfile
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Build the source archive
+        id: payload
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          set -euo pipefail
+          umask 077
+          archive="$RUNNER_TEMP/aoa-campaign-$DEPLOY_SHA.tar.gz"
+          git archive --format=tar.gz --output="$archive" "$DEPLOY_SHA"
+          checksum="$(sha256sum "$archive" | awk '{print $1}')"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "checksum=$checksum" >> "$GITHUB_OUTPUT"
+
+      - name: Load the deployment SSH key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PASSPHRASE: ${{ secrets.DEPLOY_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ -n "$DEPLOY_SSH_KEY" ]] || {
+            echo "::error::Missing GitHub Secret DEPLOY_SSH_KEY"
+            exit 1
+          }
+          key="$RUNNER_TEMP/aoa-campaign-deploy-key"
+          askpass="$RUNNER_TEMP/aoa-campaign-ssh-askpass"
+          known_hosts="$RUNNER_TEMP/aoa-campaign-known-hosts"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$key"
+          printf '%s\n' '#!/bin/sh' 'printf "%s\\n" "$DEPLOY_PASSPHRASE"' > "$askpass"
+          chmod 600 "$key"
+          chmod 700 "$askpass"
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+          echo "DEPLOY_KEY_PATH=$key" >> "$GITHUB_ENV"
+          echo "DEPLOY_KNOWN_HOSTS=$known_hosts" >> "$GITHUB_ENV"
+          DISPLAY=:0 SSH_ASKPASS="$askpass" SSH_ASKPASS_REQUIRE=force \
+            ssh-add "$key" </dev/null
+          rm -f -- "$askpass"
+          # The host key is scoped to this run. Permanent pinning can be added
+          # later after the operator records the server fingerprint out-of-band.
+          ssh-keyscan -T 10 -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" > "$known_hosts"
+          test -s "$known_hosts"
+
+      - name: Prepare runtime secret fragments
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          E2B_TEMPLATE_INPUT: ${{ inputs.e2b_template }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ -n "$GOOGLE_CLIENT_ID" && -n "$GOOGLE_CLIENT_SECRET" ]] || {
+            echo "::error::GitHub Secrets GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required"
+            exit 1
+          }
+          [[ -n "$E2B_API_KEY" ]] || {
+            echo "::error::GitHub Secret E2B_API_KEY is required for the adapter-manager"
+            exit 1
+          }
+          [[ -n "$E2B_TEMPLATE_INPUT" && "$E2B_TEMPLATE_INPUT" != *$'\n'* && "$E2B_TEMPLATE_INPUT" != *$'\r'* ]] || {
+            echo "::error::e2b_template must be a non-empty single-line value"
+            exit 1
+          }
+          [[ -n "$AWS_ACCESS_KEY_ID" && -n "$AWS_SECRET_ACCESS_KEY" ]] || {
+            echo "::error::GitHub Secrets AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required for S3 object storage"
+            exit 1
+          }
+          google_env="$RUNNER_TEMP/aoa-campaign-google.env"
+          campaign_env="$RUNNER_TEMP/aoa-campaign-overrides.env"
+          # cp-extra.env fragment — values injected directly into the control-plane
+          # container env. Google OAuth plus the AWS credentials the S3 storage provider
+          # resolves through the AWS SDK default chain (the CP mints presigned artifact
+          # URLs, so only it needs them; the worker/sandbox use the URLs). Never printed;
+          # written 0600 into RUNNER_TEMP.
+          printf 'GOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nAWS_ACCESS_KEY_ID=%s\nAWS_SECRET_ACCESS_KEY=%s\n' \
+            "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" > "$google_env"
+          printf 'E2B_API_KEY=%s\nAOA_CAMPAIGN_E2B_TEMPLATE=%s\n' \
+            "$E2B_API_KEY" "$E2B_TEMPLATE_INPUT" > "$campaign_env"
+          chmod 600 "$google_env" "$campaign_env"
+          echo "GOOGLE_ENV_PATH=$google_env" >> "$GITHUB_ENV"
+          echo "CAMPAIGN_ENV_OVERRIDES_PATH=$campaign_env" >> "$GITHUB_ENV"
+
+      - name: Stage the campaign deployment
+        id: stage
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+          ARCHIVE_PATH: ${{ steps.payload.outputs.archive }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_RUN_ID" =~ ^[0-9]+$ && "$GITHUB_RUN_ATTEMPT" =~ ^[0-9]+$ ]] || {
+            echo "::error::Invalid workflow run identity"
+            exit 1
+          }
+          remote_stage="$DEPLOY_ROOT/incoming/replatform-campaign-$DEPLOY_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          ssh_options=(
+            -p "$DEPLOY_PORT"
+            -i "$DEPLOY_KEY_PATH"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o PreferredAuthentications=publickey
+            -o PasswordAuthentication=no
+            -o KbdInteractiveAuthentication=no
+            -o ForwardAgent=no
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$DEPLOY_KNOWN_HOSTS"
+          )
+          target="$DEPLOY_USER@$DEPLOY_HOST"
+          ssh "${ssh_options[@]}" "$target" \
+            "install -d -m 700 -- '$remote_stage' '$DEPLOY_ROOT/campaign-releases' && \
+             test -f '$DEPLOY_ROOT/docker/campaign/.env.campaign' && \
+             test -f '$CAMPAIGN_ROOT/cp-extra.env' && \
+             test -f '$CAMPAIGN_ROOT/secrets/cp-signing-key.pem' && \
+             test -f '$CAMPAIGN_ROOT/secrets/am-cp-pubkey.pem' && \
+             test -f '$CAMPAIGN_ROOT/secrets/worker-enrollment-ticket'"
+          scp_options=(
+            -P "$DEPLOY_PORT"
+            -i "$DEPLOY_KEY_PATH"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o PreferredAuthentications=publickey
+            -o PasswordAuthentication=no
+            -o KbdInteractiveAuthentication=no
+            -o ForwardAgent=no
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$DEPLOY_KNOWN_HOSTS"
+          )
+          scp "${scp_options[@]}" \
+            "$ARCHIVE_PATH" "$GOOGLE_ENV_PATH" "$CAMPAIGN_ENV_OVERRIDES_PATH" \
+            "$target:$remote_stage/"
+          printf '%s\n' "$remote_stage" > "$RUNNER_TEMP/aoa-campaign-remote-stage"
+          echo "remote_stage=$remote_stage" >> "$GITHUB_OUTPUT"
+
+      - name: Build and deploy the campaign slice
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+          ARCHIVE_SHA256: ${{ steps.payload.outputs.checksum }}
+          REMOTE_STAGE: ${{ steps.stage.outputs.remote_stage }}
+          START_WORKER: ${{ inputs.start_worker }}
+          CLEANUP_BUILDER_CACHE: ${{ inputs.cleanup_builder_cache }}
+        run: |
+          set -euo pipefail
+          ssh_options=(
+            -p "$DEPLOY_PORT"
+            -i "$DEPLOY_KEY_PATH"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o PreferredAuthentications=publickey
+            -o PasswordAuthentication=no
+            -o KbdInteractiveAuthentication=no
+            -o ForwardAgent=no
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$DEPLOY_KNOWN_HOSTS"
+          )
+          target="$DEPLOY_USER@$DEPLOY_HOST"
+          ssh "${ssh_options[@]}" "$target" bash -s -- \
+            "$DEPLOY_SHA" "$REMOTE_STAGE" "$ARCHIVE_SHA256" \
+            "$START_WORKER" "$CLEANUP_BUILDER_CACHE" <<'REMOTE'
+          set -Eeuo pipefail
+          set +x
+          umask 077
+
+          sha="$1"
+          stage="$2"
+          expected_checksum="$3"
+          start_worker="$4"
+          cleanup_builder_cache="$5"
+          deploy_root="/opt/aoa"
+          campaign_root="/opt/campaign"
+          campaign_env="$deploy_root/docker/campaign/.env.campaign"
+          cp_extra_env="$campaign_root/cp-extra.env"
+          release="$deploy_root/campaign-releases/$sha"
+          release_tmp="$deploy_root/campaign-releases/.$sha.tmp.$$"
+          archive="$stage/aoa-campaign-$sha.tar.gz"
+          google_env="$stage/aoa-campaign-google.env"
+          campaign_overrides="$stage/aoa-campaign-overrides.env"
+          env_backup="$stage/campaign.env.before"
+          cp_backup="$stage/cp-extra.env.before"
+          campaign_env_changed=false
+          cp_extra_changed=false
+
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid deployment SHA" >&2; exit 1; }
+          [[ "$expected_checksum" =~ ^[0-9a-f]{64}$ ]] || { echo "invalid archive checksum" >&2; exit 1; }
+          [[ "$stage" =~ ^/opt/aoa/incoming/replatform-campaign-[0-9a-f]{40}-[0-9]+-[0-9]+$ ]] || {
+            echo "invalid deployment stage" >&2
+            exit 1
+          }
+          [[ "$start_worker" == true || "$start_worker" == false ]] || {
+            echo "invalid start_worker input" >&2
+            exit 1
+          }
+          [[ "$cleanup_builder_cache" == true || "$cleanup_builder_cache" == false ]] || {
+            echo "invalid cleanup_builder_cache input" >&2
+            exit 1
+          }
+          [[ -f "$archive" && -f "$google_env" && -f "$campaign_overrides" ]] || {
+            echo "deployment inputs are missing" >&2
+            exit 1
+          }
+          [[ "$(sha256sum "$archive" | awk '{print $1}')" == "$expected_checksum" ]] || {
+            echo "archive checksum mismatch" >&2
+            exit 1
+          }
+          [[ -f "$campaign_env" && -f "$cp_extra_env" ]] || {
+            echo "campaign bootstrap files are missing" >&2
+            exit 1
+          }
+          [[ -f "$campaign_root/secrets/cp-signing-key.pem" ]] || exit 1
+          [[ -f "$campaign_root/secrets/am-cp-pubkey.pem" ]] || exit 1
+          [[ -f "$campaign_root/secrets/worker-enrollment-ticket" ]] || exit 1
+
+          on_exit() {
+            status=$?
+            trap - EXIT
+            set +e
+            if [[ "$status" -ne 0 && "$campaign_env_changed" == true ]]; then
+              install -m 600 "$env_backup" "$campaign_env"
+            fi
+            if [[ "$status" -ne 0 && "$cp_extra_changed" == true ]]; then
+              install -m 600 "$cp_backup" "$cp_extra_env"
+            fi
+            rm -rf -- "$release_tmp"
+            exit "$status"
+          }
+          trap on_exit EXIT
+
+          if [[ ! -e "$release" ]]; then
+            mkdir -m 700 -- "$release_tmp"
+            tar --extract --gzip --file "$archive" --directory "$release_tmp" \
+              --no-same-owner --no-same-permissions
+            [[ -f "$release_tmp/docker-compose.staging.yml" ]] || {
+              echo "archive has no staging compose file" >&2
+              exit 1
+            }
+            [[ -f "$release_tmp/docker/campaign/docker-compose.campaign.yml" ]] || {
+              echo "archive has no campaign compose overlay" >&2
+              exit 1
+            }
+            mv -- "$release_tmp" "$release"
+          fi
+          rm -rf -- "$release_tmp"
+
+          # The bootstrap env stays outside Git. Only the two rotating runtime
+          # values below are changed by this workflow, and each change is
+          # atomic. A failed rollout restores both files.
+          install -m 600 "$campaign_env" "$env_backup"
+          awk '!/^(E2B_API_KEY|AOA_CAMPAIGN_E2B_TEMPLATE)=/' "$campaign_env" > "$stage/campaign.env.next"
+          cat "$campaign_overrides" >> "$stage/campaign.env.next"
+          chmod 600 "$stage/campaign.env.next"
+          mv -f -- "$stage/campaign.env.next" "$campaign_env"
+          campaign_env_changed=true
+
+          install -m 600 "$cp_extra_env" "$cp_backup"
+          awk '!/^(GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY)=/' "$cp_extra_env" > "$stage/cp-extra.env.next"
+          cat "$google_env" >> "$stage/cp-extra.env.next"
+          chmod 600 "$stage/cp-extra.env.next"
+          mv -f -- "$stage/cp-extra.env.next" "$cp_extra_env"
+          cp_extra_changed=true
+
+          available_gb="$(df -BG --output=avail / | tail -1 | tr -dc '0-9')"
+          if [[ "$available_gb" =~ ^[0-9]+$ ]] && (( available_gb < 15 )); then
+            if [[ "$cleanup_builder_cache" == true ]]; then
+              docker builder prune -af
+              available_gb="$(df -BG --output=avail / | tail -1 | tr -dc '0-9')"
+            fi
+            if [[ ! "$available_gb" =~ ^[0-9]+$ ]] || (( available_gb < 15 )); then
+              echo "less than 15G is available for the image build; enable cleanup_builder_cache or reclaim space" >&2
+              exit 1
+            fi
+          fi
+
+          echo "building campaign images for $sha"
+          docker build --pull --label "org.opencontainers.image.revision=$sha" \
+            -f "$release/docker/control-plane/Dockerfile" \
+            -t aoa-control-plane:campaign "$release"
+          docker build --pull --label "org.opencontainers.image.revision=$sha" \
+            -f "$release/docker/adapter-manager/Dockerfile" \
+            -t aoa-adapter-manager:campaign "$release"
+          docker build --pull --label "org.opencontainers.image.revision=$sha" \
+            -f "$release/docker/worker/Dockerfile" \
+            -t aoa-worker:campaign "$release"
+
+          compose() {
+            docker compose \
+              --project-name aoa-staging \
+              --project-directory "$deploy_root" \
+              --env-file "$campaign_env" \
+              -f "$release/docker-compose.staging.yml" \
+              -f "$release/docker/campaign/docker-compose.campaign.yml" \
+              "$@"
+          }
+
+          compose config --quiet
+          compose up -d --force-recreate --remove-orphans --wait --wait-timeout 300 \
+            migrate control-plane adapter-manager
+          if [[ "$start_worker" == true ]]; then
+            compose up -d --force-recreate --remove-orphans --wait --wait-timeout 300 worker
+          fi
+
+          health="$(curl --fail --silent --show-error --retry 12 --retry-all-errors \
+            --retry-delay 5 --max-time 15 http://127.0.0.1:3100/api/health)"
+          grep -Fq '"status":"ok"' <<<"$health" || {
+            echo "control-plane health did not report status ok" >&2
+            exit 1
+          }
+
+          expected_cp="$(docker image inspect --format '{{.Id}}' aoa-control-plane:campaign)"
+          expected_am="$(docker image inspect --format '{{.Id}}' aoa-adapter-manager:campaign)"
+          for service_and_expected in \
+            "control-plane:$expected_cp" \
+            "adapter-manager:$expected_am"; do
+            service="${service_and_expected%%:*}"
+            expected="${service_and_expected#*:}"
+            container="$(compose ps --quiet "$service")"
+            [[ -n "$container" ]] || { echo "$service is not running" >&2; exit 1; }
+            actual="$(docker inspect --format '{{.Image}}' "$container")"
+            [[ "$actual" == "$expected" ]] || {
+              echo "$service is not running the newly built image" >&2
+              exit 1
+            }
+          done
+          if [[ "$start_worker" == true ]]; then
+            expected_worker="$(docker image inspect --format '{{.Id}}' aoa-worker:campaign)"
+            worker="$(compose ps --quiet worker)"
+            [[ -n "$worker" ]] || { echo "worker is not running" >&2; exit 1; }
+            actual_worker="$(docker inspect --format '{{.Image}}' "$worker")"
+            [[ "$actual_worker" == "$expected_worker" ]] || {
+              echo "worker is not running the newly built image" >&2
+              exit 1
+            }
+          fi
+
+          echo "campaign deployment is healthy for $sha"
+          compose ps
+          rm -f -- "$env_backup" "$cp_backup"
+          campaign_env_changed=false
+          cp_extra_changed=false
+          rm -f -- "$google_env" "$campaign_overrides"
+          REMOTE
+
+      - name: Clean deployment credentials and staging files
+        if: ${{ always() }}
+        run: |
+          set +e
+          ssh_options=(
+            -p "$DEPLOY_PORT"
+            -i "${DEPLOY_KEY_PATH:-$RUNNER_TEMP/aoa-campaign-deploy-key}"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o PreferredAuthentications=publickey
+            -o PasswordAuthentication=no
+            -o KbdInteractiveAuthentication=no
+            -o ForwardAgent=no
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=${DEPLOY_KNOWN_HOSTS:-$RUNNER_TEMP/aoa-campaign-known-hosts}"
+          )
+          stage_file="$RUNNER_TEMP/aoa-campaign-remote-stage"
+          if [[ -n "${SSH_AUTH_SOCK:-}" && -s "$stage_file" ]]; then
+            remote_stage="$(<"$stage_file")"
+            if [[ "$remote_stage" =~ ^/opt/aoa/incoming/replatform-campaign-[0-9a-f]{40}-[0-9]+-[0-9]+$ ]]; then
+              ssh "${ssh_options[@]}" "$DEPLOY_USER@$DEPLOY_HOST" \
+                "rm -rf -- '$remote_stage'" || true
+            fi
+          fi
+          if [[ -n "${SSH_AGENT_PID:-}" ]]; then
+            ssh-agent -k >/dev/null 2>&1 || true
+          fi
+          rm -f -- \
+            "$RUNNER_TEMP/aoa-campaign-deploy-key" \
+            "$RUNNER_TEMP/aoa-campaign-ssh-askpass" \
+            "$RUNNER_TEMP/aoa-campaign-known-hosts" \
+            "$RUNNER_TEMP/aoa-campaign-remote-stage" \
+            "$RUNNER_TEMP"/aoa-campaign-*.tar.gz \
+            "$RUNNER_TEMP"/aoa-campaign-*.env

@@ -1,0 +1,1 @@
+ALTER TABLE "discussion_entries" ADD COLUMN "proposal_status" text;

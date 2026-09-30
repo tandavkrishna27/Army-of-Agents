@@ -1,0 +1,95 @@
+node_modules/
+dist/
+server/.aoa/
+build/
+.env
+*.tsbuildinfo
+drizzle/meta/
+.vite/
+coverage/
+.DS_Store
+data/
+.aoa/
+.pnpm-store/
+tmp-*
+cli/tmp/
+out.log
+
+# Scratch/seed scripts (but not scripts/ dir)
+check-*.mjs
+!scripts/check-*.mjs
+new-agent*.json
+newcompany.json
+seed-*.mjs
+server/check-*.mjs
+server/seed-*.mjs
+packages/db/seed-*.mjs
+
+# npm publish build artifacts
+cli/package.dev.json
+
+# Build artifacts in src directories
+server/src/**/*.js
+server/src/**/*.js.map
+server/src/**/*.d.ts
+!server/src/types/*.d.ts
+server/src/**/*.d.ts.map
+tmp/
+
+# Editor / tool temp files
+*.tmp
+.vscode/
+.claude/settings.local.json
+.claude/worktrees/
+.aoa-local/
+.worktrees/
+docs/superpowers/
+plans/
+!docs/aoa/plans/
+.superpowers/
+
+# Playwright e2e outputs
+tests/e2e/playwright-report/
+tests/e2e/test-results/
+
+# Playwright release-smoke outputs
+tests/release-smoke/playwright-report/
+tests/release-smoke/test-results/
+
+# Marketplace catalog snapshot — fetched at build time, not committed
+ui/src/aoa-marketplace-snapshot.json
+ui/src/aoa-connectors-snapshot.json
+.gstack/
+
+# Codex CLI scratch dir — dev-server logs & UAT screenshots from agent runs
+.codex/
+.qa-logs/
+.aoa-qa/
+.runtime-research/
+.codex-logs/
+
+# Per-slice live-verify screenshot dirs + Playwright HTML report (throwaway agent run artifacts)
+.*-verify/
+playwright-report/
+
+# Arc-layout visual harness build artifact (rebuild with esbuild — see arc-harness.ts header)
+ui/dev-harness/*.bundle.js
+
+# Adjutant self-written diagnostic reports — the agent writes these via
+# its own write_file tool when it can't complete a task. Interesting as a
+# debugging signal but not source. UAT iteration 2 generated ~30 of these
+# while diagnosing the zombie-process race.
+ADJUTANT-*.md
+server/ADJUTANT-*.md
+server/adjutant-*.md
+server/adjutant-*.mjs
+server/adjutant-*.ts
+server/check-thread*.ts
+server/diagnose-*.ts
+
+# transient local CI/watch logs (not for commit)
+_*.log
+
+# stray onboarding e2e artifacts (were committed by accident)
+test-results/
+local-connectors.json

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arc Layout Visual Harness</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #0a0a0a;
+        color: #e5e5e5;
+        font-family: Inter, system-ui, sans-serif;
+        padding: 20px 24px 80px;
+      }
+      h1 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+      .sub {
+        font-size: 12px;
+        color: #7E8AA8;
+        margin: 0 0 24px;
+      }
+      .scenario {
+        margin-bottom: 28px;
+        border: 1px solid #232323;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #0d0d0d;
+      }
+      .title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #cfcfcf;
+        padding: 8px 12px;
+        background: #141414;
+        border-bottom: 1px solid #232323;
+        font-family: "Courier New", monospace;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 320px;
+        background: #0a0a0a;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Trunk-and-Arcs Visual Harness</h1>
+    <p class="sub">
+      Real layout (git-arc-layout) + real draw code (git-arc-draw). Each canvas
+      is fit-to-view so nothing is clipped — overlap and scaling problems are
+      fully visible here.
+    </p>
+    <div id="root"></div>
+    <script src="arc-harness.bundle.js"></script>
+  </body>
+</html>

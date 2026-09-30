@@ -1,0 +1,5 @@
+{
+  "id": "04-break-down-goal",
+  "input": { "prompt": "Can we break this quarter's goal into work with dependencies mapped out and assigned?", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/sprint-planning" }
+}

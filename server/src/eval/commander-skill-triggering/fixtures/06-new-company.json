@@ -1,0 +1,5 @@
+{
+  "id": "06-new-company",
+  "input": { "prompt": "We just started out — can you help us set our company vision and mission?", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/identity-setup" }
+}

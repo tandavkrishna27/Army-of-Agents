@@ -1,0 +1,2 @@
+ALTER TABLE "discussion_entries" ADD COLUMN "seq" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "discussion_entries_thread_seq_uniq" ON "discussion_entries" USING btree ("discussion_id","seq") WHERE "discussion_entries"."seq" <> 0;

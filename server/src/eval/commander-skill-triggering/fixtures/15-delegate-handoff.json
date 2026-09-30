@@ -1,0 +1,5 @@
+{
+  "id": "15-delegate-handoff",
+  "input": { "prompt": "hand the checkout redesign off to one of the design agents", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/delegate-handoff" }
+}

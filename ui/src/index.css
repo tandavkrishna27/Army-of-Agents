@@ -1,0 +1,1116 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* === Brand === */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-wash: var(--brand-wash);
+  --color-brand-focus-ring: var(--brand-focus-ring);
+
+  /* === Semantic states === */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  /* === Data palette === */
+  --color-data-teal: var(--data-teal);
+  --color-data-indigo: var(--data-indigo);
+  --color-data-green: var(--data-green);
+  --color-data-amber: var(--data-amber);
+  --color-data-magenta: var(--data-magenta);
+  --color-data-slate: var(--data-slate);
+
+  /* === Surfaces === */
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-hd: var(--hd);
+  --color-field: var(--field);
+  --color-text: var(--text);
+  --color-dim: var(--dim);
+  --color-very-dim: var(--very-dim);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-border-strong: var(--border-strong);
+
+  /* === Component tokens === */
+  --color-secondary-sidebar: var(--secondary-sidebar-bg);
+  --color-sidebar-active-text: var(--sidebar-active-text);
+  --color-tooltip-surface: var(--tooltip-surface);
+  --color-tooltip-text: var(--tooltip-text);
+
+  /* === DEPRECATED shadcn aliases — remove when primitives use new tokens === */
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--card-2);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--brand);
+  --color-primary-foreground: white;
+  --color-secondary: var(--card);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--card);
+  --color-muted-foreground: var(--dim);
+  --color-accent: var(--card);
+  --color-accent-foreground: var(--text);
+  --color-destructive: var(--error);
+  --color-destructive-foreground: white;
+  --color-input: var(--field);
+  --color-ring: var(--brand);
+
+  /* Charts (preserve existing names; remap to data palette) */
+  --color-chart-1: var(--data-indigo);
+  --color-chart-2: var(--data-teal);
+  --color-chart-3: var(--data-amber);
+  --color-chart-4: var(--data-magenta);
+  --color-chart-5: var(--data-green);
+
+  /* Sidebar (preserve existing shadcn names) */
+  --color-sidebar: var(--card);
+  --color-sidebar-foreground: var(--text);
+  --color-sidebar-primary: var(--brand);
+  --color-sidebar-primary-foreground: white;
+  --color-sidebar-accent: var(--hd);
+  --color-sidebar-accent-foreground: var(--text);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--brand);
+
+  /* === Fonts === */
+  --font-sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", ui-monospace, monospace;
+
+  /* === Radius === */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 999px;
+  --radius: 6px;
+
+  /* === Motion === */
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pulse-glow: pulse-glow 1.5s ease-in-out infinite;
+  --animate-float-gentle: float-gentle 3.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -120% 0; }
+  100% { background-position: 220% 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--brand) 60%, transparent),
+      0 0 6px color-mix(in srgb, var(--brand) 40%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px color-mix(in srgb, var(--brand) 0%, transparent),
+      0 0 12px color-mix(in srgb, var(--brand) 60%, transparent);
+  }
+}
+
+@keyframes thread-attention {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(34, 197, 94, 0);
+  }
+}
+
+.thread-attention-pulse {
+  animation: thread-attention 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thread-attention-pulse {
+    animation: none;
+  }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Commander confirmation card border pulse — border-color only (no box-shadow, no paint cost).
+   30 iterations × 2s = 60s then auto-stops. Wrapped in prefers-reduced-motion so the class
+   is safe to apply unconditionally; reduced-motion users see a static amber border. */
+@keyframes commander-pulse-border {
+  0%, 100% { border-color: #fde68a; /* amber-200 */ }
+  50%       { border-color: #f59e0b; /* amber-400 */ }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .commander-pulse-border {
+    animation: commander-pulse-border 2s ease-in-out 30;
+  }
+}
+
+/* Commander rich (contenteditable) input. Uncontrolled — the DOM owns the
+   live text. `pre-wrap` preserves the Shift+Enter newlines we insert as "\n";
+   the JS-toggled `.is-empty` class drives the placeholder (more reliable than
+   `:empty`, which a leftover <br> would defeat). */
+.commander-input {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow-y: auto;
+  outline: none;
+}
+.commander-input.is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  pointer-events: none;
+  user-select: none;
+}
+
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --brand: #921a0d;
+  --brand-hover: #b32616;
+  --brand-wash: color-mix(in srgb, var(--brand) 6%, transparent);
+  --brand-focus-ring: color-mix(in srgb, var(--brand) 12%, transparent);
+
+  /* Semantic */
+  --success: #0a8a4f;
+  --warning: #a87a1c;
+  --error: #ef4444;
+  --info: #2563eb;
+
+  /* Rich-input tokens (Commander). One color per token kind; expandable
+     (skill now; mention/file later). Text color + soft wash background so the
+     token reads as an atomic unit without being a removable pill chip. */
+  --token-skill: #2563eb;
+  --token-skill-bg: color-mix(in srgb, var(--token-skill) 10%, transparent);
+
+  /* Data palette (same hex on both modes) */
+  --data-teal: #3fa8c7;
+  --data-indigo: #6470dc;
+  --data-green: #4fb67e;
+  --data-amber: #d9a938;
+  --data-magenta: #c25ba8;
+  --data-slate: #7e8aa8;
+
+  /* Surfaces (light) */
+  --bg: oklch(0.99 0.005 30);
+  --card: oklch(0.97 0.005 30);
+  --card-2: oklch(0.95 0.005 30);
+  --hd: oklch(0.94 0.005 30);
+  --field: white;
+  --text: hsl(20 12% 18%);
+  --dim: hsl(20 8% 40%);
+  --very-dim: hsl(20 8% 55%);
+  --border: hsl(20 8% 88%);
+  --border-soft: hsl(20 8% 92%);
+  --border-strong: hsl(20 8% 78%);
+
+  /* Toast (unified) */
+  --toast-bg: color-mix(in oklch, var(--card-2) 80%, transparent);
+  --toast-border: color-mix(in srgb, var(--text) 12%, transparent);
+  --toast-highlight: rgba(255, 255, 255, 0.6);
+  --toast-loading: #0e9bb3;
+
+  /* Sizing tokens */
+  --row-compact: 32px; /* denser than --row-data for high-frequency session lists */
+
+  /* Component tokens (light) */
+  --secondary-sidebar-bg: oklch(0.92 0.005 30);
+  --sidebar-active-text: hsl(15 55% 40%);
+  --tooltip-surface: oklch(0.98 0.005 30);
+  --tooltip-text: hsl(20 12% 18%);
+
+  /* === DEPRECATED shadcn aliases — remove when primitives use new tokens === */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card-foreground: var(--text);
+  --popover: var(--card-2);
+  --popover-foreground: var(--text);
+  --primary: var(--brand);
+  --primary-foreground: white;
+  --secondary: var(--card);
+  --secondary-foreground: var(--text);
+  --muted: var(--card);
+  --muted-foreground: var(--dim);
+  --accent: var(--card);
+  --accent-foreground: var(--text);
+  --destructive: var(--error);
+  --destructive-foreground: white;
+  --input: var(--field);
+  --ring: var(--brand);
+
+  /* Charts */
+  --chart-1: var(--data-indigo);
+  --chart-2: var(--data-teal);
+  --chart-3: var(--data-amber);
+  --chart-4: var(--data-magenta);
+  --chart-5: var(--data-green);
+
+  /* Sidebar */
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--text);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: white;
+  --sidebar-accent: var(--hd);
+  --sidebar-accent-foreground: var(--text);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand);
+
+  /* Entity-specific (preserve names — remap to data palette) */
+  --entity-task: var(--data-indigo);
+  --entity-agent: var(--data-green);
+  --entity-brief: var(--data-magenta);
+  --entity-goal: var(--data-amber);
+  --entity-memory: var(--data-slate);
+}
+
+.dark {
+  /* Brand */
+  --brand: #b82d1c;
+  --brand-hover: #d13a26;
+  --brand-wash: color-mix(in srgb, var(--brand) 8%, transparent);
+  --brand-focus-ring: color-mix(in srgb, var(--brand) 15%, transparent);
+
+  /* Semantic */
+  --success: #4fb67e;
+  --warning: #d9a938;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* Rich-input tokens (Commander) — lighter blue for contrast on dark. */
+  --token-skill: #6ea8fe;
+  --token-skill-bg: color-mix(in srgb, var(--token-skill) 14%, transparent);
+
+  /* Data palette (same as light) */
+  --data-teal: #3fa8c7;
+  --data-indigo: #6470dc;
+  --data-green: #4fb67e;
+  --data-amber: #d9a938;
+  --data-magenta: #c25ba8;
+  --data-slate: #7e8aa8;
+
+  /* Surfaces (dark) */
+  --bg: #0a0a0a;
+  --card: oklch(0.19 0.005 30);
+  --card-2: oklch(0.205 0.005 30);
+  --hd: oklch(0.16 0.005 30);
+  --field: oklch(0.13 0.005 30);
+  --text: #eeeeee;
+  --dim: hsl(0 0% 60%);
+  --very-dim: hsl(0 0% 45%);
+  --border: hsl(0 0% 14%);
+  --border-soft: hsl(0 0% 11%);
+  --border-strong: hsl(0 0% 22%);
+
+  /* Toast (unified) */
+  --toast-bg: color-mix(in oklch, var(--card-2) 55%, transparent);
+  --toast-border: color-mix(in srgb, white 11%, transparent);
+  --toast-highlight: rgba(255, 255, 255, 0.06);
+  --toast-loading: #37c2d4;
+
+  /* Component tokens (dark) */
+  --secondary-sidebar-bg: oklch(0.155 0.005 30);
+  --sidebar-active-text: hsl(15 60% 75%);
+  /* tooltip-surface and tooltip-text stay light — frosted-glass is intentionally always light */
+
+  /* === DEPRECATED shadcn aliases — remove when primitives use new tokens === */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card-foreground: var(--text);
+  --popover: var(--card-2);
+  --popover-foreground: var(--text);
+  --primary: var(--brand);
+  --primary-foreground: white;
+  --secondary: var(--card);
+  --secondary-foreground: var(--text);
+  --muted: var(--card);
+  --muted-foreground: var(--dim);
+  --accent: var(--card);
+  --accent-foreground: var(--text);
+  --destructive: var(--error);
+  --destructive-foreground: white;
+  --input: var(--field);
+  --ring: var(--brand);
+
+  /* Charts */
+  --chart-1: var(--data-indigo);
+  --chart-2: var(--data-teal);
+  --chart-3: var(--data-amber);
+  --chart-4: var(--data-magenta);
+  --chart-5: var(--data-green);
+
+  /* Sidebar */
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--text);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: white;
+  --sidebar-accent: var(--hd);
+  --sidebar-accent-foreground: var(--text);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand);
+
+  /* Entity */
+  --entity-task: var(--data-indigo);
+  --entity-agent: var(--data-green);
+  --entity-brief: var(--data-magenta);
+  --entity-goal: var(--data-amber);
+  --entity-memory: var(--data-slate);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    height: 100%;
+    -webkit-tap-highlight-color: color-mix(in oklab, var(--foreground) 20%, transparent);
+  }
+  body {
+    @apply bg-background text-foreground;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  /* Prevent double-tap-to-zoom on interactive elements for mobile */
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  label {
+    touch-action: manipulation;
+  }
+}
+
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  [data-slot="select-trigger"] {
+    min-height: 44px;
+  }
+
+  /* Commander (Task 11): dense ghost icon buttons (28px) and the session-row
+     overflow menu (22px) are comfortable with a mouse but too small to tap.
+     Bump them to a ~40px square hit area on coarse pointers only — fine
+     (mouse) pointers keep the dense desktop sizing untouched. The session
+     overflow trigger is normally hover-revealed; force it visible on touch
+     since there is no hover. */
+  [data-commander-touch] {
+    min-width: 40px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  [data-commander-touch].group-hover\:flex {
+    display: inline-flex !important;
+  }
+}
+
+/* Dark mode scrollbars */
+.dark {
+  color-scheme: dark;
+}
+
+.dark *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark *::-webkit-scrollbar-track {
+  background: oklch(0.205 0 0);
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: oklch(0.4 0 0);
+  border-radius: 4px;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0 0);
+}
+
+/* Auto-hide scrollbar: transparent by default, visible on container hover */
+.scrollbar-auto-hide::-webkit-scrollbar-thumb {
+  background: transparent !important;
+}
+.scrollbar-auto-hide:hover::-webkit-scrollbar-thumb {
+  background: oklch(0.4 0 0) !important;
+}
+.scrollbar-auto-hide:hover::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0 0) !important;
+}
+
+/* Expandable dialog transition for max-width changes */
+[data-slot="dialog-content"] {
+  transition: max-width 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Home widget board — resize handle visible + prominent only in edit mode
+   (Plan 5 Task 5). react-grid-layout ships the handle at opacity:0 except on
+   tile :hover, and even then it's just a faint ~5px corner mark rendered from
+   react-resizable's hardcoded (non-theme-aware) black glyph — easy to miss,
+   and wrong on dark backgrounds. Outside edit mode react-grid-layout already
+   removes the handle from interaction (and hides it) via its own
+   `.react-resizable-hide` class (driven by HomeBoard.tsx's
+   `resizeConfig.enabled`), so nothing extra is needed there. While editing
+   (`[data-home-board-editing]`, set by HomeBoard.tsx), replace the glyph with
+   a small theme-toned "chip" so the grab affordance reads clearly at rest,
+   without needing a hover to discover it. */
+[data-home-board-editing] .react-grid-item > .react-resizable-handle {
+  opacity: 1;
+  width: 18px;
+  height: 18px;
+  background-image: none;
+  border: 1px solid var(--border-strong);
+  border-top: none;
+  border-left: none;
+  border-radius: 0 0 var(--radius-sm) 0;
+  background-color: var(--card-2);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+[data-home-board-editing] .react-grid-item > .react-resizable-handle::after {
+  right: 4px;
+  bottom: 4px;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid var(--dim);
+  border-bottom: 2px solid var(--dim);
+}
+
+[data-home-board-editing] .react-grid-item:hover > .react-resizable-handle {
+  background-color: var(--brand-wash);
+  border-color: var(--brand);
+}
+
+[data-home-board-editing] .react-grid-item:hover > .react-resizable-handle::after {
+  border-right-color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-home-board-editing] .react-grid-item > .react-resizable-handle {
+    transition: none;
+  }
+}
+
+/* Home widget board — arrange-mode affordance (Plan 6 Task 2). The whole
+   tile is already draggable while editing (HomeBoard.tsx's dragConfig sets
+   no RGL `handle`, only a `cancel` selector for the remove button) — nothing
+   about that was visible before. `.home-board-tile-editable` is applied to
+   every tile only while `editableNow` (see HomeBoard.tsx) and is scoped
+   under the same `[data-home-board-editing]` attribute as the resize-handle
+   CSS above, so both affordances turn on/off from the same signal. A grab
+   cursor plus a dashed outline read as "pick this up", without shrinking the
+   drag surface to a header handle (which would be the opposite of the goal). */
+[data-home-board-editing] .home-board-tile-editable {
+  cursor: grab;
+  outline: 2px dashed var(--border-strong);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+  transition: outline-color 120ms ease;
+}
+
+[data-home-board-editing] .home-board-tile-editable:hover {
+  outline-color: var(--brand);
+}
+
+[data-home-board-editing] .home-board-tile-editable:active {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-home-board-editing] .home-board-tile-editable {
+    transition: none;
+  }
+}
+
+/* Dashboard activity row entry motion */
+@keyframes dashboard-activity-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.985);
+    filter: blur(4px);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.002);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes dashboard-activity-highlight {
+  0% {
+    box-shadow: inset 2px 0 0 var(--primary);
+    background-color: color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+  100% {
+    box-shadow: inset 0 0 0 transparent;
+    background-color: transparent;
+  }
+}
+
+.activity-row-enter {
+  animation:
+    dashboard-activity-enter 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    dashboard-activity-highlight 920ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-row-enter {
+    animation: none;
+  }
+}
+
+/* Lobby mount choreography — sidebar slides in, heading fades+rises, cards stagger fade+rise */
+@keyframes lobby-sidebar-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes lobby-heading-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lobby-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lobby-sidebar-enter {
+  animation: lobby-sidebar-enter 200ms ease-out both;
+}
+
+.lobby-heading-enter {
+  animation: lobby-heading-enter 200ms ease-out 200ms both;
+}
+
+.lobby-card-enter {
+  animation: lobby-card-enter 200ms ease-out both;
+  animation-delay: calc(250ms + var(--lobby-card-index, 0) * 30ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lobby-sidebar-enter,
+  .lobby-heading-enter,
+  .lobby-card-enter {
+    animation: none;
+  }
+}
+
+/* Entity hover effects for cards */
+.kanban-card-hover:not([class*="opacity-30"]):not([class*="shadow-lg"]):hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: color-mix(in srgb, var(--entity-task) 25%, var(--border));
+}
+
+.agent-card-hover:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: color-mix(in srgb, var(--entity-agent) 25%, var(--border));
+}
+
+.card-hover {
+  transition: border-color .2s ease, box-shadow .25s ease, transform .15s ease;
+}
+
+.card-hover:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 1px hsl(8 75% 50% / 0.25), 0 8px 28px hsl(8 75% 30% / 0.18);
+}
+
+/* MDXEditor theme integration */
+.aoa-mdxeditor-scope,
+.aoa-mdxeditor {
+  --baseBase: var(--background);
+  --baseBg: transparent;
+  --baseBgSubtle: color-mix(in oklab, var(--accent) 35%, transparent);
+  --baseLine: var(--border);
+  --baseSolid: var(--muted-foreground);
+  --baseSolidHover: var(--foreground);
+  --baseText: var(--muted-foreground);
+  --baseBorderColor: var(--border);
+  --baseBorder: var(--border);
+  --baseBorderHover: var(--ring);
+  --baseTextContrast: var(--foreground);
+  --baseTextContrastMuted: var(--muted-foreground);
+  --baseTextEmphasis: var(--foreground);
+  --basePageBg: var(--background);
+  --baseRadius: var(--radius);
+  --baseLineHeight: 1.5;
+  --accentBorder: color-mix(in oklab, var(--primary) 35%, var(--border));
+  --accentSolid: var(--primary);
+  --accentSolidHover: var(--primary);
+  --accentLine: color-mix(in oklab, var(--primary) 20%, transparent);
+  --accentBg: var(--accent);
+  --accentBgHover: color-mix(in oklab, var(--accent) 80%, var(--background));
+  --accentBgActive: color-mix(in oklab, var(--accent) 72%, var(--background));
+  --accentText: var(--accent-foreground);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--foreground);
+}
+
+.aoa-mdxeditor-scope [class*="_iconButton_"],
+.aoa-mdxeditor [class*="_iconButton_"] {
+  color: var(--baseText);
+}
+
+.aoa-mdxeditor-scope [class*="_iconButton_"]:hover,
+.aoa-mdxeditor [class*="_iconButton_"]:hover {
+  color: var(--baseTextContrast);
+}
+
+.aoa-mdxeditor .mdxeditor-root-contenteditable {
+  min-height: 2.5rem;
+  padding: 0;
+  line-height: 1.5;
+}
+
+.aoa-mdxeditor [class*="_contentEditable_"] {
+  padding: 0.375rem 0.625rem !important;
+}
+
+.aoa-mdxeditor--borderless [class*="_contentEditable_"] {
+  padding: 0 !important;
+}
+
+.aoa-mdxeditor [class*="_placeholder_"] {
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.aoa-mdxeditor-content {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.aoa-mdxeditor-content > *:first-child {
+  margin-top: 0;
+}
+
+.aoa-mdxeditor-content > *:last-child {
+  margin-bottom: 0;
+}
+
+.aoa-mdxeditor-content p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.aoa-mdxeditor-content p + p {
+  margin-top: 0.6rem;
+}
+
+.aoa-mdxeditor-content a.aoa-project-mention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0 0.1rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  text-decoration: none;
+  vertical-align: baseline;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.aoa-mdxeditor-content a.aoa-skill-mention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0 0.1rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  text-decoration: none;
+  vertical-align: baseline;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.aoa-mdxeditor-content ul,
+.aoa-mdxeditor-content ol {
+  margin: 0.35rem 0;
+  padding-left: 1.1rem;
+}
+
+.aoa-mdxeditor-content ul {
+  list-style: disc;
+}
+
+.aoa-mdxeditor-content ol {
+  list-style: decimal;
+}
+
+.aoa-mdxeditor-content li {
+  display: list-item;
+  margin: 0.15rem 0;
+  line-height: 1.4;
+}
+
+.aoa-mdxeditor-content li::marker {
+  color: var(--muted-foreground);
+}
+
+.aoa-mdxeditor-content h1,
+.aoa-mdxeditor-content h2,
+.aoa-mdxeditor-content h3 {
+  margin: 0.4rem 0 0.25rem;
+  line-height: 1.3;
+}
+
+.aoa-mdxeditor-content img {
+  max-height: 18rem;
+  border-radius: calc(var(--radius) - 2px);
+}
+
+.aoa-mdxeditor-content blockquote {
+  margin: 0.45rem 0;
+  padding-left: 0.7rem;
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+  line-height: 1.4;
+}
+
+.aoa-mdxeditor-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.84em;
+}
+
+.aoa-mdxeditor-content pre {
+  margin: 0.5rem 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 3px);
+  background: color-mix(in oklab, var(--accent) 50%, transparent);
+  overflow-x: auto;
+}
+
+/* Rendered markdown code blocks & inline code (prose/MarkdownBody context).
+   Matches the editor theme so rendered code looks consistent. */
+.prose pre {
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 3px);
+  background-color: color-mix(in oklab, var(--accent) 50%, transparent);
+  color: var(--foreground);
+}
+
+.prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.84em;
+}
+
+/* Remove backtick pseudo-elements from inline code (prose default adds them) */
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
+/* Inline code background (not inside a code block) */
+.prose :not(pre) > code {
+  background-color: color-mix(in oklab, var(--accent) 60%, transparent);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+/* Project mention chips rendered inside MarkdownBody */
+a.aoa-project-mention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0 0.1rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  text-decoration: none;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+/* Skill mention chips rendered inside MarkdownBody */
+a.aoa-skill-mention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0 0.1rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  text-decoration: none;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+/* Keep MDXEditor popups above app dialogs when editor is inside a modal. */
+.aoa-mdxeditor-scope [class*="_dialogOverlay_"],
+.aoa-mdxeditor [class*="_dialogOverlay_"] {
+  z-index: 80;
+}
+
+.aoa-mdxeditor-scope [class*="_dialogContent_"],
+.aoa-mdxeditor-scope [class*="_largeDialogContent_"],
+.aoa-mdxeditor-scope [class*="_popoverContent_"],
+.aoa-mdxeditor-scope [class*="_linkDialogPopoverContent_"],
+.aoa-mdxeditor-scope [class*="_tableColumnEditorPopoverContent_"],
+.aoa-mdxeditor-scope [class*="_toolbarButtonDropdownContainer_"],
+.aoa-mdxeditor-scope [class*="_toolbarNodeKindSelectContainer_"],
+.aoa-mdxeditor [class*="_dialogContent_"],
+.aoa-mdxeditor [class*="_largeDialogContent_"],
+.aoa-mdxeditor [class*="_popoverContent_"],
+.aoa-mdxeditor [class*="_linkDialogPopoverContent_"],
+.aoa-mdxeditor [class*="_tableColumnEditorPopoverContent_"],
+.aoa-mdxeditor [class*="_toolbarButtonDropdownContainer_"],
+.aoa-mdxeditor [class*="_toolbarNodeKindSelectContainer_"] {
+  z-index: 81 !important;
+}
+
+/* Unified toast glass surface */
+.toast-glass {
+  background: var(--toast-bg);
+  border: 1px solid var(--toast-border);
+  -webkit-backdrop-filter: blur(17px) saturate(1.35);
+  backdrop-filter: blur(17px) saturate(1.35);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--toast-highlight);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .toast-glass {
+    background: var(--card-2);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Indeterminate loading rail */
+@keyframes toastRail {
+  0% { left: -44%; }
+  100% { left: 100%; }
+}
+.toast-rail {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 44%;
+  border-radius: 2px;
+  background: var(--toast-loading);
+  animation: toastRail 1.25s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-rail { animation: none; left: 0; width: 100%; opacity: 0.5; }
+}
+
+/* ---------------------------------------------------------------------------
+   Syntax highlighting theme (highlight.js) — P3.2.
+   Hand-written so it is `.dark`-scoped (class dark strategy) and inherits the
+   surrounding container background (bg-muted/40 in the code viewer, .prose pre
+   in markdown). We deliberately do NOT import a highlight.js theme CSS file —
+   those set their own light-only backgrounds and are not `.dark`-aware.
+   Palette is a neutral GitHub-ish set, tuned for legibility in both themes.
+   --------------------------------------------------------------------------- */
+.hljs {
+  display: block;
+  color: var(--foreground);
+  background: transparent;
+}
+
+/* Light (default) token colors — GitHub Light-ish */
+.hljs-comment,
+.hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-doctag,
+.hljs-formula {
+  color: #d73a49;
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-meta .hljs-string {
+  color: #032f62;
+}
+.hljs-number,
+.hljs-literal {
+  color: #005cc5;
+}
+.hljs-title,
+.hljs-title.function_,
+.hljs-section,
+.hljs-name {
+  color: #6f42c1;
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #005cc5;
+}
+.hljs-built_in,
+.hljs-class .hljs-title,
+.hljs-title.class_,
+.hljs-selector-class {
+  color: #e36209;
+}
+.hljs-type,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-selector-id {
+  color: #22863a;
+}
+.hljs-tag {
+  color: #22863a;
+}
+.hljs-tag .hljs-name {
+  color: #22863a;
+}
+.hljs-meta {
+  color: #6a737d;
+}
+.hljs-params {
+  color: #24292e;
+}
+.hljs-addition {
+  color: #22863a;
+  background-color: #f0fff4;
+}
+.hljs-deletion {
+  color: #b31d28;
+  background-color: #ffeef0;
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 600;
+}
+
+/* Dark overrides — GitHub Dark-ish */
+.dark .hljs-comment,
+.dark .hljs-quote {
+  color: #8b949e;
+}
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-doctag,
+.dark .hljs-formula {
+  color: #ff7b72;
+}
+.dark .hljs-string,
+.dark .hljs-regexp,
+.dark .hljs-meta .hljs-string {
+  color: #a5d6ff;
+}
+.dark .hljs-number,
+.dark .hljs-literal {
+  color: #79c0ff;
+}
+.dark .hljs-title,
+.dark .hljs-title.function_,
+.dark .hljs-section,
+.dark .hljs-name {
+  color: #d2a8ff;
+}
+.dark .hljs-attr,
+.dark .hljs-attribute,
+.dark .hljs-variable,
+.dark .hljs-template-variable,
+.dark .hljs-selector-attr,
+.dark .hljs-selector-pseudo {
+  color: #79c0ff;
+}
+.dark .hljs-built_in,
+.dark .hljs-class .hljs-title,
+.dark .hljs-title.class_,
+.dark .hljs-selector-class {
+  color: #ffa657;
+}
+.dark .hljs-type,
+.dark .hljs-symbol,
+.dark .hljs-bullet,
+.dark .hljs-link,
+.dark .hljs-selector-id {
+  color: #7ee787;
+}
+.dark .hljs-tag,
+.dark .hljs-tag .hljs-name {
+  color: #7ee787;
+}
+.dark .hljs-meta {
+  color: #8b949e;
+}
+.dark .hljs-params {
+  color: #c9d1d9;
+}
+.dark .hljs-addition {
+  color: #aff5b4;
+  background-color: rgba(46, 160, 67, 0.15);
+}
+.dark .hljs-deletion {
+  color: #ffdcd7;
+  background-color: rgba(248, 81, 73, 0.15);
+}

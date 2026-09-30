@@ -1,0 +1,18 @@
+{
+  "id": "02-greetings-only",
+  "input": {
+    "thread": {
+      "id": "fixture-thread-2",
+      "companyId": "fixture-company-1",
+      "entries": [
+        { "id": "e1", "rawContent": "hey", "createdAt": "2026-05-29T09:00:00.000Z" },
+        { "id": "e2", "rawContent": "morning!", "createdAt": "2026-05-29T09:00:05.000Z" },
+        { "id": "e3", "rawContent": "how's it going", "createdAt": "2026-05-29T09:00:10.000Z" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "types": [] }
+  }
+}

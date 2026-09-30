@@ -1,0 +1,44 @@
+PROVIDER-SWITCHING — Scenario 5b (PART A: org/heartbeat run-time model correction)
+Captured live on local_trusted instance :3100, codex ChatGPT/subscription auth. No fabrication.
+Company 69aa10c6-0d33-434b-8d29-ac2331a59f22  Agent f46535c6-92ac-4e75-9fcb-894a5679ce5f (Director, kind=org, codex_local)
+
+--- (1) Agent PERSISTED adapterConfig (UNCHANGED by save; correction is run-time) ---
+name=Director kind=org adapterType=codex_local
+adapterConfig={"model":"gpt-5.3-codex","extraArgs":["--skip-git-repo-check"]}
+  => persisted model is gpt-5.3-codex (the api-key-only model).
+
+--- (2) Heartbeat run record (org path executed + succeeded) ---
+{"id":"e1e2b3dd-8601-441c-9c50-2e2392eff50e","status":"succeeded","exit_code":0,"started_at":"2026-06-24T10:28:30.643Z","finished_at":"2026-06-24T10:30:51.491Z","error_code":null}
+  => status=succeeded, exit_code=0 (--skip-git-repo-check cleared codex trust gate).
+
+--- (3) usageJson billingType (auth mode actually used) ---
+{"billingType":"subscription","inputTokens":595175,"outputTokens":5377,"cachedInputTokens":509184}
+  => billingType=subscription => ChatGPT login (NOT apikey). gpt-5.3-codex would be rejected here.
+
+--- (4) cost_events for this run (the RESOLVED/billed model) ---
+{"id8":"eb8edd3e","model":"gpt-5.5","agent_id":"f46535c6-92ac-4e75-9fcb-894a5679ce5f","billing_type":"unknown","occurred_at":"2026-06-24T10:30:51.509Z","input_tokens":595175,"output_tokens":5377}
+  => billed model = gpt-5.5 at Wed Jun 24 2026 16:00:51 GMT+0530 (India Standard Time), 18ms after run finished_at Wed Jun 24 2026 16:00:51 GMT+0530 (India Standard Time).
+  => org/heartbeat path corrected persisted gpt-5.3-codex -> gpt-5.5 at run time (resolveRunScopedModel).
+
+--- (5) Codex run uniqueness (this is the ONLY succeeded codex run; 4 prior failed the trust gate) ---
+{"id8":"e1e2b3dd","status":"succeeded","error_code":null,"started_at":"2026-06-24T10:28:30.643Z"}
+{"id8":"fd2cc5df","status":"failed","error_code":"adapter_failed","started_at":"2026-06-24T10:21:26.107Z"}
+{"id8":"7c12b1ad","status":"failed","error_code":"adapter_failed","started_at":"2026-06-24T07:36:22.001Z"}
+{"id8":"dcfcb436","status":"failed","error_code":"adapter_failed","started_at":"2026-06-24T06:36:21.131Z"}
+{"id8":"85209b27","status":"failed","error_code":"adapter_failed","started_at":"2026-06-24T05:36:20.278Z"}
+
+--- (6) BOOT-BACKFILL — REMOVED 2026-06-24 (superseded; no longer in the codebase) ---
+The Task-2 boot sweep `backfillOrgCodexModels` (formerly wired in server/src/index.ts)
+was REMOVED. The run-time seam in sections (1)-(5) above is now the SOLE correction path.
+Rationale (best-practice-at-scale): the sweep mutated a founder-PINNED model based on a
+boot-time GUESS of a RUNTIME property (auth mode). For a company sharing an api-key
+auth.json — where gpt-5.3-codex is a VALID model — that silently clobbered the founder's
+choice on every restart (the Codex P2(b) finding). It also had no crew/Commander
+counterpart, so it broke parity. Correcting at run time (when the live auth mode is known)
+is the only correct moment; the persisted row is now left exactly as the founder pinned it,
+while cost_events still reflects the resolved/billed model (section 4).
+
+Historical note (no longer reproducible): when the sweep existed, a reboot with
+OPENAI_API_KEY stripped healed gpt-5.3-codex -> gpt-5.5 at boot (extraArgs preserved via
+shallow merge), captured live at agent.updated_at 2026-06-24T10:39:17.014Z. As of the A2
+removal there is NO persisted-row rewrite on boot — do not expect one.

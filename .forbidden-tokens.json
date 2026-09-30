@@ -1,0 +1,5 @@
+{
+  "_comment": "Additional pre-publish token guard. CI scans every tracked path and file content with zero exceptions.",
+  "tokens": ["pcp_invite_", "pcp_mcp_", "pcp_claim_"],
+  "allowPaths": []
+}

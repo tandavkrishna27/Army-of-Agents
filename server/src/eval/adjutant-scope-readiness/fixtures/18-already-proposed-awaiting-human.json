@@ -1,0 +1,20 @@
+{
+  "id": "18-already-proposed-awaiting-human",
+  "input": {
+    "thread": {
+      "id": "fixture-18",
+      "phase": "discuss",
+      "intent": ["planning", "build"],
+      "summaryText": null,
+      "entries": [
+        { "id": "e1", "rawContent": "Let's build the agent activity export — CSV of every run with cost and outcome.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "Yes, filtered by the current date range, streamed so big exports don't OOM.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "Proposed scope: 1) export endpoint, 2) CSV streaming serializer, 3) export button on the activity page. Approve to create these tasks?", "authorAgentId": "adjutant", "createdBy": "adjutant" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "category": "wait" }
+  }
+}

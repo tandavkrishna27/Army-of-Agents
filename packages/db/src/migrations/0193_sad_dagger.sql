@@ -1,0 +1,1 @@
+ALTER TABLE "organization_memberships" ADD COLUMN "created_by_break_glass" boolean DEFAULT false NOT NULL;

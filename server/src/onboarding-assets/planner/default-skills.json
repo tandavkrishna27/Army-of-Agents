@@ -1,0 +1,4 @@
+{
+  "_comment": "Catalog skill IDs to install for the Planner crew role. writing-plans is the basic skill; deep sourcing deferred (spec §11).",
+  "skills": ["writing-plans"]
+}

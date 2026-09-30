@@ -1,0 +1,2 @@
+ALTER TABLE "environments" ADD COLUMN "execution_target_id" uuid;--> statement-breakpoint
+ALTER TABLE "environments" ADD CONSTRAINT "environments_execution_target_id_execution_targets_id_fk" FOREIGN KEY ("execution_target_id") REFERENCES "public"."execution_targets"("id") ON DELETE set null ON UPDATE no action;

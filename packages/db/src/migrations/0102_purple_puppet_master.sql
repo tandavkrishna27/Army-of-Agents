@@ -1,0 +1,1 @@
+ALTER TABLE "company_skills" ADD COLUMN "trigger_phrases" jsonb DEFAULT '[]'::jsonb;

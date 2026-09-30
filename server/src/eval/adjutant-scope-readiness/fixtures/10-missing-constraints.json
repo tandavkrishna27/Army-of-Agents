@@ -1,0 +1,21 @@
+{
+  "id": "10-missing-constraints",
+  "input": {
+    "thread": {
+      "id": "fixture-10",
+      "phase": "discuss",
+      "intent": ["planning"],
+      "summaryText": null,
+      "entries": [
+        { "id": "e1", "rawContent": "Let's add a referral program.", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "Good idea, the activation funnel could use the boost.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "Yeah. We should do it.", "authorAgentId": null, "createdBy": "user-1" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "rubric": "Should return 'ask-clarifying' — the team agrees on the idea but hasn't named any constraints (reward structure, eligibility rules, timing, budget, or success metric). Without those, a scope_proposal would be guessing. A clarifying question would help.",
+    "value": { "category": "ask-clarifying" }
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "discussions" ADD COLUMN "use_controller_path" boolean DEFAULT false NOT NULL;

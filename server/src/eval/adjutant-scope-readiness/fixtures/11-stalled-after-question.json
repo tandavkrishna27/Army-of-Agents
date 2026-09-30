@@ -1,0 +1,21 @@
+{
+  "id": "11-stalled-after-question",
+  "input": {
+    "thread": {
+      "id": "fixture-11",
+      "phase": "discuss",
+      "intent": ["planning"],
+      "summaryText": "Founder is exploring how to reduce churn in the trial cohort.",
+      "entries": [
+        { "id": "e1", "rawContent": "Trial churn is at 62%. What's driving it?", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "Do we have any data on which step they drop off at?", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "Not sure. Anyone want to dig in?", "authorAgentId": null, "createdBy": "user-1" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "rubric": "Should return 'ask-clarifying' — the founders are asking each other questions but none has been answered. A focused Adjutant question (e.g. 'should I have Scout pull the funnel data?') would unblock the conversation without forcing a scope.",
+    "value": { "category": "ask-clarifying" }
+  }
+}

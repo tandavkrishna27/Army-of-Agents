@@ -1,0 +1,73 @@
+# MCP write tool behavioral tests (Phase C.3).
+# Covers the 3 new write tools: create-task, update-task, add-task-comment.
+# The critical boundary is Decision #14 revised (2026-04-21): structured, intentional
+# task creation goes to create-task directly; unstructured content that needs extraction
+# continues to route through debrief-push (Discussion pipeline).
+
+- description: "mcp.write.create_task - agent creates a task directly when user request is structured"
+  vars:
+    companyId: company-eval-01
+    userRole: founder
+    pageContext: mcp
+  prompt: "The founder tells their external Claude Code client: 'Create a task \"Fix login bug\" in the Engineering department with priority high.' Emit the MCP tool call."
+  assert:
+    - type: contains
+      value: "create-task"
+      metric: mcp_direct_task_creation
+    - type: contains
+      value: "Fix login bug"
+      metric: preserves_title
+    - type: not-contains
+      value: "debrief-push"
+      metric: no_discussion_route_for_structured_input
+    - type: not-contains
+      value: "discussion"
+      metric: no_discussion_fallback
+
+- description: "mcp.write.debrief_for_unstructured - agent routes a meeting transcript through debrief-push, not create-task"
+  vars:
+    companyId: company-eval-01
+    userRole: founder
+    pageContext: mcp
+  prompt: "The founder pastes a long meeting transcript into their external Claude Code client and says: 'Extract action items and memories from this transcript.' The tool call should route this through the Discussion/extraction pipeline, not create individual tasks directly."
+  assert:
+    - type: contains
+      value: "debrief-push"
+      metric: mcp_discussion_route_for_extraction
+    - type: not-contains
+      value: "create-task"
+      metric: no_direct_create_for_extraction_input
+
+- description: "mcp.write.update_task - agent updates an existing task when asked to change status or priority"
+  vars:
+    companyId: company-eval-01
+    userRole: team_lead
+    pageContext: mcp
+  prompt: "A team lead says to their external MCP client: 'Move task TASK-42 to in_progress and bump priority to high.' Emit the MCP tool call."
+  assert:
+    - type: contains
+      value: "update-task"
+      metric: mcp_update_task_usage
+    - type: contains
+      value: "in_progress"
+      metric: preserves_status
+    - type: not-contains
+      value: "create-task"
+      metric: no_duplicate_create
+
+- description: "mcp.write.add_comment - agent posts a comment when asked to note progress on a task"
+  vars:
+    companyId: company-eval-01
+    userRole: team_member
+    pageContext: mcp
+  prompt: "A team member says: 'Add a comment on task TASK-15 that I'm looking into the 401 error now.' Emit the MCP tool call."
+  assert:
+    - type: contains
+      value: "add-task-comment"
+      metric: mcp_add_comment_usage
+    - type: contains
+      value: "401"
+      metric: preserves_comment_body
+    - type: not-contains
+      value: "update-task"
+      metric: no_wrong_mutation_tool

@@ -1,0 +1,1 @@
+ALTER TABLE "internal_agent_messages" ADD COLUMN "output_refs" jsonb;

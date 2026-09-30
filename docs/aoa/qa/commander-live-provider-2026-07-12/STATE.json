@@ -1,0 +1,27 @@
+{
+  "instance": "commander-live-provider",
+  "url": "http://127.0.0.1:3202/HAR/commander",
+  "companyId": "39dafabd-573f-4412-afc5-223928885745",
+  "companyPrefix": "HAR",
+  "discussionId": "b8aed703-5660-4a33-b7db-82d59d86787d",
+  "agents": {
+    "claude": "545f0da2-7885-43ec-8f05-e30078831e81",
+    "codex": "55d77883-d62c-40b9-8184-6d01b353455c"
+  },
+  "tasks": {
+    "HAR-1": "0da52a6a-c1ac-4da3-babf-726a4b961c31",
+    "HAR-2": "f8c7ac0d-12b6-44fb-ad4e-2ec4cbc66569",
+    "HAR-3": "558018c5-dd42-4dec-902d-dbd3381313b9"
+  },
+  "runs": {
+    "HAR-1-initial": "ad5e6648-678e-4f50-8b74-6d9ba21d2e97",
+    "HAR-1-continuation": "2759a99d-4cca-42a9-84bf-e8a09936c5a0",
+    "HAR-2": "6a1db946-7850-4b47-9aaf-14ad003a1b70",
+    "HAR-3": "461ff1b2-03a0-49e6-bd5d-5200646badfc"
+  },
+  "questions": {
+    "HAR-1": "345df3a2-08cf-4cb0-9dd0-1d8bf41f8a7a",
+    "HAR-2": "5ffcd90e-9ad4-4fed-8072-b297e20df0c2"
+  },
+  "finalVerdict": "FAIL"
+}

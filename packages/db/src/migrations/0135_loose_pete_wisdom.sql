@@ -1,0 +1,4 @@
+ALTER TABLE "company_brain_edges" DROP CONSTRAINT "company_brain_edges_from_type_check";--> statement-breakpoint
+ALTER TABLE "company_brain_edges" DROP CONSTRAINT "company_brain_edges_to_type_check";--> statement-breakpoint
+ALTER TABLE "company_brain_edges" ADD CONSTRAINT "company_brain_edges_from_type_check" CHECK (from_type IN ('company', 'department', 'project', 'team', 'human', 'agent', 'goal', 'task', 'discussion', 'discussion_entry', 'memory_item', 'memory_folder', 'memory_asset', 'artifact'));--> statement-breakpoint
+ALTER TABLE "company_brain_edges" ADD CONSTRAINT "company_brain_edges_to_type_check" CHECK (to_type IN ('company', 'department', 'project', 'team', 'human', 'agent', 'goal', 'task', 'discussion', 'discussion_entry', 'memory_item', 'memory_folder', 'memory_asset', 'artifact'));

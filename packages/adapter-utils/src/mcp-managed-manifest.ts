@@ -1,0 +1,313 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import { createHash, randomUUID } from "node:crypto";
+import { resolveAoaInstanceRootForAdapter } from "./server-utils.js";
+
+/**
+ * Ownership manifest for the JSON-config MCP writers (opencode, gemini).
+ *
+ * ── THE PROBLEM (Plan 2b B5) ────────────────────────────────────────────────
+ * Both JSON writers used to remove exactly one key — the bridge's — and splice
+ * it back. That is fine for a single fixed name, but external connectors are a
+ * SET that changes between runs. When a founder deletes or disables a
+ * connector, the next run simply stops writing it, and the entry a PREVIOUS run
+ * wrote stays in the file forever. The agent keeps being offered a revoked
+ * connector. These files persist (unlike claude's per-run tmpdir), so nothing
+ * else cleans them up.
+ *
+ * Sweeping requires knowing which entries AoA owns. codex solves this with
+ * sentinel COMMENT fences around its managed region. JSON has no comments.
+ *
+ * ── WHY NOT AN IN-FILE MANIFEST KEY ─────────────────────────────────────────
+ * Probed against the real CLI — a top-level `"$aoaManagedMcpServers"` key is
+ * FATAL:
+ *
+ *     $ opencode mcp list
+ *     Error: Configuration is invalid at .../opencode.json
+ *     ↳ Unrecognized key: $aoaManagedMcpServers
+ *
+ * An invalid config does not degrade gracefully: opencode loads NO MCP servers
+ * at all, so AoA's own bridge dies with it and the agent silently runs
+ * toolless. A marker nested INSIDE an entry is tolerated today, but that is one
+ * zod schema's unspecified leniency, not a contract; if upstream tightens it we
+ * land in the failure above. gemini's tolerance could not be verified here at
+ * all (it exits at an auth wall before config load is observable). So ownership
+ * is tracked in a separate file that sits entirely outside the CLI's schema
+ * surface.
+ *
+ * ── WHERE THE MANIFEST LIVES, AND WHY NOT IN THE AGENT'S CWD ────────────────
+ * The manifest is AoA-private state under the AoA instance root
+ * (`$AOA_HOME/instances/<id>/mcp-managed/...`), NOT beside the config file.
+ *
+ * It originally sat in the agent's cwd, and that was a defect. The cwd is a
+ * checked-out user repository that AoA does not control and nothing gitignores,
+ * which made the manifest UNTRUSTED INPUT to its own sweep: anyone who could
+ * write a file into the repo could hand AoA a manifest claiming the user's
+ * hand-authored `mcp` entries, and the next run would delete them. The
+ * realistic path needed no attacker at all — the file was rewritten every run,
+ * so it got committed, and a teammate's clone then carried machine A's
+ * ownership claims and ate that teammate's own entries.
+ *
+ * Only the CLI's config file has to be in the cwd; the manifest does not. Under
+ * the instance root it is unreachable from the repo, which removes the
+ * untrusted-input path AND the per-repo pollution in one move. The path is
+ * keyed by company + agent + cwd so concurrent runs never collide, and so a
+ * manifest is scoped to the exact context that wrote it.
+ *
+ * ── WRITE ORDER: MANIFEST FIRST, WITH THE UNION ─────────────────────────────
+ * The two files cannot be written atomically together, so the crash window has
+ * to fail in the safe direction. Writing the config first was WRONG, and the
+ * "under-claims for one sweep" story told about it was false. Concretely:
+ *
+ *   run 1: config {alpha},  manifest [alpha]
+ *   run 2: config {beta}  ← crash before the manifest; manifest still [alpha]
+ *   run 3: sweeps alpha, never learns about beta, rewrites manifest [gamma]
+ *          → `beta` is now permanently unowned and is offered to the agent on
+ *            every future run. Forever, not once.
+ *
+ * That is precisely the revoked-connector-stays-live failure this exists to
+ * close. So the manifest is written FIRST with `union(previous, next)`: the
+ * moment a name can possibly be in the config, it is already claimed. The union
+ * can only over-claim names AoA is about to write or already owned — both
+ * AoA-owned by the ownership rule above — so it can never eat a user entry.
+ * After the config write succeeds, the manifest is narrowed to exactly `next`;
+ * a crash before that narrowing just leaves the (safe) union in place.
+ */
+
+/**
+ * Legacy in-repo manifest filename (pre-relocation). Retained ONLY so the stale
+ * file can be deleted from repos where an earlier build wrote one. It is never
+ * read — see {@link removeLegacyCwdManifest}.
+ */
+export const AOA_MCP_MANIFEST_FILENAME = ".aoa-mcp-managed.json";
+
+export interface McpManagedManifestScope {
+  /** Adapter key — keeps opencode and gemini manifests apart for one cwd. */
+  adapter: string;
+  /** The directory whose CLI config file this manifest describes ownership of. */
+  cwd: string;
+  companyId?: string | null;
+  agentId?: string | null;
+  env?: NodeJS.ProcessEnv;
+}
+
+/**
+ * Absolute path of the ownership manifest for one (adapter, company, agent,
+ * cwd) scope.
+ *
+ * The scope is HASHED rather than spelled out as nested directories: `cwd` is
+ * an arbitrary absolute path (drive letters, spaces, unicode, and lengths that
+ * blow past Windows MAX_PATH once nested under the instance root), and company
+ * / agent ids are untrusted strings that must never become path segments. A
+ * fixed-width hash makes every scope a safe, bounded filename while staying
+ * deterministic across runs.
+ */
+export function resolveMcpManagedManifestPath(scope: McpManagedManifestScope): string {
+  // NOTE: this THROWS if the instance root cannot be resolved (e.g.
+  // `resolveAoaInstanceRootForAdapter` rejects a malformed `AOA_INSTANCE_ID`).
+  // Writers must call it through {@link tryResolveMcpManagedManifestPath} —
+  // a throw here happens BEFORE the config write and would therefore abort MCP
+  // delivery entirely, which is precisely what the best-effort envelope around
+  // the manifest exists to prevent.
+  const instanceRoot = resolveAoaInstanceRootForAdapter({ env: scope.env });
+  // The NUL separator (written as an escape so this file stays TEXT, not a
+  // binary blob to git) cannot occur in an id or a path, so distinct scopes can
+  // never collide by concatenation (e.g. company "a" + agent "bc" vs "ab" + "c").
+  const key = [scope.companyId ?? "", scope.agentId ?? "", path.resolve(scope.cwd)].join(
+    "\u0000",
+  );
+  const digest = createHash("sha256").update(key).digest("hex").slice(0, 32);
+  const adapter = /^[A-Za-z0-9_-]+$/.test(scope.adapter) ? scope.adapter : "unknown";
+  return path.join(instanceRoot, "mcp-managed", adapter, `${digest}.json`);
+}
+
+/**
+ * Best-effort {@link resolveMcpManagedManifestPath}. `null` means "ownership
+ * tracking is unavailable this run" — the caller delivers MCP config normally
+ * and simply does not sweep.
+ *
+ * Unreachable today: `AOA_INSTANCE_ID` is validated at boot
+ * (`server/src/home-paths.ts`), so an adapter should never see a malformed one.
+ * This is robustness hardening for the day that stops being true — the failure
+ * it prevents (an env-var typo silently costing every gemini/opencode agent
+ * ALL of its MCP tools) is severe and entirely non-obvious from the symptom.
+ */
+export function tryResolveMcpManagedManifestPath(
+  scope: McpManagedManifestScope,
+): string | null {
+  try {
+    return resolveMcpManagedManifestPath(scope);
+  } catch {
+    return null;
+  }
+}
+
+interface ManifestShape {
+  managedServerNames?: unknown;
+}
+
+/**
+ * Read the server names a previous run recorded as AoA-owned.
+ *
+ * Missing file, unreadable file, and malformed JSON all return `[]` — "sweep
+ * nothing", which leaves stale entries in place. Deliberate: the alternative
+ * (guessing) can only ever delete a user's data, and a stale entry is
+ * recoverable on the next healthy run.
+ *
+ * A `managedServerNames` that is not an array is also `[]`. If it IS an array,
+ * non-string elements are DROPPED and the surviving string subset is returned
+ * and acted on — a partially-malformed array is not downgraded to
+ * no-manifest, because the names that did survive are still genuine ownership
+ * records and failing to sweep them is the bug this module exists to fix.
+ */
+export async function readAoaManagedServerNames(
+  manifestPath: string | null,
+): Promise<string[]> {
+  if (!manifestPath) return [];
+  try {
+    const text = await fs.readFile(manifestPath, "utf8");
+    const parsed = JSON.parse(text) as ManifestShape | null;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return [];
+    const names = parsed.managedServerNames;
+    if (!Array.isArray(names)) return [];
+    return names.filter((n): n is string => typeof n === "string");
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Record the server names AoA owns, replacing any previous record.
+ *
+ * Names are sorted and de-duplicated so the file is byte-identical across runs
+ * with the same connector set. Written atomically (temp + rename): a torn
+ * manifest read back as malformed JSON would silently disable sweeping.
+ *
+ * THROWS on failure — callers decide. See {@link tryWriteAoaManagedServerNames},
+ * which is what the writers actually use.
+ */
+export async function writeAoaManagedServerNames(
+  manifestPath: string,
+  names: readonly string[],
+): Promise<void> {
+  const dir = path.dirname(manifestPath);
+  await fs.mkdir(dir, { recursive: true });
+  const unique = Array.from(new Set(names)).sort();
+  const body = `${JSON.stringify({ managedServerNames: unique }, null, 2)}\n`;
+
+  const tempPath = path.join(
+    dir,
+    `${path.basename(manifestPath)}.tmp-${process.pid}-${randomUUID()}`,
+  );
+  await fs.writeFile(tempPath, body, "utf8");
+  try {
+    await renameWithRetry(tempPath, manifestPath);
+  } catch (err) {
+    await fs.unlink(tempPath).catch(() => {});
+    throw err;
+  }
+}
+
+/**
+ * Best-effort {@link writeAoaManagedServerNames}. Returns `true` when the claim
+ * was recorded.
+ *
+ * The manifest is BOOKKEEPING, and bookkeeping must never cost the agent its
+ * tools. Because the manifest is now written BEFORE the config (see the write
+ * order note above), a throwing write would abort the whole MCP config write —
+ * so an unwritable `$AOA_HOME` (read-only mount, permissions, an exotic HOME)
+ * would leave the agent with NO MCP servers at all, bridge included, on every
+ * single run. That is far worse than the failure this file exists to prevent.
+ *
+ * ── THE REAL COST, STATED HONESTLY ──────────────────────────────────────────
+ * It is NOT merely "no sweeping this run". While the manifest location is
+ * unwritable the READ also returns `[]`, so every name written during that
+ * window is never recorded as AoA-owned — and once the location becomes
+ * writable again, the next run records only ITS OWN set. Names written during
+ * the outage are therefore unowned PERMANENTLY: they survive in the config
+ * file, are never swept, and keep being offered to the agent even after the
+ * problem is fixed. That is the same orphan failure the I1 ordering change
+ * closes, reappearing whenever the manifest cannot be written at all.
+ *
+ * The tradeoff is still the right one — a permanently stale entry beats losing
+ * every tool on every run — but it is a real cost, not a rounding error, and a
+ * future maintainer weighing a change here should weigh the true figure. The I1
+ * ordering guarantee is conditional on the manifest being writable; recovery is
+ * manual (delete the stale entries, or let a run with the same connector set
+ * re-claim them).
+ */
+export async function tryWriteAoaManagedServerNames(
+  manifestPath: string | null,
+  names: readonly string[],
+): Promise<boolean> {
+  if (!manifestPath) return false;
+  try {
+    await writeAoaManagedServerNames(manifestPath, names);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete a stale in-repo manifest left by an earlier build.
+ *
+ * DELETED WITHOUT BEING READ, on purpose. That file lives in a user repository
+ * AoA does not control, so its contents are untrusted; honouring it even once
+ * during "migration" would reopen exactly the hole relocation closed. The cost
+ * is that entries an earlier build wrote become unowned and survive one more
+ * sweep — a stale entry, never data loss. Best-effort: failure never fails a
+ * run.
+ */
+export async function removeLegacyCwdManifest(cwd: string): Promise<void> {
+  await fs.rm(path.join(cwd, AOA_MCP_MANIFEST_FILENAME), { force: true }).catch(() => {});
+}
+
+/**
+ * Remove every previously-AoA-managed key from a destination map of MCP server
+ * entries, returning a NULL-PROTOTYPE copy of the survivors (the user's own
+ * entries plus anything AoA never claimed).
+ *
+ * Null prototype is load-bearing, not defensive habit: these keys are untrusted
+ * connector names from DB rows, and callers go on to assign more names into
+ * this map. Assigning `__proto__` onto a normal object literal replaces the
+ * prototype instead of creating a key — the server silently vanishes and every
+ * unknown name then reads through to the attacker's entry. `JSON.parse` gives
+ * `__proto__` as a plain own property, so such a key genuinely can arrive here
+ * from an existing config file.
+ */
+export function sweepAoaManagedEntries<T>(
+  existingEntries: Record<string, T>,
+  previouslyManaged: readonly string[],
+): Record<string, T> {
+  const managed = new Set(previouslyManaged);
+  const out: Record<string, T> = Object.create(null);
+  for (const [name, value] of Object.entries(existingEntries)) {
+    if (managed.has(name)) continue;
+    out[name] = value;
+  }
+  return out;
+}
+
+/**
+ * fs.rename() with a small retry budget for the Windows EPERM/EBUSY case where
+ * the destination is briefly locked by a concurrent rename in flight. Same
+ * contract as the copies inside the opencode and gemini writers — POSIX
+ * rename(2) is atomic and never throws these codes for a same-fs move, so on
+ * Linux/macOS this loop always exits on attempt 1.
+ */
+async function renameWithRetry(src: string, dst: string, maxAttempts = 10): Promise<void> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      await fs.rename(src, dst);
+      return;
+    } catch (err) {
+      lastErr = err;
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code !== "EPERM" && code !== "EBUSY" && code !== "EACCES") throw err;
+      await new Promise((r) => setTimeout(r, 5 + Math.random() * 10));
+    }
+  }
+  throw lastErr;
+}

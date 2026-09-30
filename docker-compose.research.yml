@@ -1,0 +1,213 @@
+name: aoa-research
+
+x-research-runtime-build: &research-runtime-build
+  context: .
+  dockerfile: docker/research/Dockerfile
+  target: runtime
+
+x-research-e2e-build: &research-e2e-build
+  context: .
+  dockerfile: docker/research/Dockerfile
+  target: e2e
+
+x-research-real-provider-build: &research-real-provider-build
+  context: .
+  dockerfile: docker/research/Dockerfile
+  target: e2e-real-provider
+  args:
+    CLAUDE_CODE_NPM_PACKAGE: "${AOA_RESEARCH_CLAUDE_CODE_NPM_PACKAGE:-@anthropic-ai/claude-code@latest}"
+    CODEX_NPM_PACKAGE: "${AOA_RESEARCH_CODEX_NPM_PACKAGE:-@openai/codex@latest}"
+    GEMINI_NPM_PACKAGE: "${AOA_RESEARCH_GEMINI_NPM_PACKAGE:-@google/gemini-cli@latest}"
+
+x-research-env: &research-env
+  CI: "1"
+  NODE_ENV: "development"
+  HOST: "127.0.0.1"
+  PORT: "3100"
+  SERVE_UI: "true"
+  DATABASE_URL: "postgres://aoa:aoa@db:5432/aoa"
+  AOA_HOME: "/research/aoa-home"
+  AOA_INSTANCE_ID: "docker-research"
+  AOA_DEPLOYMENT_MODE: "local_trusted"
+  # local_trusted still refuses to boot without Google OAuth unless the dev
+  # escape hatch is set. The research harness is a disposable loopback rig with
+  # no real auth, so opt into the synthetic local identity.
+  AOA_DEV_LOCAL_IDENTITY: "1"
+  AOA_DEPLOYMENT_EXPOSURE: "private"
+  AOA_AUTH_BASE_URL_MODE: "auto"
+  AOA_OPEN_ON_LISTEN: "false"
+  AOA_MIGRATION_AUTO_APPLY: "true"
+  AOA_MARKETPLACE_CDN_URL: "http://127.0.0.1:1/catalog.json"
+  AOA_E2E_FAKE_AWS_SECRETS_MANAGER: "1"
+  AOA_E2E_FAKE_CREW_LLM: "1"
+  AOA_E2E_FAKE_EMBEDDER: "1"
+  AOA_E2E_FAKE_CLAUDE_CONTROL: "/tmp/aoa-e2e-fake-claude-control.json"
+  AOA_E2E_FAKE_CLAUDE_INVOCATIONS: "/tmp/aoa-e2e-fake-claude-invocations.jsonl"
+  AOA_E2E_FAKE_CODEX_CONTROL: "/tmp/aoa-e2e-fake-codex-control.json"
+  AOA_E2E_FAKE_CODEX_INVOCATIONS: "/tmp/aoa-e2e-fake-codex-invocations.jsonl"
+  AOA_E2E_FAKE_EMBEDDER_CONTROL: "/tmp/aoa-e2e-fake-embedder-control.json"
+  AOA_THREAD_EVENT_DEBOUNCE_MS: "250"
+  OPENAI_API_KEY: ""
+  ANTHROPIC_API_KEY: ""
+  GEMINI_API_KEY: ""
+  GOOGLE_API_KEY: ""
+  CURSOR_API_KEY: ""
+  BETTER_AUTH_SECRET: "docker-research-local-only-better-auth-secret"
+  AOA_AGENT_JWT_SECRET: "docker-research-local-only-agent-jwt-secret"
+  AOA_RESEARCH_ARTIFACTS_DIR: "/research/artifacts"
+
+services:
+  db:
+    image: pgvector/pgvector:pg18
+    environment:
+      POSTGRES_USER: aoa
+      POSTGRES_PASSWORD: aoa
+      POSTGRES_DB: aoa
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aoa -d aoa"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+    volumes:
+      - research-postgres18:/var/lib/postgresql
+    networks:
+      - research
+
+  aoa:
+    build: *research-runtime-build
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *research-env
+      AOA_RESEARCH_PROXY_PORT: "3101"
+    command: ["bash", "docker/research/start-aoa.sh"]
+    volumes:
+      - ./.runtime-research/aoa-home:/research/aoa-home
+      - ./.runtime-research/artifacts:/research/artifacts
+    networks:
+      - research
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3100/api/health >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  browser-proxy:
+    build: *research-runtime-build
+    depends_on:
+      aoa:
+        condition: service_healthy
+    command:
+      [
+        "socat",
+        "TCP-LISTEN:3101,fork,reuseaddr,bind=0.0.0.0",
+        "TCP:aoa:3101"
+      ]
+    ports:
+      - "127.0.0.1:${AOA_RESEARCH_PORT:-33100}:3101"
+    networks:
+      - research
+      - host-access
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3101/api/health >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 5s
+
+  e2e:
+    profiles: ["e2e"]
+    build: *research-e2e-build
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *research-env
+      AOA_E2E_PORT: "3199"
+      AOA_RESEARCH_E2E_DATABASE_URL: "postgres://aoa:aoa@db:5432/aoa_e2e"
+    entrypoint: ["/usr/bin/tini", "--", "bash", "docker/research/run-e2e.sh"]
+    command: []
+    volumes:
+      - ./.runtime-research/artifacts:/research/artifacts
+    networks:
+      - research
+
+  e2e-real-provider:
+    profiles: ["real-provider"]
+    build: *research-real-provider-build
+    # Runs as root via the entry wrapper, which chowns the bind-mounted
+    # artifacts dir and then drops to pwuser for the Playwright run. Do NOT add
+    # `user: pwuser` here — that reintroduces the artifacts permission failure.
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *research-env
+      AOA_HOME: "/tmp/aoa-real-provider-e2e-home"
+      AOA_INSTANCE_ID: "docker-research-real-provider-e2e"
+      AOA_E2E_PORT: "3299"
+      AOA_RESEARCH_E2E_DATABASE_URL: "postgres://aoa:aoa@db:5432/aoa_e2e_real_provider"
+      AOA_E2E_FAKE_CREW_LLM: "0"
+      AOA_E2E_FAKE_EMBEDDER: "0"
+      AOA_E2E_SKIP_LLM: "false"
+      AOA_E2E_REAL_PROVIDER: "${AOA_E2E_REAL_PROVIDER:-1}"
+      AOA_E2E_REAL_CREW_FLOW: "${AOA_E2E_REAL_CREW_FLOW:-1}"
+      AOA_E2E_REAL_CREW_PROVIDER: "${AOA_E2E_REAL_CREW_PROVIDER:-}"
+      AOA_E2E_REAL_CREW_MODEL: "${AOA_E2E_REAL_CREW_MODEL:-}"
+      AOA_E2E_REAL_CREW_TIMEOUT_MS: "${AOA_E2E_REAL_CREW_TIMEOUT_MS:-420000}"
+      AOA_E2E_REAL_PROVIDER_TEST_MATCH: "${AOA_E2E_REAL_PROVIDER_TEST_MATCH:-}"
+      AOA_RESEARCH_REAL_PROVIDER_REQUIRED: "${AOA_RESEARCH_REAL_PROVIDER_REQUIRED:-0}"
+      GEMINI_CLI_TRUST_WORKSPACE: "${GEMINI_CLI_TRUST_WORKSPACE:-true}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      GOOGLE_API_KEY: "${GOOGLE_API_KEY:-}"
+      CURSOR_API_KEY: "${CURSOR_API_KEY:-}"
+    entrypoint: ["/usr/bin/tini", "--", "bash", "docker/research/run-real-provider-e2e-entry.sh"]
+    command: []
+    volumes:
+      - ./.runtime-research/artifacts:/research/artifacts
+    networks:
+      - research
+      - host-access
+
+  shell:
+    profiles: ["tools"]
+    build: *research-runtime-build
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *research-env
+    command: ["bash"]
+    volumes:
+      - ./.runtime-research/aoa-home:/research/aoa-home
+      - ./.runtime-research/artifacts:/research/artifacts
+    networks:
+      - research
+
+  psql:
+    profiles: ["tools"]
+    image: pgvector/pgvector:pg18
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: "aoa"
+    command:
+      [
+        "psql",
+        "postgres://aoa:aoa@db:5432/aoa"
+      ]
+    networks:
+      - research
+
+networks:
+  research:
+    internal: true
+  host-access:
+
+volumes:
+  research-postgres18:

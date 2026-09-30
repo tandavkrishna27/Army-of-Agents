@@ -1,0 +1,1 @@
+ALTER TABLE "internal_agent_config" ADD COLUMN "commander_tool_permissions" jsonb;

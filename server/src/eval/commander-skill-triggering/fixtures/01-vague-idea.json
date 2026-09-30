@@ -1,0 +1,5 @@
+{
+  "id": "01-vague-idea",
+  "input": { "prompt": "I keep thinking we should build a Slack bot but I'm honestly not sure it's worth it", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "skill:aoa/brainstorm" }
+}

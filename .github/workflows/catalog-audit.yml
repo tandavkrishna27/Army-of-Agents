@@ -1,0 +1,46 @@
+name: Catalog Dependency Audit (advisory)
+
+# Non-blocking advisory: audits the marketplace catalog that is ACTUALLY
+# PUBLISHED (live CDN) for orphaned agent/team `requires` edges, catching an
+# upstream removal/deprecation between committed-fixture refreshes.
+#
+# This is DELIBERATELY separate from pr.yml / ci-required — it is NOT a required
+# check, so a CDN change or outage never blocks a merge. The required, offline
+# gate-side guard is the committed-fixture check
+# (server/src/__tests__/marketplace-dependency-audit.test.ts). A failure here
+# means: fix the upstream catalog, then refresh the fixture
+# (`pnpm fetch-catalog:audit-fixture`).
+
+on:
+  schedule:
+    - cron: "0 8 * * *" # daily 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 9.15.4
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit live catalog dependencies
+        run: pnpm audit-catalog

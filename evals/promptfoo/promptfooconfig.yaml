@@ -1,0 +1,42 @@
+# AoA Agent Evals - Phase 0: Promptfoo Bootstrap
+#
+# Tests narrow behaviors across models with deterministic assertions for both
+# agent surfaces: task agents (heartbeat loop) and the Internal Agent
+# (conversation + 30 tools). Test cases are organized by agent type and
+# category in tests/*.yaml files.
+#
+# Usage:
+#   pnpm evals:smoke
+#   cd evals/promptfoo && promptfoo view   # open results in browser
+#
+# Validate config before committing:
+#   cd evals/promptfoo && promptfoo validate
+#
+# Requires OPENROUTER_API_KEY or individual provider keys.
+
+description: "AoA agent behavior evals (task agent + Internal Agent)"
+
+prompts:
+  - id: task-agent
+    label: task-agent-system
+    raw: file://prompts/task-agent-system.txt
+  - id: internal-agent
+    label: internal-agent-system
+    raw: file://prompts/internal-agent-system.txt
+
+providers:
+  - id: openrouter:anthropic/claude-sonnet-4-20250514
+    label: claude-sonnet-4
+  - id: openrouter:openai/gpt-4.1
+    label: gpt-4.1
+  - id: openrouter:openai/codex-5.4
+    label: codex-5.4
+  - id: openrouter:google/gemini-2.5-pro
+    label: gemini-2.5-pro
+
+defaultTest:
+  options:
+    transformVars: "{ ...vars, apiUrl: 'http://localhost:18080', runId: 'run-eval-001' }"
+
+tests:
+  - file://tests/*.yaml

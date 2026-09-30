@@ -1,0 +1,71 @@
+{
+  "_comment": "Content synced from AoA-Skills skills/*.md frontmatter (Task 4 WHEN-only rewrite); keys are the RUNTIME seeder keys (skill:aoa/<name>), not the repo source keys (skill:aoa-curated/aoa-<name>). Sourced from server/src/services/internal-agent/generated/aoa-native-skills.json (key/name/description/triggerPhrases only — markdown omitted, not needed for routing). Update when descriptions change. Drift-guarded by commander-skill-triggering-suite.test.ts.",
+  "skills": [
+    {
+      "key": "skill:aoa/brainstorm",
+      "name": "aoa-brainstorm",
+      "description": "Use when someone has a raw or half-formed idea and wants it pressure-tested before any building starts — surfacing hidden assumptions and deciding whether it is worth doing at all. Not for shaping an already-decided idea into a task (use Spec) or for a strategic side-bet on a product feature (use Office Hours).",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/daily-triage",
+      "name": "aoa-daily-triage",
+      "description": "When the user asks what to work on, what needs their attention, what is blocked or at risk, or how a department or the company is doing right now — a status/prioritization ask, not a request to change anything.",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/delegate-handoff",
+      "name": "aoa-delegate-handoff",
+      "description": "When the user is ready to hand a piece of work to an agent — pick the right agent, write a clear task spec, set dependencies, and dispatch it. The planning→execution bridge, after the idea is shaped and before the agent runs.",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/discussion-facilitation",
+      "name": "aoa-discussion-facilitation",
+      "description": "Use when a discussion thread has accumulated conversation and someone wants the decisions, tasks, insights, and context pulled out and organized. Not for authoring one new task from scratch (use Spec).",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/identity-setup",
+      "name": "aoa-identity-setup",
+      "description": "Use when a new or unshaped company needs its vision, mission, and identity established in AoA. Not for editing a single existing identity field and not for department or agent structure (use Team Design).",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/investigate",
+      "name": "aoa-investigate",
+      "description": "Use when an agent run failed, a task is stuck or blocked, or an output is wrong and the cause is not yet understood — root-cause first, no fixes before the cause is found. Not for routine \"what's the status\" questions (a plain query answers those).",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/office-hours",
+      "name": "aoa-office-hours",
+      "description": "Use when someone is weighing whether to pursue a side project, a new product feature, or a strategic bet and needs demand, user reality, and the narrowest wedge exposed before committing. Not for a general idea interrogation (use Brainstorm) or turning a chosen idea into work (use Spec / Sprint Planning).",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/review-agent-output",
+      "name": "aoa-review-agent-output",
+      "description": "When the user wants to review what an agent produced on a task — check its deliverable or diff against the acceptance criteria and decide whether to approve it or send it back — before an approval is granted.",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/spec",
+      "name": "aoa-spec",
+      "description": "Use when someone has a decided change — a feature, fix, or task — and wants it written up as one backlog-ready, unambiguous item an agent can pick up. Not for still-uncertain ideas (use Brainstorm) and not for work that spans several tasks with dependencies (use Sprint Planning).",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/sprint-planning",
+      "name": "aoa-sprint-planning",
+      "description": "Use when a goal or larger effort needs to be broken into several tasks with dependencies and agent assignments before anyone starts. Not for a single self-contained task (use Spec) or for deciding whether the effort is worth doing (use Brainstorm / Office Hours).",
+      "triggerPhrases": []
+    },
+    {
+      "key": "skill:aoa/team-design",
+      "name": "aoa-team-design",
+      "description": "Use when someone is deciding which agents a company or project should have — roles, adapter types, and concurrency — usually while setting up or scaling. Not for assigning existing agents to a specific task (that is routine assignment, no skill needed).",
+      "triggerPhrases": []
+    }
+  ]
+}

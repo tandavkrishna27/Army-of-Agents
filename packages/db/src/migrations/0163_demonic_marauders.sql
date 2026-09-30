@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "agent_runtime_decisions_status_expiry_idx" ON "agent_runtime_decisions" USING btree ("status","expires_at");

@@ -1,0 +1,30 @@
+{
+  "id": "01-single-task",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-1",
+      "summary": "Add a 'Copy invite link' button to the team settings page so founders can share workspace invites without going through email.",
+      "proposedTasks": [
+        {
+          "title": "Add Copy invite link button to TeamSettings.tsx",
+          "acceptanceCriteria": [
+            "Button is visible in the Members tab next to the Email invite form",
+            "Clicking the button copies the workspace invite URL to clipboard",
+            "Toast confirms 'Invite link copied'"
+          ]
+        }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "contains",
+    "value": [
+      "Goal",
+      "### 1.",
+      "Depends on: none",
+      "Acceptance criteria",
+      "Suggested assignee"
+    ]
+  }
+}

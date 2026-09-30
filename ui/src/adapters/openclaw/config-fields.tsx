@@ -1,0 +1,182 @@
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import type { AdapterConfigFieldsProps } from "../types";
+import {
+  Field,
+  DraftInput,
+  help,
+} from "../../components/agent-config-primitives";
+
+const inputClass =
+  "w-full rounded-md border border-border px-2.5 py-1.5 bg-transparent outline-none text-sm font-mono placeholder:text-muted-foreground/40";
+
+function SecretField({
+  label,
+  value,
+  onCommit,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onCommit: (v: string) => void;
+  placeholder?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <Field label={label}>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+        >
+          {visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+        </button>
+        <DraftInput
+          value={value}
+          onCommit={onCommit}
+          immediate
+          type={visible ? "text" : "password"}
+          className={inputClass + " pl-8"}
+          placeholder={placeholder}
+        />
+      </div>
+    </Field>
+  );
+}
+
+export function OpenClawConfigFields({
+  isCreate,
+  values,
+  set,
+  config,
+  eff,
+  mark,
+}: AdapterConfigFieldsProps) {
+  const configuredHeaders =
+    config.headers && typeof config.headers === "object" && !Array.isArray(config.headers)
+      ? (config.headers as Record<string, unknown>)
+      : {};
+  const effectiveHeaders =
+    (eff("adapterConfig", "headers", configuredHeaders) as Record<string, unknown>) ?? {};
+  const effectiveGatewayAuthHeader = typeof effectiveHeaders["x-openclaw-auth"] === "string"
+    ? String(effectiveHeaders["x-openclaw-auth"])
+    : "";
+
+  const commitGatewayAuthHeader = (rawValue: string) => {
+    const nextValue = rawValue.trim();
+    const nextHeaders: Record<string, unknown> = { ...effectiveHeaders };
+    if (nextValue) {
+      nextHeaders["x-openclaw-auth"] = nextValue;
+    } else {
+      delete nextHeaders["x-openclaw-auth"];
+    }
+    mark("adapterConfig", "headers", Object.keys(nextHeaders).length > 0 ? nextHeaders : undefined);
+  };
+
+  const transport = eff(
+    "adapterConfig",
+    "streamTransport",
+    String(config.streamTransport ?? "sse"),
+  );
+  const sessionStrategy = eff(
+    "adapterConfig",
+    "sessionKeyStrategy",
+    String(config.sessionKeyStrategy ?? "fixed"),
+  );
+
+  return (
+    <>
+      <Field label="Gateway URL" hint={help.webhookUrl}>
+        <DraftInput
+          value={
+            isCreate
+              ? values!.url
+              : eff("adapterConfig", "url", String(config.url ?? ""))
+          }
+          onCommit={(v) =>
+            isCreate
+              ? set!({ url: v })
+              : mark("adapterConfig", "url", v || undefined)
+          }
+          immediate
+          className={inputClass}
+          placeholder="https://..."
+        />
+      </Field>
+      {!isCreate && (
+        <>
+          {/* NOTE: `aoaApiUrl` is the stored adapter-config key shape used by
+              existing OpenClaw configs in the DB. Renaming would orphan every existing
+              config. Treat as wire-compat — change requires a coordinated Drizzle
+              migration on `agents.adapterConfig`. See docs/superpowers/plans/
+              2026-04-25-aoa-to-aoa-rename.md (deferred from Phase 1). */}
+          <Field label="AoA API URL override">
+            <DraftInput
+              value={
+                eff(
+                  "adapterConfig",
+                  "aoaApiUrl",
+                  String(config.aoaApiUrl ?? ""),
+                )
+              }
+              onCommit={(v) => mark("adapterConfig", "aoaApiUrl", v || undefined)}
+              immediate
+              className={inputClass}
+              placeholder="https://aoa.example"
+            />
+          </Field>
+
+          <Field label="Transport">
+            <select
+              value={transport}
+              onChange={(e) => mark("adapterConfig", "streamTransport", e.target.value)}
+              className={inputClass}
+            >
+              <option value="sse">SSE (recommended)</option>
+              <option value="webhook">Webhook</option>
+            </select>
+          </Field>
+
+          <Field label="Session strategy">
+            <select
+              value={sessionStrategy}
+              onChange={(e) => mark("adapterConfig", "sessionKeyStrategy", e.target.value)}
+              className={inputClass}
+            >
+              <option value="fixed">Fixed</option>
+              <option value="issue">Per task</option>
+              <option value="run">Per run</option>
+            </select>
+          </Field>
+
+          {sessionStrategy === "fixed" && (
+            <Field label="Session key">
+              <DraftInput
+                value={eff("adapterConfig", "sessionKey", String(config.sessionKey ?? "aoa"))}
+                onCommit={(v) => mark("adapterConfig", "sessionKey", v || undefined)}
+                immediate
+                className={inputClass}
+                placeholder="aoa"
+              />
+            </Field>
+          )}
+
+          <SecretField
+            label="Webhook auth header (optional)"
+            value={eff("adapterConfig", "webhookAuthHeader", String(config.webhookAuthHeader ?? ""))}
+            onCommit={(v) => mark("adapterConfig", "webhookAuthHeader", v || undefined)}
+            placeholder="Bearer <token>"
+          />
+
+          <SecretField
+            label="Gateway auth token (x-openclaw-auth)"
+            value={effectiveGatewayAuthHeader}
+            onCommit={commitGatewayAuthHeader}
+            placeholder="OpenClaw gateway token"
+          />
+        </>
+      )}
+    </>
+  );
+}

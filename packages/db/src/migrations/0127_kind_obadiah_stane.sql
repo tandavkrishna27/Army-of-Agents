@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "issues_source_discussion_idx" ON "issues" USING btree ("source_discussion_id");

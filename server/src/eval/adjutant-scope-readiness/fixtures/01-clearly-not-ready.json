@@ -1,0 +1,18 @@
+{
+  "id": "01-clearly-not-ready",
+  "input": {
+    "thread": {
+      "id": "fixture-1",
+      "phase": "discuss",
+      "intent": [],
+      "summaryText": null,
+      "entries": [
+        { "id": "e1", "rawContent": "what if we redesigned the homepage", "authorAgentId": null, "createdBy": "user-1" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "category": "ask-clarifying" }
+  }
+}

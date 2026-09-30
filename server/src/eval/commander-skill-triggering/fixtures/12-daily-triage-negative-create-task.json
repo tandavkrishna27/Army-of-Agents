@@ -1,0 +1,5 @@
+{
+  "id": "12-daily-triage-negative-create-task",
+  "input": { "prompt": "create a task to fix the login bug", "userRole": "founder" },
+  "expected": { "type": "exact", "value": "none" }
+}

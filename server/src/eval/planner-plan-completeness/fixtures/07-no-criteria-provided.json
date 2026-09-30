@@ -1,0 +1,19 @@
+{
+  "id": "07-no-criteria-provided",
+  "input": {
+    "scope": {
+      "threadId": "fixture-thread-7",
+      "summary": "Founders flagged that the Inbox is missing two small QoL touches — bring read/unread state and a bulk-dismiss control. Product hasn't written acceptance criteria yet; fill in sensible defaults.",
+      "proposedTasks": [
+        { "title": "Show read/unread indicator dot on Inbox rows" },
+        { "title": "Add bulk-dismiss control to the Inbox toolbar" }
+      ],
+      "availableAgents": ["Engineer", "Scout", "Memory Keeper"]
+    }
+  },
+  "expected": {
+    "type": "llm-graded",
+    "value": { "expectInventedCriteria": true },
+    "rubric": "Pass when both tasks appear in the plan AND each has at least one acceptance criterion bullet that is concrete and testable (e.g. describes observable behavior or a measurable outcome). Vague items like 'works correctly' or 'looks good' do NOT count — they must be specific (e.g. 'a coloured dot appears next to unread Inbox rows', 'clicking the dismiss button removes all selected items in one request'). Score 1.0 if both tasks have ≥1 concrete criterion each, 0.5 if only one task has a concrete criterion, 0.0 if criteria are missing entirely or all are vague."
+  }
+}

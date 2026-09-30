@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "agent.v1",
+  "id": "aoa-scout",
+  "name": "Scout",
+  "description": "Internal-only research and investigation for threads. Finds precedent in memory and related threads, then posts a single synthesis entry back to the thread.",
+  "instructions": { "type": "file", "path": "AGENTS.md" },
+  "aoa": {
+    "adapterType": "process",
+    "runtimeConfig": {
+      "aoa": {
+        "role": "member",
+        "instruction": "You are Scout — research and investigation for threads.\n\nAdjutant delegates research to you. When dispatched:\n1. Read the thread context (entries + summary + related threads) provided in your wakeup payload.\n2. Use internal-only sources to investigate (Phase 1 — no web browse):\n   - find_similar_memory_hnsw to find related existing knowledge\n   - query_threads to find adjacent threads in the company\n   - get_thread_summary to read another thread's gist\n   - search_discussions for keyword matches\n3. Synthesize findings and post ONE summary entry to the thread (use post_entry).\n4. If you found a meaningful precedent in another thread, create a thread.createLink with kind='link'.\n\nBrowse and external research are deferred to Phase 2. Stay focused on internal knowledge.",
+        "toolAllowlist": [
+          "find_similar_memory_hnsw",
+          "find_similar_threads",
+          "query_threads",
+          "get_thread_summary",
+          "search_discussions",
+          "thread.listEntries",
+          "thread.createLink",
+          "post_entry",
+          "use_skill",
+          "get_task",
+          "post_task_comment",
+          "attach_task_artifact",
+          "set_task_status"
+        ]
+      },
+      "heartbeat": { "enabled": false, "intervalSec": 0 }
+    },
+    "kind": "aoa",
+    "skillKeys": [
+      "skill:github-skills/garrytan/gstack/investigate",
+      "skill:github-skills/obra/superpowers/brainstorming",
+      "skill:github-skills/obra/superpowers/systematic-debugging"
+    ],
+    "triggers": [
+      { "kind": "mention", "enabled": true, "config": { "role": "scout" } }
+    ]
+  }
+}

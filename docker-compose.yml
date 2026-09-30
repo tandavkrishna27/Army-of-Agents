@@ -1,0 +1,179 @@
+name: aoa
+
+x-aoa-image: &aoa-image
+  image: ${AOA_IMAGE:-aoa:local}
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      USER_UID: ${USER_UID:-1000}
+      USER_GID: ${USER_GID:-1000}
+      AOA_IMAGE_REVISION: ${AOA_IMAGE_REVISION:-unknown}
+
+x-aoa-env: &aoa-env
+  HOST: "0.0.0.0"
+  PORT: "3100"
+  SERVE_UI: "true"
+  AOA_HOME: /aoa
+  AOA_INSTANCE_ID: ${AOA_INSTANCE_ID:-default}
+  AOA_CONFIG: /aoa/instances/${AOA_INSTANCE_ID:-default}/config.json
+  AOA_INSTALL_PROFILE: ${AOA_INSTALL_PROFILE:-hosted_multi_tenant}
+  AOA_NETWORK_LOCATION: ${AOA_NETWORK_LOCATION:-}
+  AOA_TRUST_BOUNDARY: ${AOA_TRUST_BOUNDARY:-}
+  AOA_EXECUTION_OWNERSHIP: ${AOA_EXECUTION_OWNERSHIP:-}
+  AOA_EXECUTION_TARGET_ID: ${AOA_EXECUTION_TARGET_ID:-control-plane}
+  AOA_CODEX_DEVICE_AUTH: ${AOA_CODEX_DEVICE_AUTH:-false}
+  AOA_CLAUDE_PASTE_AUTH: ${AOA_CLAUDE_PASTE_AUTH:-false}
+  AOA_SCOPED_CLI_AUTH: ${AOA_SCOPED_CLI_AUTH:-false}
+  AOA_DEPLOYMENT_MODE: ${AOA_DEPLOYMENT_MODE:-authenticated}
+  AOA_DEPLOYMENT_EXPOSURE: ${AOA_DEPLOYMENT_EXPOSURE:-private}
+  AOA_PUBLIC_URL: ${AOA_PUBLIC_URL:-}
+  AOA_DEPLOY_SHA: ${AOA_DEPLOY_SHA:-}
+  # A1 compatibility selector. Both roots remain readable/jailed; only new
+  # marketplace bundle writes follow this selector.
+  AOA_MARKETPLACE_SKILLS_WRITE_ROOT: ${AOA_MARKETPLACE_SKILLS_WRITE_ROOT:-legacy}
+  AOA_AUTH_PUBLIC_BASE_URL: ${AOA_AUTH_PUBLIC_BASE_URL:-}
+  AOA_AUTH_BASE_URL_MODE: ${AOA_AUTH_BASE_URL_MODE:-}
+  # Google OAuth is REQUIRED in `authenticated` mode (the server refuses to boot
+  # without it). This stack binds 0.0.0.0 for port publishing, and local_trusted
+  # is loopback-only, so Docker cannot run keyless — use the native `aoa` CLI for
+  # a keyless local trial. AOA_DEV_LOCAL_IDENTITY is passed through only for
+  # advanced host-network overrides; it has no effect in authenticated mode.
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+  AOA_DEV_LOCAL_IDENTITY: ${AOA_DEV_LOCAL_IDENTITY:-}
+  AOA_ALLOWED_HOSTNAMES: ${AOA_ALLOWED_HOSTNAMES:-}
+  AOA_TRUST_PROXY: ${AOA_TRUST_PROXY:-false}
+  AOA_MIGRATION_AUTO_APPLY: ${AOA_MIGRATION_AUTO_APPLY:-true}
+  AOA_MIGRATION_PROMPT: ${AOA_MIGRATION_PROMPT:-}
+  # DATABASE_URL is assembled by scripts/docker-entrypoint.sh from the discrete
+  # AOA_POSTGRES_* pieces below (percent-encoding user/password so reserved chars
+  # in a hardened password survive postgres.js URL parsing). Left empty here so a
+  # host-shell / .env DATABASE_URL still propagates and wins over assembly.
+  DATABASE_URL: ${DATABASE_URL:-}
+  AOA_POSTGRES_USER: ${AOA_POSTGRES_USER:-aoa}
+  AOA_POSTGRES_PASSWORD: ${AOA_POSTGRES_PASSWORD:-aoa}
+  AOA_POSTGRES_DB: ${AOA_POSTGRES_DB:-aoa}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+  AOA_AGENT_JWT_SECRET: ${AOA_AGENT_JWT_SECRET:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+  CURSOR_API_KEY: ${CURSOR_API_KEY:-}
+  # E2B sandbox provider (cloud_auth execution isolation). REQUIRED on cloud_auth:
+  # resolvePlatformDefaultEnvironment returns null without E2B_API_KEY, so every
+  # sandboxed run (agents, readiness probes, discussion/file-import extraction,
+  # Commander compaction) fails with "No isolated sandbox environment is
+  # available." write-compose-env.mjs writes it to the runtime env-file, but a
+  # --env-file var only reaches the container when referenced here. Inert when
+  # empty (self-hosted / authenticated deployments). E2B_DOMAIN/E2B_TEMPLATE are
+  # optional (self-hosted E2B domain / sandbox template; default template "base").
+  E2B_API_KEY: ${E2B_API_KEY:-}
+  E2B_DOMAIN: ${E2B_DOMAIN:-}
+  E2B_TEMPLATE: ${E2B_TEMPLATE:-}
+  E2B_TIMEOUT_MS: ${E2B_TIMEOUT_MS:-}
+  GITHUB_APP_ID: ${GITHUB_APP_ID:-}
+  GITHUB_APP_SLUG: ${GITHUB_APP_SLUG:-}
+  GITHUB_APP_CLIENT_ID: ${GITHUB_APP_CLIENT_ID:-}
+  GITHUB_APP_CLIENT_SECRET: ${GITHUB_APP_CLIENT_SECRET:-}
+  GITHUB_APP_PRIVATE_KEY_PEM: ${GITHUB_APP_PRIVATE_KEY_PEM:-}
+  GITHUB_APP_WEBHOOK_SECRET: ${GITHUB_APP_WEBHOOK_SECRET:-}
+  AOA_STORAGE_PROVIDER: ${AOA_STORAGE_PROVIDER:-local_disk}
+  AOA_STORAGE_S3_BUCKET: ${AOA_STORAGE_S3_BUCKET:-}
+  AOA_STORAGE_S3_REGION: ${AOA_STORAGE_S3_REGION:-}
+  AOA_STORAGE_S3_ENDPOINT: ${AOA_STORAGE_S3_ENDPOINT:-}
+  AOA_STORAGE_S3_PREFIX: ${AOA_STORAGE_S3_PREFIX:-}
+  AOA_STORAGE_S3_FORCE_PATH_STYLE: ${AOA_STORAGE_S3_FORCE_PATH_STYLE:-false}
+  AOA_SECRETS_PROVIDER: ${AOA_SECRETS_PROVIDER:-local_encrypted}
+
+services:
+  db:
+    image: ${AOA_POSTGRES_IMAGE:-pgvector/pgvector:pg18}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${AOA_POSTGRES_USER:-aoa}
+      POSTGRES_PASSWORD: ${AOA_POSTGRES_PASSWORD:-aoa}
+      POSTGRES_DB: ${AOA_POSTGRES_DB:-aoa}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    volumes:
+      - aoa-postgres:/var/lib/postgresql
+    networks:
+      - aoa
+
+  server:
+    <<: *aoa-image
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${AOA_BIND_ADDRESS:-0.0.0.0}:${AOA_PORT:-3100}:3100"
+    environment:
+      <<: *aoa-env
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS \"http://127.0.0.1:$${PORT:-3100}/api/health\" >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    volumes:
+      - aoa-data:/aoa
+    networks:
+      - aoa
+
+  # Legacy/headless CEO-invite bootstrap. Opt-in only: the default authenticated
+  # deploy promotes the first Google sign-in to instance admin (first-user-admin,
+  # RB3/A7), so a normal `docker compose up` must NOT mint a CEO invite. Run
+  # explicitly when there is no Google sign-in path:
+  #   docker compose --profile bootstrap run --rm bootstrap
+  bootstrap:
+    image: ${AOA_IMAGE:-aoa:local}
+    profiles: ["bootstrap"]
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: "no"
+    environment:
+      <<: *aoa-env
+      BOOTSTRAP_BASE_URL: ${BOOTSTRAP_BASE_URL:-}
+      BOOTSTRAP_FORCE: ${BOOTSTRAP_FORCE:-false}
+    command:
+      - node
+      - --import
+      - ./server/node_modules/tsx/dist/loader.mjs
+      - scripts/docker-bootstrap-ceo.mjs
+    healthcheck:
+      disable: true
+    volumes:
+      - aoa-data:/aoa
+    networks:
+      - aoa
+
+  psql:
+    image: ${AOA_POSTGRES_IMAGE:-pgvector/pgvector:pg18}
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${AOA_POSTGRES_PASSWORD:-aoa}
+    command:
+      - psql
+      - --host=db
+      - --username=${AOA_POSTGRES_USER:-aoa}
+      - --dbname=${AOA_POSTGRES_DB:-aoa}
+    networks:
+      - aoa
+
+volumes:
+  aoa-postgres:
+  aoa-data:
+
+networks:
+  aoa:

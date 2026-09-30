@@ -1,0 +1,5 @@
+#!/bin/sh
+# POSIX shim: lets Commander cli-mode resolve `claude` from PATH to the
+# deterministic fake CLI (see fake-claude.mjs). Marked executable in git
+# (`git update-index --chmod=+x`) so `which claude` finds it on Linux CI.
+exec node "$(dirname "$0")/fake-claude.mjs" "$@"

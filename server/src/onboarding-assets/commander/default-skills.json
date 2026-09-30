@@ -1,0 +1,13 @@
+{
+  "_comment": "Catalog skill IDs to install when a new Commander is created. All 8 IDs map to 'commander' category skills in the marketplace. Add new skill IDs here to seed them automatically.",
+  "skills": [
+    "skill:aoa-curated/aoa-brainstorm",
+    "skill:aoa-curated/aoa-identity-setup",
+    "skill:aoa-curated/aoa-sprint-planning",
+    "skill:aoa-curated/aoa-team-design",
+    "skill:aoa-curated/aoa-office-hours",
+    "skill:aoa-curated/aoa-investigate",
+    "skill:aoa-curated/aoa-spec",
+    "skill:aoa-curated/aoa-discussion-facilitation"
+  ]
+}

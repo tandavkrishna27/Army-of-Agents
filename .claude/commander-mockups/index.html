@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AoA Commander — Mockup Comparison Board</title>
+<link rel="stylesheet" href="./_tokens.css" />
+<style>
+  body { padding: 20px; }
+  .board-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .board-header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.025em; }
+  .board-header .meta { font-family: var(--font-mono); font-size: 0.74rem; color: var(--dim); }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    height: calc(100vh - 100px);
+  }
+  .frame-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .frame-head {
+    padding: 10px 14px;
+    background: var(--hd);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .frame-head h2 { font-size: 0.85rem; font-weight: 600; }
+  .frame-head .open { font-size: 0.72rem; color: var(--brand); text-decoration: none; }
+  .frame-head .open:hover { text-decoration: underline; }
+  .frame-iframe-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  iframe {
+    /* Scale 1280px to fit the column; the column is ~410px wide on a 1280px screen */
+    border: none;
+    transform-origin: top left;
+    background: var(--bg);
+  }
+  .legend {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: var(--dim);
+  }
+  .legend strong { color: var(--text); }
+  .legend ul { margin-left: 18px; margin-top: 6px; }
+  .legend li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<div class="board-header">
+  <h1>Commander redesign — Warm Operator variants</h1>
+  <span class="meta">3 variants · AoA dark tokens · 2026-05-20</span>
+</div>
+
+<div class="grid">
+  <div class="frame-wrap">
+    <div class="frame-head">
+      <h2>B1 · Canonical</h2>
+      <a class="open" href="./variant-B1.html" target="_blank">Open ↗</a>
+    </div>
+    <div class="frame-iframe-wrap">
+      <iframe src="./variant-B1.html" id="frame-B1"></iframe>
+    </div>
+  </div>
+
+  <div class="frame-wrap">
+    <div class="frame-head">
+      <h2>B2 · Focus (sidebar collapsed)</h2>
+      <a class="open" href="./variant-B2.html" target="_blank">Open ↗</a>
+    </div>
+    <div class="frame-iframe-wrap">
+      <iframe src="./variant-B2.html" id="frame-B2"></iframe>
+    </div>
+  </div>
+
+  <div class="frame-wrap">
+    <div class="frame-head">
+      <h2>B3 · + Context Strip</h2>
+      <a class="open" href="./variant-B3.html" target="_blank">Open ↗</a>
+    </div>
+    <div class="frame-iframe-wrap">
+      <iframe src="./variant-B3.html" id="frame-B3"></iframe>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <strong>What's different across variants:</strong>
+  <ul>
+    <li><strong>B1 (canonical):</strong> compressed 40px topbar with breadcrumb, full sessions sidebar, no big "Commander." heading wasting space</li>
+    <li><strong>B2 (focus):</strong> same as B1 but sessions sidebar collapsed to a 40px icon strip — maximum chat real estate, sessions still accessible</li>
+    <li><strong>B3 (+ context strip):</strong> adds a persistent 44px context bar showing live session info (title, model, ctx, cost, autonomy) — always-visible context</li>
+  </ul>
+  <p style="margin-top: 8px;"><strong>Common across all 3:</strong> AoA dark mode tokens (no inventing colors), 30° warm hue undertone on neutrals, brand red <code style="font-family: var(--font-mono); color: var(--brand);">#b82d1c</code> used only for primary CTAs + active states, amber confirmation card for tool gates, Inter + Geist Mono typography.</p>
+</div>
+
+<script>
+  // Scale iframes so each shows the full 1280px viewport inside the column
+  function scaleFrames() {
+    const frames = ['frame-B1', 'frame-B2', 'frame-B3'];
+    for (const id of frames) {
+      const f = document.getElementById(id);
+      if (!f) continue;
+      const wrap = f.parentElement;
+      const targetW = 1280;
+      const targetH = 720;
+      const wrapW = wrap.clientWidth;
+      const wrapH = wrap.clientHeight;
+      const scale = Math.min(wrapW / targetW, wrapH / targetH);
+      f.style.width = targetW + 'px';
+      f.style.height = targetH + 'px';
+      f.style.transform = `scale(${scale})`;
+    }
+  }
+  window.addEventListener('load', scaleFrames);
+  window.addEventListener('resize', scaleFrames);
+</script>
+</body>
+</html>

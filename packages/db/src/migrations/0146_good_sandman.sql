@@ -1,0 +1,2 @@
+ALTER TABLE "thread_scope_items" ADD COLUMN IF NOT EXISTS "source_action_id" uuid;--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "thread_scope_items_source_action_uq" ON "thread_scope_items" USING btree ("company_id","source_action_id") WHERE source_action_id IS NOT NULL;

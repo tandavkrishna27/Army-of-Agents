@@ -1,0 +1,33 @@
+import { pgTable, uuid, text, timestamp, boolean, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { companies } from "./companies.js";
+
+export const companyMemberships = pgTable(
+  "company_memberships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    principalType: text("principal_type").notNull(),
+    principalId: text("principal_id").notNull(),
+    status: text("status").notNull().default("active"),
+    membershipRole: text("membership_role"),
+    parentType: text("parent_type"),
+    parentId: text("parent_id"),
+    isSystemAdmin: boolean("is_system_admin").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    companyPrincipalUniqueIdx: uniqueIndex("company_memberships_company_principal_unique_idx").on(
+      table.companyId,
+      table.principalType,
+      table.principalId,
+    ),
+    principalStatusIdx: index("company_memberships_principal_status_idx").on(
+      table.principalType,
+      table.principalId,
+      table.status,
+    ),
+    companyStatusIdx: index("company_memberships_company_status_idx").on(table.companyId, table.status),
+    companyParentIdx: index("cm_company_parent_idx").on(table.companyId, table.parentType, table.parentId),
+  }),
+);

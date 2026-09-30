@@ -1,0 +1,377 @@
+name: Deploy testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_sha:
+        description: Full reviewed commit SHA from main to deploy or roll back to
+        required: true
+        type: string
+      deployment_mode:
+        description: Deployment mode (cloud_auth = multi-tenant + E2B sandboxes; authenticated = single-tenant, unchanged)
+        required: false
+        default: authenticated
+        type: choice
+        options:
+          - authenticated
+          - cloud_auth
+      record_0188_marker:
+        description: One-time - snapshot the DB and record the 0188 multi-tenant migration marker before deploying (required the FIRST time you flip a POPULATED instance to cloud_auth)
+        required: false
+        default: false
+        type: boolean
+      record_founder_grants:
+        description: One-time RBAC repair - seed missing principal_permission_grants for active-member founders (heals cloud_auth founders 403'd on Providers / actions before the permanent code fix ships)
+        required: false
+        default: false
+        type: boolean
+      cleanup_disk:
+        description: Emergency - free disk on the box BEFORE deploying (rm old pg_dump snapshots + prune unused Docker images/build-cache/stopped-containers + old releases; NEVER touches volumes/DB data)
+        required: false
+        default: false
+        type: boolean
+      e2b_template:
+        description: E2B sandbox template alias (e.g. "aoa-base", pre-loaded with the claude/codex CLIs). Empty = bare "base" (CLIs installed per-run). See e2b/README.md.
+        required: false
+        default: ""
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: deploy-testing
+  queue: max
+
+env:
+  DEPLOY_HOST: 89.167.10.169
+  DEPLOY_PORT: "22"
+  DEPLOY_USER: root
+  DEPLOY_ROOT: /opt/aoa
+  DEPLOY_PUBLIC_URL: https://testing.armyofagents.org
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      checks: read
+      contents: read
+
+    steps:
+      - name: Select deployment SHA
+        id: revision
+        env:
+          MANUAL_SHA: ${{ inputs.deploy_sha }}
+        run: |
+          set -euo pipefail
+          sha="$MANUAL_SHA"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "::error::Deployment SHA is not 40 lowercase hex characters"
+            exit 1
+          }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout main history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify revision is tested main history
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash scripts/deploy/verify-testing-revision.sh "$DEPLOY_SHA"
+          install -m 700 scripts/deploy/remote-compose-deploy.sh \
+            "$RUNNER_TEMP/remote-compose-deploy.sh"
+
+      - name: Checkout tested revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.revision.outputs.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Confirm exact checkout
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$DEPLOY_SHA"
+
+      - name: Build source archive and runtime environment
+        id: payload
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+          AOA_POSTGRES_PASSWORD: ${{ secrets.AOA_POSTGRES_PASSWORD }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          AOA_AGENT_JWT_SECRET: ${{ secrets.AOA_AGENT_JWT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          E2B_TEMPLATE: ${{ inputs.e2b_template }}
+          AOA_DEPLOYMENT_MODE_OVERRIDE: ${{ inputs.deployment_mode }}
+        run: |
+          set -euo pipefail
+          umask 077
+          archive="$RUNNER_TEMP/aoa-$DEPLOY_SHA.tar.gz"
+          runtime_env="$RUNNER_TEMP/aoa-$DEPLOY_SHA.env"
+          git archive --format=tar.gz --output="$archive" "$DEPLOY_SHA"
+          node scripts/deploy/write-compose-env.mjs "$runtime_env"
+          checksum="$(sha256sum "$archive" | awk '{print $1}')"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "runtime_env=$runtime_env" >> "$GITHUB_OUTPUT"
+          echo "checksum=$checksum" >> "$GITHUB_OUTPUT"
+
+      - name: Load encrypted deployment key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PASSPHRASE: ${{ secrets.DEPLOY_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key="$RUNNER_TEMP/aoa-deploy-key"
+          askpass="$RUNNER_TEMP/aoa-ssh-askpass"
+          known_hosts="$RUNNER_TEMP/aoa-known-hosts"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$key"
+          printf '%s\n' '#!/bin/sh' 'printf "%s\n" "$DEPLOY_PASSPHRASE"' > "$askpass"
+          chmod 600 "$key"
+          chmod 700 "$askpass"
+          eval "$(ssh-agent -s)"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
+          echo "DEPLOY_KEY_PATH=$key" >> "$GITHUB_ENV"
+          echo "DEPLOY_KNOWN_HOSTS=$known_hosts" >> "$GITHUB_ENV"
+          DISPLAY=:0 SSH_ASKPASS="$askpass" SSH_ASKPASS_REQUIRE=force \
+            ssh-add "$key" </dev/null
+          rm -f -- "$askpass"
+          # Temporary user-approved exception: enroll the current host key for
+          # this run only. Persistent host-key pinning is intentionally deferred.
+          ssh-keyscan -T 10 -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" > "$known_hosts"
+          test -s "$known_hosts"
+
+      - name: Record 0188 multi-tenant migration marker (one-time cloud_auth flip)
+        if: ${{ inputs.record_0188_marker }}
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          set -euo pipefail
+          # One-time operator step for flipping a POPULATED single-tenant instance
+          # to cloud_auth. Migration 0188 is a one-way multi-tenant door: its
+          # snapshot gate refuses to apply until a full DB snapshot has been taken
+          # and "0188" is recorded in instance_settings.general.migrationSnapshots.
+          # This step takes that snapshot and records the marker. It is EXPLICIT
+          # (gated on the record_0188_marker input the operator sets on this one
+          # dispatch) — deliberate, not a silent auto-bypass of the safety gate.
+          ssh_options=(
+            -p "$DEPLOY_PORT"
+            -i "$DEPLOY_KEY_PATH"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o PreferredAuthentications=publickey
+            -o PasswordAuthentication=no
+            -o KbdInteractiveAuthentication=no
+            -o ForwardAgent=no
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$DEPLOY_KNOWN_HOSTS"
+          )
+          target="$DEPLOY_USER@$DEPLOY_HOST"
+          echo "Snapshotting DB before the one-way 0188 marker..."
+          ssh "${ssh_options[@]}" "$target" \
+            "docker exec aoa-db-1 pg_dump -U aoa aoa > '$DEPLOY_ROOT/pre-0188-snapshot-$DEPLOY_SHA.sql' && wc -c '$DEPLOY_ROOT/pre-0188-snapshot-$DEPLOY_SHA.sql'"
+          echo "Recording 0188 marker (instance_settings.general.migrationSnapshots += 0188)..."
+          # SQL is base64 to avoid SSH/YAML quoting. Decodes to:
+          #   INSERT INTO instance_settings (singleton_key, general)
+          #   VALUES ('default', '{"migrationSnapshots":["0188"]}'::jsonb)
+          #   ON CONFLICT (singleton_key) DO UPDATE
+          #   SET general = COALESCE(instance_settings.general, '{}'::jsonb)
+          #                 || '{"migrationSnapshots":["0188"]}'::jsonb, updated_at = now();
+          printf '%s' 'SU5TRVJUIElOVE8gaW5zdGFuY2Vfc2V0dGluZ3MgKHNpbmdsZXRvbl9rZXksIGdlbmVyYWwpIFZBTFVFUyAoJ2RlZmF1bHQnLCAneyJtaWdyYXRpb25TbmFwc2hvdHMiOlsiMDE4OCJdfSc6Ompzb25iKSBPTiBDT05GTElDVCAoc2luZ2xldG9uX2tleSkgRE8gVVBEQVRFIFNFVCBnZW5lcmFsID0gQ09BTEVTQ0UoaW5zdGFuY2Vfc2V0dGluZ3MuZ2VuZXJhbCwgJ3t9Jzo6anNvbmIpIHx8ICd7Im1pZ3JhdGlvblNuYXBzaG90cyI6WyIwMTg4Il19Jzo6anNvbmIsIHVwZGF0ZWRfYXQgPSBub3coKTs=' \
+            | base64 -d \
+            | ssh "${ssh_options[@]}" "$target" 'docker exec -i aoa-db-1 psql -U aoa -d aoa -v ON_ERROR_STOP=1'
+          echo "Verifying marker contains 0188..."
+          marker="$(ssh "${ssh_options[@]}" "$target" \
+            "docker exec -i aoa-db-1 psql -U aoa -d aoa -tAc \"SELECT general->'migrationSnapshots' FROM instance_settings WHERE singleton_key = 'default';\"")"
+          echo "recorded: $marker"
+          case "$marker" in
+            *0188*) echo "OK: 0188 marker present";;
+            *) echo "::error::0188 marker not recorded"; exit 1;;
+          esac
+
+      - name: Free disk space on the box (emergency, before deploy)
+        if: ${{ inputs.cleanup_disk }}
+        run: |
+          set -euo pipefail
+          # The box filled up (Postgres PANIC "No space left on device" → DB crash-
+          # recovery loop → every auth/login write 500s). Free space WITHOUT ever
+          # touching Docker volumes or the Postgres data dir: remove the one-time
+          # pg_dump snapshots this workflow wrote, prune unused images + build cache
+          # + stopped containers (running aoa-db-1/aoa-server-1 and their volumes are
+          # never pruned), and drop all but the 5 newest release dirs. Runs BEFORE
+          # the deploy step, which then brings the containers up healthy on freed disk.
+          ssh_options=(
+            -p "$DEPLOY_PORT"
+            -i "$DEPLOY_KEY_PATH"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o PreferredAuthentications=publickey
+            -o PasswordAuthentication=no
+            -o KbdInteractiveAuthentication=no
+            -o ForwardAgent=no
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$DEPLOY_KNOWN_HOSTS"
+          )
+          target="$DEPLOY_USER@$DEPLOY_HOST"
+          echo "=== disk BEFORE ==="
+          ssh "${ssh_options[@]}" "$target" "df -h / ; echo '--- top /opt/aoa users ---' ; du -sh $DEPLOY_ROOT/* 2>/dev/null | sort -h | tail -15 ; echo '--- docker df ---' ; docker system df || true"
+          echo "=== freeing space (volume-safe) ==="
+          ssh "${ssh_options[@]}" "$target" "rm -f $DEPLOY_ROOT/pre-0188-snapshot-*.sql 2>/dev/null || true"
+          ssh "${ssh_options[@]}" "$target" "docker container prune -f || true"
+          ssh "${ssh_options[@]}" "$target" "docker image prune -af || true"
+          ssh "${ssh_options[@]}" "$target" "docker builder prune -af || true"
+          ssh "${ssh_options[@]}" "$target" "ls -1dt $DEPLOY_ROOT/releases/*/ 2>/dev/null | tail -n +6 | xargs -r rm -rf || true"
+          echo "=== disk AFTER ==="
+          ssh "${ssh_options[@]}" "$target" "df -h /"
+
+      - name: Backfill founder permission grants (one-time RBAC repair)
+        if: ${{ inputs.record_founder_grants }}
+        run: |
+          set -euo pipefail
+          # Fast unblock for the founder-grants RBAC bug: on cloud_auth a founder
+          # is authorized entirely through principal_permission_grants, but
+          # ensureRealOperator historically seeded the founder role + membership
+          # WITHOUT the grants, so founders 403 on Providers / every action. This
+          # seeds the missing grants for founders WITH an active membership
+          # (idempotent, additive, ON CONFLICT DO NOTHING) so the live instance is
+          # healed immediately while the permanent code fix rides main's CI. The
+          # base64 SQL below decodes to:
+          #   INSERT INTO principal_permission_grants (company_id, principal_type,
+          #     principal_id, permission_key, scope, granted_by_user_id)
+          #   SELECT ur.company_id, 'user', ur.user_id, pk.key, NULL, ur.user_id
+          #   FROM user_roles ur
+          #   JOIN company_memberships cm ON cm.company_id = ur.company_id
+          #     AND cm.principal_type = 'user' AND cm.principal_id = ur.user_id
+          #     AND cm.status = 'active'
+          #   CROSS JOIN (VALUES ('agents:create'),('users:invite'),
+          #     ('users:manage_permissions'),('tasks:assign'),
+          #     ('tasks:assign_scope'),('joins:approve')) AS pk(key)
+          #   WHERE ur.role = 'founder'
+          #   ON CONFLICT (company_id, principal_type, principal_id, permission_key)
+          #     DO NOTHING;
+          ssh_options=(
+            -p "$DEPLOY_PORT"
+            -i "$DEPLOY_KEY_PATH"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o PreferredAuthentications=publickey
+            -o PasswordAuthentication=no
+            -o KbdInteractiveAuthentication=no
+            -o ForwardAgent=no
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$DEPLOY_KNOWN_HOSTS"
+          )
+          target="$DEPLOY_USER@$DEPLOY_HOST"
+          echo "Seeding founder permission grants for active-member founders..."
+          printf '%s' 'SU5TRVJUIElOVE8gcHJpbmNpcGFsX3Blcm1pc3Npb25fZ3JhbnRzIChjb21wYW55X2lkLCBwcmluY2lwYWxfdHlwZSwgcHJpbmNpcGFsX2lkLCBwZXJtaXNzaW9uX2tleSwgc2NvcGUsIGdyYW50ZWRfYnlfdXNlcl9pZCkgU0VMRUNUIHVyLmNvbXBhbnlfaWQsICd1c2VyJywgdXIudXNlcl9pZCwgcGsua2V5LCBOVUxMLCB1ci51c2VyX2lkIEZST00gdXNlcl9yb2xlcyB1ciBKT0lOIGNvbXBhbnlfbWVtYmVyc2hpcHMgY20gT04gY20uY29tcGFueV9pZCA9IHVyLmNvbXBhbnlfaWQgQU5EIGNtLnByaW5jaXBhbF90eXBlID0gJ3VzZXInIEFORCBjbS5wcmluY2lwYWxfaWQgPSB1ci51c2VyX2lkIEFORCBjbS5zdGF0dXMgPSAnYWN0aXZlJyBDUk9TUyBKT0lOIChWQUxVRVMgKCdhZ2VudHM6Y3JlYXRlJyksKCd1c2VyczppbnZpdGUnKSwoJ3VzZXJzOm1hbmFnZV9wZXJtaXNzaW9ucycpLCgndGFza3M6YXNzaWduJyksKCd0YXNrczphc3NpZ25fc2NvcGUnKSwoJ2pvaW5zOmFwcHJvdmUnKSkgQVMgcGsoa2V5KSBXSEVSRSB1ci5yb2xlID0gJ2ZvdW5kZXInIE9OIENPTkZMSUNUIChjb21wYW55X2lkLCBwcmluY2lwYWxfdHlwZSwgcHJpbmNpcGFsX2lkLCBwZXJtaXNzaW9uX2tleSkgRE8gTk9USElORzs=' \
+            | base64 -d \
+            | ssh "${ssh_options[@]}" "$target" 'docker exec -i aoa-db-1 psql -U aoa -d aoa -v ON_ERROR_STOP=1'
+          echo "Verifying: number of founders now holding agents:create..."
+          count="$(ssh "${ssh_options[@]}" "$target" \
+            "docker exec -i aoa-db-1 psql -U aoa -d aoa -tAc \"SELECT count(*) FROM principal_permission_grants WHERE permission_key = 'agents:create';\"")"
+          echo "founders with agents:create grant: $count"
+
+      - name: Upload and deploy tested revision
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+          ARCHIVE_PATH: ${{ steps.payload.outputs.archive }}
+          RUNTIME_ENV_PATH: ${{ steps.payload.outputs.runtime_env }}
+          ARCHIVE_SHA256: ${{ steps.payload.outputs.checksum }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_RUN_ID" =~ ^[0-9]+$ && "$GITHUB_RUN_ATTEMPT" =~ ^[0-9]+$ ]] || {
+            echo "::error::Invalid workflow run identity"
+            exit 1
+          }
+          remote_stage="$DEPLOY_ROOT/incoming/$DEPLOY_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          printf '%s\n' "$remote_stage" > "$RUNNER_TEMP/aoa-remote-stage"
+          ssh_options=(
+            -p "$DEPLOY_PORT"
+            -i "$DEPLOY_KEY_PATH"
+            -o BatchMode=yes
+            -o IdentitiesOnly=yes
+            -o PreferredAuthentications=publickey
+            -o PasswordAuthentication=no
+            -o KbdInteractiveAuthentication=no
+            -o ForwardAgent=no
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$DEPLOY_KNOWN_HOSTS"
+          )
+          target="$DEPLOY_USER@$DEPLOY_HOST"
+          ssh "${ssh_options[@]}" "$target" \
+            "install -d -m 700 -- '$remote_stage'"
+          scp_options=("${ssh_options[@]}")
+          scp_options[0]=-P
+          scp "${scp_options[@]}" \
+            "$ARCHIVE_PATH" \
+            "$RUNTIME_ENV_PATH" \
+            "$RUNNER_TEMP/remote-compose-deploy.sh" \
+            "$target:$remote_stage/"
+          ssh "${ssh_options[@]}" "$target" \
+            "bash '$remote_stage/remote-compose-deploy.sh' \
+              '$DEPLOY_SHA' \
+              '$remote_stage/$(basename "$ARCHIVE_PATH")' \
+              '$ARCHIVE_SHA256' \
+              '$remote_stage/$(basename "$RUNTIME_ENV_PATH")'"
+          {
+            echo "### Testing deployment"
+            echo
+            echo "- SHA: \`$DEPLOY_SHA\`"
+            echo "- URL: $DEPLOY_PUBLIC_URL"
+            echo "- Health: verified healthy at revision \`$DEPLOY_SHA\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Clean deployment credentials and staging
+        if: ${{ always() }}
+        run: |
+          set +e
+          if [[ -n "${SSH_AUTH_SOCK:-}" &&
+                -s "${DEPLOY_KNOWN_HOSTS:-}" &&
+                -f "$RUNNER_TEMP/aoa-remote-stage" ]]; then
+            remote_stage="$(cat "$RUNNER_TEMP/aoa-remote-stage")"
+            if [[ "$remote_stage" =~ ^/opt/aoa/incoming/[0-9a-f]{40}-[0-9]+-[0-9]+$ ]]; then
+              ssh_options=(
+                -p "$DEPLOY_PORT"
+                -i "$DEPLOY_KEY_PATH"
+                -o BatchMode=yes
+                -o IdentitiesOnly=yes
+                -o PreferredAuthentications=publickey
+                -o PasswordAuthentication=no
+                -o KbdInteractiveAuthentication=no
+                -o ForwardAgent=no
+                -o StrictHostKeyChecking=yes
+                -o "UserKnownHostsFile=$DEPLOY_KNOWN_HOSTS"
+              )
+              ssh "${ssh_options[@]}" "$DEPLOY_USER@$DEPLOY_HOST" \
+                "rm -f -- \
+                  '$remote_stage/remote-compose-deploy.sh' \
+                  '$remote_stage/'*.tar.gz \
+                  '$remote_stage/'*.env \
+                  '$remote_stage/previous.env'; \
+                 rmdir -- '$remote_stage' 2>/dev/null || true" || true
+            fi
+          fi
+          if [[ -n "${SSH_AGENT_PID:-}" ]]; then
+            ssh-agent -k >/dev/null 2>&1 || true
+          fi
+          rm -f -- \
+            "$RUNNER_TEMP/aoa-deploy-key" \
+            "$RUNNER_TEMP/aoa-ssh-askpass" \
+            "$RUNNER_TEMP/aoa-known-hosts" \
+            "$RUNNER_TEMP/aoa-remote-stage" \
+            "$RUNNER_TEMP"/aoa-*.tar.gz \
+            "$RUNNER_TEMP"/aoa-*.env

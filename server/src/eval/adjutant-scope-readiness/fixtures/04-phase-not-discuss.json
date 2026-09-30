@@ -1,0 +1,20 @@
+{
+  "id": "04-phase-not-discuss",
+  "input": {
+    "thread": {
+      "id": "fixture-4",
+      "phase": "scope",
+      "intent": ["planning"],
+      "summaryText": "Founder wants to ship a new pricing page by end of quarter.",
+      "entries": [
+        { "id": "e1", "rawContent": "let's lock the pricing page rewrite", "authorAgentId": null, "createdBy": "user-1" },
+        { "id": "e2", "rawContent": "I agree — three tiers, annual toggle, FAQ section.", "authorAgentId": null, "createdBy": "user-2" },
+        { "id": "e3", "rawContent": "Yes, and replace the testimonials block.", "authorAgentId": null, "createdBy": "user-1" }
+      ]
+    }
+  },
+  "expected": {
+    "type": "exact",
+    "value": { "category": "wait" }
+  }
+}
