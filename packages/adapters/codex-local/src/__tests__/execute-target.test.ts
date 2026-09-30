@@ -63,7 +63,9 @@ describe("codex execute target", () => {
     const commandPath = await writeFakeCodexCommand(commandBase);
 
     const previousCodexHome = process.env.CODEX_HOME;
+    const previousDeploymentMode = process.env.AOA_DEPLOYMENT_MODE;
     process.env.CODEX_HOME = codexHome;
+    process.env.AOA_DEPLOYMENT_MODE = "local_trusted";
     const metaEvents: AdapterInvocationMeta[] = [];
 
     try {
@@ -94,6 +96,7 @@ describe("codex execute target", () => {
           graceSec: 1,
         },
         context: {
+          aoaWorkspace: { cwd: workspace, source: "agent_home" },
           currentTaskMarkdown: "## Current Task\n- Task ID: task-custom-codex",
         },
         executionTarget: { type: "local" },
@@ -117,7 +120,9 @@ describe("codex execute target", () => {
         env: Record<string, string>;
       };
       await expectSameRealPath(capture.cwd, workspace);
-      expect(capture.argv).toEqual(expect.arrayContaining(["exec", "--json", "-"]));
+      expect(capture.argv).toEqual(
+        expect.arrayContaining(["exec", "--json", "--skip-git-repo-check", "-"]),
+      );
       expect(capture.prompt).toBe(
         "Prompt for agent-1 in run-codex-target.\n\n## Current Task\n- Task ID: task-custom-codex",
       );
@@ -137,6 +142,11 @@ describe("codex execute target", () => {
         delete process.env.CODEX_HOME;
       } else {
         process.env.CODEX_HOME = previousCodexHome;
+      }
+      if (previousDeploymentMode === undefined) {
+        delete process.env.AOA_DEPLOYMENT_MODE;
+      } else {
+        process.env.AOA_DEPLOYMENT_MODE = previousDeploymentMode;
       }
       await fs.rm(root, { recursive: true, force: true });
     }
