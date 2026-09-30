@@ -30,10 +30,10 @@ concurrency:
 
 jobs:
   # Cheap change-detector: decides whether the heavy suite needs to run.
-  # docs-only (code=false) iff EVERY changed file is under docs/ or is a
-  # ROOT-LEVEL *.md (README/CLAUDE/AGENTS). Any .github/** file, any nested
-  # *.md (runtime assets like server/src/onboarding-assets/**/*.md, fixtures,
-  # package READMEs), or any other path => code=true => full CI. Uses
+  # docs-only (code=false) iff EVERY changed file is under docs/, is a
+  # root-level *.md, or is a GitHub community-health template that does not
+  # affect CI execution. Workflow/action changes and nested *.md outside docs/
+  # still classify as code=true. Uses
   # --no-renames so a code file moved into docs/ still classifies its (deleted)
   # source as code. On push (main) code is always true. Skips on draft.
   changes:
@@ -62,11 +62,9 @@ jobs:
             exit 0
           fi
           code=false
-          if printf '%s\n' "$changed" | grep -qE '^\.github/'; then
-            code=true        # any .github/** file (incl .github/*.md) => full CI
-          elif printf '%s\n' "$changed" | grep -qEv '^docs/|^[^/]+\.md$'; then
-            code=true        # anything not under docs/ and not a ROOT-LEVEL *.md
-                             # (nested .md may be runtime assets/fixtures => code)
+          non_code_pattern='^(docs/|[^/]+\.md$|LICENSE$|\.github/ISSUE_TEMPLATE/|\.github/PULL_REQUEST_TEMPLATE\.md$|\.github/CODEOWNERS$|\.github/FUNDING\.yml$|\.github/dependabot\.yml$)'
+          if printf '%s\n' "$changed" | grep -qEv "$non_code_pattern"; then
+            code=true        # workflows/actions, runtime files, nested non-doc markdown, or app code
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
           echo "changed files:"; printf '%s\n' "$changed"
