@@ -54,7 +54,11 @@ Agents perform work. Army of Agents provides the organization in which that work
 
 ## Universe UI
 
-> **Under development** — Universe UI is an evolving interactive interface for coordinating people and AI agents. The screenshots below are an early visual concept and may change as implementation progresses.
+> **Under development** —Universe (Some people call it Jarvis, Cortana, Zoe, or whatever name they give their AI. I just think of it as your whole universe in one place.)
+Universe is where everything comes together — you, the people you work with, your agents, conversations, tasks, files, tools, and whatever you’re currently working on.
+Instead of jumping between ten different apps and talking to different AI agents separately, you have one space where you can just say what you want to do. Your Commander understands the context, pulls in the right people or agents, opens whatever needs to be worked on, and helps move things forward.
+The idea is not really another dashboard. It is more like a place you work from — where humans and agents can be around you, things can keep happening in the background, and you can zoom into whatever needs your attention.
+It is still under development, and what you see below is an early visual concept. The interface will probably keep changing as I figure out what this should actually feel like.The screenshots below are an early visual concept and may change as implementation progresses.
 
 ![Universe UI — collaborative workspace](docs/images/universe-ui-1.jpg)
 
