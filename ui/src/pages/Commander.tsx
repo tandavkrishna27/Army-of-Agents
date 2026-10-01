@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { AgentPanelContent } from "../components/InternalAgentPanel";
 import { SessionsSidebar } from "../components/commander";
 import { COMMANDER_PANEL_ROW } from "../components/commander/commanderChrome";
 import { useCommanderSessionsCollapsed } from "../components/commander/useCommanderSessionsCollapsed";
-import { commanderConversationsApi, internalAgentApi } from "../api/internal-agent";
-import { queryKeys } from "../lib/queryKeys";
+import { commanderConversationsApi } from "../api/internal-agent";
 import { useBreakpoint } from "../lib/useBreakpoint";
 import { cn } from "../lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -34,12 +32,6 @@ export function Commander() {
     setBreadcrumbs([{ label: "Commander" }]);
   }, [setBreadcrumbs]);
 
-  const { data: config } = useQuery({
-    queryKey: queryKeys.agentConfig(selectedCompanyId!),
-    queryFn: () => internalAgentApi.getConfig(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
-  });
-
   const handleNewConversation = async () => {
     if (!selectedCompanyId) return;
     const conv = await commanderConversationsApi.create(selectedCompanyId);
@@ -63,14 +55,6 @@ export function Commander() {
     // resolves to main's content box, so content + pb == client → no outer
     // scrollbar; only the message list scrolls).
     <div className="flex flex-col h-full min-h-0">
-
-      {/* Best-effort badge (non-claude_cli warning) */}
-      {config?.cliTool && config.cliTool !== "claude_cli" && (
-        <div className="px-5 py-1.5 bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-200 inline-flex items-center gap-1.5 shrink-0">
-          <Info className="h-3 w-3 shrink-0" />
-          <span>Confirmation gates use best-effort detection on <code className="font-mono">{config.cliTool}</code>. Switch to Claude CLI for strict gating.</span>
-        </div>
-      )}
 
       {/* Chat workspace — sessions + chat panel, fills remaining height */}
       <div className={cn("flex flex-1 min-h-0 overflow-hidden", COMMANDER_PANEL_ROW)}>

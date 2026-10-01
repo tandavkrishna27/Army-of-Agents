@@ -24,6 +24,8 @@ interface SidebarCollapseToggleProps {
    * tests can disambiguate which toggle they're targeting.
    */
   ariaLabel?: string;
+  /** Render in the normal document flow instead of straddling a sidebar rail. */
+  inline?: boolean;
 }
 
 export function SidebarCollapseToggle({
@@ -33,6 +35,7 @@ export function SidebarCollapseToggle({
   top = 9,
   className,
   ariaLabel,
+  inline = false,
 }: SidebarCollapseToggleProps) {
   const Icon = collapsed ? PanelLeftOpen : PanelLeftClose;
   const label = ariaLabel ?? (collapsed ? "Expand sidebar" : "Collapse sidebar");
@@ -55,7 +58,7 @@ export function SidebarCollapseToggle({
         "focus-visible:outline-none focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-brand-focus-ring",
         className,
       )}
-      style={{ top, left: `calc(${sidebarWidth}px - ${collapsed ? 16 : 13}px)` }}
+      style={inline ? undefined : { top, left: `calc(${sidebarWidth}px - ${collapsed ? 16 : 13}px)` }}
     >
       <Icon className={collapsed ? "size-4" : "size-3.5"} />
     </button>

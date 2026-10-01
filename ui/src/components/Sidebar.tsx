@@ -19,7 +19,6 @@ import { useNavigate } from "@/lib/router";
 import { SidebarSection } from "./SidebarSection";
 import { SidebarNavItem } from "./SidebarNavItem";
 import { SidebarProjectsByType } from "./SidebarProjectsByType";
-import { SidebarCollapseToggle } from "./SidebarCollapseToggle";
 import { BudgetSidebarMarker } from "./finance/BudgetSidebarMarker";
 import { useCompany } from "../context/CompanyContext";
 import { useSidebar } from "../context/SidebarContext";
@@ -31,7 +30,7 @@ import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const { selectedCompanyId, selectedCompany } = useCompany();
-  const { collapsed, toggleCollapse, isMobile } = useSidebar();
+  const { collapsed } = useSidebar();
   const navigate = useNavigate();
   const { data: sidebarBadges } = useQuery({
     queryKey: queryKeys.sidebarBadges(selectedCompanyId!),
@@ -49,66 +48,15 @@ export function Sidebar() {
     (c) => c.slots.some((s) => s.type === "page"),
   );
 
-  const sidebarWidth = collapsed ? 56 : 220;
-
   return (
     <>
       <aside
         data-collapsed={collapsed}
         className={cn(
-          "h-full min-h-0 flex flex-col border-r border-border bg-background transition-[width] duration-[180ms]",
+          "h-full min-h-0 flex flex-col rounded-xl border border-border bg-background overflow-hidden transition-[width] duration-[180ms]",
           collapsed ? "w-[56px]" : "w-[220px]",
         )}
       >
-        {/* Header — h-11, logo + company-name (click → lobby). No internal collapse toggle. */}
-        <div
-          className={cn(
-            "flex items-center shrink-0 h-11 border-b border-border",
-            collapsed ? "justify-center px-0" : "gap-2 px-3",
-          )}
-        >
-          {collapsed ? (
-            <a
-              href="/"
-              onClick={(e) => { e.preventDefault(); navigate("/"); }}
-              title="Back to all companies"
-              className="flex items-center justify-center size-8 rounded-md hover:bg-accent/50 transition-colors"
-            >
-              {selectedCompany?.logoAssetId ? (
-                <img
-                  src={`/api/assets/${selectedCompany.logoAssetId}/content`}
-                  alt={selectedCompany.name}
-                  className="size-6 rounded object-cover"
-                />
-              ) : selectedCompany?.brandColor ? (
-                <div className="size-5 rounded shrink-0" style={{ backgroundColor: selectedCompany.brandColor }} />
-              ) : (
-                <div className="size-5 rounded bg-muted shrink-0" />
-              )}
-            </a>
-          ) : (
-            <>
-              {selectedCompany?.logoAssetId ? (
-                <img
-                  src={`/api/assets/${selectedCompany.logoAssetId}/content`}
-                  alt={selectedCompany.name}
-                  className="size-5 rounded object-cover shrink-0"
-                />
-              ) : selectedCompany?.brandColor ? (
-                <div className="size-5 rounded shrink-0" style={{ backgroundColor: selectedCompany.brandColor }} />
-              ) : null}
-              <a
-                href="/"
-                onClick={(e) => { e.preventDefault(); navigate("/"); }}
-                className="flex-1 text-sm font-semibold text-foreground truncate hover:text-foreground/80 transition-colors"
-                title="Back to all companies"
-              >
-                {selectedCompany?.name ?? "Select company"}
-              </a>
-            </>
-          )}
-        </div>
-
         {/* Nav — hidden scrollbar */}
         <nav
           className={cn(
@@ -173,18 +121,41 @@ export function Sidebar() {
           )}
         </nav>
 
-        {/* No bottom UserMenu (Phase E — moved to lobby only) */}
+        {/* Company identity is intentionally anchored to the sidebar footer. */}
+        <div className={cn(
+          "mt-auto shrink-0 border-t border-border p-2",
+          collapsed ? "flex justify-center" : "px-3 py-2",
+        )}>
+          <a
+            href="/"
+            onClick={(e) => { e.preventDefault(); navigate("/"); }}
+            title="Switch company"
+            aria-label={`Switch company${selectedCompany?.name ? `: ${selectedCompany.name}` : ""}`}
+            className={cn(
+              "flex items-center rounded-md hover:bg-accent/50 transition-colors",
+              collapsed ? "justify-center size-8" : "gap-2 px-2 py-2",
+            )}
+          >
+            {selectedCompany?.logoAssetId ? (
+              <img
+                src={`/api/assets/${selectedCompany.logoAssetId}/content`}
+                alt={selectedCompany.name}
+                className={cn("rounded object-cover shrink-0", collapsed ? "size-6" : "size-5")}
+              />
+            ) : selectedCompany?.brandColor ? (
+              <div className={cn("rounded shrink-0", collapsed ? "size-5" : "size-5")} style={{ backgroundColor: selectedCompany.brandColor }} />
+            ) : (
+              <div className="size-5 rounded bg-muted shrink-0" />
+            )}
+            {!collapsed && (
+              <span className="text-sm font-semibold text-foreground truncate">
+                {selectedCompany?.name ?? "Select company"}
+              </span>
+            )}
+          </a>
+        </div>
       </aside>
 
-      {/* External collapse toggle — hidden in mobile drawer mode (parity with LobbySidebar) */}
-      {!isMobile && (
-        <SidebarCollapseToggle
-          collapsed={collapsed}
-          onToggle={toggleCollapse}
-          sidebarWidth={sidebarWidth}
-          className="hidden md:inline-flex"
-        />
-      )}
     </>
   );
 }

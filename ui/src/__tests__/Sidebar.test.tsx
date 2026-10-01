@@ -89,15 +89,17 @@ describe("Sidebar — Phase E chrome", () => {
     expect(screen.queryByTestId("user-menu")).toBeNull();
   });
 
-  it("renders the external SidebarCollapseToggle on desktop", () => {
+  it("does not render a second collapse toggle inside the sidebar", () => {
     renderSidebar();
-    expect(screen.getByLabelText(/collapse sidebar/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/collapse sidebar/i)).toBeNull();
   });
 
-  it("header company-name link navigates to lobby (href='/' )", () => {
+  it("keeps company identity in the sidebar footer", () => {
     renderSidebar();
-    const link = screen.getByTitle(/back to all companies/i);
+    const link = screen.getByTitle(/switch company/i);
     expect(link).toHaveAttribute("href", "/");
+    expect(link.closest("aside")?.lastElementChild).toContainElement(link);
+    expect(screen.queryByText("Phase4 Test Co")?.closest("aside")?.querySelector("nav")?.contains(screen.getByText("Phase4 Test Co"))).toBe(false);
   });
 
   it("active row uses brand-red glow dot pattern (no bg-accent)", async () => {
