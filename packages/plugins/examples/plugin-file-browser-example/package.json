@@ -1,6 +1,6 @@
 {
   "name": "@armyofagents/plugin-file-browser-example",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Example plugin: project sidebar Files link + project detail tab with workspace selector and file browser",
   "type": "module",
   "private": true,

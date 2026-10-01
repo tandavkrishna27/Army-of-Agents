@@ -1,6 +1,6 @@
 {
   "name": "@armyofagents/cli",
-  "version": "0.2.7",
+  "version": "1.0.1",
   "description": "AoA (Army of Agents) CLI — orchestrate AI agent teams to run a business",
   "type": "module",
   "bin": {

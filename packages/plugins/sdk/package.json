@@ -1,6 +1,6 @@
 {
   "name": "@armyofagents/plugin-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Stable public API for AoA plugins — worker-side context and UI bridge hooks",
   "license": "MIT",
   "homepage": "https://github.com/meteoritelabs/aoa",

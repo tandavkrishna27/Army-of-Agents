@@ -1,6 +1,6 @@
 {
   "name": "@armyofagents/plugin-hello-world-example",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "First-party reference plugin that adds a Hello World dashboard widget",
   "type": "module",
   "private": true,

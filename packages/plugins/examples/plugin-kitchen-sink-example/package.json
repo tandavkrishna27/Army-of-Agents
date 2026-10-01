@@ -1,6 +1,6 @@
 {
   "name": "@armyofagents/plugin-kitchen-sink-example",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Reference plugin that demonstrates the full AoA plugin surface area in one package",
   "type": "module",
   "private": true,
