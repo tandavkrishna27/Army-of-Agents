@@ -1,6 +1,6 @@
 {
   "name": "@armyofagents/adapter-hermes-local",
-  "version": "0.2.7",
+  "version": "1.0.1",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -9,14 +9,30 @@
   "publishConfig": {
     "access": "public",
     "exports": {
-      ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-      "./server": { "types": "./dist/server/index.d.ts", "import": "./dist/server/index.js" }
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./server": {
+        "types": "./dist/server/index.d.ts",
+        "import": "./dist/server/index.js"
+      }
     },
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts"
   },
-  "files": ["dist"],
-  "scripts": { "build": "tsc", "typecheck": "tsc --noEmit" },
-  "dependencies": { "@armyofagents/adapter-utils": "workspace:*" },
-  "devDependencies": { "@types/node": "^24.6.0", "typescript": "^5.7.3" }
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@armyofagents/adapter-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.7.3"
+  }
 }
