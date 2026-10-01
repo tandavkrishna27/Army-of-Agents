@@ -58,7 +58,7 @@
     "@octokit/rest": "^22.0.1",
     "ajv": "^8.18.0",
     "ajv-formats": "^3.0.1",
-    "better-auth": "1.6.13",
+    "better-auth": "1.6.22",
     "chokidar": "^5.0.0",
     "detect-port": "^2.1.0",
     "diff": "^9.0.0",
