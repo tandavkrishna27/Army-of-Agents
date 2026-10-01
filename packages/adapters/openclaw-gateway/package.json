@@ -1,6 +1,7 @@
 {
   "name": "@armyofagents/adapter-openclaw-gateway",
   "version": "0.2.7",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",

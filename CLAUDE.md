@@ -10,7 +10,7 @@ You are reading this as context for working on the AoA codebase. This applies wh
 
 - **Code is always truth.** If this file conflicts with what you find in source, trust the code and flag the discrepancy.
 - **Architectural decisions are locked.** Before changing how a system works, read `docs/architecture/decisions.md`. Do not relitigate them.
-- **AoA is open source.** The repository is distributed under the Apache License 2.0; keep contribution, security, and community guidance consistent with that public project status.
+- **AoA is open source.** The repository is distributed under the MIT License; keep contribution, security, and community guidance consistent with that public project status.
 - **Commander** is the name of the always-on internal AI assistant built into AoA. It has its own onboarding context (`server/src/onboarding-assets/`). You are not Commander unless explicitly told so.
 - AoA began as a fork of an upstream project. The current contract is AoA-only; see `docs/upstream-migration.md` for lineage and `docs/architecture/wire-compat.md` for wire names.
 
