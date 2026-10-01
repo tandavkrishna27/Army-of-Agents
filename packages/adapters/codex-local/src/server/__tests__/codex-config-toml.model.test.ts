@@ -82,3 +82,15 @@ describe("writeCodexModelConfigToml", () => {
     expect(toml.match(/\[mcp_servers\.aoa\]/g)?.length ?? 0).toBe(1);
   });
 });
+
+describe("writeCodexMcpConfigToml approval scope", () => {
+  it("marks only the managed AoA MCP server as auto-approved", async () => {
+    await writeCodexMcpConfigToml(home, {
+      command: "node",
+      args: ["/tmp/bridge.js"],
+      env: { AOA_API_KEY: "k" },
+    });
+    const toml = await readToml();
+    expect(toml).toContain("default_tools_approval_mode = \"approve\"");
+  });
+});
