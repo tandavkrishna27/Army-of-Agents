@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/tandavkrishna27/Army-of-Agents/security/advisories/new
+    about: Please report vulnerabilities privately. Do not open a public issue for security bugs.
+  - name: Documentation
+    url: https://docs.armyofagents.org
+    about: Read the public documentation.
+  - name: Website
+    url: https://armyofagents.org
+    about: Learn more about Army of Agents.
