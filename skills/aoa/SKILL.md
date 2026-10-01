@@ -222,7 +222,7 @@ GET /api/companies/{companyId}/issues?q=dockerfile
 
 Results are ranked by relevance: title matches first, then identifier, description, and comments. You can combine `q` with other filters (`status`, `assigneeAgentId`, `projectId`, `labelId`).
 
-## Memory (V2.6)
+## Memory
 
 AoA exposes company-shared memory via three MCP tools at the same MCP endpoint your run JWT can already reach (`POST /api/companies/:companyId/mcp`, JSON-RPC `tools/call`):
 

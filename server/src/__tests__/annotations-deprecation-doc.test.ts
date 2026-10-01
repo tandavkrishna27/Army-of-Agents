@@ -4,9 +4,9 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DOC = join(__dirname, "../../../docs/upstream-migration.md");
+const DOC = join(__dirname, "../../../docs/architecture/compatibility-notes.md");
 
-describe("upstream-migration.md — annotation deprecation", () => {
+describe("compatibility-notes.md — annotation deprecation", () => {
   const text = readFileSync(DOC, "utf8");
 
   it("documents discussion_annotations as a deprecated stub", () => {

@@ -15,7 +15,7 @@ automated through GitHub Actions and gated by post-publish smoke tests.
 | ID | Decision | Locked value |
 |----|----------|--------------|
 | H.D1 | Distribution format | **Docker + NPM only.** No desktop installer in Phase H. |
-| H.D2 | Versioning | **SemVer** (`MAJOR.MINOR.PATCH`). First version `0.1.0`. Pre-1.0 signals "evolving — may break." Deviates from the upstream project's CalVer. |
+| H.D2 | Versioning | **SemVer** (`MAJOR.MINOR.PATCH`). First version `0.1.0`. Pre-1.0 signals "evolving — may break." |
 | H.D3 | Intended artifact destinations | **GHCR** (`ghcr.io/${{ github.repository }}` — resolves to the current repository owner) + **npmjs.org public** for `@armyofagents/*` scoped packages, including `@armyofagents/cli`. These are configured targets, not evidence that an artifact exists. |
 | H.D4 | CI service | **GitHub Actions.** |
 | H.D5 | Multi-arch Docker | **amd64 + arm64.** arm/v7 (Raspberry Pi) deferred to Phase I. |
@@ -90,7 +90,7 @@ pnpm release:rollback --dry-run   # preview every action without side effects
 pnpm release:rollback --self-test # run internal helper tests
 ```
 
-3-step Changesets-aware flow (NOT a 1-step dist-tag repointer like the upstream project's):
+3-step Changesets-aware flow:
 1. `npm deprecate` each package returned by the shared owned-workspace package
    discovery at that package's current manifest version
    with a message (default: `"Reverted by rollback-latest.sh on <ISO timestamp>"`;
@@ -127,7 +127,7 @@ pnpm docker:smoke                     # full onboard auto-bootstrap smoke (pulls
 
 ## SemVer vs CalVer
 
-AoA uses SemVer; the upstream project uses CalVer. First AoA version is `0.1.0`, signaling "pre-1.0 evolving — APIs may change between minors." Bump rules:
+AoA uses SemVer. The first AoA version is `0.1.0`, signaling "pre-1.0 evolving — APIs may change between minors." Bump rules:
 - **patch** (0.1.0 → 0.1.1): bug fixes, no API changes
 - **minor** (0.1.0 → 0.2.0): backward-compatible features (relaxed pre-1.0 — minors may include API changes)
 - **major** (0.1.0 → 1.0.0): API breaking changes; 1.0 declares stability commitment

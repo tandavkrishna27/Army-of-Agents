@@ -13,7 +13,7 @@ description: >
 
 # PARA Memory Files (workspace-local only)
 
-> **Scope reminder (V2.6):** This skill is for **your private working notes**.
+> **Scope reminder:** This skill is for **your private working notes**.
 > For company-shared knowledge that other agents and the founder need to see,
 > use the AoA memory MCP tools instead:
 >

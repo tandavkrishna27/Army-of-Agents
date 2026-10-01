@@ -4,7 +4,7 @@
 
 **Goal:** Replace the raw `<pre>` text dump in the workspace timeline with structured, department-aware rendering that shows agent work as scannable pills, cards, and messages.
 
-**Architecture:** Port AoA's `normalizeTranscript()` logic into a new `transcript/` directory under workspace components. Add a new aggregation pass (inspired by vibe-kanban) and a department-aware entry classifier. Build focused rendering components (pills, cards, messages). Wire into existing `TimelineAgentMessage` to replace the `<pre>` dump.
+**Architecture:** Move AoA's `normalizeTranscript()` logic into a new `transcript/` directory under workspace components. Add a new aggregation pass and a department-aware entry classifier. Build focused rendering components (pills, cards, messages). Wire into existing `TimelineAgentMessage` to replace the `<pre>` dump.
 
 **Tech Stack:** React, TypeScript, TailwindCSS, Vitest, @testing-library/react, Lucide icons
 

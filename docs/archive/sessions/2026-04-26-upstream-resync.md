@@ -1,4 +1,4 @@
-# upstream project → AoA Resync (Tier 1 + Tier 2) Implementation Plan
+# AoA Integration and Runtime Update (Tier 1 + Tier 2) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -38,7 +38,7 @@
 - **T23 partial — `BackupRetentionPolicy` interface + retention presets** (`DAILY/WEEKLY/MONTHLY_RETENTION_PRESETS`) already in `packages/shared/src/types/instance.ts:8-12` plus zod validator in `packages/shared/src/validators/instance.ts:19-23`. Task 23 reduced to backup-lib refactor + UI wire-up + un-hide.
 
 **Explicitly skipped — out of scope:**
-- **D1 — Standalone `@upstreamai/mcp-server` package.** AoA's in-server MCP at `server/src/mcp/server.ts` (31 tools, scoped, rate-limited) supersedes this. The standalone package is a stdio MCP→REST bridge for external clients connecting to a remote Upstream; AoA's deployment model is local-first, so this package adds no v1.0 value. **Decision lock candidate** for `docs/aoa/reference/decisions.md`.
+- **D1 — Standalone MCP package.** AoA's in-server MCP at `server/src/mcp/server.ts` (31 tools, scoped, rate-limited) supersedes a separate stdio MCP→REST bridge for external clients. AoA's deployment model is local-first, so a separate package adds no product value. **Decision lock candidate** for `docs/aoa/reference/decisions.md`.
 - **D5 — Skill bin/ PATH support** (Upstream commit `854fa817`). Targets `pi-local` adapter, which AoA does not have (Sprint 2A removed API adapters; AoA's adapter set is `claude_local | opencode_local | openclaw | http | process | cursor | codex_local | hermes_local | gemini_local`). If skill helpers ever need PATH-prepending in AoA's adapters, revisit then.
 
 ---
@@ -1941,7 +1941,7 @@ git commit -m "feat(ui): skill slash-command autocomplete in markdown editor (94
 
 **Review-pass corrections (verified 2026-04-26):**
 - `readUpstreamSkillSyncPreference` and `writeUpstreamSkillSyncPreference` do **not** exist in AoA. Located in Upstream at `packages/adapter-utils/src/server-utils.ts:1227-1306`.
-- Port them with **AoA-renamed function names** (`readAoaSkillSyncPreference` / `writeAoaSkillSyncPreference`), but the **runtime-config FIELD name** must support both `aoaSkillSync` (forward write) AND `upstreamSkillSync` (back-compat read) — because external adapters like Hermes (`hermes-upstream-adapter` package, not under our control) may still emit/consume the old field name. Document with comment "// upstreamSkillSync compat read — remove in next major" matching AoA's existing pattern (per CLAUDE.md "Ambient Upstream-era gaps still open" section).
+- Port them with **AoA-owned function names** (`readAoaSkillSyncPreference` / `writeAoaSkillSyncPreference`), but the **runtime-config field** must support both `aoaSkillSync` (forward write) and `upstreamSkillSync` (back-compat read), because Hermes adapters may still emit or consume the legacy integration field. Document with comment `// upstreamSkillSync compat read` and remove only when compatibility is no longer required.
 
 **Files:**
 - Modify: `packages/adapter-utils/src/server-utils.ts` (port + rename helpers; dual-name field)
@@ -3117,7 +3117,7 @@ git commit -m "feat(inbox): parent-child nesting toggle + j/k traversal (PR #221
 In `docs/aoa/reference/decisions.md`, append (use the next sequential decision numbers):
 
 ```markdown
-## Decision #92: Skip standalone `@upstreamai/mcp-server` package port
+## Decision #92: Keep MCP support in the AoA server package
 
 **Date:** 2026-04-26
 **Context:** Upstream released `packages/mcp-server` — a stdio-based MCP server that wraps the Upstream REST API for external MCP clients (e.g., Claude Desktop) to call Upstream from outside.

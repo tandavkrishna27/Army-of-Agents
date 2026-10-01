@@ -337,7 +337,7 @@ On successful completion:
 ## 8. Out of scope
 
 - Fixing anything found (F1 policy — report only)
-- Re-running upstream project's tests against `upstream-master` for comparison
+- Re-running the baseline tests against the recorded reference revision for comparison
 - Deep performance profiling or load testing
 - Third-party dependency CVE audit (npm audit is separate)
 - Publishing findings externally (internal doc only)
