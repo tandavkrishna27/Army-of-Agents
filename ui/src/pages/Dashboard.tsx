@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@/lib/router";
 import { useHomeSummary } from "../hooks/useHomeSummary";
-import { authApi } from "../api/auth";
+import { profileApi } from "../api/profile";
 import { suggestionsApi } from "../api/suggestions";
 import { useCompany } from "../context/CompanyContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
@@ -41,9 +41,9 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { setBreadcrumbs } = useBreadcrumbs();
 
-  const { data: session } = useQuery({
-    queryKey: queryKeys.auth.session,
-    queryFn: () => authApi.getSession(),
+  const { data: profile } = useQuery({
+    queryKey: queryKeys.auth.profile,
+    queryFn: () => profileApi.get(),
   });
 
   useEffect(() => {
@@ -85,7 +85,9 @@ export function Dashboard() {
     return <EmptyState icon={Home} message="Create or select a company to get started." />;
   }
 
-  const userName = session?.user?.name?.split(" ")[0] ?? null;
+  const userName = profile?.id === "local-board"
+    ? "Local development"
+    : profile?.displayName?.trim()?.split(/\s+/)[0] ?? profile?.email?.split("@")[0] ?? null;
   const greeting = userName ? `${getGreeting()}, ${userName}` : getGreeting();
   // Onboarding (spine + persona fork + in-flight tail) lives ENTIRELY in the
   // standalone /onboarding dark flow and never takes over the dashboard. A

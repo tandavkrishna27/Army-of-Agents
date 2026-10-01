@@ -15,6 +15,7 @@ import { LobbyCompanyCard } from "@/components/LobbyCompanyCard";
 import { LobbyEmptyState } from "@/components/LobbyEmptyState";
 import { LobbyShellMobileMenuButton } from "@/components/LobbyShell";
 import { HUMAN_ROLE_LABELS } from "@/lib/human-profile-constants";
+import { profileFirstName } from "@/lib/auth-identity";
 
 function deriveFirstName(
   displayName: string | undefined,
@@ -82,10 +83,9 @@ export function Lobby({
   }
 
   const isEmpty = visibleCompanies.length === 0;
-  const firstName = deriveFirstName(
-    profile?.displayName ?? undefined,
-    profile?.email ?? undefined
-  );
+  const firstName = profile
+    ? profileFirstName(profile)
+    : deriveFirstName(undefined, undefined);
   const pendingCompanies = stats
     ? visibleCompanies.filter(
         (c) => (stats[c.id]?.pendingApprovalCount ?? 0) > 0

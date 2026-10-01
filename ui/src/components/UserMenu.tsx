@@ -16,6 +16,7 @@ import { useCompany } from "../context/CompanyContext";
 import { useSidebarOrder } from "../hooks/useSidebarOrder";
 import { queryKeys } from "../lib/queryKeys";
 import { cn } from "../lib/utils";
+import { isLocalTrustedProfile, profileDisplayName } from "../lib/auth-identity";
 
 function deriveInitials(name: string): string {
   const trimmed = name.trim();
@@ -43,7 +44,8 @@ export function UserMenu({ collapsed, className }: UserMenuProps) {
     staleTime: 60_000,
   });
 
-  const displayName = profile?.displayName ?? profile?.email ?? "Account";
+  const localTrusted = isLocalTrustedProfile(profile);
+  const displayName = profileDisplayName(profile);
   const initials = deriveInitials(displayName);
 
   const handleSignOut = async () => {
@@ -122,10 +124,17 @@ export function UserMenu({ collapsed, className }: UserMenuProps) {
           Reset sidebar to default
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={handleSignOut}>
-          <LogOut />
-          Sign out
-        </DropdownMenuItem>
+        {localTrusted ? (
+          <DropdownMenuItem disabled>
+            <LogOut />
+            Local trusted session
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onSelect={handleSignOut}>
+            <LogOut />
+            Sign out
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
