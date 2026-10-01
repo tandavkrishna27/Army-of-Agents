@@ -12,7 +12,7 @@ You are reading this as context for working on the AoA codebase. This applies wh
 - **Architectural decisions are locked.** Before changing how a system works, read `docs/architecture/decisions.md`. Do not relitigate them.
 - **AoA is open source.** The repository is distributed under the MIT License; keep contribution, security, and community guidance consistent with that public project status.
 - **Commander** is the name of the always-on internal AI assistant built into AoA. It has its own onboarding context (`server/src/onboarding-assets/`). You are not Commander unless explicitly told so.
-- AoA began as a fork of an upstream project. The current contract is AoA-only; see `docs/upstream-migration.md` for lineage and `docs/architecture/wire-compat.md` for wire names.
+- AoA uses AoA-owned contracts across runtime, plugin, CLI, browser, and export surfaces. See `docs/architecture/wire-compat.md` for current wire names.
 
 ---
 
@@ -32,11 +32,10 @@ You are reading this as context for working on the AoA codebase. This applies wh
 
 ---
 
-## AoA Divergence Points
+## AoA Operating Invariants
 
-These are intentional AoA-specific choices that **differ from the upstream project** and must
-survive future upstream pull syncs. Future agents: when you see an upstream commit
-touching these areas, check against this list before porting.
+These are product and safety invariants. Preserve them when changing related behavior,
+and review the implementation and tests before making changes.
 
 ### D5 — Concurrency clamp (heartbeat)
 
@@ -44,10 +43,10 @@ touching these areas, check against this list before porting.
   AoA teams opt-up per-agent as they build trust. A founding team of 3-5 people
   running a multi-agent pipeline can set each agent to 3-5, yielding 9-25 concurrent
   runs — well within the clamp.
-- `HEARTBEAT_MAX_CONCURRENT_RUNS_MAX = 50` — raised from the upstream project's 10 in v1.1 (D5).
+- `HEARTBEAT_MAX_CONCURRENT_RUNS_MAX = 50` — configured upper bound (D5).
   Founding teams legitimately need > 10 concurrent runs across all agents.
-- **Do NOT port** any upstream commit that raises the DEFAULT above 1 or the MAX
-  above 50 unless there is a specific AoA team-size reason to do so.
+- **Do NOT raise** the DEFAULT above 1 or the MAX above 50 without a specific
+  AoA team-size reason.
 
 ### D6 — Hire-approval default by deployment mode (company create)
 
@@ -58,8 +57,8 @@ touching these areas, check against this list before porting.
   Multi-human board → agent hiring is a governance decision. Default on = safe.
 - DB schema default (`.default(true)`) is unchanged — this is injected server-side
   in `server/src/routes/companies.ts` POST handler using `opts.deploymentMode`.
-- **Do NOT port** any upstream commit that sets this field to `false` in
-  `authenticated` mode. Multi-human board accountability is the AoA thesis.
+- **Do NOT set** this field to `false` in `authenticated` mode. Multi-human board
+  accountability is a core AoA principle.
 
 ### D8 — Planning mode dispatch gate
 
@@ -70,8 +69,7 @@ touching these areas, check against this list before porting.
   `server/src/routes/issues-planning-mode-dispatch.ts`.
 - UI: amber "Planning" pill on IssuesList rows, NewIssueDialog chip bar, and
   TaskSlideOver header (click to revert to Standard).
-- **Do NOT port** any upstream commit that adds `work_mode` or a similar field
-  differently — AoA's interpretation is that planning tasks are human-curated and
+- **Do NOT change** the meaning of `work_mode` — AoA's interpretation is that planning tasks are human-curated and
   must not auto-dispatch until the founder switches them to Standard.
 
 ---
@@ -254,7 +252,7 @@ Thumbs-up/down on agent-authored comments (`FeedbackThumbs` in CommentThread). R
 
 ### Company Portability
 
-Export/import full company bundles (`schemaVersion: 2`, 12 sections). Upstream v1 bundles import compatibly (warn-and-continue for unknown sections). UI: `/export` (checkboxes + preview → JSON download) + `/import` (upload → plan → import). See `docs/api/companies.md` for the full bundle schema and section list.
+Export/import full company bundles (`schemaVersion: 2`, 12 sections). Unknown sections are handled compatibly (warn-and-continue). UI: `/export` (checkboxes + preview → JSON download) + `/import` (upload → plan → import). See `docs/api/companies.md` for the full bundle schema and section list.
 
 ### Execution Workspaces
 
@@ -627,5 +625,5 @@ ui/src/lib/                → Shared utilities + constants
 | `docs/cli/` | CLI command reference |
 | `docs/roadmap.md` | Planned features — NOT current behavior |
 | `docs/STANDARDS.md` | Documentation lifecycle and session log extraction rules |
-| `docs/upstream-migration.md` | Upstream-to-AoA tracking: wire protocol, deprecated tables, removed adapters |
+| `docs/architecture/wire-compat.md` | AoA wire names and compatibility contracts |
 | `docs/archive/` | Historical session logs, shipped plans, retired specs — not authoritative |

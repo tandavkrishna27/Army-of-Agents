@@ -7,7 +7,7 @@
 # in normal CI without credentials.
 #
 # The AUTHORITATIVE per-release gate for the real-LLM loop is the manual
-# checklist at docs/qa/thread-v2-release-checklist.md. This automated lane
+# checklist at docs/qa/thread-crew-release-checklist.md. This automated lane
 # exists as an early-warning signal — flakiness here does not constitute a
 # blocking failure.
 #

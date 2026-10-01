@@ -1,8 +1,8 @@
-# Thread v2 (Crew) — Per-Release Manual QA Checklist
+# Thread and Crew — Per-Release Manual QA Checklist
 
 Run this against a live instance with the crew agents (Adjutant, Engineer, Scout)
 configured with a real `claude_local` adapter + valid credentials, before tagging
-a release that touches the thread-v2 / crew path. The automated E2E lane
+a release that touches the Thread or Crew path. The automated E2E lane
 (`.github/workflows/thread-v2-e2e.yml`) is advisory; this checklist is the
 authoritative per-release gate for the real-LLM loop.
 
@@ -123,4 +123,4 @@ Notes / exceptions:
 
 ---
 
-*This checklist is generated from the thread-v2 implementation. If UI labels or card test-ids change, update this checklist in the same PR that changes the component.*
+*This checklist covers the Thread and Crew implementation. If UI labels or card test-ids change, update this checklist in the same PR that changes the component.*

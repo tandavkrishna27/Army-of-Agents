@@ -40,7 +40,7 @@ Decisions made during product design and development. Do not relitigate unless e
 | 17 | Tasks don't care who does them | Same task model for humans and agents. Experience adapts. |
 | 18 | Agents can only self-transition: todo → in_progress → in_review | Only humans mark done/cancelled. Deliberate control point. |
 | 18A | Decision #18 is superseded by Decision #109 (2026-07-11) | Review-required remains the safe default; explicitly governed tasks may allow agent completion under policy, autonomy, and structured acceptance criteria. |
-| 19 | Drizzle only, no raw SQL | Matches the upstream project patterns. `pnpm db:generate` for all schema DDL. Narrow C14 exception: idempotency guards + data-only backfills may be hand-appended post-generation (e.g. 0189/0195), always idempotent; schema DDL is never hand-authored. |
+| 19 | Drizzle only, no raw SQL | `pnpm db:generate` for all schema DDL. Narrow C14 exception: idempotency guards + data-only backfills may be hand-appended post-generation (e.g. 0189/0195), always idempotent; schema DDL is never hand-authored. |
 | 20 | ~~Sub-goals limited to one level deep~~ **(SUPERSEDED 2026-05-25)** | Superseded by the multi-parent goals model — goals form a freely-nested, multi-parent DAG; integrity (cycles + child⊆parent scope) enforced on write. See `docs/superpowers/plans/2026-05-25-threads-goals-followup.md` B0. |
 | 21 | Task dependencies use a separate `task_dependencies` table, not parentId | parentId = subtasks (hierarchy). Dependencies = blocking relationships (different concept). Separate table, separate logic. |
 | 22 | Cancelled dependency notifies but does NOT auto-cancel dependents | Too aggressive. Founder decides what to do with orphaned tasks. |
@@ -501,15 +501,15 @@ New table: `internal_agent_runs` with triggerType (conversation / proactive / ev
 
 ## Decision (annotation, 2026-04-21): MCP `upsert-task-document` ≡ artifact operations
 
-the upstream project's `aoaUpsertIssueDocument` tool wraps a markdown body (identified by a `key`) attached to an issue, with an append-only revision history. AoA's equivalent substrate is the existing `artifacts` + `artifact_versions` subsystem, with a 1:1 link from task to artifact via `issues.artifactId`. Phase C (Task C.4) maps the upstream project's document tool surface onto AoA's artifact subsystem:
+The task-document workflow stores a markdown body attached to a task with an append-only revision history. AoA's substrate is the existing `artifacts` + `artifact_versions` subsystem, with a 1:1 link from task to artifact via `issues.artifactId`. Phase C (Task C.4) maps document operations onto AoA's artifact subsystem:
 
 - `upsert-task-document` → if the task's artifact exists and is of type `document`, add a new immutable version; else create a new artifact of type `document` and link it via `issues.artifactId`
-- `list-task-documents` → return the task's document artifact (0 or 1 item — AoA has a single artifact per task, unlike the upstream project's per-key multiplicity)
+- `list-task-documents` → return the task's document artifact (0 or 1 item — AoA has a single artifact per task)
 - `get-task-document` → return the artifact + its latest version (content + metadata)
 - `list-task-document-revisions` → return all artifact versions ordered ascending by `versionNumber` (immutable history)
 - `restore-task-document-revision` → create a **new** artifact version whose content is copied from the specified older version; the old version is **never mutated** (preserves Decisions #43 / #45 — artifact versions are immutable)
 
-**Surface divergence from the upstream project:** AoA does not accept the upstream project's `key` parameter because its data model is 1:1 task↔artifact. If the upstream project-style per-key multiplicity is ever needed, it would require a schema change (e.g., a `task_documents` junction table), not a tool-surface change.
+**Surface constraint:** AoA does not accept a `key` parameter because its data model is 1:1 task↔artifact. Per-key multiplicity would require a schema change (e.g., a `task_documents` junction table), not a tool-surface change.
 
 **RBAC:** All five tools enforce company isolation (cross-company access returns 404) and — for scoped users — project-scope membership via the task's `projectId`. Writes additionally require `permissionsSvc.canAccessEntity("artifact", "update", { departmentId: task.projectId })`.
 
@@ -533,20 +533,20 @@ AoA keeps `issues.artifactId` as the primary artifact pointer for artifact-as-in
 
 **Status:** Locked 2026-04-26.
 
-The upstream project provided a standalone stdio MCP wrapper around its REST API. AoA uses its in-server MCP implementation with its own RBAC and tool registry, so the standalone wrapper was not ported. This historical decision does not require retaining an upstream package name or binary alias in AoA. If a standalone wrapper is needed later, it should ship under the AoA package scope and current AoA wire contracts.
+AoA uses an in-server MCP implementation with its own RBAC and tool registry. If a standalone wrapper is needed later, it should ship under the AoA package scope and current AoA wire contracts.
 
 ---
 
-## Decision #94 — Skip the upstream project `pi-local` skill bin/ PATH support port
+## Decision #94 — Keep skill helper execution within AoA's current runtime contract
 
 **Status:** Locked (2026-04-26)
 
-**Context:** the upstream project commit `854fa817` adds skill `bin/` directories to the child process PATH for the `pi-local` adapter so AGENTS.md-invoked skill helpers (`aoa-get-issue`, `aoa-add-comment`, etc.) resolve without absolute paths during agent CLI runs.
+**Context:** Adding skill `bin/` directories to child process PATH can make helper commands resolve without absolute paths during agent CLI runs.
 
-**Decision:** Do NOT port. AoA's adapter set is `claude_local | opencode_local | openclaw | http | process | cursor | codex_local | hermes_local | gemini_local`. None of these are the upstream project's `pi-local`. Skill helpers via the PATH-prepending mechanism are not part of AoA's heartbeat protocol today — agents communicate with the AoA backend via the in-server MCP, not via shelling out to skill-bundled CLI binaries.
+**Decision:** Do not add implicit skill-bin PATH mutation. AoA's adapter set is `claude_local | opencode_local | openclaw | http | process | cursor | codex_local | hermes_local | gemini_local`. Skill helpers via PATH-prepending are not part of AoA's heartbeat protocol today — agents communicate with the AoA backend via in-server MCP, not via shelling out to skill-bundled CLI binaries.
 
 **Reasoning:**
-- The upstream project change targets a specific adapter (`pi-local`) that AoA does not have and has no plan to add (Sprint 2A / Decision #91 removed API-mode adapters; the adapter list is curated).
+- The helper behavior was scoped to an adapter that AoA does not support (Sprint 2A / Decision #91 removed API-mode adapters; the adapter list is curated).
 - AoA's equivalent agent-tool surface is the in-server MCP exposed via per-user keys — agents call MCP tools, not bundled CLI binaries.
 - Adding generic skill-bin PATH support to AoA's other adapters (claude_local, codex_local, etc.) would be feature-creep without a concrete agent workflow that needs it.
 
@@ -1125,7 +1125,7 @@ Design reviewed: W5c plan (staff-eng + Codex review) plus the Task 1 live `app-s
 
 3. **Crew-autonomy dial gates agent-INITIATED work only; explicit founder authorization always dispatches.** Approving a `crew_dispatch` (or manually assigning/reassigning a task to a crew agent) exempts the resulting task wakeup from the company crew-autonomy gate (keyed on `payload.issueId` + `source ∈ {assignment, automation}`, covering both the assignee-wakeup chokepoint and the PATCH-reassign path). `crewPaused` stays the true global kill-switch. This fixes the `skipped_autonomy` behavior where approving a dispatch visibly did nothing at Manual/Assist autonomy.
 
-4. **Dead-type package — build 2, prune 2, defer 2, hide 1.** BUILD now (docs already promised them): `extraction_failed` (emit on CLI-extraction failure; auto-archive on successful reprocess) and `routine_outcome` (failure-only; success never notifies). PRUNE (type-only, superseded): `human_input_needed` and `scope_proposal` — the "agent needs the human" channels are `agent_runtime_decision`/`work_question` + `mention`, and scope proposals surface as thread cards + the `crew_dispatch` approval. DEFER to 1.1 (need schedulers): `reminder` (Commander reminders) and `proactive` (the periodic scan loop — CLAUDE.md corrected to reflect it is unwired today). KEEP internal-only, hidden from settings: `legacy_other` (the catch-all sink stays functional for the upstream project-era company-bundle imports).
+4. **Dead-type package — build 2, prune 2, defer 2, hide 1.** BUILD now (docs already promised them): `extraction_failed` (emit on CLI-extraction failure; auto-archive on successful reprocess) and `routine_outcome` (failure-only; success never notifies). PRUNE (type-only, superseded): `human_input_needed` and `scope_proposal` — the "agent needs the human" channels are `agent_runtime_decision`/`work_question` + `mention`, and scope proposals surface as thread cards + the `crew_dispatch` approval. DEFER to 1.1 (need schedulers): `reminder` (Commander reminders) and `proactive` (the periodic scan loop — CLAUDE.md corrected to reflect it is unwired today). KEEP internal-only, hidden from settings: `legacy_other` (the catch-all sink stays functional for legacy company-bundle imports).
 
 **Deferred (not decided here, tracked separately) — BOTH NOW RESOLVED 2026-07-04 (see the note below this decision):** the `work_question` **adapter caller** (agents can't yet ask the founder a product question in-run — the service/panel/answer path exist but no bridge raises one; W5b scoped it out) → shipped as the `ask_founder` MCP tool; BUG-6 (`codex_local` supervised turn completes empty) → root-caused (no model on the app-server turn → `gpt-5.3-codex` 400) + fixed. Safety fix shipped for `work_question`: answering one whose run is dead returns an honest 409 + cancels the decision instead of stalling forever.
 

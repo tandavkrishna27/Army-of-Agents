@@ -30,7 +30,7 @@ Three-row unified input widget, fixed to the bottom of the timeline panel, wrapp
 | Left | Adapter icon + agent name | Read-only. Icon colored per provider (purple = Claude, green = OpenAI, blue = Gemini). Agent name from the task's `assigneeAgentId`. |
 | Center-left | Diff stats badge | `3 files +120 -45`. Only visible when the latest run produced file changes. Uses existing `latestFileCount`/`latestTotalBytes` data. |
 | Right corner | Context donut icon | Small donut/ring indicator. Shows token usage details on hover (tooltip: "42K / 200K tokens used"). Data source TBD — will need to aggregate from run token data. |
-| Right corner | Todo icon | Click opens a popover showing agent's task progress list (similar to Vibe Kanban's "Tasks 3/5" with progress bar). Data source TBD — will need to parse from agent run output or subtask hierarchy. |
+| Right corner | Todo icon | Click opens a popover showing the agent's task progress list with completed and total task counts. Data source TBD — parse from agent run output or subtask hierarchy. |
 
 ### Input Area (middle)
 

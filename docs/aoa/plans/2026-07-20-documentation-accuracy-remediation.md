@@ -31,7 +31,7 @@ and with externally verifiable distribution state.
 | `POST /api/mcp/artifacts/:id/versions` | Board founder or founder-owned MCP key; reject agents; force `source: "mcp"`. |
 | JSON-RPC `attach-artifact-version` | Board or MCP caller with same-company, project-scope, and artifact-update permission; reject agent and Commander actors. |
 | Company/project `humanQuestionSlaHours` | Human board operator with `tasks:assign`; local implicit and instance-admin bypasses remain. Presence checks include `null` clears. |
-| Public install instructions | Source checkout plus `pnpm aoa` until the scoped CLI is actually published and smoke-tested. Never direct users to the unrelated `aoa` package or upstream `upstreamai` package. |
+| Public install instructions | Source checkout plus `pnpm aoa` until the scoped CLI is actually published and smoke-tested. Never direct users to an unrelated package. |
 
 ## Implementation
 
@@ -61,7 +61,7 @@ and with externally verifiable distribution state.
    - Describe the actual per-package tag and Docker behavior, and make the
      local release script discover every owned, non-private
      `@armyofagents/*` pnpm workspace dynamically.
-   - Keep the upstream-owned `@upstreamai/create-upstream-plugin`
+   - Keep plugin scaffolding within the AoA-owned package scope.
      compatibility workspace private so Changesets excludes it, and reuse the
      same owned-workspace discovery and package-specific versions for release
      and rollback.
