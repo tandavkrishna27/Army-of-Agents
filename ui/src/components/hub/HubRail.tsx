@@ -99,11 +99,6 @@ export function HubRail({
                   )}
                 >
                   <Icon className="h-4 w-4" aria-hidden="true" />
-                  {lane === "waiting_on_you" && counts.open > 0 ? (
-                    <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-brand px-1 text-[10px] leading-4 text-white">
-                      {counts.open}
-                    </span>
-                  ) : null}
                 </button>
               );
             })}
@@ -127,11 +122,6 @@ export function HubRail({
                 >
                   <Icon className="size-3.5 shrink-0" aria-hidden="true" />
                   <span className="min-w-0 flex-1 truncate">{label}</span>
-                  {lane === "waiting_on_you" && counts.open > 0 ? (
-                    <span className="ml-auto shrink-0 rounded-full bg-brand px-1.5 text-[10px] leading-4 text-white">
-                      {counts.open}
-                    </span>
-                  ) : null}
                 </button>
               );
             })}

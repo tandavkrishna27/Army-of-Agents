@@ -58,6 +58,7 @@ vi.mock("../context/SidebarContext", () => ({
     toggleSidebar: vi.fn(),
     isMobile: false,
     setCollapsed: vi.fn(),
+    setTransientMode: vi.fn(),
     toggleCollapse: vi.fn(),
   }),
 }));

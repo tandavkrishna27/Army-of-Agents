@@ -356,7 +356,7 @@ describe.skipIf(process.platform === "win32")("durable work questions (real Post
     )).then((rows) => rows[0]);
     expect(cancelledRequest.status).toBe("cancelled");
     const closedMirror = await db.select().from(hubItems).where(eq(hubItems.id, openMirror.id)).then((rows) => rows[0]);
-    expect(closedMirror.status).toBe("archived");
+    expect(closedMirror.status).toBe("resolved");
   });
 
   it("accepts the shared workspace owned by the task's source Discussion", async () => {
@@ -693,7 +693,7 @@ describe.skipIf(process.platform === "win32")("durable work questions (real Post
       status: "cancelled",
       continuationStatus: "not_needed",
     });
-    expect(mirror.status).toBe("archived");
+    expect(mirror.status).toBe("resolved");
   });
 
   it("parks unsupported runtimes immediately and persists visible waiting state", async () => {

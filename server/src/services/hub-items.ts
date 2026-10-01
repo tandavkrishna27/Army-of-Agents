@@ -86,6 +86,10 @@ import { runtimeDecisionSourceSnapshot } from "./agent-runtime-decisions.js";
 import { formatBudgetAlertSummary } from "./hub-source-producers.js";
 
 // Semantic types that resolve to a given lane (lane is derived, not a column).
+export function terminalHubStatusForSource(sourceType: string): "resolved" | "archived" {
+  return sourceType === "work_question" ? "resolved" : "archived";
+}
+
 function semanticTypesForLane(lane: HubLane): HubSemanticType[] {
   return HUB_SEMANTIC_TYPES.filter((t) => laneForSemanticType(t) === lane);
 }
@@ -1808,8 +1812,9 @@ export function hubItemsService(db: Db) {
         // concurrent user action bumps the version → this UPDATE 409s; we swallow
         // it and let the next sweep reconcile (sources stay truth).
         try {
+          const terminalStatus = terminalHubStatusForSource(opts.sourceType);
           const closedItem = await runTransaction(async (tx) =>
-            applyGuardedTransition(tx, item, "archived", {
+            applyGuardedTransition(tx, item, terminalStatus, {
               actorType: "system",
               actorId: "reconciler",
               action: "reconcile_close",
@@ -1821,7 +1826,7 @@ export function hubItemsService(db: Db) {
           closed += 1;
           // Realtime close (BUG-2): push the archive so the item leaves the
           // open lane without a hub reload.
-          publishHubItemChanged(closedItem, "archived");
+          publishHubItemChanged(closedItem, terminalStatus);
         } catch (err) {
           // 409 from a concurrent action → skip; anything else rethrows.
           if (!(err instanceof Error) || (err as { status?: number }).status !== 409) throw err;

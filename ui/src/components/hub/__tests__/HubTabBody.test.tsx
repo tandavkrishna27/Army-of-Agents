@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { HubItemListRow } from "@/api/hub-items";
 import { HubTabBody } from "../HubTabBody";
 import { HUB_TABPANEL_ID } from "../HubTabStrip";
@@ -16,6 +17,7 @@ import {
   runtimeDecisionTab,
   taskTab,
   threadTab,
+  workQuestionTab,
   type HubTab,
 } from "../hubViewerModel";
 
@@ -96,6 +98,27 @@ vi.mock("../TaskOutputViewer", () => ({
   ),
 }));
 
+const workspaceTimelineSpy = vi.fn();
+vi.mock("../../workspace/WorkspaceTimeline", () => ({
+  WorkspaceTimeline: (props: Record<string, unknown>) => {
+    workspaceTimelineSpy(props);
+    return <div data-testid="mock-workspace-timeline" data-issue-id={String(props.issueId)} />;
+  },
+}));
+
+const workQuestionDetail = vi.fn();
+vi.mock("@/api/work-questions", () => ({
+  workQuestionsApi: {
+    detail: (...args: unknown[]) => workQuestionDetail(...args),
+  },
+}));
+
+vi.mock("@/components/work-questions/WorkQuestionPanel", () => ({
+  WorkQuestionPanel: (props: Record<string, unknown>) => (
+    <div data-testid="mock-work-question-panel" data-question-id={String(props.questionId)} />
+  ),
+}));
+
 // D4 containers are exercised in their own suites; here we stub them to simple
 // divs and only assert HubTabBody's switch routes to them with the right props.
 const agentContainerSpy = vi.fn();
@@ -145,13 +168,15 @@ function renderBody(
   activeItem?: HubItemListRow | null,
 ) {
   const utils = render(
-    <HubTabBody
-      tab={tab}
-      companyId="company-1"
-      onOpenTab={onOpenTab}
-      resolveHubItem={resolveHubItem}
-      activeItem={activeItem}
-    />,
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <HubTabBody
+        tab={tab}
+        companyId="company-1"
+        onOpenTab={onOpenTab}
+        resolveHubItem={resolveHubItem}
+        activeItem={activeItem}
+      />
+    </QueryClientProvider>,
   );
   return { ...utils, onOpenTab };
 }
@@ -211,6 +236,20 @@ describe("HubTabBody", () => {
     renderBody(taskTab("issue-42", "Ship it"));
     const el = screen.getByTestId("mock-task-detail");
     expect(el).toHaveAttribute("data-issue-id", "issue-42");
+  });
+
+  it("opens a linked work question as the full workspace thread surface", async () => {
+    workQuestionDetail.mockResolvedValue({
+      question: { issueId: "issue-question-42" },
+    });
+
+    renderBody(workQuestionTab("question-42", "Need input"));
+
+    await screen.findByTestId("mock-workspace-timeline");
+    expect(screen.queryByTestId("mock-work-question-panel")).not.toBeInTheDocument();
+    expect(screen.getByTestId("mock-workspace-timeline")).toHaveAttribute("data-issue-id", "issue-question-42");
+    const props = workspaceTimelineSpy.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(props.issueId).toBe("issue-question-42");
   });
 
   it("renders ThreadDetail with the payload discussionId + embedded for a thread tab", () => {

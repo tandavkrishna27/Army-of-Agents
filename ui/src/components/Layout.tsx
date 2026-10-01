@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AgentPanelProvider } from "../context/AgentPanelContext";
 import { AccessRequired } from "../pages/AccessRequired";
+import { getRouteSidebarMode } from "../lib/sidebarPolicy";
 
 const NewAgentDialog = lazy(() => import("./NewAgentDialog").then((m) => ({ default: m.NewAgentDialog })));
 const NewGoalDialog = lazy(() => import("./NewGoalDialog").then((m) => ({ default: m.NewGoalDialog })));
@@ -53,7 +54,7 @@ export function shouldUseFullBleedMain(pathname: string, companyPrefix?: string)
 }
 
 export function Layout() {
-  const { sidebarOpen, setSidebarOpen, toggleSidebar, isMobile, setCollapsed, toggleCollapse } = useSidebar();
+  const { sidebarOpen, setSidebarOpen, toggleSidebar, isMobile, hidden, setMode, setCollapsed, setTransientMode, toggleCollapse } = useSidebar();
   const {
     newAgentOpen,
     newGoalOpen,
@@ -166,6 +167,14 @@ export function Layout() {
     }
   }, [location.pathname, isMobile, setCollapsed]);
 
+  useEffect(() => {
+    if (isMobile) {
+      setTransientMode(null);
+      return;
+    }
+    setTransientMode(getRouteSidebarMode(location.pathname));
+  }, [isMobile, location.pathname, setTransientMode]);
+
   useCompanyPageMemory();
 
   useKeyboardShortcuts({
@@ -251,7 +260,7 @@ export function Layout() {
 
   return (
     <AgentPanelProvider>
-    <div className="flex h-dvh bg-background text-foreground overflow-hidden pt-[env(safe-area-inset-top)]">
+    <div className="flex flex-col h-dvh bg-background text-foreground overflow-hidden pt-[env(safe-area-inset-top)]">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[200] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -268,7 +277,11 @@ export function Layout() {
         />
       )}
 
-      {/* Sidebar + docs bar */}
+      {/* Full-width application header; navigation and content begin below it. */}
+      <BreadcrumbBar />
+
+      {/* Sidebar + main content */}
+      <div className="flex flex-1 min-h-0 min-w-0">
       {isMobile ? (
         <div
           className={cn(
@@ -276,21 +289,16 @@ export function Layout() {
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-            <Sidebar />
-          </div>
+            <div className="flex flex-1 min-h-0 overflow-hidden"><Sidebar /></div>
         </div>
       ) : (
-        <div className="relative flex flex-col shrink-0 h-full">
-          <div className="flex flex-1 min-h-0">
-            <Sidebar />
-          </div>
+          <div className="relative flex flex-col shrink-0 h-full py-2 pl-2">
+            {!hidden && <div className="flex flex-1 min-h-0"><Sidebar /></div>}
         </div>
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 h-full">
-        <BreadcrumbBar />
+        <div className="flex-1 flex flex-col min-w-0 h-full">
         <main
           id="main-content"
           tabIndex={-1}
@@ -304,6 +312,18 @@ export function Layout() {
           {noAccessPrefix ? <AccessRequired requestedPrefix={noAccessPrefix} /> : <Outlet />}
         </main>
       </div>
+      </div>
+
+      {!isMobile && hidden && (
+        <button
+          type="button"
+          aria-label="Show sidebar"
+          title="Show sidebar"
+          onMouseEnter={() => setMode("compact")}
+          onClick={() => setMode("compact")}
+          className="fixed left-0 top-1/2 z-40 h-16 w-2 -translate-y-1/2 rounded-r-md border border-l-0 border-border bg-card/80 opacity-70 transition-all hover:w-3 hover:bg-card"
+        />
+      )}
 
 
       {isMobile && <MobileBottomNav visible={mobileNavVisible} />}

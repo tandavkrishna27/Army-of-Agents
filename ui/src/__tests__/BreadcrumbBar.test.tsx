@@ -58,6 +58,14 @@ describe("BreadcrumbBar — Phase G slim", () => {
     expect(screen.queryByLabelText(/commander/i)).toBeNull();
   });
 
+  it("renders AoA as a persistent Lobby link and desktop sidebar toggle", () => {
+    renderBar();
+    expect(screen.getByRole("link", { name: /go to lobby/i })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("button", { name: /collapse sidebar/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /sidebar display options/i })).toBeNull();
+    expect(screen.getByRole("link", { name: /go to lobby/i }).className).toContain("absolute");
+  });
+
   it("renders last-2-breadcrumbs as a slim trail with middot separator", () => {
     renderBar();
     expect(screen.getByText("Q4 launch")).toBeInTheDocument();
