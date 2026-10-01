@@ -13,6 +13,7 @@ const {
   createConnectorCatalogService,
   resolveConnectorCatalogService,
   CONNECTOR_CATALOG_TTL_MS,
+  DEFAULT_CONNECTOR_CATALOG_URL,
 } = await import("../services/mcp-connector-catalog.js");
 
 const URL_ = "https://cdn.example.test/connectors.json";
@@ -55,6 +56,12 @@ afterEach(() => {
 });
 
 describe("connector catalog service — happy path", () => {
+  it("uses the AoA-owned connectors catalog URL by default", () => {
+    expect(DEFAULT_CONNECTOR_CATALOG_URL).toBe(
+      "https://raw.githubusercontent.com/tandavkrishna27/aoa-marketplace-cdn/main/connectors.json",
+    );
+  });
+
   it("fetches and parses the CDN body", async () => {
     const fetchFn = vi.fn(async () => okJson({ entries: [httpEntry("alpha"), httpEntry("beta")] }));
     const svc = createConnectorCatalogService({ url: URL_, fetchFn: fetchFn as unknown as typeof fetch });
