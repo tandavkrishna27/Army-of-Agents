@@ -25,6 +25,7 @@ interface HubListProps {
   onMarkRead: (itemId: string) => void;
   onToggleBulkItem: (itemId: string) => void;
   onLoadMore?: () => void;
+  emptyMessage?: string;
   /** Restore a personally-dismissed hidden row (revealed via the "N hidden" chip). */
   onUndismiss?: (itemId: string) => void;
   /** Restore a personally-snoozed hidden row (revealed via the "N hidden" chip). */
@@ -60,6 +61,7 @@ export function HubList({
   onMarkRead,
   onToggleBulkItem,
   onLoadMore,
+  emptyMessage = "No items in this view.",
   onUndismiss,
   onUnsnooze,
 }: HubListProps) {
@@ -72,7 +74,7 @@ export function HubList({
     return <div className="p-4 text-sm text-error">Could not load hub items.</div>;
   }
   if (items.length === 0) {
-    return <div className="p-4 text-sm text-muted-foreground">No open items in this lane.</div>;
+    return <div className="p-4 text-sm text-muted-foreground">{emptyMessage}</div>;
   }
 
   const entries = buildHubListEntries(items, groupMode);

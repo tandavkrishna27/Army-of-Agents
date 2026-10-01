@@ -13,7 +13,6 @@ import {
   Shield,
   Puzzle,
   FolderGit2,
-  LayoutList,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@/lib/router";
@@ -137,7 +136,6 @@ export function Sidebar() {
           <SidebarSection label="Work" collapsed={collapsed}>
             <SidebarNavItem to="/discussions" label="Discussions" icon={MessageSquare} badge={sidebarBadges?.pendingDiscussions} collapsed={collapsed} />
             <SidebarNavItem to="/issues" label="Tasks" icon={CircleDot} collapsed={collapsed} />
-            <SidebarNavItem to="/team?tab=aoa&aoaTab=tasks" label="Crew Board" icon={LayoutList} collapsed={collapsed} />
             <SidebarNavItem to="/agents/all" label="Agents" icon={Bot} collapsed={collapsed} />
             <SidebarNavItem to="/routines" label="Routines" icon={Repeat} collapsed={collapsed} />
             <SidebarNavItem to="/workspaces" label="Workspaces" icon={FolderGit2} collapsed={collapsed} />

@@ -91,6 +91,7 @@ interface HubShellProps {
   onUnsnooze?: (itemId: string) => void;
   hasMore?: boolean;
   isLoadingMore?: boolean;
+  emptyMessage?: string;
   preferences?: HubPreferences;
   autopilotPolicy?: HubAutopilotPolicy;
   autopilotActions?: { items: HubAutopilotActionRow[] };
@@ -142,6 +143,7 @@ export function HubShell({
   onUnsnooze = noop,
   hasMore = false,
   isLoadingMore = false,
+  emptyMessage,
   preferences = DEFAULT_PREFERENCES,
   autopilotPolicy = DEFAULT_AUTOPILOT_POLICY,
   autopilotActions = EMPTY_AUTOPILOT_ACTIONS,
@@ -371,6 +373,7 @@ export function HubShell({
             selectedBulkIds={selectedBulkIds}
             hasMore={hasMore}
             isLoadingMore={isLoadingMore}
+            emptyMessage={emptyMessage}
             groupMode={preferences.groupMode}
             density={preferences.density}
             onOpenItem={onOpenItem}

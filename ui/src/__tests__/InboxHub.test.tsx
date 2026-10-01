@@ -538,11 +538,11 @@ describe("InboxHub page", () => {
     expect(await screen.findByText(/Autopilot/i)).toBeInTheDocument();
   });
 
-  it("fetches a waiting-lane preview on Home and surfaces it as 'Needs you most'", async () => {
+  it("fetches all open lanes on Home and surfaces the most relevant item", async () => {
     // On Home (no active lane) the lane list query is disabled; the dedicated
     // home-preview fetch must fill the "Needs you most" card.
     vi.mocked(hubItemsApi.list).mockImplementation(async (_cid, opts) =>
-      opts?.lane === "waiting_on_you" && opts?.limit === 5
+      opts?.status === "open" && opts?.limit === 50
         ? hubList([hubItem({ id: "hub-needs", title: "Decide the deployment" })])
         : hubList([]),
     );
@@ -552,9 +552,8 @@ describe("InboxHub page", () => {
     // The preview page is requested with the stable HOME_PREVIEW_OPTIONS.
     await waitFor(() => {
       expect(hubItemsApi.list).toHaveBeenCalledWith("company-1", {
-        lane: "waiting_on_you",
         status: "open",
-        limit: 5,
+        limit: 50,
       });
     });
     // Its top item appears in the "Needs you most" card (no longer the empty copy).
@@ -1178,7 +1177,7 @@ describe("InboxHub page", () => {
     // persists independently of the list, so the item stays reachable — and the
     // cached row keeps its tab body resolvable without a getOne refetch.
     fireEvent.click(screen.getByRole("button", { name: /^resolved$/i }));
-    await screen.findByText(/no open items in this lane/i);
+    await screen.findByText(/no resolved items in waiting on you/i);
 
     expect(screen.getByRole("tab", { name: /listed deep item/i })).toBeInTheDocument();
     expect(hubItemsApi.getOne).not.toHaveBeenCalled();

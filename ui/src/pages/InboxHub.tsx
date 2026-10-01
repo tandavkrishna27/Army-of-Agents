@@ -75,16 +75,13 @@ const DEFAULT_AUTOPILOT_ACTIONS: HubAutopilotActionsResponse = { items: [] };
 export const OPENED_ITEM_CACHE_MAX = 24;
 
 /**
- * "Needs you most" (HubHome) reads items[0]. On Home (`activeLane===null`) the
- * lane list query is disabled, so without a dedicated fetch the card is
- * permanently empty. This stable options object drives a small waiting-lane
- * preview page (the decision lane) with a stable query key. Module-level so the
- * reference — and therefore the query key — stays stable across renders.
+ * Home (`activeLane===null`) needs its own open-item fetch because the lane list
+ * query is disabled there. Fetch all lanes so the global Inbox badge and Home's
+ * visible rows describe the same open-item set.
  */
 export const HOME_PREVIEW_OPTIONS = {
-  lane: "waiting_on_you",
   status: "open",
-  limit: 5,
+  limit: 50,
 } as const;
 
 /**
@@ -333,10 +330,9 @@ export function InboxHub() {
   });
   const hiddenCount = hiddenCountQuery.data?.hiddenOpen ?? 0;
 
-  // "Needs you most" Home preview: a small waiting-lane page fetched ONLY on Home
-  // (activeLane===null), where the lane list query is disabled. Distinct query
-  // key from any lane's infinite query, under the ["hub-items", cid] prefix so the
-  // live hub.item.changed invalidation refreshes it.
+  // Home preview: fetch all open lanes ONLY on Home (activeLane===null), where
+  // the lane list query is disabled. Distinct query key from any lane's
+  // infinite query, under the ["hub-items", cid] prefix so live changes refresh it.
   const homePreviewQuery = useQuery({
     queryKey: selectedCompanyId
       ? queryKeys.hubItems.homePreview(selectedCompanyId)
@@ -446,6 +442,23 @@ export function InboxHub() {
     () => (activeLane ? (listQuery.data?.pages.flatMap((page) => page.items) ?? []) : []),
     [activeLane, listQuery.data],
   );
+  const emptyLaneMessage = useMemo(() => {
+    if (!activeLane) return undefined;
+    const laneLabel = activeLane === "waiting_on_you"
+      ? "Waiting on you"
+      : activeLane === "notifications"
+        ? "Notifications"
+        : "Suggestions";
+    const statusLabel = historyStatus === "open"
+      ? "open"
+      : historyStatus === "resolved"
+        ? "resolved"
+        : "archived";
+    const openCount = countsQuery.data?.open ?? 0;
+    return openCount > 0
+      ? `No ${statusLabel} items in ${laneLabel}. Inbox has ${openCount} open item${openCount === 1 ? "" : "s"} across its lanes.`
+      : `No ${statusLabel} items in ${laneLabel}.`;
+  }, [activeLane, countsQuery.data?.open, historyStatus]);
   // `selectedItemId` gates the center-list highlight, so it stays validated
   // against the loaded lane. `selectedItem` (the Home preview) additionally
   // falls back to the opened-item cache so a deep-linked / cross-lane item still
@@ -778,6 +791,7 @@ export function InboxHub() {
       onUnsnooze={handleUnsnooze}
       hasMore={listQuery.hasNextPage}
       isLoadingMore={listQuery.isFetchingNextPage}
+      emptyMessage={emptyLaneMessage}
       preferences={preferences}
       autopilotPolicy={autopilotPolicyQuery.data ?? DEFAULT_AUTOPILOT_POLICY}
       autopilotActions={autopilotActionsQuery.data ?? DEFAULT_AUTOPILOT_ACTIONS}
