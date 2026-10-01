@@ -9,7 +9,7 @@
 // installed the team — there is no installed row for that member to find.
 //
 // TODO(WS6-marketplace-cdn): this is the AoA-side half of a two-part change.
-// The other half is a PR against https://github.com/MeteoriteLabs/aoa-marketplace-cdn
+// The other half is a PR against https://github.com/tandavkrishna27/aoa-marketplace-cdn
 // adding the Librarian to the `aoa-curated/standard-crew` team package's
 // team.json `agents` array (templateOrigin `aoa-curated/standard-crew/librarian`,
 // NOT `@legacy`). Until that catalog PR lands + `pnpm fetch-catalog` refreshes
