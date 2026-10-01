@@ -693,7 +693,7 @@ describe.skipIf(process.platform === "win32")("durable work questions (real Post
       status: "cancelled",
       continuationStatus: "not_needed",
     });
-    expect(mirror.status).toBe("archived");
+    expect(mirror.status).toBe("resolved");
   });
 
   it("parks unsupported runtimes immediately and persists visible waiting state", async () => {
