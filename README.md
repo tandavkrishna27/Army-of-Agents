@@ -273,7 +273,7 @@ Participation in this project is covered by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT
 
 ## License
 
-Army of Agents is licensed under the [Apache License 2.0](LICENSE).
+Army of Agents is licensed under the [MIT License](LICENSE).
 
 ## Project status
 
