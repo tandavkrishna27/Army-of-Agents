@@ -22,6 +22,7 @@ import {
 import detectPort from "detect-port";
 import { createApp } from "./app.js";
 import { loadConfig } from "./config.js";
+import { formatEmbeddedPostgresStartupError } from "./postgres/embedded-startup-errors.js";
 import { logger } from "./middleware/logger.js";
 import { setupLiveEventsWebSocketServer } from "./realtime/live-events-ws.js";
 import {
@@ -478,7 +479,12 @@ if (config.databaseUrl) {
   }
 
   const embeddedAdminConnectionString = `postgres://aoa:aoa@127.0.0.1:${port}/postgres`;
-  const dbStatus = await ensurePostgresDatabase(embeddedAdminConnectionString, "aoa");
+  let dbStatus: Awaited<ReturnType<typeof ensurePostgresDatabase>>;
+  try {
+    dbStatus = await ensurePostgresDatabase(embeddedAdminConnectionString, "aoa");
+  } catch (error) {
+    throw new Error(formatEmbeddedPostgresStartupError(error, dataDir), { cause: error });
+  }
   if (dbStatus === "created") {
     logger.info("Created embedded PostgreSQL database: aoa");
   }

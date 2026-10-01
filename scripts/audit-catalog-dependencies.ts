@@ -19,7 +19,7 @@ import {
 
 const CDN_URL =
   process.env.AOA_CATALOG_CDN_URL ??
-  "https://meteoritelabs.github.io/aoa-marketplace-cdn/catalog.json";
+  "https://raw.githubusercontent.com/meteoritelabs/aoa-marketplace-cdn/main/catalog.json";
 
 async function main() {
   console.log(`Auditing live marketplace catalog: ${CDN_URL}`);

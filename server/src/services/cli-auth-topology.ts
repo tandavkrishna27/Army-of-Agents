@@ -284,17 +284,46 @@ export async function detectProviderCli(
   run: (command: string, args: string[]) => Promise<{ stdout: string; stderr?: string }> = async (
     command,
     args,
-  ) => execFile(command, args, { timeout: 5_000 }),
+  ) =>
+    execFile(command, args, {
+      timeout: 5_000,
+      // npm installs Windows CLIs as .cmd shims. Node cannot spawn those
+      // shims directly with execFile on Windows; use the platform shell for
+      // this fixed executable name and fixed version argument only.
+      ...(process.platform === "win32" ? { shell: true } : {}),
+    }),
 ): Promise<{ cliInstalled: boolean; cliVersion: string | null; cliVersionSupported: boolean }> {
-  const command = provider === "openai" ? "codex" : "claude";
+  const command = resolveProviderCliCommand(provider, process.platform);
   try {
     const result = await run(command, ["--version"]);
     const version = /\b(\d+\.\d+\.\d+)\b/.exec(`${result.stdout} ${result.stderr ?? ""}`)?.[1] ?? null;
-    const supported =
-      version !== null &&
-      (provider === "openai" ? /^0\.145\.\d+$/.test(version) : /^2\.1\.\d+$/.test(version));
+    const supported = version !== null && isSupportedCliVersion(provider, version);
     return { cliInstalled: true, cliVersion: version, cliVersionSupported: supported };
   } catch {
     return { cliInstalled: false, cliVersion: null, cliVersionSupported: false };
   }
+}
+
+export function resolveProviderCliCommand(
+  provider: "openai" | "anthropic",
+  platform: NodeJS.Platform,
+): string {
+  const command = provider === "openai" ? "codex" : "claude";
+  return platform === "win32" ? `${command}.cmd` : command;
+}
+
+/**
+ * Keep the compatibility gate conservative without tying local onboarding to
+ * the exact Docker patch version. Codex's CLI uses a pre-1.0 version scheme,
+ * so the adapter supports the tested 0.145+ through the current 0.1xx line;
+ * an unrelated future 0.999 release remains blocked until it is verified.
+ * Claude's 2.1 line is the supported adapter family.
+ */
+export function isSupportedCliVersion(provider: "openai" | "anthropic", version: string): boolean {
+  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+  if (!match) return false;
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+  if (provider === "openai") return major === 0 && minor >= 145 && minor < 200;
+  return major === 2 && minor === 1;
 }

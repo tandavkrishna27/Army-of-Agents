@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
-import { Building, Shield, KeyRound, DollarSign, Plug, Cable, Puzzle, Store, Archive, Github, Activity, Layers, HeartPulse, PanelLeft, PanelLeftClose, Brain, Terminal, Inbox } from "lucide-react";
+import { Building, Shield, KeyRound, DollarSign, Plug, Cable, Puzzle, Store, Archive, Github, Activity, Layers, HeartPulse, PanelLeft, PanelLeftClose, Brain, Terminal, Inbox, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -10,7 +10,7 @@ const SECONDARY_COLLAPSED_KEY = "aoa.settings-secondary-collapsed";
 export type SettingsSectionId =
   | "general" | "health" | "commander" | "memory" | "providers" | "budget" | "mcp" | "connectors" | "github"
   | "plugins" | "marketplace" | "archive"
-  | "activity" | "environments" | "secrets" | "inbox";
+  | "activity" | "environments" | "secrets" | "inbox" | "autonomy";
 
 /**
  * Accepted ?tab= input alias. The old "llm" tab value is still accepted on
@@ -39,6 +39,7 @@ export const SETTINGS_SECTIONS: readonly SettingsGroup[] = [
     { id: "inbox",        label: "Inbox",              icon: Inbox },
     { id: "health",       label: "Health",             icon: HeartPulse },
     { id: "commander",    label: "Commander",          icon: Shield },
+    { id: "autonomy",     label: "Autonomy",           icon: SlidersHorizontal },
     { id: "memory",       label: "Memory",             icon: Brain },
     { id: "providers",    label: "Providers",          icon: Terminal },
     { id: "budget",       label: "Budget & caps",      icon: DollarSign },

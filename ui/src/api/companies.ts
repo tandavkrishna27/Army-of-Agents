@@ -46,7 +46,7 @@ export const companiesApi = {
     data: Partial<
       Pick<
         Company,
-        "name" | "description" | "status" | "budgetMonthlyCents" | "requireBoardApprovalForNewAgents" | "brandColor" | "vision" | "mission" | "values" | "mcpEnabled" | "rootFolder" | "humanQuestionSlaHours"
+        "name" | "description" | "status" | "budgetMonthlyCents" | "requireBoardApprovalForNewAgents" | "brandColor" | "vision" | "mission" | "values" | "mcpEnabled" | "rootFolder" | "humanQuestionSlaHours" | "agentCompletionPolicyDefault" | "agentCompletionReviewGuardrail"
       >
     >,
   ) => api.patch<Company>(`/companies/${companyId}`, data),

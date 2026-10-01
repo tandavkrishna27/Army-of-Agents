@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { writeFile, unlink } from "node:fs/promises";
@@ -1218,7 +1218,10 @@ export async function runAoaAgent(db: Db, agentId: string, payload: AoaTriggerPa
     if (payload.issueId && runId) {
       const { issueService } = await import("../../issues.js");
       const task = await issueService(db).getById(payload.issueId);
-      if (task && task.status === "in_progress" && (task as { executionRunId?: string | null }).executionRunId === runId) {
+      const taskExecutionRunId = (task as { executionRunId?: string | null } | null)?.executionRunId ?? null;
+      const taskCheckoutRunId = (task as { checkoutRunId?: string | null } | null)?.checkoutRunId ?? null;
+      const taskOwnedByRun = taskExecutionRunId === runId || taskCheckoutRunId === runId;
+      if (task && task.status === "in_progress" && taskOwnedByRun) {
         const parkedQuestion = await db.select({ id: workQuestions.id }).from(workQuestions).where(and(
           eq(workQuestions.companyId, payload.companyId),
           eq(workQuestions.issueId, payload.issueId),
@@ -1250,7 +1253,11 @@ export async function runAoaAgent(db: Db, agentId: string, payload: AoaTriggerPa
           try {
             await db.update(issues)
               .set({ executionRunId: null, checkoutRunId: null, executionAgentNameKey: null, executionLockedAt: null, updatedAt: new Date() })
-              .where(and(eq(issues.id, payload.issueId), eq(issues.executionRunId, runId), eq(issues.status, "in_progress")));
+          .where(and(
+            eq(issues.id, payload.issueId),
+            or(eq(issues.executionRunId, runId), eq(issues.checkoutRunId, runId)),
+            eq(issues.status, "in_progress"),
+          ));
             log.info(
               { issueId: payload.issueId, effectiveAutonomy },
               "crew task run finished at Manual autonomy — task left in_progress for the founder, execution lock cleared (not a failure)",
@@ -1268,7 +1275,11 @@ export async function runAoaAgent(db: Db, agentId: string, payload: AoaTriggerPa
             // is cleared on leaving in_progress), so without status='in_progress' here
             // this could revert an in_review/done task back to todo.
             .set({ status: "todo", executionRunId: null, checkoutRunId: null, updatedAt: new Date() })
-            .where(and(eq(issues.id, payload.issueId), eq(issues.executionRunId, runId), eq(issues.status, "in_progress")))
+            .where(and(
+              eq(issues.id, payload.issueId),
+              or(eq(issues.executionRunId, runId), eq(issues.checkoutRunId, runId)),
+              eq(issues.status, "in_progress"),
+            ))
             .returning({ id: issues.id });
           // Only publish + throw if the guarded UPDATE actually released the row. A
           // ZERO-row result means set_task_status won the race and already moved the

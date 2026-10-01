@@ -247,6 +247,9 @@ export async function execute(
   const useConfiguredInsteadOfAgentHome = workspaceSource === "agent_home" && configuredCwd.length > 0;
   const effectiveWorkspaceCwd = useConfiguredInsteadOfAgentHome ? "" : workspaceCwd;
   const cwd = effectiveWorkspaceCwd || configuredCwd || process.cwd();
+  const localTrustedInstallation =
+    (process.env.AOA_DEPLOYMENT_MODE?.trim() || "local_trusted") === "local_trusted";
+  const allowNonGitWorkspace = localTrustedInstallation && workspaceSource === "agent_home";
   await ensureAbsoluteDirectory(cwd, { createIfMissing: true });
   await ensureCodexSkillsInjected(onLog);
   const envConfig = parseObject(config.env);
@@ -551,6 +554,7 @@ export async function execute(
 
   const buildArgs = (resumeSessionId: string | null) => {
     const args = ["exec", "--json"];
+    if (allowNonGitWorkspace) args.push("--skip-git-repo-check");
     if (search) args.unshift("--search");
     if (bypass) args.push("--dangerously-bypass-approvals-and-sandbox");
     if (model) args.push("--model", model);

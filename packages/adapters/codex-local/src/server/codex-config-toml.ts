@@ -129,6 +129,12 @@ function renderMcpBlock(spec: CodexMcpBridgeSpec, serverName: string): string {
   lines.push(`[mcp_servers.${serverName}]`);
   lines.push(`command = ${tomlString(spec.command)}`);
   lines.push(`args = ${tomlStringArray(spec.args)}`);
+  // The AoA bridge performs its own actor/company/task authorization. Tell
+  // Codex to auto-approve this managed internal server only; global command
+  // approval and all unlisted/external MCP servers remain unchanged.
+  if (serverName === "aoa") {
+    lines.push(`default_tools_approval_mode = ${tomlString("approve")}`);
+  }
   lines.push("");
   lines.push(`[mcp_servers.${serverName}.env]`);
   for (const [key, value] of Object.entries(spec.env)) {
