@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { TaskDetail } from "@/components/TaskDetail";
 import { ThreadDetail } from "@/pages/ThreadDetail";
 import { ApprovalDetailCore } from "@/components/approval/ApprovalDetailCore";
@@ -13,6 +14,7 @@ import { RunDetailContainer } from "../agent-detail/RunDetailContainer";
 import { HUB_TABPANEL_ID } from "./HubTabStrip";
 import { RuntimeDecisionPanel } from "./RuntimeDecisionPanel";
 import { WorkQuestionPanel } from "@/components/work-questions/WorkQuestionPanel";
+import { workQuestionsApi } from "@/api/work-questions";
 import { GenericNotificationBody } from "./viewers/GenericNotificationBody";
 import { JoinRequestBody } from "./viewers/JoinRequestBody";
 import { MarketplaceOpBody } from "./viewers/MarketplaceOpBody";
@@ -219,7 +221,7 @@ function HubTabBodyContent({
     case "work_question": {
       const payload = tab.payload as HubWorkQuestionPayload | undefined;
       if (!payload || !companyId) return <TabLoadingPlaceholder kind={tab.kind} />;
-      return <WorkQuestionPanel companyId={companyId} questionId={payload.questionId} embedded />;
+      return <WorkQuestionThread companyId={companyId} questionId={payload.questionId} />;
     }
 
     case "join_request":
@@ -275,6 +277,23 @@ function HubTabBodyContent({
       // Exhaustiveness guard: any new kind falls back to a placeholder, never null.
       return <TabLoadingPlaceholder kind={(tab as HubTab).kind} />;
   }
+}
+
+function WorkQuestionThread({ companyId, questionId }: { companyId: string; questionId: string }) {
+  const detailQuery = useQuery({
+    queryKey: ["work-question-thread", companyId, questionId],
+    queryFn: () => workQuestionsApi.detail(companyId, questionId),
+  });
+  const issueId = detailQuery.data?.question.issueId;
+
+  if (detailQuery.isLoading) return <TabLoadingPlaceholder kind="work_question" />;
+  if (detailQuery.isError || !issueId) {
+    return <WorkQuestionPanel companyId={companyId} questionId={questionId} embedded />;
+  }
+
+  return (
+    <TaskDetail issueId={issueId} active initialTab="comments" />
+  );
 }
 
 /**
