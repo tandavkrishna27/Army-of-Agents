@@ -98,6 +98,14 @@ vi.mock("../TaskOutputViewer", () => ({
   ),
 }));
 
+const workspaceTimelineSpy = vi.fn();
+vi.mock("../../workspace/WorkspaceTimeline", () => ({
+  WorkspaceTimeline: (props: Record<string, unknown>) => {
+    workspaceTimelineSpy(props);
+    return <div data-testid="mock-workspace-timeline" data-issue-id={String(props.issueId)} />;
+  },
+}));
+
 const workQuestionDetail = vi.fn();
 vi.mock("@/api/work-questions", () => ({
   workQuestionsApi: {
@@ -230,19 +238,18 @@ describe("HubTabBody", () => {
     expect(el).toHaveAttribute("data-issue-id", "issue-42");
   });
 
-  it("opens a linked work question as one full task comments thread", async () => {
+  it("opens a linked work question as the full workspace thread surface", async () => {
     workQuestionDetail.mockResolvedValue({
       question: { issueId: "issue-question-42" },
     });
 
     renderBody(workQuestionTab("question-42", "Need input"));
 
-    await screen.findByTestId("mock-task-detail");
+    await screen.findByTestId("mock-workspace-timeline");
     expect(screen.queryByTestId("mock-work-question-panel")).not.toBeInTheDocument();
-    expect(screen.getByTestId("mock-task-detail")).toHaveAttribute("data-issue-id", "issue-question-42");
-    const props = taskDetailSpy.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    expect(props.initialTab).toBe("comments");
-    expect(props.active).toBe(true);
+    expect(screen.getByTestId("mock-workspace-timeline")).toHaveAttribute("data-issue-id", "issue-question-42");
+    const props = workspaceTimelineSpy.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(props.issueId).toBe("issue-question-42");
   });
 
   it("renders ThreadDetail with the payload discussionId + embedded for a thread tab", () => {

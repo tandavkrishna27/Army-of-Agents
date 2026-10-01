@@ -11,6 +11,7 @@ import type { IssueContextBundle } from "@/api/issues";
 import { TaskOutputViewer } from "../threads/TaskOutputViewer";
 import { AgentDetailContainer } from "../agent-detail/AgentDetailContainer";
 import { RunDetailContainer } from "../agent-detail/RunDetailContainer";
+import { WorkspaceTimeline } from "../workspace/WorkspaceTimeline";
 import { HUB_TABPANEL_ID } from "./HubTabStrip";
 import { RuntimeDecisionPanel } from "./RuntimeDecisionPanel";
 import { WorkQuestionPanel } from "@/components/work-questions/WorkQuestionPanel";
@@ -292,7 +293,7 @@ function WorkQuestionThread({ companyId, questionId }: { companyId: string; ques
   }
 
   return (
-    <TaskDetail issueId={issueId} active initialTab="comments" />
+    <WorkspaceTimeline issueId={issueId} />
   );
 }
 
