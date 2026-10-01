@@ -22,6 +22,10 @@ Open a feature request issue with the problem, proposed solution, alternatives c
 
 Do not use public issues for vulnerabilities. Follow [`SECURITY.md`](SECURITY.md).
 
+## Code of Conduct reports
+
+For private conduct concerns, contact Tandav Krishna at [armyofagents.official@gmail.com](mailto:armyofagents.official@gmail.com). Do not include sensitive personal details in a public issue.
+
 ## Commercial or roadmap discussions
 
 Use https://armyofagents.org for project and product information. Public roadmap items that are not shipped should stay clearly labeled as planned work.

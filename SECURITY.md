@@ -16,6 +16,8 @@ Use GitHub's private vulnerability reporting flow for this repository when avail
 
 If private vulnerability reporting is not available for you, open a minimal public issue that says you need a private security contact. Do not include exploit details, secrets, logs, tokens, customer data, or reproduction steps in that public issue.
 
+You can also email the maintainer privately at [armyofagents.official@gmail.com](mailto:armyofagents.official@gmail.com). Do not include sensitive exploit details until a private channel is confirmed.
+
 ## Sensitive areas
 
 Please use the private reporting path for issues involving:

@@ -38,7 +38,7 @@ Examples of representing the community include using an official email address, 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported through the contact methods listed in [`SUPPORT.md`](SUPPORT.md). Security-sensitive issues should follow [`SECURITY.md`](SECURITY.md) instead.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported privately to Tandav Krishna at [armyofagents.official@gmail.com](mailto:armyofagents.official@gmail.com). Security-sensitive issues should follow [`SECURITY.md`](SECURITY.md) instead.
 
 All complaints will be reviewed and investigated promptly and fairly.
 
