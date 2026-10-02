@@ -39,24 +39,20 @@ interface LobbyNavRowProps {
   label: string;
   active?: boolean;
   collapsed?: boolean;
-  onClick: () => void;
+  href?: string;
+  onClick?: () => void;
 }
 
-function LobbyNavRow({ icon: Icon, label, active, collapsed, onClick }: LobbyNavRowProps) {
-  const button = (
-    <button
-      type="button"
-      onClick={onClick}
-      data-active={active ? "true" : undefined}
-      title={collapsed ? label : undefined}
-      className={cn(
-        "relative flex w-full items-center gap-2.5 rounded-md text-[13px] font-medium transition-colors",
-        collapsed ? "h-9 justify-center px-0" : "px-3 py-2",
-        active
-          ? "bg-brand/[0.08] text-sidebar-active-text"
-          : "text-foreground/[0.78] hover:bg-white/[0.04] hover:text-foreground",
-      )}
-    >
+function LobbyNavRow({ icon: Icon, label, active, collapsed, href, onClick }: LobbyNavRowProps) {
+  const className = cn(
+    "relative flex w-full items-center gap-2.5 rounded-md text-[13px] font-medium transition-colors",
+    collapsed ? "h-9 justify-center px-0" : "px-3 py-2",
+    active
+      ? "bg-brand/[0.08] text-sidebar-active-text"
+      : "text-foreground/[0.78] hover:bg-white/[0.04] hover:text-foreground",
+  );
+  const content = (
+    <>
       <Icon className="size-4 shrink-0" />
       {!collapsed && <span className="flex-1 truncate text-left">{label}</span>}
       {active && (
@@ -68,13 +64,36 @@ function LobbyNavRow({ icon: Icon, label, active, collapsed, onClick }: LobbyNav
           )}
         />
       )}
+    </>
+  );
+
+  const row = href ? (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClick}
+      title={collapsed ? label : undefined}
+      className={className}
+    >
+      {content}
+    </a>
+  ) : (
+    <button
+      type="button"
+      onClick={onClick}
+      data-active={active ? "true" : undefined}
+      title={collapsed ? label : undefined}
+      className={className}
+    >
+      {content}
     </button>
   );
 
-  if (!collapsed) return button;
+  if (!collapsed) return row;
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipTrigger asChild>{row}</TooltipTrigger>
       <TooltipContent side="right" sideOffset={8}>
         {label}
       </TooltipContent>
@@ -310,16 +329,16 @@ export function LobbySidebar({
           <LobbyNavRow
             icon={BookOpen}
             label="Learn"
-            active={activeItem === "learn"}
             collapsed={collapsed}
-            onClick={() => navTo("/learn")}
+            href="https://docs.armyofagents.org/guides/board-operator/dashboard"
+            onClick={onNavigate}
           />
           <LobbyNavRow
             icon={FileText}
             label="Documentation"
-            active={activeItem === "documentation"}
             collapsed={collapsed}
-            onClick={() => navTo("/docs")}
+            href="https://docs.armyofagents.org/start/what-is-aoa"
+            onClick={onNavigate}
           />
 
           {showInstanceSettings && (

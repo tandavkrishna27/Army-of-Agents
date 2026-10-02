@@ -105,8 +105,14 @@ describe("LobbySidebar", () => {
     renderWithProviders(<LobbySidebar onCreateCompany={onCreateCompany} />);
     expect(screen.getByRole("button", { name: /companies/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /marketplace/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /learn/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /documentation/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /learn/i })).toHaveAttribute(
+      "href",
+      "https://docs.armyofagents.org/guides/board-operator/dashboard",
+    );
+    expect(screen.getByRole("link", { name: /documentation/i })).toHaveAttribute(
+      "href",
+      "https://docs.armyofagents.org/start/what-is-aoa",
+    );
     // Settings appears once the profile query resolves (instance admin).
     expect(await screen.findByRole("button", { name: /settings/i })).toBeInTheDocument();
   });
@@ -147,6 +153,17 @@ describe("LobbySidebar", () => {
     renderWithProviders(<LobbySidebar onCreateCompany={onCreateCompany} />);
     await user.click(await screen.findByRole("button", { name: /settings/i }));
     expect(mockNavigate).toHaveBeenCalledWith("/instance/settings", undefined);
+  });
+
+  it("opens Learn and Documentation safely in new tabs without SPA navigation", () => {
+    renderWithProviders(<LobbySidebar onCreateCompany={onCreateCompany} />);
+
+    for (const label of [/learn/i, /documentation/i]) {
+      const link = screen.getByRole("link", { name: label });
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    }
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   // --- Instance-Settings row gating (N2) ---
