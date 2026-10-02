@@ -37,11 +37,7 @@ function assertMarketplaceResourceUrl(raw: string): URL {
       { cause },
     );
   }
-  if (
-    parsed.protocol !== "https:" ||
-    parsed.username ||
-    parsed.password
-  ) {
+  if (parsed.protocol !== "https:" || parsed.username || parsed.password) {
     throw new MarketplaceResourceFetchError(
       "Marketplace resources require credential-free HTTPS URLs",
       "unsafe_url",
@@ -96,20 +92,39 @@ export async function fetchCatalogResourceUrl(
   signal?: AbortSignal,
 ): Promise<string> {
   const timeout = AbortSignal.timeout(FETCH_TIMEOUT_MS);
-  const combinedSignal = signal
-    ? AbortSignal.any([timeout, signal])
-    : timeout;
+  const combinedSignal = signal ? AbortSignal.any([timeout, signal]) : timeout;
   let current = assertMarketplaceResourceUrl(url);
 
   for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
     try {
       const target = await validateAndResolveFetchUrl(current.toString());
-      const response = await executePinnedRequest(
-        target,
-        { method: "GET", redirect: "manual" },
-        combinedSignal,
-        { maxBodyBytes: MAX_RESOURCE_BYTES },
-      );
+      const addresses = target.resolvedAddresses ?? [target.resolvedAddress];
+      let response:
+        | Awaited<ReturnType<typeof executePinnedRequest>>
+        | undefined;
+      let lastRequestError: unknown;
+      for (const address of addresses) {
+        if (combinedSignal.aborted) throw combinedSignal.reason;
+        try {
+          response = await executePinnedRequest(
+            { ...target, resolvedAddress: address },
+            { method: "GET", redirect: "manual" },
+            combinedSignal,
+            {
+              maxBodyBytes: MAX_RESOURCE_BYTES,
+              ...(addresses.length > 1 ? { connectTimeoutMs: 5_000 } : {}),
+            },
+          );
+          break;
+        } catch (error) {
+          lastRequestError = error;
+        }
+      }
+      if (!response)
+        throw (
+          lastRequestError ??
+          new Error("No safe marketplace resource address resolved")
+        );
 
       if (
         response.status >= 300 &&

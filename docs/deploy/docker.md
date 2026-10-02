@@ -8,7 +8,48 @@ Run AoA in Docker without installing Node or pnpm locally.
 For the deployment checks required before a fleet repair, see
 [Marketplace recovery](/guides/board-operator/marketplace-recovery).
 
+## Single-user local trial (no AoA/Google login)
+
+To try AoA on one computer without configuring Google OAuth or installing
+Node.js/pnpm on the host, use the separate local-trial Compose file. It is
+intended only for a trusted single-user machine, not a shared or remote server.
+Docker Desktop with Linux containers is supported on Windows and macOS; Linux
+requires Docker Engine and Compose v2. The first build downloads dependencies;
+onboarding also downloads the curated crew's skill bundles, so keep internet
+access available. First-company setup can take up to about 90 seconds on a
+slower connection.
+
+```sh
+git clone https://github.com/tandavkrishna27/Army-of-Agents.git
+cd Army-of-Agents
+docker compose -f docker-compose.local.yml up --build -d
+```
+
+Open `http://127.0.0.1:3100` and complete onboarding. AoA human login is not
+required. Commander still needs your own Codex or Claude provider account and
+subscription; sign in through the provider flow in onboarding. The local trial
+does not supply provider credentials.
+
+The app listener stays on container loopback; a transport relay is published
+only at host `127.0.0.1`. Do not change that binding, expose this single-user
+trusted mode to a network, or attach untrusted containers to its Compose
+network. The loopback trust mode does not authenticate peers that can reach the
+service. The dedicated Compose volume persists local identity, database,
+onboarding progress, and provider auth files across restarts.
+
+```sh
+docker compose -f docker-compose.local.yml down
+docker compose -f docker-compose.local.yml up -d
+```
+
+`down` stops the stack and preserves data. `docker compose -f
+docker-compose.local.yml down --volumes` permanently deletes the local trial
+volume; use it only when you intentionally want a fresh start. If port 3100 is
+busy, stop the other service before starting this trial.
+
 ## Compose Deployment
+
+This section covers the authenticated multi-service deployment.
 
 The default `docker-compose.yml` is the recommended remote-dev deployment. It starts:
 
@@ -177,11 +218,10 @@ GOOGLE_CLIENT_SECRET=... \
 docker compose -f docker-compose.quickstart.yml up --build
 ```
 
-> **Docker cannot run keyless.** `local_trusted` mode (the keyless path) only
-> binds loopback, but a port-published container must bind `0.0.0.0`, which
-> `local_trusted` refuses. For a keyless local trial without Google, run the
-> native `aoa` CLI instead of Docker — it binds `127.0.0.1` and supports
-> `local_trusted`.
+The authenticated quickstart remains the option for an AoA instance that needs
+Google-authenticated operator accounts. For a no-AoA-login, loopback-only trial,
+use the separate `docker-compose.local.yml` flow above; do not remove Google
+authentication from this deployment.
 
 Override quickstart paths and ports with:
 

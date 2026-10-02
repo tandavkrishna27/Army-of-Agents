@@ -5,6 +5,7 @@ vi.mock("../services/outbound-url-guard.js", () => ({
   validateAndResolveFetchUrl: vi.fn(async (url: string) => ({
     parsedUrl: new URL(url),
     resolvedAddress: "93.184.216.34",
+    resolvedAddresses: ["93.184.216.34"],
     hostHeader: new URL(url).host,
     tlsServername: new URL(url).hostname,
     useTls: true,
@@ -27,8 +28,15 @@ const BASE_ITEM: CatalogItem = {
   name: "Code Review",
   description: "Reviews code for issues",
   version: "1.0.0",
-  source: { adapter: "aoa-curated", url: "https://example.com", locator: "content/skills/code-review", commitSha: "abc123" },
-  resourceUrl: `https://raw.githubusercontent.com/example/skills/${"f".repeat(40)}/SKILL.md`,
+  source: {
+    adapter: "aoa-curated",
+    url: "https://example.com",
+    locator: "content/skills/code-review",
+    commitSha: "abc123",
+  },
+  resourceUrl: `https://raw.githubusercontent.com/example/skills/${"f".repeat(
+    40,
+  )}/SKILL.md`,
   content: undefined,
   trust: { tier: "verified", source: "aoa-curated" },
   status: "active",
@@ -46,7 +54,10 @@ describe("loadSkillContent", () => {
     vi.mocked(validateAndResolveFetchUrl).mockClear();
     vi.mocked(executePinnedRequest).mockClear();
 
-    const item = { ...BASE_ITEM, content: { inline: "# Code Review\n\nCheck for bugs." } };
+    const item = {
+      ...BASE_ITEM,
+      content: { inline: "# Code Review\n\nCheck for bugs." },
+    };
     const result = await loadSkillContent(item);
 
     expect(result).toBe("# Code Review\n\nCheck for bugs.");
@@ -71,9 +82,46 @@ describe("loadSkillContent", () => {
     expect(executePinnedRequest).toHaveBeenCalled();
   });
 
+  it("fails over across only DNS-validated public addresses", async () => {
+    vi.mocked(validateAndResolveFetchUrl).mockResolvedValueOnce({
+      parsedUrl: new URL(BASE_ITEM.resourceUrl!),
+      resolvedAddress: "185.199.109.133",
+      resolvedAddresses: ["185.199.109.133", "185.199.111.133"],
+      hostHeader: "raw.githubusercontent.com",
+      tlsServername: "raw.githubusercontent.com",
+      useTls: true,
+    });
+    vi.mocked(executePinnedRequest)
+      .mockRejectedValueOnce(new Error("first address unreachable"))
+      .mockResolvedValueOnce({
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        body: "# recovered",
+      });
+
+    await expect(loadSkillContent(BASE_ITEM)).resolves.toBe("# recovered");
+    expect(executePinnedRequest).toHaveBeenCalledTimes(2);
+    expect(executePinnedRequest).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ resolvedAddress: "185.199.109.133" }),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(executePinnedRequest).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ resolvedAddress: "185.199.111.133" }),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
   it("accepts a commit-pinned GitHub root-level resource", async () => {
-    const resourceUrl =
-      `https://github.com/example/skills/raw/${"f".repeat(40)}/SKILL.md`;
+    const resourceUrl = `https://github.com/example/skills/raw/${"f".repeat(
+      40,
+    )}/SKILL.md`;
     vi.mocked(executePinnedRequest).mockResolvedValueOnce({
       status: 200,
       statusText: "OK",
@@ -81,9 +129,9 @@ describe("loadSkillContent", () => {
       body: "# Root-level skill",
     });
 
-    await expect(
-      loadSkillContent({ ...BASE_ITEM, resourceUrl }),
-    ).resolves.toBe("# Root-level skill");
+    await expect(loadSkillContent({ ...BASE_ITEM, resourceUrl })).resolves.toBe(
+      "# Root-level skill",
+    );
     expect(validateAndResolveFetchUrl).toHaveBeenCalledWith(resourceUrl);
   });
 

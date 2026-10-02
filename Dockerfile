@@ -65,6 +65,9 @@ FROM base AS build
 WORKDIR /app
 COPY --from=deps /app /app
 COPY . .
+# Include the published catalog snapshots in the Docker image so the app can
+# resolve marketplace items when its runtime catalog sync is unavailable.
+RUN pnpm prebuild
 RUN pnpm --filter @armyofagents/ui build
 RUN pnpm --filter @armyofagents/plugin-sdk build
 RUN pnpm --filter @armyofagents/server build

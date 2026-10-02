@@ -25,7 +25,8 @@ Army of Agents gives organizations one control plane for people, AI agents, goal
 - [Core capabilities](#core-capabilities)
 - [Supported runtimes](#supported-runtimes)
 - [Marketplace and ecosystem](#marketplace-and-ecosystem)
-- [Quick start](#quick-start)
+- [Try AoA locally](#try-aoa-locally)
+- [Develop from source](#develop-from-source)
 - [Repository structure](#repository-structure)
 - [Development](#development)
 - [Contributing](#contributing)
@@ -170,7 +171,48 @@ Army of Agents connects to an ecosystem of catalogs, skills, plugins, agents, te
 
 The application maintains a cache and bundled fallback for catalog availability, so the marketplace is an integration point rather than a requirement for every local operation.
 
-## Quick start
+## Try AoA locally
+
+The simplest way to try Army of Agents is Docker Compose. You do not need Node.js,
+pnpm, a Google OAuth client, or an external database. You do need Docker Desktop
+running (Windows with Linux containers/WSL 2, or macOS), or Docker Engine with
+Compose v2 on Linux. The first run needs internet access to build the image and
+download dependencies; keep internet access available during onboarding while
+AoA installs the curated crew and its skill bundles. First-company setup can
+take up to about 90 seconds on a slower connection.
+
+```sh
+git clone https://github.com/tandavkrishna27/Army-of-Agents.git
+cd Army-of-Agents
+docker compose -f docker-compose.local.yml up --build -d
+```
+
+Open [http://127.0.0.1:3100](http://127.0.0.1:3100). AoA starts directly at
+onboarding, where you create your local profile, organization, and company and
+choose a Commander provider. AoA does not ask you to sign in with Google or create
+an AoA account. To run Commander, you must still sign in to your own Codex or
+Claude account; AoA does not provide provider access or subscriptions.
+
+The local trial is single-user and published only on this computer's loopback
+interface. Do not expose it to a LAN, reverse proxy, or the public internet, and
+do not attach untrusted containers to its Compose network. This local-trust mode
+does not authenticate requests from peers that can reach the service. Its
+Compose-managed data volume survives stop/start and container recreation:
+
+```sh
+docker compose -f docker-compose.local.yml down       # Stop; keep your data
+docker compose -f docker-compose.local.yml up -d      # Start again
+```
+
+To permanently erase this trial's data, run
+`docker compose -f docker-compose.local.yml down --volumes`. This deletes the
+local volume; it is not a normal stop command. If port 3100 is already occupied,
+stop the other service before starting AoA.
+
+## Develop from source
+
+This path is for contributors who want to run and change the source code. It is
+separate from the Docker local trial above.
 
 ### Requirements
 

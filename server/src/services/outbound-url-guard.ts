@@ -22,7 +22,10 @@ export const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
 export const DNS_LOOKUP_TIMEOUT_MS = 5_000;
 
 function parseIpv6Words(ip: string): number[] | null {
-  const normalized = ip.toLowerCase().replace(/^\[|\]$/g, "").split("%", 1)[0]!;
+  const normalized = ip
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .split("%", 1)[0]!;
   if (!normalized.includes(":")) return null;
   const halves = normalized.split("::");
   if (halves.length > 2) return null;
@@ -72,7 +75,9 @@ export function isPrivateIP(ip: string): boolean {
   const lower = ip.toLowerCase().replace(/^\[|\]$/g, "");
 
   // Unwrap IPv4-mapped IPv6 addresses (::ffff:x.x.x.x) and re-check as IPv4
-  const v4MappedMatch = lower.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+  const v4MappedMatch = lower.match(
+    /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/,
+  );
   if (v4MappedMatch && v4MappedMatch[1]) return isPrivateIP(v4MappedMatch[1]);
   const ipv6Words = parseIpv6Words(lower);
   const canonicalMapped = ipv6Words ? mappedIpv4(ipv6Words) : null;
@@ -101,8 +106,8 @@ export function isPrivateIP(ip: string): boolean {
     if (second >= 16 && second <= 31) return true;
   }
   if (ip.startsWith("192.168.")) return true;
-  if (ip.startsWith("127.")) return true;                   // loopback
-  if (ip.startsWith("169.254.")) return true;               // link-local
+  if (ip.startsWith("127.")) return true; // loopback
+  if (ip.startsWith("169.254.")) return true; // link-local
   if (ip === "0.0.0.0") return true;
 
   // IPv6 special-use ranges. Compare parsed words so compressed and canonical
@@ -114,19 +119,10 @@ export function isPrivateIP(ip: string): boolean {
     if ((first! & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
     if ((first! & 0xffc0) === 0xfec0) return true; // fec0::/10 deprecated site-local
     if ((first! & 0xff00) === 0xff00) return true; // ff00::/8 multicast
-    if (
-      first === 0x0064 &&
-      second === 0xff9b &&
-      (third === 0 || third === 1)
-    ) {
+    if (first === 0x0064 && second === 0xff9b && (third === 0 || third === 1)) {
       return true; // NAT64 translation prefixes
     }
-    if (
-      first === 0x0100 &&
-      second === 0 &&
-      third === 0 &&
-      fourth === 0
-    ) {
+    if (first === 0x0100 && second === 0 && third === 0 && fourth === 0) {
       return true; // 100::/64 discard-only
     }
     if (
@@ -155,6 +151,8 @@ export function isPrivateIP(ip: string): boolean {
 export interface ValidatedFetchTarget {
   parsedUrl: URL;
   resolvedAddress: string;
+  /** All non-private DNS answers from the same lookup, safe for pinned failover. */
+  resolvedAddresses?: string[];
   hostHeader: string;
   tlsServername?: string;
   useTls: boolean;
@@ -172,7 +170,9 @@ export interface ValidatedFetchTarget {
  * must additionally pin the resolved IP — see `buildPinnedRequestOptions`
  * in `plugin-host-services.ts` for an example.
  */
-export async function validateAndResolveFetchUrl(urlString: string): Promise<ValidatedFetchTarget> {
+export async function validateAndResolveFetchUrl(
+  urlString: string,
+): Promise<ValidatedFetchTarget> {
   let parsed: URL;
   try {
     parsed = new URL(urlString);
@@ -210,6 +210,7 @@ export async function validateAndResolveFetchUrl(urlString: string): Promise<Val
     return {
       parsedUrl: parsed,
       resolvedAddress: originalHostname,
+      resolvedAddresses: [originalHostname],
       hostHeader,
       tlsServername: undefined,
       useTls: parsed.protocol === "https:",
@@ -222,7 +223,12 @@ export async function validateAndResolveFetchUrl(urlString: string): Promise<Val
   let timeoutHandle: NodeJS.Timeout | null = null;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutHandle = setTimeout(
-      () => reject(new Error(`DNS lookup timed out after ${DNS_LOOKUP_TIMEOUT_MS}ms for ${originalHostname}`)),
+      () =>
+        reject(
+          new Error(
+            `DNS lookup timed out after ${DNS_LOOKUP_TIMEOUT_MS}ms for ${originalHostname}`,
+          ),
+        ),
       DNS_LOOKUP_TIMEOUT_MS,
     );
   });
@@ -230,7 +236,9 @@ export async function validateAndResolveFetchUrl(urlString: string): Promise<Val
   try {
     const results = await Promise.race([dnsPromise, timeoutPromise]);
     if (results.length === 0) {
-      throw new Error(`DNS resolution returned no results for ${originalHostname}`);
+      throw new Error(
+        `DNS resolution returned no results for ${originalHostname}`,
+      );
     }
 
     // Filter to only non-private IPs instead of rejecting the entire request
@@ -247,20 +255,28 @@ export async function validateAndResolveFetchUrl(urlString: string): Promise<Val
     return {
       parsedUrl: parsed,
       resolvedAddress: resolved.address,
+      resolvedAddresses: safeResults.map((entry) => entry.address),
       hostHeader,
-      tlsServername: parsed.protocol === "https:" && isIP(originalHostname) === 0
-        ? originalHostname
-        : undefined,
+      tlsServername:
+        parsed.protocol === "https:" && isIP(originalHostname) === 0
+          ? originalHostname
+          : undefined,
       useTls: parsed.protocol === "https:",
     };
   } catch (err) {
     // Re-throw our own errors; wrap DNS failures
-    if (err instanceof Error && (
-      err.message.startsWith("All resolved IPs") ||
-      err.message.startsWith("DNS resolution returned") ||
-      err.message.startsWith("DNS lookup timed out")
-    )) throw err;
-    throw new Error(`DNS resolution failed for ${originalHostname}: ${(err as Error).message}`);
+    if (
+      err instanceof Error &&
+      (err.message.startsWith("All resolved IPs") ||
+        err.message.startsWith("DNS resolution returned") ||
+        err.message.startsWith("DNS lookup timed out"))
+    )
+      throw err;
+    throw new Error(
+      `DNS resolution failed for ${originalHostname}: ${
+        (err as Error).message
+      }`,
+    );
   } finally {
     if (timeoutHandle) clearTimeout(timeoutHandle);
   }
@@ -281,7 +297,10 @@ export async function validateAndResolveFetchUrl(urlString: string): Promise<Val
 export function buildPinnedRequestOptions(
   target: ValidatedFetchTarget,
   init?: RequestInit,
-): { options: HttpRequestOptions & { servername?: string }; body: string | Buffer | undefined } {
+): {
+  options: HttpRequestOptions & { servername?: string };
+  body: string | Buffer | undefined;
+} {
   const headers = new Headers(init?.headers);
   const method = init?.method ?? "GET";
 
@@ -300,12 +319,18 @@ export function buildPinnedRequestOptions(
     // None are exercised by current callers; reject explicitly so a future caller
     // doesn't get silent String(...) corruption like the previous implementation.
     throw new TypeError(
-      `Unsupported body type for pinned request: ${Object.prototype.toString.call(rawBody)}`,
+      `Unsupported body type for pinned request: ${Object.prototype.toString.call(
+        rawBody,
+      )}`,
     );
   }
 
   headers.set("Host", target.hostHeader);
-  if (body !== undefined && !headers.has("content-length") && !headers.has("transfer-encoding")) {
+  if (
+    body !== undefined &&
+    !headers.has("content-length") &&
+    !headers.has("transfer-encoding")
+  ) {
     headers.set("content-length", String(Buffer.byteLength(body)));
   }
 
@@ -322,8 +347,8 @@ export function buildPinnedRequestOptions(
       port: target.parsedUrl.port
         ? Number(target.parsedUrl.port)
         : target.useTls
-          ? 443
-          : 80,
+        ? 443
+        : 80,
       path: pathname,
       method,
       headers: Object.fromEntries(headers.entries()),
@@ -374,15 +399,33 @@ export async function executePinnedRequest(
   target: ValidatedFetchTarget,
   init: RequestInit | undefined,
   signal: AbortSignal,
-  options?: { maxBodyBytes?: number },
+  options?: { maxBodyBytes?: number; connectTimeoutMs?: number },
 ): Promise<PinnedResponse> {
   const { options: reqOptions, body } = buildPinnedRequestOptions(target, init);
   const maxBodyBytes = options?.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
 
   const response = await new Promise<IncomingMessage>((resolve, reject) => {
     const requestFn = target.useTls ? httpsRequest : httpRequest;
-    const req = requestFn({ ...reqOptions, signal }, resolve);
-    req.on("error", reject);
+    let connectTimer: NodeJS.Timeout | undefined;
+    const req = requestFn({ ...reqOptions, signal }, (incoming) => {
+      if (connectTimer) clearTimeout(connectTimer);
+      resolve(incoming);
+    });
+    if (options?.connectTimeoutMs) {
+      connectTimer = setTimeout(
+        () =>
+          req.destroy(
+            new Error(
+              `Pinned request timed out after ${options.connectTimeoutMs}ms before response headers`,
+            ),
+          ),
+        options.connectTimeoutMs,
+      );
+    }
+    req.on("error", (error) => {
+      if (connectTimer) clearTimeout(connectTimer);
+      reject(error);
+    });
     if (body !== undefined) req.write(body);
     req.end();
   });
