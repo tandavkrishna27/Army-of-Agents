@@ -27,6 +27,7 @@ Use the `AOA_*` names shown below.
 | `AOA_OPEN_ON_LISTEN` | `true` (CLI), `false` (server-only) | Auto-open default browser on first listen |
 | `AOA_CONFIG` | (default path) | Override path to instance `config.json` |
 | `AOA_LOG_DIR` | `<AOA_HOME>/instances/<id>/logs` | Override log directory |
+| `AOA_CREW_INSTALL_DEADLINE_MS` | `30000` | Maximum time, in milliseconds, for initial marketplace crew skill installation during onboarding. Valid range: `30000`–`120000`. Increase for slow network links; the login-free local Docker trial uses `90000` to allow first-run downloads more time. |
 | `RUN_LOG_BASE_PATH` | `<AOA_HOME>/instances/<id>/data/run-logs` | Override local-file heartbeat run log storage. Use a durable mounted volume in Docker/cloud single-node deployments |
 | `WORKSPACE_OPERATION_LOG_BASE_PATH` | `<AOA_HOME>/instances/<id>/data/workspace-operation-logs` | Override local-file workspace operation log storage. Use a durable mounted volume in Docker/cloud single-node deployments |
 
