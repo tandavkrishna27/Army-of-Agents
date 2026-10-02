@@ -1,6 +1,6 @@
 # Login-Free Local Docker Quickstart — Design
 
-**Status:** Draft for founder review  
+**Status:** Draft for founder review
 **Date:** 2026-10-02
 
 ## Goal
