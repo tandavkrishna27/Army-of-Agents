@@ -10,6 +10,7 @@ This tutorial gets Army of Agents running on your machine, creates the first com
 - Node.js 20.3 or newer
 - pnpm 9 or newer
 - Git
+- No Google login, OAuth credentials, or external PostgreSQL database is needed for this local trial.
 - Optional: a local agent CLI such as Claude Code or OpenAI Codex if you want Commander or agents to run immediately
 
 <Info>
@@ -30,7 +31,9 @@ cd Army-of-Agents
   <Step title="Install dependencies">
 
 ```sh
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
+pnpm build
 ```
 
   </Step>
@@ -44,7 +47,7 @@ For the fastest first run, use the CLI bootstrap:
 pnpm aoa onboard --yes
 ```
 
-With no environment overrides, this writes a loopback-only `local_trusted` configuration, uses embedded PostgreSQL, stores files locally, stores secrets locally in encrypted form, and starts the app.
+With no environment overrides, this writes a loopback-only `local_trusted` configuration, uses embedded PostgreSQL, stores files locally, stores secrets locally in encrypted form, and starts the app. No Google sign-in or AI provider is required to start and explore the app; a supported provider CLI or credentials are needed for live Commander or agent responses.
 
 Keep the command running and open the URL it prints. The default URL is:
 
