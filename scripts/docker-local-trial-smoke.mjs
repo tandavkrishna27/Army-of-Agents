@@ -64,6 +64,16 @@ export function assertOnlyLoopbackPortBindings(portBindings) {
   return true;
 }
 
+export function getPublishedHostPorts(portBindings) {
+  if (!portBindings || typeof portBindings !== "object" || Array.isArray(portBindings)) {
+    throw new Error("Docker inspect returned invalid port binding data");
+  }
+  return Object.values(portBindings)
+    .filter((bindings) => Array.isArray(bindings))
+    .flat()
+    .map((binding) => Number(binding?.HostPort));
+}
+
 export async function assertHostPortAvailable(port) {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error("AOA_PORT must be a valid TCP port from 1 to 65535");
@@ -330,7 +340,7 @@ async function main() {
   );
   const bindings = JSON.parse(inspected.stdout.trim());
   assertOnlyLoopbackPortBindings(bindings);
-  const published = Object.values(bindings).flat().map((entry) => Number(entry.HostPort));
+  const published = getPublishedHostPorts(bindings);
   if (!published.includes(port)) throw new Error(`Docker did not publish the requested loopback port ${port}`);
 
   console.log("==> Checking runtime identity and writable persistent home");

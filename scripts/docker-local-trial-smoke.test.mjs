@@ -6,6 +6,7 @@ import {
   assertOnlyLoopbackPortBindings,
   createSmokeProjectName,
   dockerComposeUpArgs,
+  getPublishedHostPorts,
 } from "./docker-local-trial-smoke.mjs";
 
 test("builds the image by default and supports explicit no-build reruns", () => {
@@ -31,12 +32,12 @@ test("accepts only complete IPv4 loopback port bindings", () => {
 });
 
 test("allows internal-only exposed ports while validating published loopback ports", () => {
-  assert.doesNotThrow(() =>
-    assertOnlyLoopbackPortBindings({
-      "3100/tcp": null,
-      "3101/tcp": [{ HostIp: "127.0.0.1", HostPort: "3100" }],
-    }),
-  );
+  const inspectPorts = {
+    "3100/tcp": null,
+    "3101/tcp": [{ HostIp: "127.0.0.1", HostPort: "35157" }],
+  };
+  assert.doesNotThrow(() => assertOnlyLoopbackPortBindings(inspectPorts));
+  assert.deepEqual(getPublishedHostPorts(inspectPorts), [35157]);
 });
 
 test("rejects wildcard, IPv6, absent, empty, and malformed port bindings", () => {
