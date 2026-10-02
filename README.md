@@ -25,7 +25,8 @@ Army of Agents gives organizations one control plane for people, AI agents, goal
 - [Core capabilities](#core-capabilities)
 - [Supported runtimes](#supported-runtimes)
 - [Marketplace and ecosystem](#marketplace-and-ecosystem)
-- [Quick start](#quick-start)
+- [Try AoA locally](#try-aoa-locally)
+- [Deploy with Docker](#deploy-with-docker)
 - [Repository structure](#repository-structure)
 - [Development](#development)
 - [Contributing](#contributing)
@@ -170,15 +171,15 @@ Army of Agents connects to an ecosystem of catalogs, skills, plugins, agents, te
 
 The application maintains a cache and bundled fallback for catalog availability, so the marketplace is an integration point rather than a requirement for every local operation.
 
-## Quick start
+## Try AoA locally
+
+The local quickstart is for exploring AoA on your own machine. It does not require Google login, Google OAuth credentials, or a separately managed PostgreSQL database. The first run opens AoA's existing onboarding flow.
 
 ### Requirements
 
-- Node.js
-- pnpm
+- Node.js 20.3 or newer
+- pnpm 9 or newer (available through Corepack)
 - Git
-- PostgreSQL, or the embedded development database
-- Any agent CLIs you intend to connect
 
 ### Install
 
@@ -188,24 +189,21 @@ cd Army-of-Agents
 
 corepack enable
 pnpm install --frozen-lockfile
+pnpm build
+pnpm aoa onboard --yes
 ```
 
-### Start the development server
+The build step prepares the workspace packages required to run AoA from a source checkout. With the default environment, the CLI then configures a loopback-only local instance and uses embedded PostgreSQL. Open `http://localhost:3100`; a first-time user is taken to `/onboarding` to create their profile, company, and first team setup.
 
-```bash
-pnpm dev
-```
+You can explore and complete onboarding without configuring an AI provider. To get a real Commander or agent response, install and sign in to a supported provider CLI (such as Codex or Claude) on the same machine, or configure the provider credentials AoA supports.
 
-The local application runs at `http://localhost:3100`.
+> **Local access only:** this default mode trusts the local operator and binds to loopback. Do not expose it to your LAN or the public internet. Review the deployment guide before setting up shared access.
 
-Useful checks:
+The bootstrap command honors relevant environment overrides. For a clean default setup, make sure variables such as `AOA_DEPLOYMENT_MODE`, `HOST`, and `DATABASE_URL` are not set in your shell. See the [full quickstart](docs/start/quickstart.md) for onboarding details and troubleshooting.
 
-```bash
-curl http://localhost:3100/api/health
-curl http://localhost:3100/api/companies
-```
+### Deploy with Docker
 
-When `DATABASE_URL` is not set, development uses the bundled embedded PostgreSQL instance. Some agent integrations require their own local CLI installation and credentials.
+Docker is a separate authenticated deployment path, not the login-free local trial: the current Docker quickstart defaults to authenticated mode and requires the operator to configure Google OAuth. See the [Docker deployment guide](docs/deploy/docker.md).
 
 ## Repository structure
 
@@ -219,6 +217,14 @@ docs/            Architecture, API, deployment, and project documentation
 ```
 
 ## Development
+
+For contributing to AoA, use the development server and verification commands below. This path is intended for development, not as the quickest way to try the app.
+
+```bash
+pnpm dev
+```
+
+The development server runs at `http://localhost:3100`. When `DATABASE_URL` is unset, it uses the bundled embedded PostgreSQL instance. Agent integrations still need their own provider CLI or credentials for live execution.
 
 Run the standard verification commands before submitting changes:
 
