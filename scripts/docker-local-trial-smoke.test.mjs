@@ -30,6 +30,15 @@ test("accepts only complete IPv4 loopback port bindings", () => {
   );
 });
 
+test("allows internal-only exposed ports while validating published loopback ports", () => {
+  assert.doesNotThrow(() =>
+    assertOnlyLoopbackPortBindings({
+      "3100/tcp": null,
+      "3101/tcp": [{ HostIp: "127.0.0.1", HostPort: "3100" }],
+    }),
+  );
+});
+
 test("rejects wildcard, IPv6, absent, empty, and malformed port bindings", () => {
   for (const bindings of [
     { "3101/tcp": [{ HostIp: "0.0.0.0", HostPort: "3100" }] },

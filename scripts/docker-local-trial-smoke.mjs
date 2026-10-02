@@ -36,7 +36,14 @@ export function assertOnlyLoopbackPortBindings(portBindings) {
 
   let count = 0;
   for (const [containerPort, bindings] of entries) {
-    if (!/^\d+\/(tcp|udp)$/i.test(containerPort) || !Array.isArray(bindings) || bindings.length === 0) {
+    if (!/^\d+\/(tcp|udp)$/i.test(containerPort)) {
+      throw new Error(`Docker inspect returned an invalid binding for ${containerPort}`);
+    }
+    // Docker reports exposed-but-unpublished container ports as null. They
+    // have no host binding to validate (for example, AoA's internal 3100/tcp;
+    // only the local relay on 3101/tcp is published by the trial Compose file).
+    if (bindings === null) continue;
+    if (!Array.isArray(bindings) || bindings.length === 0) {
       throw new Error(`Docker inspect returned an invalid binding for ${containerPort}`);
     }
     for (const binding of bindings) {
