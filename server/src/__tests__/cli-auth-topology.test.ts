@@ -43,6 +43,44 @@ describe("CLI authentication topology", () => {
     });
   });
 
+  it("enables Codex device and Claude code-paste sign-in for local_single_user without remote flags", () => {
+    const topology = resolveCliAuthTopology({
+      env: { AOA_INSTALL_PROFILE: "local_single_user" },
+      deploymentMode: "local_trusted",
+      deploymentExposure: "private",
+      platform: "linux",
+    });
+
+    expect(topology).toMatchObject({
+      installProfile: "local_single_user",
+      networkLocation: "local",
+      trustBoundary: "single_user",
+      executionOwnership: "user_hosted",
+    });
+    expect(providerSubscriptionCapability("openai", topology, {})).toMatchObject({
+      enabled: true,
+      mode: "device_code",
+    });
+    expect(providerSubscriptionCapability("anthropic", topology, {})).toMatchObject({
+      enabled: true,
+      mode: "paste_code",
+    });
+  });
+
+  it("rejects local_single_user when an explicit topology axis conflicts", () => {
+    expect(() =>
+      resolveCliAuthTopology({
+        env: {
+          AOA_INSTALL_PROFILE: "local_single_user",
+          AOA_NETWORK_LOCATION: "remote",
+        },
+        deploymentMode: "local_trusted",
+        deploymentExposure: "private",
+        platform: "linux",
+      }),
+    ).toThrow(/conflicts/);
+  });
+
   it("rejects conflicting explicit axes", () => {
     expect(() =>
       resolveCliAuthTopology({

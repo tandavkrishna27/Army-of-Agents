@@ -54,6 +54,7 @@
     "smoke:openclaw-docker-ui": "./scripts/smoke/openclaw-docker-ui.sh",
     "smoke:openclaw-sse-standalone": "./scripts/smoke/openclaw-sse-standalone.sh",
     "docker:build-test": "./scripts/docker-build-test.sh",
+    "docker:local-trial-smoke": "node scripts/docker-local-trial-smoke.mjs",
     "docker:smoke": "./scripts/docker-onboard-smoke.sh",
     "evals:smoke": "cd evals/promptfoo && npx promptfoo@0.121.20 eval",
     "evals:validate": "cd evals/promptfoo && npx promptfoo@0.121.20 view",

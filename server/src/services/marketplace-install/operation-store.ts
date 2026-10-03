@@ -185,8 +185,8 @@ export async function updateOperation(
 
 /**
  * How long an operation may sit in `running` before another caller may assume
- * its owner died. Generous relative to CREW_INSTALL_DEADLINE_MS (30s) so a
- * live install is never stolen mid-flight.
+ * its owner died. Generous relative to CREW_INSTALL_DEADLINE_MS (30s default,
+ * at most 120s by configuration) so a live install is never stolen mid-flight.
  */
 export const OPERATION_CLAIM_STALE_AFTER_MS = 10 * 60 * 1000;
 

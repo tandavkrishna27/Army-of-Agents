@@ -35,10 +35,19 @@ import {
   type CatalogAvailability,
   type CatalogUnavailableReason,
 } from "../aoa-marketplace.js";
-import { dispatchInstall, startInstallOperation, type Installers, type PublishLiveEventFn } from "./orchestrator.js";
-import { claimOperationForDispatch, updateOperation } from "./operation-store.js";
+import {
+  dispatchInstall,
+  startInstallOperation,
+  type Installers,
+  type PublishLiveEventFn,
+} from "./orchestrator.js";
+import {
+  claimOperationForDispatch,
+  updateOperation,
+} from "./operation-store.js";
 import { installSkill } from "./skill-installer.js";
 import { installTeam } from "./team-installer.js";
+import { resolveCrewInstallDeadlineMs } from "./crew-install-deadline.js";
 import {
   catalogPublishesStewardInDefaultCrew,
   DEFAULT_CREW_TEAM_ITEM_ID,
@@ -72,7 +81,9 @@ export { DEFAULT_CREW_TEAM_ITEM_ID } from "./crew-constants.js";
  * - it is re-checked before each skill install, so at most one in-flight batch
  *   continues past it;
  * - a clone that is slow rather than stalled can therefore still push the
- *   install past 30s by up to one `git` process's abort latency.
+ *   install past its configured deadline by up to one `git` process's abort
+ *   latency. The default is 30s; local Docker trial may raise it to 90s (the
+ *   accepted override range is 30–120s).
  *
  * Blowing the deadline is not data loss: the install fails, company create
  * degrades to the legacy seeders with a loud log, and T2.3b's repair pass
@@ -80,11 +91,12 @@ export { DEFAULT_CREW_TEAM_ITEM_ID } from "./crew-constants.js";
  * are re-used by that repair.
  *
  * Worst case for company create is `CATALOG_AVAILABILITY_TIMEOUT_MS` (12s) +
- * this (30s) ≈ 42s, versus ~13.5 minutes before — and comfortably inside Node's
- * 300s default `requestTimeout`, which was previously the real (socket-error)
- * ceiling.
+ * the configured install deadline: ~42s at the default, ~102s for the local
+ * Docker trial, and at most ~132s with the supported override. All remain
+ * inside Node's 300s default `requestTimeout`, which was previously the real
+ * (socket-error) ceiling.
  */
-export const CREW_INSTALL_DEADLINE_MS = 30_000;
+export const CREW_INSTALL_DEADLINE_MS = resolveCrewInstallDeadlineMs();
 
 /**
  * Resource fetches in flight during pre-flight. 6 keeps the healthy path ~5×
@@ -110,16 +122,33 @@ export function crewBootstrapIdempotencyKey(companyId: string): string {
 }
 
 export type CrewBootstrapResult =
-  | { status: "installed"; teamId: string | null; operationId: string; catalogSource: "cache" | "sync" }
-  /** Another caller holds (or completed) this install — do NOT seed over it. */
-  | { status: "already-dispatched"; operationId: string; operationStatus: string }
   | {
-    status: "unavailable";
-    reason: "no-catalog" | "team-not-in-catalog" | "default-crew-missing-steward";
-    detail: CatalogUnavailableReason | null;
-    catalog: MarketplaceCatalogFile | null;
-  }
-  | { status: "failed"; reason: string; operationId: string | null; catalog: MarketplaceCatalogFile | null };
+      status: "installed";
+      teamId: string | null;
+      operationId: string;
+      catalogSource: "cache" | "sync";
+    }
+  /** Another caller holds (or completed) this install — do NOT seed over it. */
+  | {
+      status: "already-dispatched";
+      operationId: string;
+      operationStatus: string;
+    }
+  | {
+      status: "unavailable";
+      reason:
+        | "no-catalog"
+        | "team-not-in-catalog"
+        | "default-crew-missing-steward";
+      detail: CatalogUnavailableReason | null;
+      catalog: MarketplaceCatalogFile | null;
+    }
+  | {
+      status: "failed";
+      reason: string;
+      operationId: string | null;
+      catalog: MarketplaceCatalogFile | null;
+    };
 
 export interface CrewBootstrapDeps {
   /** Who to attribute the install operation to. Free text column, no FK. */
@@ -141,7 +170,9 @@ export interface CrewBootstrapDeps {
  * degrades the company to the legacy seeders WITH a loud log, rather than
  * silently installing a half-configured plugin.
  */
-const bootstrapPluginInstaller = async (opts: { catalogItem: CatalogItem }): Promise<never> => {
+const bootstrapPluginInstaller = async (opts: {
+  catalogItem: CatalogItem;
+}): Promise<never> => {
   throw new Error(
     `crew bootstrap cannot install plugin dependency ${opts.catalogItem.id} — ` +
       "the plugin loader is route-scoped. Install it from the Marketplace after onboarding.",
@@ -184,10 +215,16 @@ export async function bootstrapCrewFromMarketplace(
 
   try {
     const resolve =
-      deps.resolveCatalog ?? (() => resolveCatalogForBootstrap(db, deps.catalogTimeoutMs));
+      deps.resolveCatalog ??
+      (() => resolveCatalogForBootstrap(db, deps.catalogTimeoutMs));
     const resolved = await resolve();
     if (resolved.status !== "ok") {
-      return { status: "unavailable", reason: "no-catalog", detail: resolved.reason, catalog: null };
+      return {
+        status: "unavailable",
+        reason: "no-catalog",
+        detail: resolved.reason,
+        catalog: null,
+      };
     }
     catalog = resolved.catalog;
 
@@ -195,7 +232,12 @@ export async function bootstrapCrewFromMarketplace(
       (item) => item.id === DEFAULT_CREW_TEAM_ITEM_ID && item.type === "team",
     );
     if (!teamItem) {
-      return { status: "unavailable", reason: "team-not-in-catalog", detail: null, catalog };
+      return {
+        status: "unavailable",
+        reason: "team-not-in-catalog",
+        detail: null,
+        catalog,
+      };
     }
     if (!catalogPublishesStewardInDefaultCrew(catalog.items)) {
       return {
@@ -335,7 +377,10 @@ export async function inspectCrewTeamInstall(
       .select({ id: teams.id })
       .from(teams)
       .where(
-        and(eq(teams.companyId, companyId), eq(teams.templateOrigin, DEFAULT_CREW_TEAM_ITEM_ID)),
+        and(
+          eq(teams.companyId, companyId),
+          eq(teams.templateOrigin, DEFAULT_CREW_TEAM_ITEM_ID),
+        ),
       )
       .limit(1);
     return row ? { state: "installed", teamId: row.id } : { state: "absent" };

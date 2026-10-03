@@ -5,6 +5,40 @@ summary: Run Army of Agents locally and complete founder onboarding
 
 This tutorial gets Army of Agents running on your machine, creates the first company, and brings you to the Home screen.
 
+## Try AoA with Docker
+
+For the simplest local trial, Docker Desktop (Windows with Linux containers/WSL 2,
+or macOS) or Docker Engine plus Compose v2 (Linux) is enough. The first build
+needs internet access, and the initial crew setup downloads the curated skill
+bundles. Keep the connection available during onboarding; first-company setup
+can take up to about 90 seconds on a slower connection. You do not need Node.js,
+pnpm, Google OAuth credentials, an AoA account, or an external database.
+
+```sh
+git clone https://github.com/tandavkrishna27/Army-of-Agents.git
+cd Army-of-Agents
+docker compose -f docker-compose.local.yml up --build -d
+```
+
+Open `http://127.0.0.1:3100` to reach onboarding. The trial is for one trusted
+local user and is bound to this computer only. To stop and restart while
+preserving your setup:
+
+```sh
+docker compose -f docker-compose.local.yml down
+docker compose -f docker-compose.local.yml up -d
+```
+
+Use `docker compose -f docker-compose.local.yml down --volumes` only if you
+intend to permanently erase the local trial's data. Commander provider sign-in
+is separate from AoA login: to run agents, bring your own Codex or Claude account
+and subscription and complete provider setup during onboarding. See the
+[Docker guide](/deploy/docker) for the security boundary and troubleshooting.
+
+## Run from source
+
+The source-based setup below is intended for development or contributors.
+
 ## Prerequisites
 
 - Node.js 20.3 or newer

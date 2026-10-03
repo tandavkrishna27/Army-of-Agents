@@ -27,11 +27,10 @@ services:
       AOA_CODEX_DEVICE_AUTH: ${AOA_CODEX_DEVICE_AUTH:-false}
       AOA_CLAUDE_PASTE_AUTH: ${AOA_CLAUDE_PASTE_AUTH:-false}
       AOA_SCOPED_CLI_AUTH: ${AOA_SCOPED_CLI_AUTH:-false}
-      # Like the main stack, quickstart runs in `authenticated` mode and needs
-      # Google OAuth credentials — the first Google sign-in becomes instance
-      # admin. It binds 0.0.0.0 for Docker port publishing, and local_trusted
-      # is loopback-only (server refuses 0.0.0.0), so Docker cannot run keyless:
-      # use the native `aoa` CLI for a keyless loopback trial instead.
+      # This quickstart stays in `authenticated` mode and needs Google OAuth
+      # credentials — the first Google sign-in becomes instance admin. For a
+      # single-user, loopback-only local trial without AoA/Google login, use
+      # the separate docker-compose.local.yml instead.
       AOA_DEPLOYMENT_MODE: ${AOA_DEPLOYMENT_MODE:-authenticated}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}

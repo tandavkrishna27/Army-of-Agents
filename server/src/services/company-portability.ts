@@ -2179,7 +2179,8 @@ export function companyPortabilityService(db: Db) {
       // carry no crew/team section at all (see KNOWN_SECTIONS).
       //
       // Latency is bounded by CREW_INSTALL_DEADLINE_MS + the catalog budget
-      // (~42s worst case); import is already a long-running operation.
+      // (~42s default; up to ~132s with the maximum configured override); import
+      // is already a long-running operation.
       // P3 (mirrors Fix 5): the company row AND the importer's founder
       // membership/role/org membership are written atomically inside ONE
       // transaction (`createWithOperator`), so a transient fault mid-import can

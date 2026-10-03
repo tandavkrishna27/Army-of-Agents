@@ -1,0 +1,57 @@
+services:
+  aoa:
+    image: ${AOA_IMAGE:-aoa:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
+        AOA_IMAGE_REVISION: ${AOA_IMAGE_REVISION:-local-trial}
+    restart: unless-stopped
+    ports:
+      - target: 3101
+        published: "${AOA_PORT:-3100}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    environment:
+      HOST: "127.0.0.1"
+      PORT: "3100"
+      SERVE_UI: "true"
+      AOA_HOME: /aoa
+      AOA_INSTANCE_ID: default
+      AOA_CONFIG: /aoa/instances/default/config.json
+      AOA_DEPLOYMENT_MODE: local_trusted
+      AOA_DEPLOYMENT_EXPOSURE: private
+      AOA_DEV_LOCAL_IDENTITY: "1"
+      AOA_INSTALL_PROFILE: local_single_user
+      AOA_NETWORK_LOCATION: local
+      AOA_TRUST_BOUNDARY: single_user
+      AOA_EXECUTION_OWNERSHIP: user_hosted
+      AOA_EXECUTION_TARGET_ID: control-plane
+      AOA_PUBLIC_URL: http://127.0.0.1:${AOA_PORT:-3100}
+      AOA_MIGRATION_AUTO_APPLY: "true"
+      AOA_STORAGE_PROVIDER: local_disk
+      AOA_SECRETS_PROVIDER: local_encrypted
+      # Keep marketplace-managed skills on the persistent /aoa volume instead
+      # of the image's read-only /app working directory.
+      AOA_MARKETPLACE_SKILLS_WRITE_ROOT: persistent
+      # Fresh installs may need longer to download the curated crew's skill bundles.
+      AOA_CREW_INSTALL_DEADLINE_MS: "90000"
+    command:
+      - sh
+      - -lc
+      - socat TCP-LISTEN:3101,fork,reuseaddr TCP:127.0.0.1:3100 & exec node --import ./server/node_modules/tsx/dist/loader.mjs server/dist/index.js
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS "http://127.0.0.1:3101/api/health" >/dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    volumes:
+      - aoa-local-trial-data:/aoa
+
+volumes:
+  aoa-local-trial-data:
