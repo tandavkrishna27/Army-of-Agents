@@ -106,4 +106,59 @@ describe("ConstellationBg", () => {
     expect(arc).toHaveBeenCalled();
     expect(fill).toHaveBeenCalled();
   });
+
+  it("pins its CSS size to the container so the bitmap size cannot feed back into layout", () => {
+    const { container } = render(<ConstellationBg />);
+    const canvas = container.querySelector("canvas")!;
+    expect(canvas.style.width).toBe("100%");
+    expect(canvas.style.height).toBe("100%");
+  });
+
+  it("does not grow its bitmap on repeated resizes at devicePixelRatio 2", () => {
+    vi.stubGlobal("devicePixelRatio", 2);
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockReturnValue({
+        matches: true, // reduced motion: static frames, no rAF loop
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }),
+    );
+
+    // Emulate real layout: an absolutely-positioned canvas stretches to its
+    // container only if it has an explicit CSS size; otherwise it renders at
+    // its intrinsic (bitmap) size, exactly like a browser does.
+    const container = { width: 1024, height: 768 };
+    const rectSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLCanvasElement) {
+        const pinned = this.style.width === "100%" && this.style.height === "100%";
+        const width = pinned ? container.width : this.width;
+        const height = pinned ? container.height : this.height;
+        return {
+          width,
+          height,
+          top: 0,
+          left: 0,
+          right: width,
+          bottom: height,
+          x: 0,
+          y: 0,
+          toJSON() {},
+        } as DOMRect;
+      });
+
+    const { container: dom } = render(<ConstellationBg />);
+    const canvas = dom.querySelector("canvas")!;
+
+    for (let i = 0; i < 5; i++) {
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
+    }
+
+    expect(canvas.width).toBe(2048);
+    expect(canvas.height).toBe(1536);
+    rectSpy.mockRestore();
+  });
 });

@@ -5,7 +5,9 @@ import { useEffect, useRef } from "react";
  * 90px, one node periodically flashes red). Ported from the proven mockup
  * algorithm (scratchpad/onboarding-mockup.html). Purely decorative —
  * `aria-hidden` — and safe under jsdom (no real canvas: `getContext` can
- * return null; the effect no-ops in that case).
+ * return null; the effect no-ops in that case). The CSS size is pinned to the
+ * container so the bitmap (CSS size x dpr) never feeds back into layout on
+ * high-DPI screens.
  */
 export function ConstellationBg({ className }: { className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -133,7 +135,7 @@ export function ConstellationBg({ className }: { className?: string }) {
       ref={ref}
       className={className}
       aria-hidden="true"
-      style={{ position: "absolute", inset: 0, display: "block", zIndex: 0 }}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", zIndex: 0 }}
     />
   );
 }
