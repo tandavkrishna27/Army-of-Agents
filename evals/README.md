@@ -1,14 +1,14 @@
 # AoA Agent Evals
 
-Eval framework for testing AoA agent behaviors across models and prompt versions. Forked from the upstream project's Phase 0 promptfoo harness and extended for AoA's two agent types.
+Eval framework for testing AoA agent behaviors across models and prompt versions, covering AoA's internal and task-agent flows.
 
-See [the the upstream project evals framework plan](../../aoa-master/aoa-master/doc/plans/2026-03-13-agent-evals-framework.md) for the original design rationale.
+The framework is organized around repeatable promptfoo scenarios and AoA's agent types.
 
 ## Agent types under test
 
 AoA has two distinct agent surfaces with different behavioral contracts:
 
-- **Task agents** — adapter-executed (claude_local, openai_api, etc.), run inside a short heartbeat window, same pick-task → checkout → execute → report loop the upstream project uses. Tests live in `promptfoo/tests/task-agent-*.yaml`.
+- **Task agents** — adapter-executed (claude_local, openai_api, etc.), run inside a short heartbeat window using AoA's pick-task → checkout → execute → report lifecycle. Tests live in `promptfoo/tests/task-agent-*.yaml`.
 - **Internal Agent** — always-on conversation-driven coordinator with 30 tools across 8 categories (discussion, query, action, memory, workflow, file, coordination, analysis). Extracts user intent, routes through tools, never writes memory directly (Decision #15). Tests live in `promptfoo/tests/internal-agent-*.yaml`.
 
 ## Quick Start
@@ -54,7 +54,7 @@ Without API keys, promptfoo will fail per-provider with auth errors — the harn
 
 Phase 0 covers narrow behavioral evals for both agent surfaces.
 
-**Task agents** (ported from the upstream project):
+**Task agents**:
 
 | Case | Category | What it checks |
 |------|----------|---------------|

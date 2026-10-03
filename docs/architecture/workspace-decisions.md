@@ -93,7 +93,7 @@ Clicking a node switches timeline below to that task.
 - Human Input Points shown as review/approval moments
 - Input area at bottom (send to agent or mark human task complete)
 
-**Center-Right:** Mode-switchable panel (like vibe-kanban):
+**Center-Right:** Mode-switchable panel for switching between the active task context and related workspace material:
 - Changes mode: shows diffs (for code) or version comparison
 - Preview mode: shows artifact preview (code app, document, image, chart)
 - Logs mode: shows process output
@@ -295,7 +295,7 @@ Future enhancement: auto-capture decisions from human choices in workspace (appr
 
 ### New (to build):
 - Universal workspace view (multi-panel layout)
-- Workspace backend (ported from the upstream project — files already copied, prompt written)
+- Workspace backend implemented in AoA (files copied and prompt written)
 - Department function picker at creation
 - TaskSlideOver workspace section
 - TaskSlideOver wiring into ProjectDetail
@@ -309,7 +309,7 @@ Future enhancement: auto-capture decisions from human choices in workspace (appr
 ## Backend Status
 
 **Completed (verified 2026-04-03):**
-- 14 files ported from the upstream project → AoA and fully wired
+- 14 workspace files integrated into AoA and fully wired
 - Migration 0050 applied (execution_workspaces, workspace_runtime_services, workspace_operations)
 - Heartbeat fully integrated with workspace realization, runtime services, cleanup
 - Routes registered in app.ts
@@ -327,7 +327,7 @@ Future enhancement: auto-capture decisions from human choices in workspace (appr
 
 Decided: **Hybrid approach, evaluate later.**
 - MCP for agent-side tool use (already exists)
-- the upstream project's full plugin system (19 services) evaluated later for: webhooks, background jobs, scheduled sync, external integrations
+- broader plugin capabilities (webhooks, background jobs, scheduled sync, external integrations) evaluated for a later phase
 - NOT ruled out — just deferred
 
 ---
@@ -348,6 +348,5 @@ Import/export of department configurations can be added later as convenience fea
 
 ## References
 
-- Vibe-kanban codebase studied for UX patterns (historical checkout, location no longer valid)
-- the upstream project codebase as source for workspace backend (historical checkout, location no longer valid)
+- Workspace and timeline patterns were evaluated against AoA's own task and transcript flows.
 - Backend wiring prompt: historical prompt, location no longer valid

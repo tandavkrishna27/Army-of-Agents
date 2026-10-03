@@ -58,7 +58,7 @@ export const LIBRARIAN_TOOL_ALLOWLIST: string[] = [
  *
  * Marketplace-managed coverage: TODO(WS6-marketplace-cdn) — once the
  * Librarian ships in the `aoa-curated/standard-crew` team package on
- * https://github.com/MeteoriteLabs/aoa-marketplace-cdn (catalog.json), fresh
+ * https://github.com/tandavkrishna27/aoa-marketplace-cdn (catalog.json), fresh
  * team installs pick it up automatically via team-installer.ts. EXISTING
  * marketplace-managed companies additionally need the reconcile pass in
  * server/src/services/marketplace-install/team-reconcile.ts (added for this

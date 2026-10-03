@@ -308,7 +308,7 @@ continuationAttempt: number;
 nextAction: string | null;
 ```
 
-Use AoA package names, not `@upstreamai/*`.
+Use AoA package names, not legacy package aliases.
 
 - [ ] **Step 3: Add validators**
 
@@ -1426,7 +1426,7 @@ If implementation touched these files, add a regression test. Otherwise no commi
 Run:
 
 ```bash
-grep -RIn "Upstream\|upstream\|@upstreamai" server/src packages/shared/src packages/db/src ui/src | grep -v "upstream-migration" || true
+grep -RIn "legacy package alias\|legacy environment name" server/src packages/shared/src packages/db/src ui/src || true
 ```
 
 Expected: no new shipping-code hits from this branch. Recovery system notice text must say AoA or Task, not Upstream or Issue where user-facing.

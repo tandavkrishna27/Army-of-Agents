@@ -20,7 +20,7 @@
  * the preconditions would produce a false green. This is intentional per the
  * advisory lane contract documented in .github/workflows/thread-v2-e2e.yml.
  *
- * See docs/qa/thread-v2-release-checklist.md for the authoritative per-release
+ * See docs/qa/thread-crew-release-checklist.md for the authoritative per-release
  * manual gate.
  *
  * ── Task 5.2 addition ─────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ describe.skipIf(isWin32 || !hasRealE2E || !hasDbUrl)(
           throw new Error(
             "DATABASE_URL is not set. The thread-v2 real-agent E2E test requires a " +
             "running database with migrations applied. See " +
-            "docs/qa/thread-v2-release-checklist.md for setup.",
+            "docs/qa/thread-crew-release-checklist.md for setup.",
           );
         }
         db = createDb(databaseUrl);
@@ -289,7 +289,7 @@ describe.skipIf(isWin32 || !hasRealE2E || !hasDbUrl)(
           `thread ${threadId} / Adjutant ${adjutantAgentId}. ` +
           "Verify: (1) the Adjutant is configured with claude_local and valid creds; " +
           "(2) the claude CLI is on PATH; (3) runControllerSweep claimed the pending run. " +
-          "See docs/qa/thread-v2-release-checklist.md § Preconditions.",
+          "See docs/qa/thread-crew-release-checklist.md § Preconditions.",
         ).toBeTruthy();
 
         // Weak content assertion: the entry must be one of the expected types.
@@ -334,7 +334,7 @@ describe.skipIf(isWin32 || !hasRealE2E || !hasDbUrl)(
 //
 // Gate: identical to the block above — skips when THREAD_V2_E2E, DATABASE_URL,
 // or non-Windows preconditions are absent. This is intentional per the advisory
-// lane contract (docs/qa/thread-v2-release-checklist.md).
+// lane contract (docs/qa/thread-crew-release-checklist.md).
 //
 // Limitation: asserts the propose-card path (L0/L1 chokepoint) only. The full
 // L2 auto-approve → issues with originKind='crew_thread' → agent run → result
@@ -356,7 +356,7 @@ describe.skipIf(isWin32 || !hasRealE2E || !hasDbUrl)(
           throw new Error(
             "DATABASE_URL is not set. The T5.2 real-agent E2E test requires a " +
             "running database with migrations applied. See " +
-            "docs/qa/thread-v2-release-checklist.md for setup.",
+            "docs/qa/thread-crew-release-checklist.md for setup.",
           );
         }
         db = createDb(databaseUrl);
@@ -551,7 +551,7 @@ describe.skipIf(isWin32 || !hasRealE2E || !hasDbUrl)(
           "(2) ACCEPTANCE_ADAPTER_CONFIG is set if extra flags are needed; " +
           "(3) the Adjutant's allowlist includes propose_crew_work (ensure-adjutant.ts); " +
           "(4) runControllerSweep claimed the pending_run (check thread_orchestration_state). " +
-          "See docs/qa/thread-v2-release-checklist.md § Preconditions.",
+          "See docs/qa/thread-crew-release-checklist.md § Preconditions.",
         ).toBeTruthy();
 
         // Shape assertions — non-deterministic content is NOT asserted;

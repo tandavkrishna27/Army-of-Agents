@@ -183,7 +183,7 @@ import { fileImportJobs } from "./file_import_jobs.js";
 In `packages/db/src/schema/memory_items.ts`, add `importJobId` after the `pinnedToSkill` column (before `createdAt`):
 
 ```typescript
-    // V2.6: tracks which file import job created this item (nullable — most items are not file-imported)
+    // Tracks which file import job created this item (nullable — most items are not file-imported)
     importJobId: uuid("import_job_id").references(() => fileImportJobs.id, {
       onDelete: "set null",
     }),
