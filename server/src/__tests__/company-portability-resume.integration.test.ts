@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
-import { agents, authUsers, companies, companyMemberships, createDb, applyPendingMigrations, organizations, type Db } from "@armyofagents/db";
+import { agents, authUsers, companies, companyMemberships, createDb, applyPendingMigrations, organizations, projects, type Db } from "@armyofagents/db";
 import { companyPortabilityService } from "../services/company-portability.js";
 import { companyService } from "../services/companies.js";
 import { accessService } from "../services/access.js";
@@ -23,9 +23,11 @@ let dir: string;
 let pg: { initialise(): Promise<void>; start(): Promise<void>; stop(): Promise<void> };
 
 function request(operationId = randomUUID()): any {
+  const prefix = operationId.replaceAll("-", "").slice(0, 3).split("")
+    .map((digit) => String.fromCharCode(65 + Number.parseInt(digit, 16))).join("");
   return {
     operationId,
-    target: { mode: "new_company", newCompanyName: `Import ${operationId}` },
+    target: { mode: "new_company", newCompanyName: `${prefix} Import ${operationId}` },
     include: { company: true, agents: true, projects: true, issues: true, skills: true, routines: true,
       envInputs: true, internalAgentConfig: true, budgetPolicies: true, costEvents: true,
       financeEvents: true, quotaWindows: true, workflowTemplates: true },
@@ -447,4 +449,137 @@ describe.skipIf(process.platform !== "linux")("new company import recovery (real
     const after = await db.execute(sql`select id from finance_events where company_id = ${resumed.company.id}`);
     expect(after).toEqual(expect.arrayContaining(before));
   }, 30_000);
+
+  it("keeps routine and trigger identities at source positions when an earlier routine becomes importable on retry", async () => {
+    const input = request();
+    const [first] = input.source.manifest.routines;
+    first.slug = "late-routine";
+    first.title = "Late Routine";
+    first.assigneeAgentSlug = "late-worker";
+    first.triggers = [{ kind: "api", label: "late-trigger", enabled: true }];
+    const second = { ...first, slug: "stable-routine", title: "Stable Routine", projectSlug: "project", assigneeAgentSlug: "worker", triggers: [{ kind: "api", label: "stable-trigger", enabled: true }] };
+    input.source.manifest.routines.push(second);
+    const removeFault = await failInsert("finance_events", input);
+    const svc = companyPortabilityService(db);
+    try { await expect(svc.importBundle(input, owner, undefined, { organizationId: org })).rejects.toMatchObject({ status: 409 }); }
+    finally { await removeFault(); }
+    const failed = await operation(input);
+    const before = await db.execute(sql`select r.id as routine_id, r.title, t.id as trigger_id from routines r
+      join routine_triggers t on t.routine_id = r.id where r.company_id = ${failed!.company_id}`);
+    expect(before).toHaveLength(1);
+    expect(before[0].title).toBe(second.title);
+    await db.insert(agents).values({ companyId: failed!.company_id as string, kind: "org", name: "Late Worker", role: "engineer",
+      adapterType: "process", adapterConfig: {}, runtimeConfig: {}, permissions: {} });
+    const resumed = await svc.importBundle(input, owner, undefined, { organizationId: org });
+    const after = await db.execute(sql`select r.id as routine_id, r.title, t.id as trigger_id from routines r
+      join routine_triggers t on t.routine_id = r.id where r.company_id = ${resumed.company.id} order by r.title`);
+    expect(after).toHaveLength(1);
+    expect(after.find((row) => row.title === second.title)?.routine_id).toBe(before[0].routine_id);
+    expect(after.find((row) => row.title === second.title)?.trigger_id).toBe(before[0].trigger_id);
+    const replay = await svc.importBundle(input, owner, undefined, { organizationId: org });
+    expect(replay).toEqual(resumed);
+    expect(await db.execute(sql`select id from routines where company_id = ${resumed.company.id}`)).toHaveLength(1);
+  }, 30_000);
+
+  it("retries skipped cost events at stable source positions across fixed batch boundaries", async () => {
+    const input = request();
+    input.source.manifest.costEvents = Array.from({ length: 1001 }, (_, index) => ({
+      ...input.source.manifest.costEvents[0], slug: `position-${index}`, billingCode: `position-${index}`,
+      agentSlug: index === 0 ? "late-worker" : "worker",
+    }));
+    input.source.manifest.financeEvents = Array.from({ length: 1001 }, (_, index) => ({
+      ...input.source.manifest.financeEvents[0], slug: `finance-${index}`, costEventSlug: `position-${index}`,
+      billingCode: `cost-${index}`,
+    }));
+    const removeFault = await failInsert("finance_events", input);
+    const svc = companyPortabilityService(db);
+    try { await expect(svc.importBundle(input, owner, undefined, { organizationId: org })).rejects.toMatchObject({ status: 409 }); }
+    finally { await removeFault(); }
+    const failed = await operation(input);
+    expect(await db.execute(sql`select id from cost_events where company_id = ${failed!.company_id}`)).toHaveLength(1000);
+    await db.insert(agents).values({ companyId: failed!.company_id as string, kind: "org", name: "Late Worker", role: "engineer",
+      adapterType: "process", adapterConfig: {}, runtimeConfig: {}, permissions: {} });
+    const resumed = await svc.importBundle(input, owner, undefined, { organizationId: org });
+    const rows = await db.execute(sql`select billing_code, agent_id from cost_events where company_id = ${resumed.company.id}
+      order by billing_code`);
+    expect(rows).toHaveLength(1000);
+    expect(rows[0].billing_code).toBe("position-1");
+    expect(rows[999].billing_code).toBe("position-999");
+    expect(rows.some((row) => row.billing_code === "position-0")).toBe(false);
+    const linkedFinance = await db.execute(sql`select f.billing_code, c.billing_code as cost_billing_code
+      from finance_events f left join cost_events c on c.id = f.cost_event_id
+      where f.company_id = ${resumed.company.id} order by f.billing_code`);
+    expect(linkedFinance).toHaveLength(1001);
+    expect(linkedFinance[0]).toMatchObject({ billing_code: "cost-0", cost_billing_code: null });
+    expect(linkedFinance[1]).toMatchObject({ billing_code: "cost-1", cost_billing_code: "position-1" });
+    const checkpoints = (await operation(input))!.checkpoints as Record<string, Array<{ id: string | null; action: string }>>;
+    expect(checkpoints["cost-events:0"]).toHaveLength(1000);
+    expect(checkpoints["cost-events:0"][0]).toEqual({ id: null, action: "skipped" });
+    expect(checkpoints["cost-events:0"][1]).toMatchObject({ action: "created" });
+    expect(checkpoints["cost-events:1000"]).toHaveLength(1);
+    const replay = await svc.importBundle(input, owner, undefined, { organizationId: org });
+    expect(replay).toEqual(resumed);
+    expect(await db.execute(sql`select id from cost_events where company_id = ${resumed.company.id}`)).toHaveLength(1000);
+  }, 30_000);
+
+  it("checkpoints only section-affected rows and tolerates unrelated rows disappearing on replay", async () => {
+    const input = request();
+    const svc = companyPortabilityService(db);
+    const sideEffectName = `side_${randomUUID().replaceAll("-", "")}`;
+    const sideEffects = [
+      { table: "budget_policies", sql: `CREATE FUNCTION ${sideEffectName}_budget() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW.metric = 'cost_cents' THEN INSERT INTO budget_policies (company_id, scope_type, scope_id, metric, window_kind,
+          amount_cents, warn_percent, hard_stop_enabled, notify_enabled, is_active)
+          VALUES (NEW.company_id, 'company', NEW.company_id, 'requests', 'day', 1, 80, false, true, true); END IF;
+        RETURN NEW; END $$` },
+      { table: "provider_quota_windows", sql: `CREATE FUNCTION ${sideEffectName}_quota() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW.provider = 'test' THEN INSERT INTO provider_quota_windows (company_id, provider, window_kind, limit_value, used_value,
+          used_percent, last_updated_at) VALUES (NEW.company_id, 'unrelated-provider', 'day', 1, 0, 0, now()); END IF;
+        RETURN NEW; END $$` },
+      { table: "workflow_templates", sql: `CREATE FUNCTION ${sideEffectName}_workflow() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW.name = 'Imported Workflow' THEN INSERT INTO workflow_templates (company_id, name, workspace_mode, steps, dependencies, created_by)
+          VALUES (NEW.company_id, 'Unrelated Template', 'shared', '[]'::jsonb, '[]'::jsonb, 'import-test'); END IF;
+        RETURN NEW; END $$` },
+    ];
+    for (const [index, effect] of sideEffects.entries()) {
+      const suffix = ["budget", "quota", "workflow"][index]!;
+      await db.execute(sql.raw(effect.sql));
+      await db.execute(sql.raw(`CREATE TRIGGER ${sideEffectName}_${suffix} BEFORE INSERT ON ${effect.table}
+        FOR EACH ROW EXECUTE FUNCTION ${sideEffectName}_${suffix}()`));
+    }
+    const readyFaultName = `ready_${randomUUID().replaceAll("-", "")}`;
+    await db.execute(sql.raw(`CREATE FUNCTION ${readyFaultName}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.name = '${input.target.newCompanyName}' AND NEW.agent_execution_setup_state = 'ready'
+        THEN RAISE EXCEPTION 'synthetic readiness fault'; END IF; RETURN NEW; END $$`));
+    await db.execute(sql.raw(`CREATE TRIGGER ${readyFaultName} BEFORE UPDATE ON companies FOR EACH ROW EXECUTE FUNCTION ${readyFaultName}()`));
+    try {
+      await expect(svc.importBundle(input, owner, undefined, { organizationId: org })).rejects.toMatchObject({ status: 409 });
+    } finally {
+      await db.execute(sql.raw(`DROP TRIGGER ${readyFaultName} ON companies`));
+      await db.execute(sql.raw(`DROP FUNCTION ${readyFaultName}()`));
+      for (const [index, effect] of sideEffects.entries()) {
+        const suffix = ["budget", "quota", "workflow"][index]!;
+        await db.execute(sql.raw(`DROP TRIGGER ${sideEffectName}_${suffix} ON ${effect.table}`));
+        await db.execute(sql.raw(`DROP FUNCTION ${sideEffectName}_${suffix}()`));
+      }
+    }
+    const failed = await operation(input);
+    const companyId = failed!.company_id as string;
+    const checkpoint = await operation(input);
+    const checkpointValues = checkpoint!.checkpoints as Record<string, unknown[]>;
+    expect(checkpointValues).toMatchObject({
+      budgetPolicies: expect.any(Array),
+      quotaWindows: expect.any(Array),
+      workflowTemplates: expect.any(Array),
+    });
+    for (const key of ["budgetPolicies", "quotaWindows", "workflowTemplates"]) {
+      expect(checkpointValues[key], key).toHaveLength(1);
+    }
+    await db.execute(sql`delete from budget_policies where company_id = ${companyId} and metric = 'requests'`);
+    await db.execute(sql`delete from provider_quota_windows where company_id = ${companyId} and provider = 'unrelated-provider'`);
+    await db.execute(sql`delete from workflow_templates where company_id = ${companyId} and name = 'Unrelated Template'`);
+    const replay = await svc.importBundle(input, owner, undefined, { organizationId: org });
+    expect(replay.company.id).toBe(companyId);
+    expect(await svc.importBundle(input, owner, undefined, { organizationId: org })).toEqual(replay);
+  });
 });

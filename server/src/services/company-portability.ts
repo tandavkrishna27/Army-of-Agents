@@ -2283,10 +2283,19 @@ export function companyPortabilityService(db: Db) {
     // The fingerprint freezes iteration order; positional keys cannot leak
     // source slugs or secret-bearing names into the operation journal.
     const ordinals = new Map<string, number>();
+    let activeAgentCheckpointKey: string | null = null;
+    let activeProjectCheckpointKey: string | null = null;
+    let activeIssueCheckpointKey: string | null = null;
+    let activeRoutineCheckpointKey: string | null = null;
+    let activeTriggerCheckpointKey: string | null = null;
     function nextKey(section: string) {
       const ordinal = ordinals.get(section) ?? 0;
       ordinals.set(section, ordinal + 1);
       return `${section}:${ordinal}`;
+    }
+    async function recordSkipped(key: string) {
+      if (!operation) return;
+      await operation.checkpoint(key, async () => [{ id: null, action: "skipped" }]);
     }
     async function importRow<T extends { id: string } | null>(
       key: string,
@@ -2322,13 +2331,11 @@ export function companyPortabilityService(db: Db) {
     async function importEffect(key: string, effect: (tx: Db) => Promise<unknown>, table?: string) {
       if (!operation) { await effect(db); return; }
       const saved = await operation.checkpoint(key, async (tx) => {
-        const result = await effect(tx);
-        if (!table) return [];
-        if (Array.isArray(result) && result.length > 0 && result.every((row) => typeof row.id === "string")) {
-          return result.map((row) => ({ id: row.id as string, action: "created" as const }));
-        }
-        const rows = await tx.execute(sql`select id from ${sql.identifier(table)} where company_id = ${targetCompany!.id} order by id`);
-        return rows.map((row) => ({ id: String(row.id), action: "created" as const }));
+        const affectedIds = await effect(tx);
+        // The DB effect and its explicit affected-row IDs commit atomically.
+        // Falling back to every company row would make unrelated data a replay dependency.
+        const ids = Array.isArray(affectedIds) ? affectedIds : [];
+        return ids.flatMap((item) => typeof item === "string" ? [{ id: item, action: "created" as const }] : []);
       });
       if (table) await validateTargets(table, saved);
     }
@@ -2336,7 +2343,7 @@ export function companyPortabilityService(db: Db) {
     const agents = {
       ...baseAgents,
       create: (...args: Parameters<typeof baseAgents.create>) => importRow(
-        nextKey("agents"), (tx) => agentService(tx).create(...args), baseAgents.getById),
+        activeAgentCheckpointKey ?? nextKey("agents"), (tx) => agentService(tx).create(...args), baseAgents.getById),
       update: (...args: Parameters<typeof baseAgents.update>) => importRow(
         `agent-links:${args[0]}:${"skillKeys" in args[1] ? "skills" : "parent"}`,
         (tx) => agentService(tx).update(...args), baseAgents.getById),
@@ -2347,28 +2354,30 @@ export function companyPortabilityService(db: Db) {
     const projects = {
       ...baseProjects,
       create: (...args: Parameters<typeof baseProjects.create>) => importRow(
-        nextKey("projects"), (tx) => projectService(tx).create(...args), baseProjects.getById),
+        activeProjectCheckpointKey ?? nextKey("projects"), (tx) => projectService(tx).create(...args), baseProjects.getById),
       update: (...args: Parameters<typeof baseProjects.update>) => importRow(
-        nextKey("project-updates"), (tx) => projectService(tx).update(...args), baseProjects.getById),
+        activeProjectCheckpointKey ? `${activeProjectCheckpointKey}:update` : nextKey("project-updates"),
+        (tx) => projectService(tx).update(...args), baseProjects.getById),
     };
     const baseIssues = issueService(db);
     const issues = {
       ...baseIssues,
       create: (...args: Parameters<typeof baseIssues.create>) => importRow(
-        nextKey("issues"), (tx) => issueService(tx).create(...args), baseIssues.getById),
+        activeIssueCheckpointKey ?? nextKey("issues"), (tx) => issueService(tx).create(...args), baseIssues.getById),
     };
     const baseRoutines = routineService(db);
     const routines = {
       ...baseRoutines,
       create: (...args: Parameters<typeof baseRoutines.create>) => importRow(
-        nextKey("routines"), (tx) => routineService(tx).create(...args), baseRoutines.getDetail),
+        activeRoutineCheckpointKey ?? nextKey("routines"), (tx) => routineService(tx).create(...args), baseRoutines.getDetail),
       update: (...args: Parameters<typeof baseRoutines.update>) => importRow(
-        nextKey("routine-updates"), (tx) => routineService(tx).update(...args), baseRoutines.getDetail),
+        activeRoutineCheckpointKey ? `${activeRoutineCheckpointKey}:update` : nextKey("routine-updates"),
+        (tx) => routineService(tx).update(...args), baseRoutines.getDetail),
       // Local encrypted secret + trigger + positional identity commit together.
       // Secret material never enters the checkpoint, result, or diagnostics.
       createTrigger: async (...args: Parameters<typeof baseRoutines.createTrigger>) => {
         if (!operation) { await baseRoutines.createTrigger(...args); return; }
-        const saved = await operation.checkpoint(nextKey("triggers"), async (tx) => {
+        const saved = await operation.checkpoint(activeTriggerCheckpointKey ?? nextKey("triggers"), async (tx) => {
           const { trigger } = await routineService(tx).createTrigger(...args);
           return [{ id: trigger.id, action: "created" }];
         });
@@ -2419,7 +2428,9 @@ export function companyPortabilityService(db: Db) {
       for (const planAgent of plan.preview.plan.agentPlans) {
         const manifestAgent = plan.selectedAgents.find((agent) => agent.slug === planAgent.slug);
         if (!manifestAgent) continue;
+        activeAgentCheckpointKey = `agents:${plan.selectedAgents.findIndex((agent) => agent.slug === planAgent.slug)}`;
         if (planAgent.action === "skip") {
+          await recordSkipped(activeAgentCheckpointKey);
           resultAgents.push({
             slug: planAgent.slug,
             id: planAgent.existingAgentId,
@@ -2514,6 +2525,7 @@ export function companyPortabilityService(db: Db) {
         });
       }
 
+      activeAgentCheckpointKey = null;
       // Apply reporting links once all imported agent ids are available.
       for (const manifestAgent of plan.selectedAgents) {
         const agentId = importedSlugToAgentId.get(manifestAgent.slug);
@@ -2583,7 +2595,9 @@ export function companyPortabilityService(db: Db) {
 
         const type: "department" | "project" = manifestProject.type === "project" ? "project" : "department";
 
+        activeProjectCheckpointKey = `projects:${plan.selectedProjects.findIndex((project) => project.slug === planProject.slug)}`;
         if (planProject.action === "skip") {
+          await recordSkipped(activeProjectCheckpointKey);
           if (planProject.existingProjectId) {
             importedSlugToProjectId.set(planProject.slug, planProject.existingProjectId);
           }
@@ -2672,6 +2686,7 @@ export function companyPortabilityService(db: Db) {
           reason: planProject.reason,
         });
       }
+      activeProjectCheckpointKey = null;
     }
 
     const resultIssues: CompanyPortabilityImportResult["issues"] = [];
@@ -2683,8 +2698,10 @@ export function companyPortabilityService(db: Db) {
       }
       let labelWarningEmitted = false;
 
-      for (const manifestIssue of plan.selectedIssues) {
+      for (const [issueIndex, manifestIssue] of plan.selectedIssues.entries()) {
+        activeIssueCheckpointKey = `issues:${issueIndex}`;
         if (manifestIssue.recurring) {
+          await recordSkipped(activeIssueCheckpointKey);
           warnings.push({
             kind: "deprecated_field",
             message: `Issue "${manifestIssue.slug}" is marked recurring; recurring tasks are imported by the routines port (E.1.4) and were skipped here.`,
@@ -2807,6 +2824,7 @@ export function companyPortabilityService(db: Db) {
           reason: null,
         });
       }
+      activeIssueCheckpointKey = null;
     }
 
     const resultSkills: CompanyPortabilityImportResult["skills"] = [];
@@ -3022,7 +3040,11 @@ export function companyPortabilityService(db: Db) {
       for (const planRoutine of plan.preview.plan.routinePlans) {
         const manifestRoutine = plan.selectedRoutines.find((r) => r.slug === planRoutine.slug);
         if (!manifestRoutine) continue;
+        const routineIndex = plan.selectedRoutines.findIndex((routine) => routine.slug === planRoutine.slug);
+        activeRoutineCheckpointKey = `routines:${routineIndex}`;
+        activeTriggerCheckpointKey = null;
         if (planRoutine.action === "skip") {
+          await recordSkipped(activeRoutineCheckpointKey);
           resultRoutines.push({
             slug: planRoutine.slug,
             id: planRoutine.existingRoutineId,
@@ -3035,6 +3057,7 @@ export function companyPortabilityService(db: Db) {
 
         const projectId = routineProjectSlugToId.get(manifestRoutine.projectSlug) ?? null;
         if (!projectId) {
+          await recordSkipped(activeRoutineCheckpointKey);
           warnings.push({
             kind: "skipped_update",
             message: `Routine "${manifestRoutine.slug}" references project slug "${manifestRoutine.projectSlug}", but that project was not found; skipping.`,
@@ -3051,6 +3074,7 @@ export function companyPortabilityService(db: Db) {
 
         const assigneeAgentId = routineAgentSlugToId.get(manifestRoutine.assigneeAgentSlug) ?? null;
         if (!assigneeAgentId) {
+          await recordSkipped(activeRoutineCheckpointKey);
           warnings.push({
             kind: "skipped_update",
             message: `Routine "${manifestRoutine.slug}" references agent slug "${manifestRoutine.assigneeAgentSlug}", but that agent was not found; skipping.`,
@@ -3098,6 +3122,16 @@ export function companyPortabilityService(db: Db) {
             routinePatch as Parameters<typeof routines.create>[1],
             actor,
           );
+          if (!created) {
+            resultRoutines.push({
+              slug: planRoutine.slug,
+              id: null,
+              action: "skipped",
+              title: planRoutine.plannedTitle,
+              reason: "Routine was skipped by an earlier import attempt.",
+            });
+            continue;
+          }
           routineId = created.id;
           action = "created";
         }
@@ -3117,7 +3151,8 @@ export function companyPortabilityService(db: Db) {
           continue;
         }
 
-        for (const trigger of manifestRoutine.triggers) {
+        for (const [triggerIndex, trigger] of manifestRoutine.triggers.entries()) {
+          activeTriggerCheckpointKey = `triggers:${routineIndex}:${triggerIndex}`;
           try {
             if (trigger.kind === "schedule") {
               await routines.createTrigger(
@@ -3170,6 +3205,8 @@ export function companyPortabilityService(db: Db) {
           reason: planRoutine.reason,
         });
       }
+      activeRoutineCheckpointKey = null;
+      activeTriggerCheckpointKey = null;
     }
 
     if (include.internalAgentConfig && sourceManifest.internalAgentConfig) {
@@ -3198,15 +3235,18 @@ export function companyPortabilityService(db: Db) {
         metadata: cfg.metadata ?? {},
       };
       if (existingRows.length > 0) {
-        await db
+        const updated = await db
           .update(internalAgentConfig)
           .set(values)
-          .where(eq(internalAgentConfig.companyId, targetCompany.id));
+          .where(eq(internalAgentConfig.companyId, targetCompany.id))
+          .returning({ id: internalAgentConfig.id });
+        return updated.map((row) => row.id);
       } else {
-        await db.insert(internalAgentConfig).values({
+        const inserted = await db.insert(internalAgentConfig).values({
           companyId: targetCompany.id,
           ...values,
-        });
+        }).returning({ id: internalAgentConfig.id });
+        return inserted.map((row) => row.id);
       }
       }, "internal_agent_config");
     }
@@ -3222,6 +3262,7 @@ export function companyPortabilityService(db: Db) {
         }
       }
       await importEffect("budgetPolicies", async (db) => {
+      const affectedIds: string[] = [];
       const budgetCollisionStrategy = plan.collisionStrategy;
       for (const policy of sourceManifest.budgetPolicies!) {
         let scopeId: string;
@@ -3258,7 +3299,7 @@ export function companyPortabilityService(db: Db) {
           if (budgetCollisionStrategy === "replace") {
             const existingId = typeof collision.id === "string" ? collision.id : null;
             if (existingId) {
-              await db
+              const updated = await db
                 .update(budgetPolicies)
                 .set({
                   scopeType: policy.scopeType,
@@ -3272,13 +3313,15 @@ export function companyPortabilityService(db: Db) {
                   isActive: policy.isActive,
                   updatedByUserId: actorUserId ?? null,
                 })
-                .where(eq(budgetPolicies.id, existingId));
+                .where(eq(budgetPolicies.id, existingId))
+                .returning({ id: budgetPolicies.id });
+              affectedIds.push(...updated.map((row) => row.id));
             }
             continue;
           }
         }
 
-        await db.insert(budgetPolicies).values({
+        const inserted = await db.insert(budgetPolicies).values({
           companyId: targetCompany.id,
           scopeType: policy.scopeType,
           scopeId,
@@ -3291,8 +3334,10 @@ export function companyPortabilityService(db: Db) {
           isActive: policy.isActive,
           createdByUserId: actorUserId ?? null,
           updatedByUserId: actorUserId ?? null,
-        });
+        }).returning({ id: budgetPolicies.id });
+        affectedIds.push(...inserted.map((row) => row.id));
       }
+      return affectedIds;
       }, "budget_policies");
     }
 
@@ -3332,8 +3377,9 @@ export function companyPortabilityService(db: Db) {
 
       const pendingInserts: Record<string, unknown>[] = [];
       const pendingSlugs: string[] = [];
+      const pendingSourceIndexes: number[] = [];
       let linkFailedAgentWarned = false;
-      for (const event of manifestCostEvents) {
+      for (const [sourceIndex, event] of manifestCostEvents.entries()) {
         const agentId = event.agentSlug
           ? (importedSlugToAgentId.get(event.agentSlug) ?? existingSlugToAgentId.get(event.agentSlug) ?? null)
           : null;
@@ -3371,28 +3417,43 @@ export function companyPortabilityService(db: Db) {
           occurredAt,
         });
         pendingSlugs.push(event.slug);
+        pendingSourceIndexes.push(sourceIndex);
       }
 
-      for (let i = 0; i < pendingInserts.length; i += COST_EVENT_INSERT_BATCH_SIZE) {
-        const batch = pendingInserts.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
-        const batchSlugs = pendingSlugs.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
-        if (batch.length === 0) continue;
-        const insertBatch = async (tx: Db) => {
-          // Journal in source order independently of SQL RETURNING row order.
-          const values = operation ? batch.map((row) => ({ ...row, id: randomUUID() })) : batch;
-          const returned = await tx.insert(costEvents).values(values as never).returning({ id: costEvents.id });
-          return operation ? values.map((row) => ({ id: row.id as string })) : returned;
-        };
-        const returned = operation
-          ? await operation.checkpoint(`cost-events:${i}`, async (tx) =>
-              (await insertBatch(tx)).map(({ id }) => ({ id, action: "created" as const })))
-          : await insertBatch(db);
-        await validateTargets("cost_events", returned);
-        for (let j = 0; j < returned.length && j < batchSlugs.length; j++) {
-          const slug = batchSlugs[j];
-          const newId = returned[j]?.id;
-          if (typeof slug === "string" && typeof newId === "string") {
-            costEventSlugToNewId.set(slug, newId);
+      if (operation) {
+        for (let sourceStart = 0; sourceStart < manifestCostEvents.length; sourceStart += COST_EVENT_INSERT_BATCH_SIZE) {
+          const sourceEnd = Math.min(sourceStart + COST_EVENT_INSERT_BATCH_SIZE, manifestCostEvents.length);
+          const eligible = pendingSourceIndexes.flatMap((sourceIndex, pendingIndex) =>
+            sourceIndex >= sourceStart && sourceIndex < sourceEnd ? [{ sourceIndex, pendingIndex }] : []);
+          const saved = await operation.checkpoint(`cost-events:${sourceStart}`, async (tx) => {
+            const values = eligible.map(({ pendingIndex }) => ({ ...pendingInserts[pendingIndex]!, id: randomUUID() }));
+            if (values.length) await tx.insert(costEvents).values(values as never);
+            const bySourceIndex = new Map(eligible.map(({ sourceIndex }, index) => [sourceIndex, values[index]!.id as string]));
+            return Array.from({ length: sourceEnd - sourceStart }, (_, offset) => {
+              const id = bySourceIndex.get(sourceStart + offset) ?? null;
+              return { id, action: id ? "created" as const : "skipped" as const };
+            });
+          });
+          const created = saved.filter((item) => item.id !== null);
+          await validateTargets("cost_events", created);
+          for (let sourceIndex = sourceStart; sourceIndex < sourceEnd; sourceIndex++) {
+            const savedItem = saved[sourceIndex - sourceStart];
+            const pendingIndex = pendingSourceIndexes.indexOf(sourceIndex);
+            if (savedItem?.id && pendingIndex >= 0) {
+              costEventSlugToNewId.set(pendingSlugs[pendingIndex]!, savedItem.id);
+            }
+          }
+        }
+      } else {
+        for (let i = 0; i < pendingInserts.length; i += COST_EVENT_INSERT_BATCH_SIZE) {
+          const batch = pendingInserts.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
+          const batchSlugs = pendingSlugs.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
+          if (batch.length === 0) continue;
+          const returned = await db.insert(costEvents).values(batch as never).returning({ id: costEvents.id });
+          for (let j = 0; j < returned.length && j < batchSlugs.length; j++) {
+            const slug = batchSlugs[j];
+            const newId = returned[j]?.id;
+            if (typeof slug === "string" && typeof newId === "string") costEventSlugToNewId.set(slug, newId);
           }
         }
       }
@@ -3501,12 +3562,13 @@ export function companyPortabilityService(db: Db) {
         const batch = pendingInserts.slice(i, i + FINANCE_EVENT_INSERT_BATCH_SIZE);
         if (batch.length === 0) continue;
         await importEffect(`finance-events:${i}`, (tx) => tx.insert(financeEvents).values(batch as never)
-          .returning({ id: financeEvents.id }), "finance_events");
+          .returning({ id: financeEvents.id }).then((rows) => rows.map((row) => row.id)), "finance_events");
       }
     }
 
     if (include.quotaWindows === true && Array.isArray(sourceManifest.quotaWindows)) {
       await importEffect("quotaWindows", async (db) => {
+      const affectedIds: string[] = [];
       const manifestQuotaWindows = sourceManifest.quotaWindows!;
       for (const qw of manifestQuotaWindows) {
         const existing = (await db
@@ -3525,7 +3587,7 @@ export function companyPortabilityService(db: Db) {
         const lastUpdatedAt = new Date(qw.lastUpdatedAt);
         const resetAt = qw.resetAt ? new Date(qw.resetAt) : null;
         if (existing.length > 0 && typeof existing[0]?.id === "string") {
-          await db
+          const updated = await db
             .update(providerQuotaWindows)
             .set({
               label: qw.label,
@@ -3536,9 +3598,11 @@ export function companyPortabilityService(db: Db) {
               resetAt,
               lastUpdatedAt,
             })
-            .where(eq(providerQuotaWindows.id, existing[0]!.id));
+            .where(eq(providerQuotaWindows.id, existing[0]!.id))
+            .returning({ id: providerQuotaWindows.id });
+          affectedIds.push(...updated.map((row) => row.id));
         } else {
-          await db.insert(providerQuotaWindows).values({
+          const inserted = await db.insert(providerQuotaWindows).values({
             companyId: targetCompany.id,
             provider: qw.provider,
             model: qw.model,
@@ -3550,9 +3614,11 @@ export function companyPortabilityService(db: Db) {
             valueLabel: qw.valueLabel,
             resetAt,
             lastUpdatedAt,
-          } as never);
+          } as never).returning({ id: providerQuotaWindows.id });
+          affectedIds.push(...inserted.map((row) => row.id));
         }
       }
+      return affectedIds;
       }, "provider_quota_windows");
       if (sourceManifest.quotaWindows.length > 0) {
         warnings.push({
@@ -3565,6 +3631,7 @@ export function companyPortabilityService(db: Db) {
 
     if (include.workflowTemplates === true && Array.isArray(sourceManifest.workflowTemplates)) {
       await importEffect("workflowTemplates", async (db) => {
+      const affectedIds: string[] = [];
       const manifestWorkflowTemplates = sourceManifest.workflowTemplates!;
       const existingRows = (await db
         .select()
@@ -3607,7 +3674,7 @@ export function companyPortabilityService(db: Db) {
               });
               continue;
             }
-            await db
+            const updated = await db
               .update(workflowTemplates)
               .set({
                 name: tpl.name,
@@ -3623,7 +3690,9 @@ export function companyPortabilityService(db: Db) {
               .where(and(
                 eq(workflowTemplates.id, existingId),
                 eq(workflowTemplates.companyId, targetCompany.id),
-              ));
+              ))
+              .returning({ id: workflowTemplates.id });
+            affectedIds.push(...updated.map((row) => row.id));
             continue;
           }
           // rename: derive a unique name + slug
@@ -3636,7 +3705,7 @@ export function companyPortabilityService(db: Db) {
             candidateSlug = synthesizeWorkflowTemplateSlug(candidateName);
           }
           usedSlugs.add(candidateSlug);
-          await db.insert(workflowTemplates).values({
+          const inserted = await db.insert(workflowTemplates).values({
             companyId: targetCompany.id,
             name: candidateName,
             description: tpl.description ?? null,
@@ -3647,12 +3716,13 @@ export function companyPortabilityService(db: Db) {
             instantiationCount: 0,
             lastInstantiatedAt: null,
             createdBy: actorUserId ?? "importer",
-          } as never);
+          } as never).returning({ id: workflowTemplates.id });
+          affectedIds.push(...inserted.map((row) => row.id));
           continue;
         }
 
         usedSlugs.add(bundleSlug);
-        await db.insert(workflowTemplates).values({
+        const inserted = await db.insert(workflowTemplates).values({
           companyId: targetCompany.id,
           name: tpl.name,
           description: tpl.description ?? null,
@@ -3663,8 +3733,10 @@ export function companyPortabilityService(db: Db) {
           instantiationCount: 0,
           lastInstantiatedAt: null,
           createdBy: actorUserId ?? "importer",
-        } as never);
+        } as never).returning({ id: workflowTemplates.id });
+        affectedIds.push(...inserted.map((row) => row.id));
       }
+      return affectedIds;
       }, "workflow_templates");
     }
 
