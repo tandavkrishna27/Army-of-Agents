@@ -232,6 +232,11 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
           `Commander is currently configured for ${configuredProvider}. Switch Commander to Claude in Settings → Commander → Execution & Model, then verify the Claude subscription.`,
         );
       }
+      if (result.subscriptionBound !== true) {
+        throw new Error(
+          "Commander is working with a Claude API key, but no Claude subscription was bound. Remove the company API key or select the scoped subscription sign-in, then verify again.",
+        );
+      }
       await refreshList();
     } catch (error) {
       const safeError = commanderVerifyFailure(error);

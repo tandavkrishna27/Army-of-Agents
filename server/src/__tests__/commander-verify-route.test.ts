@@ -154,6 +154,7 @@ describe("POST /companies/:companyId/internal-agent/verify", () => {
       .send({});
     expect(res.status).toBe(200);
     expect(res.body.outcome).toBe("verified");
+    expect(res.body.subscriptionBound).toBe(true);
     expect(mockAssertRole).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
@@ -279,6 +280,8 @@ describe("POST /companies/:companyId/internal-agent/verify", () => {
     );
 
     expect(res.status).toBe(200);
+    expect((res.body as { outcome: string }).outcome).toBe("verified");
+    expect((res.body as { subscriptionBound?: boolean }).subscriptionBound).toBe(false);
     expect(mockVerifyAndBindSubscription).not.toHaveBeenCalled();
   });
 

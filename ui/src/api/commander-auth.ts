@@ -46,6 +46,8 @@ export function getCommanderAuthCapabilities(args: {
 
 export type CommanderVerifyResult = {
   outcome: "verified" | "needs_auth" | "not_installed" | "failed";
+  /** True only when a founder-scoped subscription credential was registered and bound. */
+  subscriptionBound?: boolean;
   result?: { adapterType?: string; status?: string; checks?: Array<{ code?: string; level?: string; message?: string; hint?: string }> };
 };
 

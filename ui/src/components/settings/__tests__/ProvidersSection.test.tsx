@@ -270,6 +270,11 @@ describe("ProvidersSection cached rendering", () => {
 
   it("uses Commander verification instead of the generic Test probe for scoped Claude subscriptions", async () => {
     mockScopedDockerClaudeAuth();
+    commanderVerifyMock.mockResolvedValueOnce({
+      outcome: "verified",
+      subscriptionBound: true,
+      result: { adapterType: "claude_local", checks: [] },
+    });
     await renderAndSettle([needsAuthRow("anthropic")]);
     await select("anthropic");
 
@@ -280,6 +285,22 @@ describe("ProvidersSection cached rendering", () => {
     await waitFor(() => expect(commanderVerifyMock).toHaveBeenCalledWith({ companyId: COMPANY_ID }));
     expect(testMock).not.toHaveBeenCalled();
     expect((await screen.findByTestId("provider-commander-verified")).textContent).toMatch(/verified and bound to commander/i);
+  });
+
+  it("does not claim a Claude subscription was bound when Commander verified with an API key", async () => {
+    mockScopedDockerClaudeAuth();
+    commanderVerifyMock.mockResolvedValueOnce({
+      outcome: "verified",
+      subscriptionBound: false,
+      result: { adapterType: "claude_local", checks: [] },
+    });
+    await renderAndSettle([needsAuthRow("anthropic")]);
+    await select("anthropic");
+    fireEvent.click(screen.getByTestId("provider-verify-commander"));
+
+    expect((await screen.findByTestId("provider-error")).textContent).toMatch(/Claude API key.*no Claude subscription.*bound/i);
+    expect(screen.queryByTestId("provider-commander-verified")).toBeNull();
+    expect(testMock).not.toHaveBeenCalled();
   });
 
   it("shows the safe Commander verification diagnostic when the scoped credential is not ready", async () => {

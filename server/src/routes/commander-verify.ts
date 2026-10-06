@@ -64,6 +64,7 @@ export function commanderVerifyRoutes(db: Db): Router {
     }
 
     let openedClaudeCredential: Awaited<ReturnType<typeof openScopedClaudeCredential>> | null = null;
+    let subscriptionBound = false;
     try {
       const scopedClaudeSubscriptionProbe =
         adapterType === "claude_local" &&
@@ -220,8 +221,12 @@ export function commanderVerifyRoutes(db: Db): Router {
           });
           return;
         }
+        subscriptionBound = true;
       }
-      res.status(classified.outcome === "verified" ? 200 : 422).json(classified);
+      res.status(classified.outcome === "verified" ? 200 : 422).json({
+        ...classified,
+        subscriptionBound,
+      });
     } finally {
       releaseProbeSlot();
       await openedClaudeCredential?.close();
