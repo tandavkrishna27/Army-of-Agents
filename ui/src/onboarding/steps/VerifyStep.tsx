@@ -537,12 +537,15 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
   };
 
   const providerLabel = provider ? PROVIDER_LABEL[provider] : "your CLI";
-  const terminalCommand =
+  const terminalCommands =
     capability?.enabled && provider
       ? installProfile === "remote_single_tenant"
-        ? capability.terminalCommand ?? null
-        : PROVIDER_CLI_LOGIN_COMMAND[provider]
-      : null;
+        ? capability.terminalCommands?.map(({ mode, command }) => ({
+            label: mode === "standard" ? "Standard Compose" : "Quickstart Compose",
+            command,
+          })) ?? (capability.terminalCommand ? [{ label: "Docker Compose", command: capability.terminalCommand }] : [])
+        : [{ label: "CLI", command: PROVIDER_CLI_LOGIN_COMMAND[provider] }]
+      : [];
 
   return (
     <StepShell>
@@ -775,22 +778,28 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
             {/* WS3 — CLI auto-detect: the fallback for BOTH providers when the
                 in-app bridge above can't run (server restarted, spawn failed,
                 or the founder just prefers a terminal). */}
-            {terminalCommand && <div className="flex items-center gap-2 text-very-dim">
+            {terminalCommands.length > 0 && <div className="flex items-center gap-2 text-very-dim">
               <span className="h-px flex-1 bg-border" />
               or
               <span className="h-px flex-1 bg-border" />
             </div>}
-            {terminalCommand && (cliPolling ? (
+            {terminalCommands.length > 0 && (cliPolling ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <LoadingDots state="loading" />
                   <p>
-                    Run{" "}
-                    <code className="rounded bg-field px-1 py-0.5">
-                      {terminalCommand}
-                    </code>{" "}
-                    in a terminal — we'll detect it automatically and continue.
+                    {terminalCommands.length > 1
+                      ? "From the repository directory, run the command matching the Compose stack you started; we'll detect sign-in and continue."
+                      : "Run the command in a terminal — we'll detect sign-in and continue."}
                   </p>
+                </div>
+                <div className="space-y-2">
+                  {terminalCommands.map(({ label, command }) => (
+                    <p key={label} className="text-xs">
+                      <span className="font-medium">{label}: </span>
+                      <code className="break-all rounded bg-field px-1 py-0.5">{command}</code>
+                    </p>
+                  ))}
                 </div>
                 <Button type="button" variant="ghost" className="w-full" onClick={clearCliPoll}>
                   Cancel

@@ -272,8 +272,24 @@ export class ClaudeCredentialsAccessError extends Error {
   }
 }
 
-function accessError(error: unknown): ClaudeCredentialsAccessError {
+export class ClaudeCredentialsResourceError extends Error {
+  readonly code = "claude_credentials_resource_error";
+
+  constructor() {
+    super(
+      "AoA could not inspect or copy the scoped Claude credential because a system resource is unavailable (for example, disk space or file descriptors). Free the resource and retry.",
+    );
+    this.name = "ClaudeCredentialsResourceError";
+  }
+}
+
+const RESOURCE_ERROR_CODES = new Set(["ENOSPC", "EDQUOT", "EMFILE", "ENFILE", "ENOMEM"]);
+
+function accessError(error: unknown): ClaudeCredentialsAccessError | ClaudeCredentialsResourceError {
   const code = (error as NodeJS.ErrnoException | null)?.code;
+  if (typeof code === "string" && RESOURCE_ERROR_CODES.has(code)) {
+    return new ClaudeCredentialsResourceError();
+  }
   return new ClaudeCredentialsAccessError(
     code === "EACCES" || code === "EPERM"
       ? "claude_credentials_permission_denied"
@@ -317,7 +333,9 @@ async function openPinnedDirectory(directory: string): Promise<import("node:fs/p
     return handle;
   } catch (error) {
     await handle.close();
-    throw error instanceof ClaudeCredentialsAccessError ? error : accessError(error);
+    throw error instanceof ClaudeCredentialsAccessError || error instanceof ClaudeCredentialsResourceError
+      ? error
+      : accessError(error);
   }
 }
 

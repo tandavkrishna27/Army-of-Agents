@@ -356,6 +356,20 @@ describe("provider login routes", () => {
     expect(mockLoginService.startChallenge).not.toHaveBeenCalled();
   });
 
+  it("returns both scoped Docker Compose alternatives instead of generic Claude login", async () => {
+    vi.stubEnv("AOA_INSTALL_PROFILE", "remote_single_tenant");
+    vi.stubEnv("AOA_CLAUDE_PASTE_AUTH", "true");
+    vi.stubEnv("AOA_HOME", "/aoa");
+    const res = await request(makeApp()).post(startUrl("anthropic")).send({});
+    expect(res.status).toBe(400);
+    expect(res.body.manualCommand).toBeUndefined();
+    expect(res.body.terminalCommands).toHaveLength(2);
+    expect(res.body.terminalCommands[0].command).toContain("CLAUDE_CONFIG_DIR=");
+    expect(res.body.terminalCommands[1].command).toContain("-f docker-compose.quickstart.yml");
+    expect(res.body.terminalCommands[1].command).toContain("aoa claude auth login");
+    expect(res.body.error).toMatch(/Compose stack in use/i);
+  });
+
   it("400s start for a provider with no login at all", async () => {
     const res = await request(makeApp()).post(startUrl("pi")).send({});
     expect(res.status).toBe(400);

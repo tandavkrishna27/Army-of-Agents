@@ -9,7 +9,7 @@ import {
   providerSubscriptionCapability,
   resolveCliAuthTopology,
   detectProviderCli,
-  dockerClaudeLoginCommand,
+  dockerClaudeLoginCommands,
   inspectScopedClaudeCredential,
   resolveScopedCliAuthHome,
 } from "../services/cli-auth-topology.js";
@@ -71,9 +71,9 @@ export function commanderLoginRoutes(db: Db): Router {
           reason: `Installed ${provider === "openai" ? "Codex" : "Claude"} version ${detected.cliVersion ?? "unknown"} is outside the versions supported by this AOA adapter. Upgrade or downgrade the CLI, then retry.`,
         };
       }
-      const terminalCommand =
+      const terminalCommands =
         provider === "anthropic" && policy.enabled && topology.installProfile === "remote_single_tenant"
-          ? dockerClaudeLoginCommand({
+          ? dockerClaudeLoginCommands({
               env: process.env,
               executionTargetId: process.env.AOA_EXECUTION_TARGET_ID ?? "control-plane",
               companyId,
@@ -81,7 +81,13 @@ export function commanderLoginRoutes(db: Db): Router {
               provider,
             })
           : null;
-      return { ...policy, ...detected, ...(terminalCommand ? { terminalCommand } : {}) };
+      return {
+        ...policy,
+        ...detected,
+        ...(terminalCommands
+          ? { terminalCommands, terminalCommand: terminalCommands[0]?.command }
+          : {}),
+      };
     };
     return {
       topology,

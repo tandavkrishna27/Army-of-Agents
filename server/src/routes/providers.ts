@@ -186,6 +186,7 @@ import { loadConfig } from "../config.js";
 import {
   providerSubscriptionCapability,
   resolveCliAuthTopology,
+  dockerClaudeLoginCommands,
   resolveScopedCliAuthHome,
   scopedCliAuthEnv,
 } from "../services/cli-auth-topology.js";
@@ -1089,12 +1090,37 @@ export function providerRoutes(db: Db): Router {
     // in-app start would spin until the 5-minute deadline reports `timeout`.
     const capability = resolveLoginCapability(providerId);
     if (!capability.canLogin || !hasLoginRunner(providerId)) {
+      const config = loadConfig();
+      const topology = resolveCliAuthTopology({
+        deploymentMode: config.deploymentMode,
+        deploymentExposure: config.deploymentExposure,
+      });
+      const dockerScoped = providerId === "anthropic" && topology.installProfile === "remote_single_tenant";
+      const dockerCapability = dockerScoped
+        ? providerSubscriptionCapability("anthropic", topology)
+        : null;
+      const terminalCommands =
+        dockerCapability?.enabled
+          ? dockerClaudeLoginCommands({
+              env: process.env,
+              executionTargetId: process.env.AOA_EXECUTION_TARGET_ID ?? "control-plane",
+              companyId,
+              userId: founderUserId,
+              provider: "anthropic",
+            })
+          : null;
+      const manualCommand = dockerScoped ? undefined : capability.manualCommand;
       res.status(400).json({
-        error: capability.manualCommand
+        error: terminalCommands
+          ? `${descriptor.label} sign-in must be completed with the scoped command for the Compose stack in use.`
+          : dockerScoped
+            ? dockerCapability?.reason ?? "Scoped Docker sign-in instructions are unavailable for this installation."
+          : manualCommand
           ? `${descriptor.label} sign-in must be completed in a terminal.`
           : `${descriptor.label} does not support in-app sign-in.`,
         canLogin: false,
-        ...(capability.manualCommand ? { manualCommand: capability.manualCommand } : {}),
+        ...(manualCommand ? { manualCommand } : {}),
+        ...(terminalCommands ? { terminalCommands } : {}),
       });
       return;
     }

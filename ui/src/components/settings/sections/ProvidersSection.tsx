@@ -40,6 +40,7 @@ import {
   type ProviderLoginMode,
   type ProviderStatusRow,
 } from "@/api/providers";
+import { getCommanderAuthCapabilities } from "@/api/commander-auth";
 import { ApiError } from "@/api/client";
 import {
   ProviderReadinessCard,
@@ -101,6 +102,11 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
   const { data, isLoading, error: listError } = useQuery({
     queryKey,
     queryFn: () => providersApi.list(companyId),
+  });
+  const { data: authCapabilities, error: authCapabilitiesError } = useQuery({
+    queryKey: ["commander-auth-capabilities", companyId],
+    queryFn: () => getCommanderAuthCapabilities({ companyId }),
+    retry: false,
   });
   const rows: ProviderStatusRow[] = data?.providers ?? [];
 
@@ -446,6 +452,31 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
                   : null
               }
               onOpenProvider={openProvider}
+              manualLoginCommands={
+                selectedRow.descriptor.id === "anthropic"
+                  ? authCapabilities?.providers.anthropic.terminalCommands?.map(({ mode, command }) => ({
+                      label: mode === "standard" ? "Standard Compose" : "Quickstart Compose",
+                      command,
+                    }))
+                  : undefined
+              }
+              manualLoginUnavailableText={
+                selectedRow.descriptor.id === "anthropic" && authCapabilitiesError
+                  ? "Scoped sign-in instructions could not be loaded. Reload this page or contact the installation owner."
+                  : selectedRow.descriptor.id === "anthropic" && authCapabilities?.topology.installProfile === "remote_single_tenant"
+                    ? authCapabilities.providers.anthropic.reason ?? "Scoped Docker sign-in is unavailable for this installation."
+                    : undefined
+              }
+              suppressCatalogLoginCommand={
+                selectedRow.descriptor.id === "anthropic" &&
+                (!authCapabilities || authCapabilities.topology.installProfile === "remote_single_tenant")
+              }
+              manualLoginScope={
+                selectedRow.descriptor.id === "anthropic" &&
+                authCapabilities?.topology.installProfile === "remote_single_tenant"
+                  ? "company_user_target"
+                  : "host"
+              }
               busy={busy[selectedRow.descriptor.id] ?? {}}
               error={errors[selectedRow.descriptor.id] ?? null}
             />

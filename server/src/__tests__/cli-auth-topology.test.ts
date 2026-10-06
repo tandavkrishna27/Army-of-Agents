@@ -10,6 +10,7 @@ import {
   detectProviderCli,
   resolveProviderCliCommand,
   dockerClaudeLoginCommand,
+  dockerClaudeLoginCommands,
   inspectScopedClaudeCredential,
 } from "../services/cli-auth-topology.js";
 
@@ -37,6 +38,19 @@ describe("CLI authentication topology", () => {
     expect(command).not.toContain("~/.claude");
   });
 
+  it("returns explicit commands for standard and quickstart Compose layouts", () => {
+    const scope = { env: { AOA_HOME: "/aoa" }, executionTargetId: "control-plane", companyId: "company-1", userId: "founder-1", provider: "anthropic" as const };
+    const commands = dockerClaudeLoginCommands(scope);
+    expect(commands).toHaveLength(2);
+    expect(commands?.[0]).toMatchObject({ mode: "standard" });
+    expect(commands?.[0]?.command).toContain(" server claude auth login");
+    expect(commands?.[0]?.command).not.toContain("docker-compose.quickstart.yml");
+    expect(commands?.[1]).toMatchObject({ mode: "quickstart" });
+    expect(commands?.[1]?.command).toContain("-f docker-compose.quickstart.yml");
+    expect(commands?.[1]?.command).toContain(" aoa claude auth login");
+    expect(commands?.[1]?.command).toContain("CLAUDE_CONFIG_DIR='");
+  });
+
   it("reports an unreadable scoped credential with an allowlisted permission code", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-claude-inspect-"));
     try {
@@ -56,6 +70,49 @@ describe("CLI authentication topology", () => {
         opened.mockRestore();
       }
     } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it.skipIf(process.platform !== "linux")("rejects a credential home reached through an ancestor symlink", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-claude-ancestor-link-"));
+    try {
+      const realHome = path.join(root, "real", "scope");
+      const linkParent = path.join(root, "linked-parent");
+      await fs.mkdir(realHome, { recursive: true });
+      await fs.writeFile(path.join(realHome, ".credentials.json"), "fixture");
+      await fs.symlink(path.join(root, "real"), linkParent, "dir");
+      const result = await inspectScopedClaudeCredential(path.join(linkParent, "scope"));
+      expect(result.code).toBe("claude_credentials_unsafe_path");
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it.skipIf(process.platform !== "linux")("keeps inspection pinned when the scoped home is replaced after path validation", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-claude-path-swap-"));
+    const authHome = path.join(root, "scope");
+    const displacedHome = path.join(root, "scope-original");
+    const attackerHome = path.join(root, "attacker");
+    await fs.mkdir(authHome);
+    await fs.mkdir(attackerHome);
+    await fs.writeFile(path.join(authHome, ".credentials.json"), "fixture");
+    const originalOpen = fs.open.bind(fs);
+    let swapped = false;
+    const opened = vi.spyOn(fs, "open").mockImplementation(async (candidate, flags, mode) => {
+      if (!swapped && String(candidate).endsWith("/.credentials.json")) {
+        swapped = true;
+        await fs.rename(authHome, displacedHome);
+        await fs.symlink(attackerHome, authHome, "dir");
+      }
+      return originalOpen(candidate, flags, mode);
+    });
+    try {
+      const result = await inspectScopedClaudeCredential(authHome);
+      expect(swapped).toBe(true);
+      expect(result.code).toBe("claude_credentials_ready");
+    } finally {
+      opened.mockRestore();
       await fs.rm(root, { recursive: true, force: true });
     }
   });

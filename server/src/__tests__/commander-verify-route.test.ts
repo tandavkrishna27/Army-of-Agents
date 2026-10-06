@@ -78,7 +78,10 @@ describe("POST /companies/:companyId/internal-agent/verify", () => {
     mockResolveType.mockResolvedValue("claude_local");
     mockProbeConfig.mockResolvedValue({});
     mockFindAdapter.mockReturnValue({ testEnvironment: mockTestEnvironment });
-    mockVerifyAndBindSubscription.mockResolvedValue({ credentialIds: [], bindingIds: [] });
+    mockVerifyAndBindSubscription.mockResolvedValue({
+      credentialIds: ["credential-1"],
+      bindingIds: ["binding-1"],
+    });
   });
 
   it("401 for a non-board actor", async () => {
@@ -102,6 +105,7 @@ describe("POST /companies/:companyId/internal-agent/verify", () => {
   });
 
   it("allows an instance admin to verify a company without a membership row", async () => {
+    mockProbeConfig.mockResolvedValueOnce({ env: { ANTHROPIC_API_KEY: "company-key" } });
     mockTestEnvironment.mockResolvedValue(probe("pass", ["claude_hello_probe_passed"]));
 
     const res = await request(makeApp(dbWithMembership([]), {
@@ -141,6 +145,10 @@ describe("POST /companies/:companyId/internal-agent/verify", () => {
 
   it("200 verified for a founder-authorized board user when the probe passes", async () => {
     mockTestEnvironment.mockResolvedValue(probe("pass", ["claude_hello_probe_passed"]));
+    mockVerifyAndBindSubscription.mockResolvedValueOnce({
+      credentialIds: ["credential-1"],
+      bindingIds: ["binding-1"],
+    });
     const res = await request(makeApp(dbWithMembership([{ id: COMPANY_ID }])))
       .post(`/api/companies/${COMPANY_ID}/internal-agent/verify`)
       .send({});
@@ -162,6 +170,19 @@ describe("POST /companies/:companyId/internal-agent/verify", () => {
         executionTargetId: "control-plane",
       },
     );
+  });
+
+  it("does not report verified when terminal-only sign-in has no registered credential or Commander binding", async () => {
+    mockTestEnvironment.mockResolvedValue(probe("pass", ["claude_hello_probe_passed"]));
+    mockVerifyAndBindSubscription.mockResolvedValueOnce({ credentialIds: [], bindingIds: [] });
+
+    const res = await request(makeApp(dbWithMembership([{ id: COMPANY_ID }])))
+      .post(`/api/companies/${COMPANY_ID}/internal-agent/verify`)
+      .send({});
+
+    expect(res.status).toBe(422);
+    expect(res.body.outcome).toBe("failed");
+    expect(res.body.result.checks.at(-1).code).toBe("subscription_credential_unbound");
   });
 
   it("shows a typed permission failure before a scoped Claude probe", async () => {
@@ -190,6 +211,39 @@ describe("POST /companies/:companyId/internal-agent/verify", () => {
       expect(mockTestEnvironment).not.toHaveBeenCalled();
     } finally {
       opened.mockRestore();
+      await fs.rm(root, { recursive: true, force: true });
+      if (previous.profile === undefined) delete process.env.AOA_INSTALL_PROFILE; else process.env.AOA_INSTALL_PROFILE = previous.profile;
+      if (previous.home === undefined) delete process.env.AOA_HOME; else process.env.AOA_HOME = previous.home;
+    }
+  });
+
+  it.skipIf(process.platform !== "linux")("probes through the validated directory descriptor after a pathname swap", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-verify-pinned-probe-"));
+    const previous = { profile: process.env.AOA_INSTALL_PROFILE, home: process.env.AOA_HOME };
+    process.env.AOA_INSTALL_PROFILE = "remote_single_tenant";
+    process.env.AOA_HOME = root;
+    const home = resolveScopedCliAuthHome({ env: process.env, executionTargetId: "control-plane", companyId: COMPANY_ID, userId: "u1", provider: "anthropic" });
+    const movedHome = `${home}-original`;
+    const replacementHome = path.join(root, "replacement");
+    await fs.mkdir(home, { recursive: true });
+    await fs.mkdir(replacementHome);
+    await fs.writeFile(path.join(home, ".credentials.json"), "expected-scoped-fixture");
+    let probeReadExpectedCredential = false;
+    mockTestEnvironment.mockImplementationOnce(async ({ config }: { config: { env: Record<string, string> } }) => {
+      const configDir = config.env.CLAUDE_CONFIG_DIR;
+      expect(configDir).toMatch(/^\/proc\/\d+\/fd\/\d+$/);
+      await fs.rename(home, movedHome);
+      await fs.symlink(replacementHome, home, "dir");
+      expect(await fs.readFile(path.join(configDir, ".credentials.json"), "utf8")).toBe("expected-scoped-fixture");
+      probeReadExpectedCredential = true;
+      return probe("pass", ["claude_hello_probe_passed"]);
+    });
+    try {
+      const response = await request(makeApp(dbWithMembership([{ id: COMPANY_ID }])));
+      const res = await response.post(`/api/companies/${COMPANY_ID}/internal-agent/verify`).send({});
+      expect(res.status).toBe(200);
+      expect(probeReadExpectedCredential).toBe(true);
+    } finally {
       await fs.rm(root, { recursive: true, force: true });
       if (previous.profile === undefined) delete process.env.AOA_INSTALL_PROFILE; else process.env.AOA_INSTALL_PROFILE = previous.profile;
       if (previous.home === undefined) delete process.env.AOA_HOME; else process.env.AOA_HOME = previous.home;

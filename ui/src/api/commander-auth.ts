@@ -23,7 +23,9 @@ export type CommanderAuthCapability = {
   cliInstalled?: boolean;
   cliVersion?: string | null;
   cliVersionSupported?: boolean;
-  /** Founder-scoped Docker Compose command supplied by the server. */
+  /** Explicit founder-scoped command variants; choose the Compose stack in use. */
+  terminalCommands?: Array<{ mode: "standard" | "quickstart"; command: string }>;
+  /** First command retained for older clients; new UI should show all variants. */
   terminalCommand?: string;
 };
 

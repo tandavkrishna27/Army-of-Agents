@@ -101,11 +101,17 @@ describe("commander-login routes (Plan 3 T4)", () => {
     try {
       const res = await request(makeApp()).get("/api/companies/c1/internal-agent/commander-login/capabilities");
       expect(res.status).toBe(200);
-      const command = res.body.providers.anthropic.terminalCommand as string;
-      expect(command).toContain("docker compose exec --user node");
-      expect(command).toContain("server claude auth login");
-      expect(command).toContain("CLAUDE_CONFIG_DIR=");
-      expect(command).not.toContain("~/.claude");
+      const commands = res.body.providers.anthropic.terminalCommands as Array<{ mode: string; command: string }>;
+      expect(commands).toHaveLength(2);
+      expect(commands[0]?.mode).toBe("standard");
+      expect(commands[0]?.command).toContain("docker compose exec --user node");
+      expect(commands[0]?.command).toContain("server claude auth login");
+      expect(commands[0]?.command).toContain("CLAUDE_CONFIG_DIR=");
+      expect(commands[0]?.command).not.toContain("~/.claude");
+      expect(commands[1]?.mode).toBe("quickstart");
+      expect(commands[1]?.command).toContain("-f docker-compose.quickstart.yml");
+      expect(commands[1]?.command).toContain("aoa claude auth login");
+      expect(res.body.providers.anthropic.terminalCommand).toBe(commands[0]?.command);
       expect(res.body.providers.anthropic.enabled).toBe(true);
     } finally {
       if (previous.profile === undefined) delete process.env.AOA_INSTALL_PROFILE; else process.env.AOA_INSTALL_PROFILE = previous.profile;

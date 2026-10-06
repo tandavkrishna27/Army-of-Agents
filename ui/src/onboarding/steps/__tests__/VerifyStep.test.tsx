@@ -91,7 +91,10 @@ describe("VerifyStep (Stage C / order 5, blocking)", () => {
       topology: { platform: "linux", installProfile: "remote_single_tenant", networkLocation: "remote", trustBoundary: "single_tenant", executionOwnership: "tenant_hosted" },
       providers: {
         openai: { provider: "openai", mode: "device_code", enabled: false, browserSafeRemotely: true, reason: "Disabled" },
-        anthropic: { provider: "anthropic", mode: "paste_code", enabled: true, browserSafeRemotely: true, reason: null, terminalCommand: command },
+        anthropic: { provider: "anthropic", mode: "paste_code", enabled: true, browserSafeRemotely: true, reason: null, terminalCommand: command, terminalCommands: [
+          { mode: "standard", command },
+          { mode: "quickstart", command: "docker compose -f docker-compose.quickstart.yml exec --user node aoa claude auth login" },
+        ] },
       },
     });
     post.mockRejectedValue(new ApiError("Request failed: 422", 422, {
@@ -101,6 +104,7 @@ describe("VerifyStep (Stage C / order 5, blocking)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Verify" }));
     fireEvent.click(await screen.findByRole("button", { name: /sign in myself in the cli/i }));
     expect(await screen.findByText(command)).toBeTruthy();
+    expect(screen.getByText(/Quickstart Compose/)).toBeTruthy();
     expect(screen.queryByText("claude auth login")).toBeNull();
   });
 
@@ -896,7 +900,7 @@ describe("VerifyStep — honest recovery copy", () => {
     fireEvent.click(await screen.findByRole("button", { name: /sign in myself/i }));
 
     expect(await screen.findByText("claude auth login")).toBeTruthy();
-    expect(screen.getByText(/detect it automatically/i)).toBeTruthy();
+    expect(screen.getByText(/detect sign-in and continue/i)).toBeTruthy();
   });
 });
 

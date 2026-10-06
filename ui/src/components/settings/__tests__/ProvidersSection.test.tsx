@@ -38,6 +38,7 @@ const saveKeyMock = vi.fn();
 const startLoginMock = vi.fn();
 const loginStatusMock = vi.fn();
 const cancelLoginMock = vi.fn();
+const capabilitiesMock = vi.fn();
 
 vi.mock("@/api/providers", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/api/providers")>();
@@ -53,6 +54,9 @@ vi.mock("@/api/providers", async (importOriginal) => {
     },
   };
 });
+vi.mock("@/api/commander-auth", () => ({
+  getCommanderAuthCapabilities: (...args: unknown[]) => capabilitiesMock(...args),
+}));
 
 const COMPANY_ID = "company-1";
 const useCompanyMock = vi.fn(() => ({ selectedCompanyId: COMPANY_ID as string | null }));
@@ -163,6 +167,19 @@ beforeEach(() => {
   testMock.mockResolvedValue(PROBE_OK);
   saveKeyMock.mockResolvedValue({ ok: true, secretId: "s1", reprobed: [], invalidated: [] });
   cancelLoginMock.mockResolvedValue({ ok: true });
+  capabilitiesMock.mockResolvedValue({
+    topology: { installProfile: "remote_single_tenant" },
+    providers: {
+      anthropic: {
+        enabled: true,
+        reason: null,
+        terminalCommands: [
+          { mode: "standard", command: "docker compose exec --user node server claude auth login" },
+          { mode: "quickstart", command: "docker compose -f docker-compose.quickstart.yml exec --user node aoa claude auth login" },
+        ],
+      },
+    },
+  });
   // jsdom implements neither.
   Element.prototype.scrollIntoView = vi.fn();
 });
@@ -219,6 +236,20 @@ describe("ProvidersSection cached rendering", () => {
     );
     await select("openai");
     expect((screen.getByTestId("provider-key-input") as HTMLInputElement).value).toBe("");
+  });
+
+  it("loads founder-scoped Docker auth capabilities and renders both explicit stack commands", async () => {
+    await renderAndSettle([row("anthropic", { companyDefault: scope({ outcome: "needs_auth" }) })]);
+    expect(capabilitiesMock).toHaveBeenCalledWith({ companyId: COMPANY_ID });
+    await screen.findByText("Standard Compose");
+    await screen.findByText("Quickstart Compose");
+    const card = screen.getByTestId("provider-login-section");
+    expect(card.textContent).toMatch(/choose the command matching the Compose stack/i);
+    expect(card.textContent).toMatch(/scoped to this company.*founder.*execution target/i);
+    const commands = Array.from(card.querySelectorAll("button")).map((button) => button.textContent);
+    expect(commands).toContain("docker compose exec --user node server claude auth login");
+    expect(commands).toContain("docker compose -f docker-compose.quickstart.yml exec --user node aoa claude auth login");
+    expect(commands).not.toContain("claude auth login");
   });
 
   it("refetches the list even when a Test FAILS (stale Ready must not persist)", async () => {

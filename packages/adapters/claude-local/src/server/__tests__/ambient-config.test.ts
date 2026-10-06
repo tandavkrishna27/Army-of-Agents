@@ -343,6 +343,27 @@ describe("provisionClaudeConfigHome", () => {
     }
   });
 
+  it.each(["ENOSPC", "EMFILE"])("reports %s as an operational resource failure, not an unsafe path", async (code) => {
+    const root = await makeRoot(`resource-${code.toLowerCase()}`);
+    const sourceConfigHome = await seedOperatorConfigHome(root);
+    const targetDir = path.join(root, "per-run");
+    const originalOpen = fs.open.bind(fs);
+    const exhausted = Object.assign(new Error(`${code}: fixture-secret`), { code });
+    const opened = vi.spyOn(fs, "open").mockImplementation(async (candidate, flags, mode) => {
+      if (String(candidate).endsWith(CLAUDE_CREDENTIAL_FILE_NAME)) throw exhausted;
+      return originalOpen(candidate, flags, mode);
+    });
+    try {
+      const error = await provisionClaudeConfigHome({ sourceConfigHome, targetDir }).catch((e) => e);
+      expect(error.code).toBe("claude_credentials_resource_error");
+      expect(error.message).toMatch(/resource|disk|file descriptor|retry/i);
+      expect(error.message).not.toContain("fixture-secret");
+      expect(error.message).not.toContain(sourceConfigHome);
+    } finally {
+      opened.mockRestore();
+    }
+  });
+
   it.skipIf(process.platform === "win32")("refuses a symlinked credential rather than copying its neighboring target", async () => {
     const root = await makeRoot("credential-link");
     const sourceConfigHome = await seedOperatorConfigHome(root, { withCredential: false });
