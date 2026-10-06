@@ -283,6 +283,7 @@ describe("discussionService", () => {
       expect(result).toEqual([
         {
           ...discussions[0],
+          title: "Test",
           scopeName: null,
           participantPreview: [],
           participantCount: 0,
@@ -344,6 +345,7 @@ describe("discussionService", () => {
       expect(result).toEqual([
         {
           ...discussions[0],
+          title: "Untitled discussion",
           scopeName: null,
           participantPreview: [],
           participantCount: 0,
