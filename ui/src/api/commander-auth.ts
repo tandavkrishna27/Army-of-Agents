@@ -44,6 +44,16 @@ export function getCommanderAuthCapabilities(args: {
   return api.get(`/companies/${args.companyId}/internal-agent/commander-login/capabilities`);
 }
 
+export type CommanderVerifyResult = {
+  outcome: "verified" | "needs_auth" | "not_installed" | "failed";
+  result?: { adapterType?: string; status?: string; checks?: Array<{ code?: string; level?: string; message?: string; hint?: string }> };
+};
+
+/** Run the same founder-gated probe and credential binding used by onboarding Verify. */
+export function verifyCommanderSetup(args: { companyId: string }): Promise<CommanderVerifyResult> {
+  return api.post(`/companies/${args.companyId}/internal-agent/verify`, {});
+}
+
 export function saveCommanderKey(args: {
   companyId: string;
   provider: CommanderProvider;

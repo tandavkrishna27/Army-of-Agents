@@ -40,7 +40,7 @@ import {
   type ProviderLoginMode,
   type ProviderStatusRow,
 } from "@/api/providers";
-import { getCommanderAuthCapabilities } from "@/api/commander-auth";
+import { getCommanderAuthCapabilities, verifyCommanderSetup } from "@/api/commander-auth";
 import { ApiError } from "@/api/client";
 import {
   ProviderReadinessCard,
@@ -65,6 +65,26 @@ interface ActiveLogin {
   userCode: string | null;
   expiresAt: string;
   status: "pending" | "completed" | "failed" | "timeout";
+}
+
+function commanderVerifyFailure(error: unknown): Error {
+  if (error instanceof ApiError && error.body && typeof error.body === "object") {
+    const result = (error.body as { result?: unknown }).result;
+    if (result && typeof result === "object") {
+      const checks = (result as { checks?: unknown }).checks;
+      if (Array.isArray(checks)) {
+        const failed = checks.find(
+          (check): check is { level?: string; message?: string; hint?: string } =>
+            Boolean(check) && typeof check === "object" &&
+            ["error", "warn", "fail"].includes((check as { level?: string }).level ?? ""),
+        );
+        if (failed) {
+          return new Error([failed.message, failed.hint].filter(Boolean).join(" ") || error.message);
+        }
+      }
+    }
+  }
+  return error instanceof Error ? error : new Error("Commander verification failed. Retry the check.");
 }
 
 export function ProvidersSection() {
@@ -103,7 +123,11 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
     queryKey,
     queryFn: () => providersApi.list(companyId),
   });
-  const { data: authCapabilities, error: authCapabilitiesError } = useQuery({
+  const {
+    data: authCapabilities,
+    error: authCapabilitiesError,
+    isLoading: authCapabilitiesLoading,
+  } = useQuery({
     queryKey: ["commander-auth-capabilities", companyId],
     queryFn: () => getCommanderAuthCapabilities({ companyId }),
     retry: false,
@@ -138,10 +162,43 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
     [queryClient, companyId],
   );
 
+  const usesScopedClaudeSubscription = useCallback(
+    (row: ProviderStatusRow) =>
+      row.descriptor.id === "anthropic" &&
+      !row.existingKey.configured &&
+      authCapabilities?.topology.installProfile === "remote_single_tenant",
+    [authCapabilities],
+  );
+  const canVerifyScopedClaudeSubscription = (row: ProviderStatusRow) =>
+    usesScopedClaudeSubscription(row) && authCapabilities?.providers.anthropic.enabled === true;
+
+  const cannotClassifyClaudeAuth = useCallback(
+    (row: ProviderStatusRow) =>
+      row.descriptor.id === "anthropic" &&
+      !row.existingKey.configured &&
+      (!authCapabilities || authCapabilitiesLoading || Boolean(authCapabilitiesError)),
+    [authCapabilities, authCapabilitiesError, authCapabilitiesLoading],
+  );
+
   /* ── probing ─────────────────────────────────────────────────────────── */
 
   const runTest = useCallback(
     async (providerId: ProviderId) => {
+      const row = data?.providers.find((item) => item.descriptor.id === providerId);
+      if (row && usesScopedClaudeSubscription(row)) {
+        setErrorFor(
+          providerId,
+          new Error("Use Commander verification to validate and bind the scoped Claude subscription."),
+        );
+        return;
+      }
+      if (row && cannotClassifyClaudeAuth(row)) {
+        setErrorFor(
+          providerId,
+          new Error("Claude authentication mode could not be confirmed. Reload settings before running a provider check."),
+        );
+        return;
+      }
       setBusyFor(providerId, { test: true });
       setErrorFor(providerId, null);
       try {
@@ -157,8 +214,33 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
         await refreshList();
       }
     },
-    [companyId, refreshList, setBusyFor, setErrorFor],
+    [companyId, cannotClassifyClaudeAuth, data, refreshList, setBusyFor, setErrorFor, usesScopedClaudeSubscription],
   );
+
+  const verifyCommanderSubscription = useCallback(async () => {
+    setBusyFor("anthropic", { test: true });
+    setErrorFor("anthropic", null);
+    try {
+      const result = await verifyCommanderSetup({ companyId });
+      if (result.outcome !== "verified") {
+        const check = result.result?.checks?.find((item) => item.level === "error" || item.level === "warn");
+        throw new Error(check?.message ?? "Commander could not verify the scoped Claude subscription. Complete sign-in and retry.");
+      }
+      if (result.result?.adapterType !== "claude_local") {
+        const configuredProvider = result.result?.adapterType === "codex_local" ? "Codex" : "another provider";
+        throw new Error(
+          `Commander is currently configured for ${configuredProvider}. Switch Commander to Claude in Settings → Commander → Execution & Model, then verify the Claude subscription.`,
+        );
+      }
+      await refreshList();
+    } catch (error) {
+      const safeError = commanderVerifyFailure(error);
+      setErrorFor("anthropic", safeError);
+      throw safeError;
+    } finally {
+      setBusyFor("anthropic", { test: false });
+    }
+  }, [companyId, refreshList, setBusyFor, setErrorFor]);
 
   /*
     Sequential on purpose. The server's per-company probe slot means a
@@ -169,12 +251,13 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
     setTestingAll(true);
     try {
       for (const row of rows) {
+        if (usesScopedClaudeSubscription(row) || cannotClassifyClaudeAuth(row)) continue;
         await runTest(row.descriptor.id);
       }
     } finally {
       setTestingAll(false);
     }
-  }, [rows, runTest]);
+  }, [cannotClassifyClaudeAuth, rows, runTest, usesScopedClaudeSubscription]);
 
   /*
     Auto-refresh, D3. IN USE (`agents.length > 0`) AND STALE only. `agents` is
@@ -191,11 +274,13 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
     // Don't race `Test all`: it probes sequentially through the SAME per-company
     // slot, so an auto-refresh firing on its mid-run refetch would double-probe a
     // provider and 429 the second one on a healthy machine.
-    if (!data || testingAll) return;
+    if (!data || testingAll || authCapabilitiesLoading) return;
     const targets = data.providers.filter(
       (row) =>
         row.agents.length > 0 &&
         isReadinessStale(row.companyDefault.testedAt) &&
+        !usesScopedClaudeSubscription(row) &&
+        !cannotClassifyClaudeAuth(row) &&
         !autoRefreshedRef.current.has(row.descriptor.id),
     );
     if (targets.length === 0) return;
@@ -204,7 +289,7 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
       // Same single-slot constraint as `Test all`.
       for (const t of targets) await runTest(t.descriptor.id);
     })();
-  }, [data, runTest, testingAll]);
+  }, [authCapabilitiesLoading, cannotClassifyClaudeAuth, data, runTest, testingAll, usesScopedClaudeSubscription]);
 
   /* ── key save ────────────────────────────────────────────────────────── */
 
@@ -268,12 +353,16 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
             null only when that best-effort probe could not run, which is
             exactly when we should run one.
           */
-          if (!res.readiness) {
+          const providerRow = data?.providers.find((row) => row.descriptor.id === providerId);
+          if (providerRow && usesScopedClaudeSubscription(providerRow)) {
+            // A scoped subscription is verified and bound through Commander,
+            // never through the generic company-default readiness probe.
+          } else if (!res.readiness) {
             try {
-              await providersApi.test(companyId, providerId);
+              await runTest(providerId);
             } catch {
               // Non-fatal: the card just keeps showing the pre-login verdict
-              // until the founder presses Test.
+              // until the founder retries the appropriate verification action.
             }
           }
           await refreshList();
@@ -301,7 +390,7 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
         // server times the live challenge out on its own.
       }
     },
-    [companyId, refreshList, setErrorFor],
+    [companyId, data, refreshList, runTest, setErrorFor, usesScopedClaudeSubscription],
   );
 
   const startLogin = useCallback(
@@ -389,8 +478,8 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
         <div>
           <h2 className="text-lg font-semibold">Providers</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Install and sign in to your AI CLIs. Status is shown from the last check —
-            press Test to check again.
+            Install and sign in to your AI CLIs. Status is shown from the last check;
+            Claude subscription sign-in is verified through Commander.
           </p>
         </div>
         <Button
@@ -437,6 +526,20 @@ function ProvidersPanel({ companyId }: { companyId: string }) {
               key={selectedRow.descriptor.id}
               row={selectedRow}
               onTest={() => void runTest(selectedRow.descriptor.id)}
+              onVerifyCommanderSubscription={
+                canVerifyScopedClaudeSubscription(selectedRow)
+                  ? verifyCommanderSubscription
+                  : undefined
+              }
+              testUnavailableText={
+                usesScopedClaudeSubscription(selectedRow) && !canVerifyScopedClaudeSubscription(selectedRow)
+                  ? authCapabilities?.providers.anthropic.reason ?? "Scoped Claude sign-in is unavailable for this installation."
+                  : cannotClassifyClaudeAuth(selectedRow)
+                    ? authCapabilitiesLoading
+                      ? "Checking Claude authentication mode…"
+                      : "Claude authentication mode could not be confirmed. Reload this page before running a provider check."
+                    : undefined
+              }
               onSaveKey={(value) => saveKey(selectedRow.descriptor.id, value)}
               onStartLogin={() => void startLogin(selectedRow.descriptor.id)}
               onCancelLogin={cancelLogin}

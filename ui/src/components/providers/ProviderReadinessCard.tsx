@@ -353,6 +353,10 @@ export interface ProviderReadinessCardProps {
   suppressCatalogLoginCommand?: boolean;
   /** Scope of the command shown below the login affordance. */
   manualLoginScope?: "host" | "company_user_target";
+  /** Use the founder-gated Commander verify+bind flow instead of generic provider readiness. */
+  onVerifyCommanderSubscription?(): Promise<void>;
+  /** Hide generic Test while the installation auth profile is unresolved. */
+  testUnavailableText?: string;
 }
 
 function normalizeBusy(busy: boolean | ProviderCardBusy | undefined): Required<ProviderCardBusy> {
@@ -376,10 +380,13 @@ export function ProviderReadinessCard({
   manualLoginUnavailableText,
   suppressCatalogLoginCommand = false,
   manualLoginScope,
+  onVerifyCommanderSubscription,
+  testUnavailableText,
 }: ProviderReadinessCardProps) {
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<unknown>(null);
+  const [commanderSubscriptionVerified, setCommanderSubscriptionVerified] = useState(false);
   const { descriptor, companyDefault } = row;
   const { outcome, failingAgents, unverifiableAgents, uncheckedAgents, canClaimReady } =
     deriveCardStatus(row);
@@ -441,6 +448,16 @@ export function ProviderReadinessCard({
       setSaveError(e);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const verifyCommanderSubscription = async () => {
+    setCommanderSubscriptionVerified(false);
+    try {
+      await onVerifyCommanderSubscription?.();
+      setCommanderSubscriptionVerified(true);
+    } catch {
+      // The parent passes the safe route error back through `error`.
     }
   };
 
@@ -782,15 +799,41 @@ export function ProviderReadinessCard({
         </p>
       )}
 
-      <Button
-        type="button"
-        size="sm"
-        data-testid="provider-test"
-        disabled={busyFlags.test}
-        onClick={onTest}
-      >
-        {busyFlags.test ? "Checking…" : "Test"}
-      </Button>
+      {onVerifyCommanderSubscription ? (
+        <div className="space-y-2" data-testid="provider-commander-verification">
+          <p className="text-xs text-muted-foreground">
+            Validate the founder-scoped Claude session and bind it to Commander. The status above is the separate provider-default readiness check.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            data-testid="provider-verify-commander"
+            disabled={busyFlags.test}
+            onClick={() => void verifyCommanderSubscription()}
+          >
+            {busyFlags.test ? "Verifying…" : "Verify Claude sign-in for Commander"}
+          </Button>
+          {commanderSubscriptionVerified && (
+            <p role="status" data-testid="provider-commander-verified" className="text-xs text-emerald-600">
+              Claude subscription verified and bound to Commander.
+            </p>
+          )}
+        </div>
+      ) : testUnavailableText ? (
+        <p className="text-xs text-muted-foreground" data-testid="provider-test-unavailable">
+          {testUnavailableText}
+        </p>
+      ) : (
+        <Button
+          type="button"
+          size="sm"
+          data-testid="provider-test"
+          disabled={busyFlags.test}
+          onClick={onTest}
+        >
+          {busyFlags.test ? "Checking…" : "Test"}
+        </Button>
+      )}
     </div>
   );
 }
