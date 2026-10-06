@@ -475,7 +475,7 @@ export function extractThreadUrls(values: string[]): string[] {
 
 export function extractUrlsFromThread(thread: DiscussionDetail | null | undefined): string[] {
   if (!thread) return [];
-  const values: string[] = [thread.title];
+  const values: string[] = typeof thread.title === "string" ? [thread.title] : [];
   for (const entry of thread.entries) {
     values.push(entry.rawContent);
     values.push(...sourceInfoValues(entry));

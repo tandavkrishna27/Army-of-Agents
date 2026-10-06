@@ -58,7 +58,7 @@ Requires `founder` or `team_lead` role.
 ```
 
 Fields:
-- `title` — optional display name
+- `title` — optional display name. If omitted or blank, the service uses the first non-empty line of the opening entry (collapsed whitespace; at most 80 Unicode code points). If there is no usable opening text, the title is `Untitled discussion`.
 - `scopeType` — `department`, `project`, or `goal` (optional; sets thread-level scope)
 - `scopeId` — ID of the scoped entity (optional)
 - `tags` — optional string array

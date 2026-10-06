@@ -27,6 +27,7 @@ import { issueService } from "./issues.js";
 import { memoryService } from "./memory.js";
 import { getThreadEventListener } from "./thread-events.js";
 import { threadOrchestrationService } from "./thread-orchestration.js";
+import { deriveDiscussionTitle, displayDiscussionTitle } from "./discussion-title.js";
 // parseMentions is a pure regex helper (no DB); resolveMentionTargets adds a
 // company-agent-roster read for multi-word crew names (round-13 #2). threads.ts
 // is already in the module graph via live-events.ts → threads.ts, so this static
@@ -287,6 +288,7 @@ async function enrichDiscussionListRows(
     const latestScope = latestScopesByThread.get(row.id) ?? null;
     return {
       ...row,
+      title: displayDiscussionTitle(row.title),
       scopeName: row.scopeId ? scopeNames.get(row.scopeId) ?? null : null,
       participantPreview: participants.slice(0, 3),
       participantCount: participants.length,
@@ -703,6 +705,7 @@ export function discussionService(db: Db) {
 
       return {
         ...discussion,
+        title: displayDiscussionTitle(discussion.title),
         entries: enrichedEntries,
         planSteps,
         participants,
@@ -761,7 +764,7 @@ export function discussionService(db: Db) {
           .insert(discussions)
           .values({
             companyId,
-            title: data.title ?? null,
+            title: deriveDiscussionTitle(data.title, data.entry?.rawContent),
             scopeType: data.scopeType ?? null,
             scopeId: data.scopeId ?? null,
             tags: data.tags ?? [],
@@ -973,7 +976,7 @@ export function discussionService(db: Db) {
         }
       }
 
-      return updated ?? null;
+      return updated ? { ...updated, title: displayDiscussionTitle(updated.title) } : null;
     },
 
     /**
