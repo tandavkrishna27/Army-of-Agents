@@ -7,8 +7,10 @@ import {
   type OnboardingJourney,
   type OnboardingState,
   type FirstRunPersona,
+  normalizeLegacyOnboardingState,
 } from "@armyofagents/shared";
 import { getProgress, advanceState, setFirstRunProgress } from "../services/onboarding.js";
+import { advanceSetupReadiness } from "../services/onboarding-readiness.js";
 import { assertCompanyAccess, getActorInfo } from "./authz.js";
 import { logActivity } from "../services/index.js";
 
@@ -53,7 +55,15 @@ export function onboardingRoutes(db: Db): Router {
     }
     const companyId = typeof body.companyId === "string" && body.companyId.length > 0 ? body.companyId : null;
     if (companyId) await assertCompanyAccess(db, req, companyId);
-    const result = await advanceState(db, { userId: actor.userId, companyId, journey, requestedState });
+    const advanceArgs = { userId: actor.userId, companyId, journey, requestedState };
+    const result = companyId && normalizeLegacyOnboardingState(requestedState) === "SETUP_COMPLETE"
+      ? await advanceSetupReadiness(db, {
+        companyId,
+        journey,
+        requestedState,
+        actor,
+      })
+      : await advanceState(db, advanceArgs);
     if (result.status === "illegal") {
       res.status(409).json({ error: "illegal transition", reason: result.reason });
       return;
