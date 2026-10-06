@@ -179,3 +179,4 @@ export {
 export { marketplaceCompanySettings } from "./marketplace_company_settings.js";
 export { marketplacePendingUpdates } from "./marketplace_pending_updates.js";
 export { pluginVersionSnapshots } from "./plugin_version_snapshots.js";
+export { companyImportOperations, type ImportCheckpoint } from "./company_import_operations.js";

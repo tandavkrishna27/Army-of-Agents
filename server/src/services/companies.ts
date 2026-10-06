@@ -80,6 +80,8 @@ export interface CreateCompanyOptions {
    * Optional: the bootstrap falls back to a synthetic system actor.
    */
   requestedByUserId?: string | null;
+  /** Internal replay guard; runs before any bootstrap reconciliation writes. */
+  validateReplay?: (handle: Db, company: typeof companies.$inferSelect) => Promise<void>;
 }
 
 export function companyService(db: Db) {
@@ -388,6 +390,7 @@ export function companyService(db: Db) {
   }> {
     const initialReplay = await resolveCompanyCreationReplay(db, data);
     if (initialReplay) {
+      await opts.validateReplay?.(db, initialReplay);
       // A prior request may have committed immediately before the process died
       // in the best-effort bootstrap phase. Reconcile the idempotent Group-A
       // resources on every replay so response-loss recovery also repairs a
@@ -416,6 +419,7 @@ export function companyService(db: Db) {
             );
             const replay = await resolveCompanyCreationReplay(tx as unknown as Db, data);
             if (replay) {
+              await opts.validateReplay?.(tx as unknown as Db, replay);
               const operatorId = await resolveCompanyFoundingOperator(
                 tx as unknown as Db,
                 replay.id,
@@ -460,6 +464,7 @@ export function companyService(db: Db) {
         if (data.creationRequestId && isCreationRequestConflict(error)) {
           const replay = await resolveCompanyCreationReplay(db, data);
           if (replay) {
+            await opts.validateReplay?.(db, replay);
             const operatorId = await resolveCompanyFoundingOperator(db, replay.id);
             await seedNewCompanyBestEffort(replay.id, opts.requestedByUserId ?? null);
             return {

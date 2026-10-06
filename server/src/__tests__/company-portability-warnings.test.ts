@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import "./helpers/mock-company-import-operations.js";
 
 vi.mock("../services/companies.js", () => ({
   companyService: () => ({
@@ -55,6 +56,7 @@ function baseManifest(overrides: Partial<CompanyPortabilityManifest> = {}): Comp
 function buildInlineSource(manifest: unknown, files: Record<string, string> = { "COMPANY.md": "---\nkind: company\nname: Test Co\n---\n" }) {
   return {
     source: { type: "inline" as const, manifest: manifest as CompanyPortabilityManifest, files },
+    operationId: crypto.randomUUID(),
     target: { mode: "new_company" as const, newCompanyName: "Imported" },
     include: { company: true, agents: false },
   };

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import "./helpers/mock-company-import-operations.js";
 
 type ProjectRow = {
   id: string;
@@ -116,6 +117,7 @@ function buildInlineSource(
 ) {
   return {
     source: { type: "inline" as const, manifest, files },
+    operationId: crypto.randomUUID(),
     target: { mode: "new_company" as const, newCompanyName: "Imported Co" },
     include: { company: true, agents: false, projects: true },
   };
@@ -450,6 +452,7 @@ describe("company-portability projects", () => {
           manifest: exported.manifest,
           files: exported.files,
         },
+        operationId: crypto.randomUUID(),
         target: { mode: "new_company", newCompanyName: "Clone Co" },
         include: { company: true, agents: false, projects: true },
       },

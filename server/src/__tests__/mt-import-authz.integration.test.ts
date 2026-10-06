@@ -340,6 +340,7 @@ describe.skipIf(process.platform === "win32")("D2 import authz — real DB", () 
     const result = await companyPortabilityService(db).importBundle(
       {
         source: agentBundleSource("Imported D2 Co"),
+        operationId: crypto.randomUUID(),
         target: { mode: "new_company", newCompanyName: "Imported D2 Co" },
         include: { company: true, agents: true },
       } as never,
@@ -386,6 +387,7 @@ describe.skipIf(process.platform === "win32")("D2 import authz — real DB", () 
     const result = await companyPortabilityService(db).importBundle(
       {
         source: agentBundleSource("Self Hosted D2 Co"),
+        operationId: crypto.randomUUID(),
         target: { mode: "new_company", newCompanyName: "Self Hosted D2 Co" },
         include: { company: true, agents: true },
       } as never,

@@ -419,6 +419,13 @@ export const companyPortabilityPreviewSchema = z.object({
 
 export type CompanyPortabilityPreview = z.infer<typeof companyPortabilityPreviewSchema>;
 
-export const companyPortabilityImportSchema = companyPortabilityPreviewSchema;
+export const companyPortabilityImportSchema = companyPortabilityPreviewSchema.extend({
+  operationId: z.string().uuid().optional(),
+}).superRefine((input, ctx) => {
+  if (input.target.mode === "new_company" && !input.operationId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["operationId"],
+      message: "New company imports require a caller-generated operationId; reuse it for retries." });
+  }
+});
 
 export type CompanyPortabilityImport = z.infer<typeof companyPortabilityImportSchema>;

@@ -32,6 +32,7 @@
  * Flagged rather than fixed: changing shortname scoping is its own decision.
  */
 import { describe, expect, it, vi } from "vitest";
+import "./helpers/mock-company-import-operations.js";
 
 const createMock = vi.hoisted(() =>
   vi.fn(async (input: { name: string }) => ({ id: "created-co", name: input.name })),
@@ -113,6 +114,7 @@ describe("company-bundle import into a new company provisions the crew (R8)", ()
           manifest: baseManifest(),
           files: { "COMPANY.md": "---\nkind: company\nname: Imported Co\n---\n" },
         },
+        operationId: crypto.randomUUID(),
         target: { mode: "new_company" as const, newCompanyName: "Imported Co" },
         include: { company: true, agents: false },
       } as never,
@@ -142,6 +144,7 @@ describe("company-bundle import into a new company provisions the crew (R8)", ()
           manifest: baseManifest(),
           files: { "COMPANY.md": "---\nkind: company\nname: Imported Co\n---\n" },
         },
+        operationId: crypto.randomUUID(),
         target: { mode: "new_company" as const, newCompanyName: "Imported Co" },
         include: { company: true, agents: false },
       } as never,
