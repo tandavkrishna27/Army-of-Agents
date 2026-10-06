@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 
@@ -68,6 +69,41 @@ function runRevisionVerifier(testCase: string, deploySha: string) {
 }
 
 describe("testing deployment workflow contract", () => {
+  it("writes persistent marketplace storage into the generated remote deployment env", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "aoa-compose-env-contract-"));
+    const outputPath = join(tempDir, "testing.env");
+
+    try {
+      const result = spawnSync(
+        process.execPath,
+        ["scripts/deploy/write-compose-env.mjs", outputPath],
+        {
+          cwd: REPO_ROOT,
+          encoding: "utf8",
+          env: {
+            PATH: process.env.PATH,
+            SystemRoot: process.env.SystemRoot,
+            TEMP: process.env.TEMP,
+            TMP: process.env.TMP,
+            AOA_POSTGRES_PASSWORD: "postgres-test-secret",
+            BETTER_AUTH_SECRET: "better-auth-test-secret",
+            AOA_AGENT_JWT_SECRET: "agent-jwt-test-secret",
+            GOOGLE_CLIENT_ID: "google-client-test-id",
+            GOOGLE_CLIENT_SECRET: "google-client-test-secret",
+          },
+        },
+      );
+
+      expect(result.error).toBeUndefined();
+      expect(result.status, result.stderr).toBe(0);
+      expect(readFileSync(outputPath, "utf8")).toContain(
+        'AOA_MARKETPLACE_SKILLS_WRITE_ROOT="persistent"',
+      );
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it("requires an exact, tested SHA from main history", () => {
     const source = repoFile(".github/workflows/deploy-testing.yml");
     const verifier = repoFile("scripts/deploy/verify-testing-revision.sh");

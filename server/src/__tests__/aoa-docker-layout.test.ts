@@ -88,7 +88,10 @@ describe("AOA Docker data layout and CLI compatibility", () => {
         [path.join(root, "scripts/deploy/write-compose-env.mjs"), outputPath],
         {
           env: {
-            ...process.env,
+            PATH: process.env.PATH,
+            SystemRoot: process.env.SystemRoot,
+            TEMP: process.env.TEMP,
+            TMP: process.env.TMP,
             AOA_POSTGRES_PASSWORD: "postgres-test-secret",
             BETTER_AUTH_SECRET: "better-auth-test-secret",
             AOA_AGENT_JWT_SECRET: "agent-jwt-test-secret",
@@ -105,7 +108,7 @@ describe("AOA Docker data layout and CLI compatibility", () => {
       expect(generated).toContain('AOA_EXECUTION_TARGET_ID="hetzner-qa"');
       expect(generated).toContain('AOA_SCOPED_CLI_AUTH="true"');
       expect(generated).toContain(
-        'AOA_MARKETPLACE_SKILLS_WRITE_ROOT="legacy"',
+        'AOA_MARKETPLACE_SKILLS_WRITE_ROOT="persistent"',
       );
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
