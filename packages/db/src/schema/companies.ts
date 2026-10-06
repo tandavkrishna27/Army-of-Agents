@@ -1,5 +1,7 @@
-import { pgTable, uuid, text, integer, timestamp, boolean, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, uuid, text, integer, timestamp, boolean, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
 import { organizations } from "./organizations.js";
+
+export const agentExecutionSetupStateEnum = pgEnum("agent_execution_setup_state", ["pending", "ready"]);
 
 export const companies = pgTable(
   "companies",
@@ -38,6 +40,11 @@ export const companies = pgTable(
     agentCompletionReviewGuardrail: boolean("agent_completion_review_guardrail")
       .notNull()
       .default(false),
+    // 0208 assigns `ready` to companies that already exist during upgrade;
+    // 0209 makes fresh companies `pending` after that backfill.
+    agentExecutionSetupState: agentExecutionSetupStateEnum("agent_execution_setup_state")
+      .notNull()
+      .default("pending"),
     humanQuestionSlaHours: integer("human_question_sla_hours").notNull().default(24),
     vision: text("vision"),
     mission: text("mission"),

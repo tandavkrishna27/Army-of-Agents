@@ -1,0 +1,1 @@
+ALTER TABLE "companies" ALTER COLUMN "agent_execution_setup_state" SET DEFAULT 'pending';

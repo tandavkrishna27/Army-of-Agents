@@ -76,6 +76,7 @@ describe.skipIf(process.platform !== "linux")(
   "companyService.createWithOperator — atomicity (real PostgreSQL)",
   () => {
     let db: Db;
+    let connectionUrl: string;
     const orgId = randomUUID();
     const ownerUserId = `company-tx-owner-${randomUUID()}`;
 
@@ -95,9 +96,9 @@ describe.skipIf(process.platform !== "linux")(
       });
       await pg.initialise();
       await pg.start();
-      const conn = `postgres://test:test@localhost:${port}/postgres`;
-      await applyPendingMigrations(conn);
-      db = createDb(conn);
+      connectionUrl = `postgres://test:test@localhost:${port}/postgres`;
+      await applyPendingMigrations(connectionUrl);
+      db = createDb(connectionUrl);
       const now = new Date();
       // companies.organization_id -> organizations(id) FK (RESTRICT): a real
       // owning org must exist for the company insert to satisfy the FK.
@@ -261,6 +262,9 @@ describe.skipIf(process.platform !== "linux")(
       const first = await create();
       const sequential = await create();
       const [concurrentA, concurrentB] = await Promise.all([create(), create()]);
+      for (const result of [first, sequential, concurrentA, concurrentB]) {
+        expect(result.company.agentExecutionSetupState).toBe("pending");
+      }
       expect(new Set([
         first.company.id,
         sequential.company.id,
@@ -268,6 +272,10 @@ describe.skipIf(process.platform !== "linux")(
         concurrentB.company.id,
       ])).toEqual(new Set([first.company.id]));
       expect(await db.select().from(companies).where(eq(companies.name, name))).toHaveLength(1);
+      await applyPendingMigrations(connectionUrl);
+      const afterRepeatedMigrationRun = await db.select().from(companies)
+        .where(eq(companies.id, first.company.id));
+      expect(afterRepeatedMigrationRun[0]?.agentExecutionSetupState).toBe("pending");
     });
 
     it("reconciles idempotent post-commit bootstrap when a create request is replayed", async () => {
@@ -369,7 +377,7 @@ describe.skipIf(process.platform !== "linux")(
       const name = `Atomic Company ${randomUUID()}`;
       const svc = companyService(db);
       const { company, operatorId } = await svc.createWithOperator(
-        { name, organizationId: orgId },
+        { name, organizationId: orgId, agentExecutionSetupState: "ready" },
         { requestedByUserId: ownerUserId },
         ownerUserId,
         (tx) => accessService(tx),
@@ -379,6 +387,7 @@ describe.skipIf(process.platform !== "linux")(
 
       const companyRows = await db.select().from(companies).where(eq(companies.id, company.id));
       expect(companyRows).toHaveLength(1);
+      expect(companyRows[0]?.agentExecutionSetupState).toBe("pending");
 
       // Owner company membership.
       const membership = await db

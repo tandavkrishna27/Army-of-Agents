@@ -333,6 +333,7 @@ export function companyService(db: Db) {
             // sentinel Organization unless a real org context is supplied.
             organizationId: data.organizationId ?? DEFAULT_ORGANIZATION_ID,
             issuePrefix: candidate,
+            agentExecutionSetupState: "pending",
           })
           .returning();
         const company = rows[0];
@@ -433,6 +434,7 @@ export function companyService(db: Db) {
               ...data,
               organizationId: data.organizationId ?? DEFAULT_ORGANIZATION_ID,
               issuePrefix: candidate,
+              agentExecutionSetupState: "pending",
             })
             .returning();
           const inserted = rows[0];

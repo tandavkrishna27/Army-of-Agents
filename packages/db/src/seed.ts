@@ -22,6 +22,7 @@ const [company] = await db
     status: "active",
     budgetMonthlyCents: 50000,
     organizationId: DEFAULT_ORGANIZATION_ID,
+    agentExecutionSetupState: "ready",
   })
   .returning();
 

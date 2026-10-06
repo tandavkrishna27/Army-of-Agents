@@ -30,6 +30,11 @@ import { logger } from "../middleware/logger.js";
 import { organizationAccessService } from "../services/organization-access.js";
 import type { OrgCapability } from "../services/organization-access.js";
 
+function publicCompany(company: typeof companies.$inferSelect) {
+  const { agentExecutionSetupState: _internal, ...response } = company;
+  return response;
+}
+
 /**
  * Anti-tenant-hop: the Organization used to AUTHORIZE the create is the SAME
  * Organization written to the company row. An explicit `body.organizationId`
@@ -137,7 +142,7 @@ export function companyRoutes(db: Db, opts: { deploymentMode: DeploymentMode }) 
     const result = legacyAdmin
       ? await svc.list("unscoped")
       : await svc.list(req.actor.companyIds ?? []);
-    res.json(result);
+    res.json(result.map(publicCompany));
   });
 
   router.get("/stats", async (req, res) => {
@@ -171,7 +176,7 @@ export function companyRoutes(db: Db, opts: { deploymentMode: DeploymentMode }) 
       res.status(404).json({ error: "Company not found" });
       return;
     }
-    res.json(company);
+    res.json(publicCompany(company));
   });
 
   router.post("/:companyId/export", validate(companyPortabilityExportSchema), async (req, res) => {
@@ -378,7 +383,7 @@ export function companyRoutes(db: Db, opts: { deploymentMode: DeploymentMode }) 
         );
       }
     }
-    res.status(201).json(company);
+    res.status(201).json(publicCompany(company));
   });
 
   router.patch("/:companyId", validate(updateCompanySchema), async (req, res) => {
@@ -414,7 +419,7 @@ export function companyRoutes(db: Db, opts: { deploymentMode: DeploymentMode }) 
       entityId: companyId,
       details: req.body,
     });
-    res.json(company);
+    res.json(publicCompany(company));
   });
 
   // Founder-only toggle for the team-architecture feature flag (Slices 6 + 7).
@@ -467,7 +472,7 @@ export function companyRoutes(db: Db, opts: { deploymentMode: DeploymentMode }) 
       entityType: "company",
       entityId: companyId,
     });
-    res.json(company);
+    res.json(publicCompany(company));
   });
 
   router.delete("/:companyId", async (req, res) => {
