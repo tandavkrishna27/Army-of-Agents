@@ -29,9 +29,9 @@ x-aoa-env: &aoa-env
   AOA_DEPLOYMENT_EXPOSURE: ${AOA_DEPLOYMENT_EXPOSURE:-private}
   AOA_PUBLIC_URL: ${AOA_PUBLIC_URL:-}
   AOA_DEPLOY_SHA: ${AOA_DEPLOY_SHA:-}
-  # A1 compatibility selector. Both roots remain readable/jailed; only new
-  # marketplace bundle writes follow this selector.
-  AOA_MARKETPLACE_SKILLS_WRITE_ROOT: ${AOA_MARKETPLACE_SKILLS_WRITE_ROOT:-legacy}
+  # Keep newly installed marketplace bundles on the persistent AoA data volume.
+  # Both fixed roots remain readable/jailed; host/dev callers can still override.
+  AOA_MARKETPLACE_SKILLS_WRITE_ROOT: ${AOA_MARKETPLACE_SKILLS_WRITE_ROOT:-persistent}
   AOA_AUTH_PUBLIC_BASE_URL: ${AOA_AUTH_PUBLIC_BASE_URL:-}
   AOA_AUTH_BASE_URL_MODE: ${AOA_AUTH_BASE_URL_MODE:-}
   # Google OAuth is REQUIRED in `authenticated` mode (the server refuses to boot
