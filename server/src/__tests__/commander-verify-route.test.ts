@@ -1,5 +1,8 @@
 import express from "express";
 import request from "supertest";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { drizzleOperatorStubs, makeTableProxy } from "./helpers/drizzle-mock.js";
 
@@ -29,6 +32,7 @@ vi.mock("../services/provider-credentials.js", () => ({
 }));
 
 import { commanderVerifyRoutes } from "../routes/commander-verify.js";
+import { resolveScopedCliAuthHome } from "../services/cli-auth-topology.js";
 
 const COMPANY_ID = "c1";
 
@@ -158,6 +162,38 @@ describe("POST /companies/:companyId/internal-agent/verify", () => {
         executionTargetId: "control-plane",
       },
     );
+  });
+
+  it("shows a typed permission failure before a scoped Claude probe", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-verify-auth-"));
+    const previous = { profile: process.env.AOA_INSTALL_PROFILE, home: process.env.AOA_HOME };
+    process.env.AOA_INSTALL_PROFILE = "remote_single_tenant";
+    process.env.AOA_HOME = root;
+    const home = resolveScopedCliAuthHome({ env: process.env, executionTargetId: "control-plane", companyId: COMPANY_ID, userId: "u1", provider: "anthropic" });
+    await fs.mkdir(home, { recursive: true });
+    const credential = path.join(home, ".credentials.json");
+    await fs.writeFile(credential, "fixture-secret");
+    const originalOpen = fs.open.bind(fs);
+    const opened = vi.spyOn(fs, "open").mockImplementation(async (candidate, flags, mode) => {
+      if (String(candidate) === credential) throw Object.assign(new Error("EACCES fixture-secret"), { code: "EACCES" });
+      return originalOpen(candidate, flags, mode);
+    });
+    try {
+      const res = await request(makeApp(dbWithMembership([{ id: COMPANY_ID }])))
+        .post(`/api/companies/${COMPANY_ID}/internal-agent/verify`)
+        .send({});
+      expect(res.status).toBe(422);
+      expect(res.body.outcome).toBe("failed");
+      expect(res.body.result.checks[0].code).toBe("claude_credentials_permission_denied");
+      expect(JSON.stringify(res.body)).not.toContain("fixture-secret");
+      expect(JSON.stringify(res.body)).not.toContain(root);
+      expect(mockTestEnvironment).not.toHaveBeenCalled();
+    } finally {
+      opened.mockRestore();
+      await fs.rm(root, { recursive: true, force: true });
+      if (previous.profile === undefined) delete process.env.AOA_INSTALL_PROFILE; else process.env.AOA_INSTALL_PROFILE = previous.profile;
+      if (previous.home === undefined) delete process.env.AOA_HOME; else process.env.AOA_HOME = previous.home;
+    }
   });
 
   it("atomically verifies and binds the subscription transition", async () => {

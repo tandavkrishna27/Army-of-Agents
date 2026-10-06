@@ -258,6 +258,69 @@ export class ClaudeCredentialsMissingError extends Error {
   }
 }
 
+export class ClaudeCredentialsAccessError extends Error {
+  readonly code: "claude_credentials_permission_denied" | "claude_credentials_unsafe_path";
+
+  constructor(code: "claude_credentials_permission_denied" | "claude_credentials_unsafe_path") {
+    super(
+      code === "claude_credentials_permission_denied"
+        ? "AoA cannot read the scoped Claude credential. Ask the installation owner to grant the node service user access to this company's credential, then sign in again. Run Docker terminal sign-in as node."
+        : "The scoped Claude credential path is unsafe. Ask the installation owner to inspect the scoped auth directory, then sign in again.",
+    );
+    this.name = "ClaudeCredentialsAccessError";
+    this.code = code;
+  }
+}
+
+function accessError(error: unknown): ClaudeCredentialsAccessError {
+  const code = (error as NodeJS.ErrnoException | null)?.code;
+  return new ClaudeCredentialsAccessError(
+    code === "EACCES" || code === "EPERM"
+      ? "claude_credentials_permission_denied"
+      : "claude_credentials_unsafe_path",
+  );
+}
+
+async function assertNoSymlinkComponents(candidate: string, allowMissingLeaf = false): Promise<void> {
+  const absolute = path.resolve(candidate);
+  const parsed = path.parse(absolute);
+  let current = parsed.root;
+  for (const part of absolute.slice(parsed.root.length).split(path.sep).filter(Boolean)) {
+    current = path.join(current, part);
+    try {
+      const stat = await fs.lstat(current);
+      if (stat.isSymbolicLink()) throw new ClaudeCredentialsAccessError("claude_credentials_unsafe_path");
+    } catch (error) {
+      if (error instanceof ClaudeCredentialsAccessError) throw error;
+      if (allowMissingLeaf && current === absolute && (error as NodeJS.ErrnoException).code === "ENOENT") return;
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") throw error;
+      throw accessError(error);
+    }
+  }
+}
+
+async function openPinnedDirectory(directory: string): Promise<import("node:fs/promises").FileHandle> {
+  let handle: import("node:fs/promises").FileHandle;
+  try {
+    handle = await fs.open(directory, fsConstants.O_RDONLY | (fsConstants.O_DIRECTORY ?? 0) | (fsConstants.O_NOFOLLOW ?? 0));
+  } catch (error) {
+    throw accessError(error);
+  }
+  try {
+    if (!(await handle.stat()).isDirectory()) throw new ClaudeCredentialsAccessError("claude_credentials_unsafe_path");
+    if (process.platform === "linux") {
+      // On Docker/Linux the descriptor pins the inode even if a pathname is
+      // swapped between lstat and open. Refuse a directory redirected elsewhere.
+      const actual = await fs.realpath(`/proc/self/fd/${handle.fd}`);
+      if (actual !== directory) throw new ClaudeCredentialsAccessError("claude_credentials_unsafe_path");
+    }
+    return handle;
+  } catch (error) {
+    await handle.close();
+    throw error instanceof ClaudeCredentialsAccessError ? error : accessError(error);
+  }
+}
+
 /**
  * Provision the per-run config home: copy the credential file, and ONLY the
  * credential file.
@@ -324,6 +387,9 @@ export async function provisionClaudeConfigHome(args: {
   const credentialFileName = args.credentialFileName ?? CLAUDE_CREDENTIAL_FILE_NAME;
   const source = path.resolve(args.sourceConfigHome);
   const target = path.resolve(args.targetDir);
+  if (credentialFileName !== path.basename(credentialFileName) || credentialFileName === "." || credentialFileName === "..") {
+    throw new ClaudeCredentialsAccessError("claude_credentials_unsafe_path");
+  }
   if (source === target) {
     throw new Error(
       `Refusing to provision a Claude config home from the same directory it targets ` +
@@ -334,33 +400,58 @@ export async function provisionClaudeConfigHome(args: {
 
   const from = path.join(source, credentialFileName);
   const to = path.join(target, credentialFileName);
-  const stat = await fs.stat(from).catch(() => null);
-  // `isFile()` and not bare existence: a directory named `.credentials.json`
-  // would make `copyFile` fail with EISDIR, which reads as an internal error
-  // rather than "you are not logged in".
-  if (!stat?.isFile()) {
-    throw new ClaudeCredentialsMissingError(source, from);
+  try {
+    await assertNoSymlinkComponents(source);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") throw new ClaudeCredentialsMissingError(source, from);
+    throw error;
+  }
+  const sourceDir = await openPinnedDirectory(source);
+  let credential: Buffer;
+  try {
+    const pinnedFrom = process.platform === "linux" ? `/proc/self/fd/${sourceDir.fd}/${credentialFileName}` : from;
+    let sourceFile: import("node:fs/promises").FileHandle;
+    try {
+      sourceFile = await fs.open(pinnedFrom, fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") throw new ClaudeCredentialsMissingError(source, from);
+      throw accessError(error);
+    }
+    try {
+      if (!(await sourceFile.stat()).isFile()) throw new ClaudeCredentialsMissingError(source, from);
+      credential = await sourceFile.readFile();
+    } catch (error) {
+      if (error instanceof ClaudeCredentialsMissingError) throw error;
+      throw accessError(error);
+    } finally {
+      await sourceFile.close();
+    }
+  } finally {
+    await sourceDir.close();
   }
 
-  // Only after the credential is known to exist — a failed provisioning should
-  // not leave a directory behind for the sweep to reclaim. `mode` applies only
-  // when this actually creates the directory; the normal caller passes one
-  // `mkdtemp` already made 0700.
-  await fs.mkdir(target, { recursive: true, mode: 0o700 });
-  // COPYFILE_EXCL turns the docblock's "freshly minted target" promise into a
-  // checked invariant: a caller that reuses a directory, or two runs somehow
-  // sharing one, fails here instead of silently overwriting a credential.
-  await fs.copyFile(from, to, fsConstants.COPYFILE_EXCL);
-  // `copyFile` carries the SOURCE's mode across, so a world-readable `~/.claude`
-  // would produce a world-readable copy. Clamp it. Windows has no POSIX modes —
-  // `chmod` there only toggles the read-only bit — which is precisely why the
-  // per-run root lives under the user profile rather than in shared `%TEMP%`
-  // (see `resolveIsolatedClaudeConfigRoot`); the directory's ACL is the
-  // protection there, and it is a real one.
-  if (process.platform !== "win32") {
-    await fs.chmod(to, 0o600);
+  try {
+    await assertNoSymlinkComponents(target, true);
+    await fs.mkdir(target, { recursive: true, mode: 0o700 });
+    await assertNoSymlinkComponents(target);
+    const targetDir = await openPinnedDirectory(target);
+    try {
+      const pinnedTo = process.platform === "linux" ? `/proc/self/fd/${targetDir.fd}/${credentialFileName}` : to;
+      const targetFile = await fs.open(pinnedTo, fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | (fsConstants.O_NOFOLLOW ?? 0), 0o600);
+      try {
+        await targetFile.writeFile(credential);
+        if (process.platform !== "win32") await targetFile.chmod(0o600);
+        const stat = await targetFile.stat();
+        return { credentialPath: to, fingerprint: `${stat.size}:${stat.mtimeMs}` };
+      } finally {
+        await targetFile.close();
+      }
+    } finally {
+      await targetDir.close();
+    }
+  } catch (error) {
+    throw error instanceof ClaudeCredentialsAccessError ? error : accessError(error);
   }
-  return { credentialPath: to, fingerprint: await fingerprintCredential(to) };
 }
 
 /**

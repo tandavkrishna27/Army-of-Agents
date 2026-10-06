@@ -1,5 +1,7 @@
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import fs from "node:fs/promises";
+import os from "node:os";
+import { describe, expect, it, vi } from "vitest";
 import {
   assertProviderLoginUrl,
   providerSubscriptionCapability,
@@ -7,9 +9,56 @@ import {
   resolveScopedCliAuthHome,
   detectProviderCli,
   resolveProviderCliCommand,
+  dockerClaudeLoginCommand,
+  inspectScopedClaudeCredential,
 } from "../services/cli-auth-topology.js";
 
 describe("CLI authentication topology", () => {
+  it.each([
+    ["hosted_multi_tenant", "false", false],
+    ["hosted_multi_tenant", "true", false],
+    ["remote_single_tenant", "false", false],
+    ["remote_single_tenant", "true", true],
+  ] as const)("allows Claude subscription only for dedicated opt-in (%s, %s)", (profile, flag, allowed) => {
+    const env = { AOA_INSTALL_PROFILE: profile, AOA_CLAUDE_PASTE_AUTH: flag };
+    const topology = resolveCliAuthTopology({ env, deploymentMode: "authenticated", deploymentExposure: "public" });
+    expect(providerSubscriptionCapability("anthropic", topology, env).enabled).toBe(allowed);
+  });
+
+  it("gives Docker Compose a node-user terminal command pinned to the login/verify home", () => {
+    const scope = { env: { AOA_HOME: "/aoa" }, executionTargetId: "control-plane", companyId: "company-1", userId: "founder-1", provider: "anthropic" as const };
+    const home = resolveScopedCliAuthHome(scope);
+    const dockerHome = home.replace(/^.*[\\/]aoa/, "/aoa").replaceAll("\\", "/");
+    const command = dockerClaudeLoginCommand(scope);
+    expect(command).toContain("docker compose exec --user node");
+    expect(command).toContain(`CLAUDE_CONFIG_DIR='${dockerHome}'`);
+    expect(command).toContain(`HOME='${path.posix.dirname(dockerHome)}'`);
+    expect(command).toContain("server claude auth login");
+    expect(command).not.toContain("~/.claude");
+  });
+
+  it("reports an unreadable scoped credential with an allowlisted permission code", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-claude-inspect-"));
+    try {
+      const credential = path.join(root, ".credentials.json");
+      await fs.writeFile(credential, "fixture-secret");
+      const originalOpen = fs.open.bind(fs);
+      const opened = vi.spyOn(fs, "open").mockImplementation(async (candidate, flags, mode) => {
+        if (String(candidate) === credential) throw Object.assign(new Error("EACCES fixture-secret"), { code: "EACCES" });
+        return originalOpen(candidate, flags, mode);
+      });
+      try {
+        const result = await inspectScopedClaudeCredential(root);
+        expect(result).toMatchObject({ code: "claude_credentials_permission_denied", recoverable: true });
+        expect(JSON.stringify(result)).not.toContain("fixture-secret");
+        expect(JSON.stringify(result)).not.toContain(root);
+      } finally {
+        opened.mockRestore();
+      }
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
   it("fails closed to hosted multi-tenant for authenticated deployments without an operator profile", () => {
     const topology = resolveCliAuthTopology({
       env: {},

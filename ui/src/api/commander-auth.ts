@@ -23,6 +23,8 @@ export type CommanderAuthCapability = {
   cliInstalled?: boolean;
   cliVersion?: string | null;
   cliVersionSupported?: boolean;
+  /** Founder-scoped Docker Compose command supplied by the server. */
+  terminalCommand?: string;
 };
 
 export function getCommanderAuthCapabilities(args: {

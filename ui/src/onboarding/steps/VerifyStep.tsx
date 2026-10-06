@@ -38,6 +38,26 @@ type VerifyBody = {
   result?: { status?: string; checks?: VerifyCheck[] };
 };
 
+const SAFE_CLAUDE_AUTH_ERRORS: Record<string, string> = {
+  claude_credentials_permission_denied:
+    "AoA cannot read this workspace's Claude credential. Ask the installation owner to grant the node service user access, then try sign-in again.",
+  claude_credentials_unsafe_path:
+    "The scoped Claude credential path is unsafe. Ask the installation owner to inspect it before signing in again.",
+};
+
+function safeVerifyCheck(check: VerifyCheck): VerifyCheck {
+  const safe = check.code ? SAFE_CLAUDE_AUTH_ERRORS[check.code] : undefined;
+  return safe ? { code: check.code, level: "error", message: safe, hint: "Choose Check again after access is fixed." } : check;
+}
+
+function signInError(error: unknown): string {
+  if (error instanceof ApiError && error.body && typeof error.body === "object") {
+    const code = (error.body as { code?: unknown }).code;
+    if (typeof code === "string" && SAFE_CLAUDE_AUTH_ERRORS[code]) return SAFE_CLAUDE_AUTH_ERRORS[code];
+  }
+  return error instanceof Error ? error.message : "Could not start sign-in.";
+}
+
 /**
  * The verify probe returns several checks — working directory, command
  * resolvable, auth mode, then a live "hello" probe. Showing only `checks[0]`
@@ -154,6 +174,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [capability, setCapability] = useState<CommanderAuthCapability | null>(null);
   const [topologyLabel, setTopologyLabel] = useState<string | null>(null);
+  const [installProfile, setInstallProfile] = useState<string | null>(null);
   const [topologyPlatform, setTopologyPlatform] = useState<string | null>(null);
   const [login, setLogin] = useState<{
     challengeId: string;
@@ -229,6 +250,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
         if (!alive) return;
         setCapability(result.providers[provider]);
         setTopologyPlatform(result.topology.platform);
+        setInstallProfile(result.topology.installProfile);
         setTopologyLabel(
           `${result.topology.platform} · ${result.topology.installProfile.replaceAll("_", " ")}`,
         );
@@ -321,7 +343,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
       setAuthError(null);
       try {
         const res = await api.post<VerifyBody>(`/companies/${companyId}/internal-agent/verify`, {});
-        const list = res.result?.checks ?? [];
+        const list = (res.result?.checks ?? []).map(safeVerifyCheck);
         const nextOutcome = res.outcome ?? "verified";
         setOutcome(nextOutcome);
         setChecks(list);
@@ -341,7 +363,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
         return nextOutcome;
       } catch (e) {
         const body = e instanceof ApiError ? (e.body as VerifyBody | null) : null;
-        const list = body?.result?.checks ?? [];
+        const list = (body?.result?.checks ?? []).map(safeVerifyCheck);
         const nextOutcome = body?.outcome ?? "failed";
         setOutcome(nextOutcome);
         setChecks(list);
@@ -403,7 +425,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
       pollRef.current = setInterval(() => void pollLogin(challengeId), 2500);
       void pollLogin(challengeId); // poll once immediately, don't wait a full interval
     } catch (e) {
-      setAuthError(e instanceof Error ? e.message : "Could not start sign-in.");
+      setAuthError(signInError(e));
     } finally {
       setAuthBusy(false);
     }
@@ -515,6 +537,12 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
   };
 
   const providerLabel = provider ? PROVIDER_LABEL[provider] : "your CLI";
+  const terminalCommand =
+    capability?.enabled && provider
+      ? installProfile === "remote_single_tenant"
+        ? capability.terminalCommand ?? null
+        : PROVIDER_CLI_LOGIN_COMMAND[provider]
+      : null;
 
   return (
     <StepShell>
@@ -747,19 +775,19 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
             {/* WS3 — CLI auto-detect: the fallback for BOTH providers when the
                 in-app bridge above can't run (server restarted, spawn failed,
                 or the founder just prefers a terminal). */}
-            <div className="flex items-center gap-2 text-very-dim">
+            {terminalCommand && <div className="flex items-center gap-2 text-very-dim">
               <span className="h-px flex-1 bg-border" />
               or
               <span className="h-px flex-1 bg-border" />
-            </div>
-            {cliPolling ? (
+            </div>}
+            {terminalCommand && (cliPolling ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <LoadingDots state="loading" />
                   <p>
                     Run{" "}
                     <code className="rounded bg-field px-1 py-0.5">
-                      {provider ? PROVIDER_CLI_LOGIN_COMMAND[provider] : "the CLI's sign-in command"}
+                      {terminalCommand}
                     </code>{" "}
                     in a terminal — we'll detect it automatically and continue.
                   </p>
@@ -778,7 +806,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
               >
                 I'll sign in myself in the CLI
               </Button>
-            )}
+            ))}
 
             {authError && <p className="text-destructive">{authError}</p>}
           </div>

@@ -85,6 +85,56 @@ const needsAuthResponse = () =>
 describe("VerifyStep (Stage C / order 5, blocking)", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("shows the server-scoped Docker command while watching for a terminal sign-in", async () => {
+    const command = "docker compose exec --user node -e HOME='/aoa/scoped' -e CLAUDE_CONFIG_DIR='/aoa/scoped/anthropic' server claude auth login";
+    getCommanderAuthCapabilities.mockResolvedValueOnce({
+      topology: { platform: "linux", installProfile: "remote_single_tenant", networkLocation: "remote", trustBoundary: "single_tenant", executionOwnership: "tenant_hosted" },
+      providers: {
+        openai: { provider: "openai", mode: "device_code", enabled: false, browserSafeRemotely: true, reason: "Disabled" },
+        anthropic: { provider: "anthropic", mode: "paste_code", enabled: true, browserSafeRemotely: true, reason: null, terminalCommand: command },
+      },
+    });
+    post.mockRejectedValue(new ApiError("Request failed: 422", 422, {
+      outcome: "needs_auth", result: { status: "warn", checks: [{ code: "claude_hello_probe_auth_required", level: "warn", message: "Sign in" }] },
+    }));
+    render(<VerifyStep ctx={ctx} onComplete={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Verify" }));
+    fireEvent.click(await screen.findByRole("button", { name: /sign in myself in the cli/i }));
+    expect(await screen.findByText(command)).toBeTruthy();
+    expect(screen.queryByText("claude auth login")).toBeNull();
+  });
+
+  it("does not offer terminal Claude sign-in when the hosted profile disables subscriptions", async () => {
+    getCommanderAuthCapabilities.mockResolvedValueOnce({
+      topology: { platform: "linux", installProfile: "hosted_multi_tenant", networkLocation: "remote", trustBoundary: "multi_tenant", executionOwnership: "aoa_hosted" },
+      providers: {
+        openai: { provider: "openai", mode: "device_code", enabled: false, browserSafeRemotely: true, reason: "Disabled" },
+        anthropic: { provider: "anthropic", mode: "paste_code", enabled: false, browserSafeRemotely: true, reason: "Subscription sign-in is disabled on shared hosted installations." },
+      },
+    });
+    post.mockRejectedValueOnce(needsAuthResponse());
+    render(<VerifyStep ctx={ctx} onComplete={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Verify" }));
+    expect(await screen.findByText(/disabled on shared hosted installations/i)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /sign in myself in the cli/i })).toBeNull();
+  });
+
+  it("shows safe permission recovery without rendering raw credential text", async () => {
+    post.mockRejectedValueOnce(new ApiError("Request failed: 422", 422, {
+      outcome: "failed",
+      result: { status: "fail", checks: [{
+        code: "claude_credentials_permission_denied", level: "error",
+        message: "EACCES fixture-secret", detail: "token=fixture-secret /private/credential",
+      }] },
+    }));
+    const { container } = render(<VerifyStep ctx={ctx} onComplete={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Verify" }));
+    expect(await screen.findByText(/cannot read this workspace's Claude credential/i)).toBeTruthy();
+    expect(container.textContent).not.toContain("fixture-secret");
+    expect(container.textContent).not.toContain("/private/credential");
+    expect(screen.getByRole("button", { name: "Check again" })).toBeTruthy();
+  });
+
   it("renders no step-local Back control (the FlowEngine chrome owns the shared Back affordance)", () => {
     render(<VerifyStep ctx={ctx} onComplete={vi.fn()} onBack={vi.fn()} />);
     expect(screen.queryByRole("button", { name: /back/i })).toBeNull();

@@ -1,5 +1,8 @@
 import express from "express";
 import request from "supertest";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockAssertRole = vi.hoisted(() => vi.fn(async () => {}));
@@ -21,6 +24,7 @@ vi.mock("../services/commander-login-runtime.js", () => ({
 import { errorHandler } from "../middleware/error-handler.js";
 import { commanderLoginRoutes } from "../routes/commander-login.js";
 import { LoginChallengeConflictError } from "../services/commander-login.js";
+import { resolveScopedCliAuthHome } from "../services/cli-auth-topology.js";
 
 function makeApp(actor: Record<string, unknown> = { type: "board", userId: "u1" }) {
   const app = express();
@@ -82,6 +86,64 @@ describe("commander-login routes (Plan 3 T4)", () => {
     expect(start.status).toBe(403);
     expect(start.body.code).toBe("subscription_auth_disabled");
     expect(mockService.startChallenge).not.toHaveBeenCalled();
+  });
+
+  it("returns the exact scoped Docker terminal command only for a dedicated opt-in install", async () => {
+    const previous = {
+      profile: process.env.AOA_INSTALL_PROFILE,
+      flag: process.env.AOA_CLAUDE_PASTE_AUTH,
+      home: process.env.AOA_HOME,
+    };
+    process.env.AOA_INSTALL_PROFILE = "remote_single_tenant";
+    process.env.AOA_CLAUDE_PASTE_AUTH = "true";
+    process.env.AOA_HOME = "/aoa";
+    mockLoadConfig.mockReturnValue({ deploymentMode: "authenticated", deploymentExposure: "public" });
+    try {
+      const res = await request(makeApp()).get("/api/companies/c1/internal-agent/commander-login/capabilities");
+      expect(res.status).toBe(200);
+      const command = res.body.providers.anthropic.terminalCommand as string;
+      expect(command).toContain("docker compose exec --user node");
+      expect(command).toContain("server claude auth login");
+      expect(command).toContain("CLAUDE_CONFIG_DIR=");
+      expect(command).not.toContain("~/.claude");
+      expect(res.body.providers.anthropic.enabled).toBe(true);
+    } finally {
+      if (previous.profile === undefined) delete process.env.AOA_INSTALL_PROFILE; else process.env.AOA_INSTALL_PROFILE = previous.profile;
+      if (previous.flag === undefined) delete process.env.AOA_CLAUDE_PASTE_AUTH; else process.env.AOA_CLAUDE_PASTE_AUTH = previous.flag;
+      if (previous.home === undefined) delete process.env.AOA_HOME; else process.env.AOA_HOME = previous.home;
+    }
+  });
+
+  it("rejects an unreadable scoped Claude credential without starting another login", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-route-auth-"));
+    const previous = { profile: process.env.AOA_INSTALL_PROFILE, flag: process.env.AOA_CLAUDE_PASTE_AUTH, home: process.env.AOA_HOME };
+    process.env.AOA_INSTALL_PROFILE = "remote_single_tenant";
+    process.env.AOA_CLAUDE_PASTE_AUTH = "true";
+    process.env.AOA_HOME = root;
+    mockLoadConfig.mockReturnValue({ deploymentMode: "authenticated", deploymentExposure: "public" });
+    const home = resolveScopedCliAuthHome({ env: process.env, executionTargetId: "control-plane", companyId: "c1", userId: "u1", provider: "anthropic" });
+    await fs.mkdir(home, { recursive: true });
+    const credential = path.join(home, ".credentials.json");
+    await fs.writeFile(credential, "fixture-secret");
+    const originalOpen = fs.open.bind(fs);
+    const opened = vi.spyOn(fs, "open").mockImplementation(async (candidate, flags, mode) => {
+      if (String(candidate) === credential) throw Object.assign(new Error("EACCES fixture-secret"), { code: "EACCES" });
+      return originalOpen(candidate, flags, mode);
+    });
+    try {
+      const res = await request(makeApp()).post(startUrl).send({ provider: "anthropic" });
+      expect(res.status).toBe(422);
+      expect(res.body.code).toBe("claude_credentials_permission_denied");
+      expect(JSON.stringify(res.body)).not.toContain("fixture-secret");
+      expect(JSON.stringify(res.body)).not.toContain(root);
+      expect(mockService.startChallenge).not.toHaveBeenCalled();
+    } finally {
+      opened.mockRestore();
+      await fs.rm(root, { recursive: true, force: true });
+      if (previous.profile === undefined) delete process.env.AOA_INSTALL_PROFILE; else process.env.AOA_INSTALL_PROFILE = previous.profile;
+      if (previous.flag === undefined) delete process.env.AOA_CLAUDE_PASTE_AUTH; else process.env.AOA_CLAUDE_PASTE_AUTH = previous.flag;
+      if (previous.home === undefined) delete process.env.AOA_HOME; else process.env.AOA_HOME = previous.home;
+    }
   });
 
   it("200 start returns { challengeId, loginUrl }", async () => {

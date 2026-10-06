@@ -23,6 +23,7 @@ import {
   probeReadinessInSandbox,
 } from "../services/sandbox-readiness-probe.js";
 import { mapCloudProviderKeyError } from "../services/internal-agent/require-cloud-provider-key.js";
+import { inspectScopedClaudeCredential, resolveScopedCliAuthHome } from "../services/cli-auth-topology.js";
 
 /**
  * Commander verify (Stage C / C7-C8, revA R14). Drives the SAME adapter
@@ -53,6 +54,34 @@ export function commanderVerifyRoutes(db: Db): Router {
     // secret_refs resolved) so a saved API key unblocks re-probe; falls back to
     // {} = CLI defaults / subscription-login path when no key/agent is set.
     const probeConfig = await resolveCommanderProbeConfig(db, companyId, adapterType, actor.userId);
+    if (
+      adapterType === "claude_local" &&
+      process.env.AOA_INSTALL_PROFILE === "remote_single_tenant" &&
+      !commanderProbeUsesApiKey(probeConfig, adapterType)
+    ) {
+      const authHome = resolveScopedCliAuthHome({
+        executionTargetId: process.env.AOA_EXECUTION_TARGET_ID ?? "control-plane",
+        companyId,
+        userId: actor.userId,
+        provider: "anthropic",
+      });
+      const diagnostic = await inspectScopedClaudeCredential(authHome);
+      if (
+        diagnostic.code === "claude_credentials_permission_denied" ||
+        diagnostic.code === "claude_credentials_unsafe_path"
+      ) {
+        res.status(422).json({
+          outcome: "failed",
+          result: {
+            adapterType,
+            status: "fail",
+            checks: [{ code: diagnostic.code, level: "error", message: diagnostic.message, hint: "Contact the installation owner, then choose Check again." }],
+            testedAt: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+    }
     const releaseProbeSlot = tryAcquireAdapterProbeSlot(companyId);
     if (!releaseProbeSlot) {
       res
