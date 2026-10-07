@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** After landing 35 commits in the upstream project → AoA resync (`docs/superpowers/plans/2026-04-26-upstream-resync.md`), prove every shipped feature actually works end-to-end via integration tests, e2e Playwright specs, and a hands-on UX walkthrough — finding any regression before push.
+**Goal:** After landing the integration and runtime update (`docs/archive/sessions/2026-04-26-upstream-resync.md`), prove every shipped feature works end-to-end via integration tests, e2e Playwright specs, and a hands-on UX walkthrough — finding any regression before push.
 
 **Architecture:** Five sequential phases. Phase A (static review) and Phase B (test gap audit) already executed via parallel read-only subagents on 2026-04-27 — findings folded into Phase C/D/E task list below. Phases C–E run task-by-task with the same two-stage review pipeline used for the resync itself (spec compliance → code quality). Phase F closes with full-suite verification + branch push.
 
@@ -1134,7 +1134,7 @@ If desired, create a summary tag or open a draft PR:
 
 ```sh
 gh pr create --draft \
-  --title "upstream project → AoA resync (Tier 1 + Tier 2)" \
+  --title "AoA integration and runtime update (Tier 1 + Tier 2)" \
   --body "Implements docs/superpowers/plans/2026-04-26-upstream-resync.md verified by docs/superpowers/plans/2026-04-27-resync-verification.md"
 ```
 

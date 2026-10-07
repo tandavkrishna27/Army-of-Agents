@@ -551,7 +551,7 @@ Apply the real router migration (the spike is reverted). The `<Routes>` tree in 
 
 ### Steps
 
-- [ ] **Write the failing test** (extend `AoaAgentDetail.test.tsx` or a new `AoaAgentDetailGuard.test.tsx`): assert `AoaAgentDetail` calls `useUnsavedChanges` with the combined dirty flag. Because this file mocks `@/lib/router`, add a `vi.mock("@/hooks/useUnsavedChanges", () => ({ useUnsavedChanges: vi.fn() }))` and assert it's invoked. (A full real-`useBlocker` integration test for the upstream project is lower-value than the AgentDetail one — the provider/hook are already integration-tested in Task 2.)
+- [ ] **Write the failing test** (extend `AoaAgentDetail.test.tsx` or a new `AoaAgentDetailGuard.test.tsx`): assert `AoaAgentDetail` calls `useUnsavedChanges` with the combined dirty flag. Because this file mocks `@/lib/router`, add a `vi.mock("@/hooks/useUnsavedChanges", () => ({ useUnsavedChanges: vi.fn() }))` and assert it's invoked. (A full real-`useBlocker` integration test for the application is lower-value than the AgentDetail one — the provider/hook are already integration-tested in Task 2.)
   > The existing `AoaAgentDetail.test.tsx` mock of `@/lib/router` spreads `react-router-dom` actual and overrides `useBeforeUnload: vi.fn()`. `useBlocker` is NOT used directly by `AoaAgentDetail` (only via the provider, which isn't mounted in this test), so no extra router mock is needed — but DO add the `useUnsavedChanges` mock so the new hook call doesn't throw "must be used within provider" in the test harness.
 - [ ] **Run, confirm it FAILS:** `pnpm --filter @armyofagents/ui test:run AoaAgentDetail`.
 - [ ] **Edit `AoaAgentDetail.tsx`:**

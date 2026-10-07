@@ -1,4 +1,4 @@
-# Release workflow — Changesets action pattern (AoA deviation from the upstream project's custom CalVer).
+# Release workflow — Changesets-based SemVer releases.
 #
 # Flow:
 #   1. Devs add `.changeset/*.md` files via `pnpm changeset` as part of PRs.

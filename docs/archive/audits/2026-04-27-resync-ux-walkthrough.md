@@ -1,8 +1,8 @@
 # Resync UX Walkthrough — 2026-04-27
 
-Interactive verification of the upstream project → AoA resync (Tier 1 + Tier 2,
-plan: `docs/superpowers/plans/2026-04-26-upstream-resync.md`,
-verification plan: `docs/superpowers/plans/2026-04-27-resync-verification.md`).
+Interactive verification of an AoA integration and UX update (Tier 1 + Tier 2,
+implementation plan: `docs/archive/sessions/2026-04-26-upstream-resync.md`,
+verification plan: `docs/archive/sessions/2026-04-27-resync-verification.md`).
 
 **Environment:** AoA dev server on port 3100, deployment mode `local_trusted`,
 embedded PostgreSQL with `{dailyDays: 7, weeklyWeeks: 4, monthlyMonths: 1}`

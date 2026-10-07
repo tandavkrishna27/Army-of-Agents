@@ -2,7 +2,7 @@ import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const CDN_URL = process.env.AOA_CATALOG_CDN_URL
-  ?? "https://raw.githubusercontent.com/meteoritelabs/aoa-marketplace-cdn/main/catalog.json";
+  ?? "https://raw.githubusercontent.com/tandavkrishna27/aoa-marketplace-cdn/main/catalog.json";
 const OUTPUT_PATH = join(import.meta.dirname, "..", "ui", "src", "aoa-marketplace-snapshot.json");
 
 async function main() {

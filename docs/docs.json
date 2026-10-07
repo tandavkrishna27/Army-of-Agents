@@ -32,7 +32,6 @@
               "start/core-concepts",
               "start/first-agent-run",
               "start/architecture",
-              "start/upstream-vs-aoa",
               "start/openclaw-integration"
             ]
           }

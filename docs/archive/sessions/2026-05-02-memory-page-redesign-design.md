@@ -23,7 +23,7 @@ The redesign keeps every existing memory capability — 4-layer architecture, ap
 5. Keep the architecture cloud-ready and multi-user-ready by default — DB-native folder paths, LiveEvents-driven updates, companyId-scoping everywhere.
 6. Provide a memory home page that doubles as a department launcher, a triage dashboard, and a recents strip.
 
-## Non-Goals (deferred to v2 or later)
+## Non-Goals (deferred to a later phase)
 
 1. Materializing memory items as `.md` files on disk (Future-A in brainstorming) — DB-only is intentional.
 2. Manual highlight-to-extract from PDF viewer (select text → save as memory item).

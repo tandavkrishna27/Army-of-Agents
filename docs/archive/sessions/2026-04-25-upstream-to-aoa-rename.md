@@ -1,4 +1,4 @@
-# Upstream → AoA Rename: Phased Migration Plan
+# AoA Naming Cleanup: Phased Migration Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -74,11 +74,11 @@
 The brand-check CI job at `.github/workflows/pr.yml:99-170` already enforces these allow-lists. Per `.changeset/v1-0-0-rc-4-polish-batch.md:13`:
 
 - `UPSTREAM_*` env vars — kept via `server/src/env-compat.ts` + `cli/src/config/env-compat.ts` (mirrors to `AOA_*` at startup; both are imported at line 1 of every entrypoint)
-- `upstreamai` CLI bin alias in `cli/package.json:8` and root `package.json:27`
+- legacy CLI bin alias in `cli/package.json:8` and root `package.json:27`
 - `upstreamPlugin` package.json key + `__upstreamPluginBridge__` / `__upstreamPluginToolDispatcher` / `__upstream_*` sandbox globals (plugin wire protocol)
 - `upstream-feedback-envelope-v2` / `upstream-feedback-bundle-v2` schemaVersion values (telemetry compat, see `docs/telemetry.md`)
 - `hermes-upstream-adapter` (external npm package — upstream)
-- `@upstreamai/*` published package scope (upstream)
+- legacy published package scope
 - `UpstreamPluginManifest` / `upstreamConfigSchema` type aliases
 - `docs/aoa/specs/upstream_spec.md` (upstream spec snapshot)
 - `docs/audit/v1.0.0/raw/*.md` (audit history)
@@ -110,7 +110,7 @@ The brand-check CI job at `.github/workflows/pr.yml:99-170` already enforces the
 | `ui/src/main.tsx` | 3 | Call `runStorageMigrations()` once at app boot, before any context provider mounts |
 | `ui/src/lib/storage-migrations.ts` | 3 | **NEW** — registry of all `upstream:* → aoa:*` migrations (single source of truth) |
 | 14 callsites listed in Phase 3 | 3 | Update each `STORAGE_KEY` constant + add migration entry |
-| `Dockerfile.onboard-smoke` | 4 | Replace `UPSTREAMAI_VERSION` ARG → `AOA_CLI_VERSION`; `UPSTREAM_HOME` → `AOA_HOME`; `UPSTREAM_OPEN_ON_LISTEN` → `AOA_OPEN_ON_LISTEN`; `upstreamai@` npx → `@armyofagents/cli@` |
+| `Dockerfile.onboard-smoke` | 4 | Replace legacy CLI version and environment identifiers with `AOA_CLI_VERSION`, `AOA_HOME`, `AOA_OPEN_ON_LISTEN`; use `@armyofagents/cli@` |
 | `tests/README.md` | 4 | Document `AOA_E2E_PORT` / `AOA_E2E_SKIP_LLM` (env-compat aliases keep `UPSTREAM_E2E_*` working — note that) |
 | `docs/deploy/docker.md`, `docs/deploy/environment-variables.md`, `docs/guides/openclaw-docker-setup.md` | 4 | Sweep `UPSTREAM_*` examples to `AOA_*`, mention the compat sunset |
 | `cli/CHANGELOG.md`, `README.md` | 4 | Sweep references |
@@ -391,7 +391,7 @@ grep -rn "what-is-upstream" --exclude-dir=node_modules --exclude-dir=.git .
 git mv docs/start/what-is-upstream.md docs/start/what-is-aoa.md
 ```
 
-In the new file body: update the `# Title`, intro paragraph, and any in-body "Upstream" → "AoA" except where the doc explicitly explains the project's history with the upstream project name (decide per paragraph; preserve attribution).
+In the new file body: update the `# Title`, intro paragraph, and any legacy product name to "AoA". Preserve factual integration identifiers.
 
 For each cross-link found in Step 1, update the path.
 
@@ -403,7 +403,7 @@ git commit -m "docs: rename what-is-upstream → what-is-aoa and refresh body
 
 Renames the intro doc and updates body copy where it referred to the
 project as 'Upstream'. Preserves explicit attribution paragraphs
-that describe the upstream project project as historical context."
+that describe the former product name as historical context."
 ```
 
 **Cascade analysis:**
@@ -611,7 +611,7 @@ Expected: FAIL — module not found.
  * delete the old key. Idempotent: running again is a no-op once the
  * old key is gone.
  *
- * Used by the Upstream → AoA rebrand to migrate user-visible state
+ * Used by the AoA naming cleanup to migrate user-visible state
  * (theme, sidebar collapse, drafts, recent picks, etc.) without
  * losing it across the rename.
  */
@@ -657,7 +657,7 @@ Expected: 5/5 PASS.
 git add ui/src/lib/storage-migration.ts ui/src/__tests__/storage-migration.test.ts
 git commit -m "ui: add migrateStorageKey + migrateStorageKeyPrefix helpers
 
-Pure helpers for the Upstream → AoA localStorage key rename.
+Pure helpers for the AoA localStorage key rename.
 Idempotent, no-clobber, SSR-safe. Tested with 5 cases covering
 single-key, prefix, idempotency, no-old-value, and existing-new-value."
 ```
@@ -680,7 +680,7 @@ The registry is the single source of truth for every key that needs renaming. Wh
 import { migrateStorageKey, migrateStorageKeyPrefix } from "./storage-migration";
 
 /**
- * Run every Upstream → AoA localStorage migration registered below.
+ * Run every localStorage migration registered below.
  * Idempotent: safe to call on every boot. Each individual migration
  * is a no-op once the old key is gone.
  *
@@ -742,7 +742,7 @@ Manual: in the dev preview, set `localStorage.setItem("upstream.theme", "dark")`
 git add ui/src/lib/storage-migrations.ts ui/src/main.tsx
 git commit -m "ui: add storage-migrations registry, run on app boot
 
-Single source of truth for Upstream → AoA localStorage key renames.
+Single source of truth for AoA localStorage key renames.
 Runs before any context provider mounts so all subsequent reads see
 the new names. 13 single keys + 3 prefix migrations, plus cleanup of
 two already-deprecated keys."
@@ -971,10 +971,10 @@ two already-deprecated keys (storage-migrations handles those too)."
 
 | Old | New |
 |---|---|
-| `ARG UPSTREAMAI_VERSION=latest` | `ARG AOA_CLI_VERSION=latest` |
+| legacy CLI version argument | `ARG AOA_CLI_VERSION=latest` |
 | `UPSTREAM_HOME=/upstream` | `AOA_HOME=/aoa` (and rename the host dir if mounted) |
 | `UPSTREAM_OPEN_ON_LISTEN=false` | `AOA_OPEN_ON_LISTEN=false` |
-| `upstreamai@${UPSTREAMAI_VERSION}` | `@armyofagents/cli@${AOA_CLI_VERSION}` |
+| legacy CLI package argument | `@armyofagents/cli@${AOA_CLI_VERSION}` |
 | `mkdir -p "$UPSTREAM_HOME"` (CMD line) | `mkdir -p "$AOA_HOME"` |
 | `--data-dir "$UPSTREAM_HOME"` | `--data-dir "$AOA_HOME"` |
 
@@ -997,7 +997,7 @@ git commit -m "docker: rename UPSTREAM_* ARGs/ENVs to AOA_* in onboard-smoke
 
 Aligns Dockerfile.onboard-smoke with the AoA brand and matches the
 already-AoA-aligned scripts/docker-onboard-smoke.sh runtime invocation
-(@armyofagents/cli@\${AOA_CLI_VERSION}). UPSTREAMAI_VERSION ARG is
+(@armyofagents/cli@\${AOA_CLI_VERSION}). The legacy version argument is
 gone — callers must pass --build-arg AOA_CLI_VERSION instead.
 UPSTREAM_HOME → AOA_HOME inside the container; runtime env-compat
 keeps UPSTREAM_HOME working at the OS level for users who haven't
@@ -1005,7 +1005,7 @@ migrated their shell config."
 ```
 
 **Cascade analysis:**
-- Any external CI/CD passing `--build-arg UPSTREAMAI_VERSION=...`: breaks. Document in changelog. (Mitigation if needed: keep both ARGs, default `UPSTREAMAI_VERSION` to empty, prefer `AOA_CLI_VERSION` then fall back. Skip unless someone reports.)
+- External CI/CD passing a legacy CLI version argument breaks. Document in the changelog. Add a compatibility fallback only if users require it.
 - Volumes mounted at `/upstream`: would need to be remounted at `/aoa`. List as breaking change.
 
 ---
@@ -1023,7 +1023,8 @@ migrated their shell config."
 - [ ] **Step 1: Sweep**
 
 ```
-grep -rn "UPSTREAM_\|upstreamai\|Upstream" \
+# Search tracked documentation for references to retired branding.
+git grep -n -i -E 'legacy environment names|former CLI alias|old product labels' -- '*.md'
   --include="*.md" \
   --exclude-dir=node_modules --exclude-dir=.git \
   --exclude-dir=docs/audit --exclude-dir=.changeset \
@@ -1207,7 +1208,7 @@ We're not changing the schema, so `pnpm db:generate` won't auto-create one. Manu
 - [ ] **Step 2: Write the SQL**
 
 ```sql
--- Migrate Upstream → AoA in-row sentinels.
+-- Migrate legacy in-row sentinels to AoA names.
 -- Idempotent: every UPDATE has a WHERE that drops it to a no-op on rerun.
 
 -- 1. project_workspaces.cwd: replace literal sentinel string.
@@ -1415,7 +1416,7 @@ git commit -m "ci: tighten brand-check to flag new localStorage/log/CSS regressi
 Three new patterns now blocked at PR time: upstream:/. localStorage
 keys outside the migration registry, [upstream] log prefixes, and
 upstream-mdxeditor* CSS classes. Existing wire-compat allow-list
-(UPSTREAM_* env vars, upstreamai bin alias, plugin globals,
+(legacy environment names, former CLI alias, plugin globals,
 schemaVersions) preserved."
 ```
 
@@ -1447,7 +1448,7 @@ schemaVersions) preserved."
 
 - **Phase 3** is the highest user-visible risk. Mitigation: the migration runs on every boot (idempotent), and the no-clobber semantics never overwrite fresher state.
 - **Phase 5** has database state in flight. Mitigation: dual-read (Task 5.1) ships before the data migration (Task 5.2). If Task 5.2 fails for any row, dual-read covers it; we can re-run.
-- **Phase 4 (Dockerfile)** breaks `--build-arg UPSTREAMAI_VERSION=...` in external CI. Mitigation: documented breaking change. If anyone reports, add a one-line ARG fallback.
+- **Phase 4 (Dockerfile)** breaks external CI using the former CLI version argument. Mitigation: document the breaking change; add a compatibility fallback only if needed.
 - **Phase 6 (Hermes)** is deliberately not attempted — the wire-format break is a coordination problem, not a code problem.
 
 **5. Estimated effort (sequential, single dev — now including new tests):**

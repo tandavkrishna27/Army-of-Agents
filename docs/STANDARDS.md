@@ -114,8 +114,8 @@ Run this when a feature ships or when any doc file is edited:
 - **Current:** Update the Database Schema and Architecture sections when features ship.
 - **Lean:** Architecture details live in `docs/architecture/`. CLAUDE.md points to them.
 - **No orphan paths:** Every file path in CLAUDE.md must exist. Run a quick check before committing.
-- **No V-numbers:** Describe features by name, not development phase (no "V2", "V2.5", etc.).
-- **No upstream branding:** upstream origins tracked in `docs/upstream-migration.md` only.
+- **No product-phase V-numbers:** Describe features by name, not roadmap generation. Keep real API, schema, dependency, and protocol version identifiers accurate.
+- **AoA-first language:** describe AoA's product and implementation without competitor comparisons or provenance branding.
 
 ---
 
@@ -124,7 +124,7 @@ Run this when a feature ships or when any doc file is edited:
 ```
 docs/
 ├── STANDARDS.md            ← this file
-├── upstream-migration.md  ← Upstream-to-AoA tracking (wire protocol, deprecated tables)
+├── architecture/wire-compat.md ← Current AoA wire names and compatibility contracts
 ├── roadmap.md              ← Planned but not yet built
 ├── docs.json               ← Docs site config (Mintlify navigation + metadata)
 ├── favicon.svg             ← Docs site favicon

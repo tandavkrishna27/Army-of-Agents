@@ -124,6 +124,25 @@ describe("MarketplaceCatalogService", () => {
     expect(runUpdateCheckMock).not.toHaveBeenCalled();
   });
 
+  it("uses the AoA-owned catalog URL when no URL override is provided", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(VALID_CATALOG),
+    }) as any;
+    const { db } = makeDb([[]]);
+    const service = new MarketplaceCatalogService({
+      db,
+      bundledSnapshotProvider: async () => null,
+    });
+
+    await service.refresh();
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://raw.githubusercontent.com/tandavkrishna27/aoa-marketplace-cdn/main/catalog.json",
+      expect.any(Object),
+    );
+  });
+
   it("runs update checks only through the explicit mutating refresh helper", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,

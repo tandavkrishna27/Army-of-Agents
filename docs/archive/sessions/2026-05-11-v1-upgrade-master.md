@@ -20,7 +20,7 @@
 
 ## Scope
 
-Everything in the 2026-05-11 v1→v2 roadmap collapses into one integration branch. Listed in merge-order (later items can depend on earlier ones; siblings in same row are parallel-safe).
+Everything in the 2026-05-11 product roadmap collapses into one integration branch. Listed in merge-order (later items can depend on earlier ones; siblings in same row are parallel-safe).
 
 ### Phase A — Foundation (must land first)
 
