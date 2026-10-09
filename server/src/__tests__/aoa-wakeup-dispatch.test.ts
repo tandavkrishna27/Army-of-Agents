@@ -30,6 +30,7 @@ vi.mock("@armyofagents/db", () => {
     discussions: t("d"),
     issues: t("i"),
     internalAgentConfig: t("iac"),
+    companies: t("companies"),
     internalAgentRuns: t("iar"),
     workQuestions: t("wq"),
   };

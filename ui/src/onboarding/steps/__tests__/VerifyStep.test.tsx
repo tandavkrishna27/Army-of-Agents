@@ -535,6 +535,21 @@ describe("VerifyStep (Stage C / order 5, blocking)", () => {
       expect(screen.queryByText(/expired or been revoked/i)).toBeNull();
     });
 
+    it("does not mislabel a missing bearer token as an expired session", async () => {
+      post.mockRejectedValueOnce(new ApiError("Request failed: 422", 422, {
+        outcome: "needs_auth",
+        result: { status: "fail", checks: [{
+          code: "codex_hello_probe_auth_required", level: "error",
+          message: "Codex CLI is installed, but you're not signed in yet.",
+          detail: "401 Unauthorized: Missing bearer or basic authentication in header",
+        }] },
+      }));
+      render(<VerifyStep ctx={ctx} onComplete={vi.fn()} onBack={() => {}} />);
+      fireEvent.click(screen.getByText("Verify"));
+      expect(await screen.findByText(/not signed in yet/i)).toBeTruthy();
+      expect(screen.queryByText(/expired or been revoked/i)).toBeNull();
+    });
+
     it("never renders raw stream-json from a check's `detail`", async () => {
       post.mockRejectedValueOnce(
         expiredError({
@@ -639,7 +654,7 @@ describe("VerifyStep — per-check breakdown", () => {
     });
   });
 
-  it("keeps sanitized raw detail collapsed until the founder asks for it", async () => {
+  it("does not expose the technical-details disclosure in onboarding", async () => {
     post.mockResolvedValue({
       ...REVOKED_RUN,
       result: {
@@ -654,11 +669,9 @@ describe("VerifyStep — per-check breakdown", () => {
     render(<VerifyStep ctx={ctx} onComplete={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Verify" }));
 
-    const summary = await screen.findByText("Technical details");
-    const details = summary.closest("details");
-    expect(details).toBeTruthy();
-    expect(details).not.toHaveAttribute("open");
-    expect(screen.getByText("Provider rejected the saved session.")).toBeInTheDocument();
+    await waitFor(() => expect(post).toHaveBeenCalled());
+    expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
+    expect(screen.queryByText("Provider rejected the saved session.")).not.toBeInTheDocument();
   });
 
   it("shows the Codex device code returned by the remote-safe login flow", async () => {

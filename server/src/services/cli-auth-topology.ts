@@ -184,6 +184,28 @@ export function resolveScopedCliAuthHome(args: ScopedCliAuthHomeArgs): string {
   );
 }
 
+export function usesCanonicalLocalCliAuth(env: NodeJS.ProcessEnv): boolean {
+  return (
+    (env.AOA_DEPLOYMENT_MODE?.trim() || "local_trusted") === "local_trusted" &&
+    env.AOA_INSTALL_PROFILE === "local_single_user"
+  );
+}
+
+/** Resolve the one CLI home used by login, verification, credential binding, and agent runs. */
+export function resolveProviderCliAuthHome(args: ScopedCliAuthHomeArgs): string {
+  const env = args.env ?? process.env;
+  if (usesCanonicalLocalCliAuth(env)) {
+    const home = path.resolve(env.HOME?.trim() || os.homedir());
+    return path.join(home, args.provider === "openai" ? ".codex" : ".claude");
+  }
+  return resolveScopedCliAuthHome({ ...args, env });
+}
+
+/** Backward-compatible name for the Commander login call site. */
+export function resolveCommanderLoginAuthHome(args: ScopedCliAuthHomeArgs): string {
+  return resolveProviderCliAuthHome(args);
+}
+
 /** Docker Compose's terminal fallback uses the same opaque scope as login and verify. */
 export function dockerClaudeLoginCommand(args: ScopedCliAuthHomeArgs): string | null {
   if (args.provider !== "anthropic") return null;

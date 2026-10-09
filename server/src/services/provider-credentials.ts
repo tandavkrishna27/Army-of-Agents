@@ -11,7 +11,7 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   isScopedClaudeCredentialEvidenceFor,
   resolveCliAuthTopology,
-  resolveScopedCliAuthHome,
+  resolveProviderCliAuthHome,
   type OpenedScopedClaudeCredential,
 } from "./cli-auth-topology.js";
 import { logActivity } from "./activity-log.js";
@@ -28,7 +28,7 @@ type ScopedSubscriptionCredential = {
 function resolveCredentialHome(
   args: ScopedSubscriptionCredential & { env?: NodeJS.ProcessEnv },
 ): string {
-  return resolveScopedCliAuthHome({
+  return resolveProviderCliAuthHome({
     env: args.env,
     executionTargetId: args.executionTargetId,
     companyId: args.companyId,

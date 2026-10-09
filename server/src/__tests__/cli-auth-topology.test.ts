@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   assertProviderLoginUrl,
   providerSubscriptionCapability,
+  resolveProviderCliAuthHome,
+  resolveCommanderLoginAuthHome,
   resolveCliAuthTopology,
   resolveScopedCliAuthHome,
   detectProviderCli,
@@ -15,6 +17,47 @@ import {
 } from "../services/cli-auth-topology.js";
 
 describe("CLI authentication topology", () => {
+  it.each([
+    ["openai", ".codex"],
+    ["anthropic", ".claude"],
+  ] as const)("resolves %s to the same canonical local home used by its CLI", (provider, directory) => {
+    const env = {
+      AOA_INSTALL_PROFILE: "local_single_user",
+      AOA_DEPLOYMENT_MODE: "local_trusted",
+      HOME: "/aoa",
+      AOA_HOME: "/aoa",
+    };
+    expect(resolveProviderCliAuthHome({
+      provider,
+      env,
+      executionTargetId: "target-1",
+      companyId: "company-1",
+      userId: "user-1",
+    })).toBe(path.join(path.resolve("/aoa"), directory));
+  });
+
+  it("keeps remote-single-tenant provider homes scoped to target, company, and owner", () => {
+    const args = {
+      provider: "openai" as const,
+      env: { AOA_INSTALL_PROFILE: "remote_single_tenant", AOA_HOME: "/aoa" },
+      executionTargetId: "target-1",
+      companyId: "company-1",
+      userId: "user-1",
+    };
+    expect(resolveProviderCliAuthHome(args)).toBe(resolveScopedCliAuthHome(args));
+  });
+
+  it("uses the canonical provider home for local single-user login", () => {
+    const env = { AOA_INSTALL_PROFILE: "local_single_user", AOA_DEPLOYMENT_MODE: "local_trusted", HOME: "/aoa" };
+    expect(resolveCommanderLoginAuthHome({ provider: "openai", env })).toBe(path.join(path.resolve("/aoa"), ".codex"));
+    expect(resolveCommanderLoginAuthHome({ provider: "anthropic", env })).toBe(path.join(path.resolve("/aoa"), ".claude"));
+  });
+
+  it("keeps company/user-scoped homes outside local single-user", () => {
+    const scope = { provider: "openai" as const, env: { AOA_INSTALL_PROFILE: "hosted_multi_tenant", AOA_DEPLOYMENT_MODE: "authenticated", AOA_HOME: "/aoa", HOME: "/aoa" }, executionTargetId: "control-plane", companyId: "c1", userId: "u1" };
+    expect(resolveCommanderLoginAuthHome(scope)).toBe(resolveScopedCliAuthHome(scope));
+  });
+
   it.each([
     ["hosted_multi_tenant", "false", false],
     ["hosted_multi_tenant", "true", false],
@@ -51,24 +94,19 @@ describe("CLI authentication topology", () => {
     expect(commands?.[1]?.command).toContain("CLAUDE_CONFIG_DIR='");
   });
 
-  it("reports an unreadable scoped credential with an allowlisted permission code", async () => {
+  it.skipIf(process.platform !== "linux")("reports an unreadable scoped credential with an allowlisted permission code", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-claude-inspect-"));
     try {
       const credential = path.join(root, ".credentials.json");
       await fs.writeFile(credential, "fixture-secret");
-      const originalOpen = fs.open.bind(fs);
-      const opened = vi.spyOn(fs, "open").mockImplementation(async (candidate, flags, mode) => {
-        if (String(candidate) === credential) throw Object.assign(new Error("EACCES fixture-secret"), { code: "EACCES" });
-        return originalOpen(candidate, flags, mode);
-      });
-      try {
-        const result = await inspectScopedClaudeCredential(root);
-        expect(result).toMatchObject({ code: "claude_credentials_permission_denied", recoverable: true });
-        expect(JSON.stringify(result)).not.toContain("fixture-secret");
-        expect(JSON.stringify(result)).not.toContain(root);
-      } finally {
-        opened.mockRestore();
-      }
+      // Exercise the real descriptor-relative Linux open path rather than
+      // mocking fs.promises.open (which does not intercept the secure opener
+      // consistently across Node's ESM/CJS module surfaces).
+      await fs.chmod(credential, 0);
+      const result = await inspectScopedClaudeCredential(root);
+      expect(result).toMatchObject({ code: "claude_credentials_permission_denied", recoverable: true });
+      expect(JSON.stringify(result)).not.toContain("fixture-secret");
+      expect(JSON.stringify(result)).not.toContain(root);
     } finally {
       await fs.rm(root, { recursive: true, force: true });
     }

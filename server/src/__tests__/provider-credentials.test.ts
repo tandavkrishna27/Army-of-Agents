@@ -19,11 +19,17 @@ import { resolveScopedCliAuthHome } from "../services/cli-auth-topology.js";
 
 const previousProfile = process.env.AOA_INSTALL_PROFILE;
 const previousHome = process.env.AOA_HOME;
+const previousDeploymentMode = process.env.AOA_DEPLOYMENT_MODE;
+const previousUserHome = process.env.HOME;
 afterEach(() => {
   if (previousProfile === undefined) delete process.env.AOA_INSTALL_PROFILE;
   else process.env.AOA_INSTALL_PROFILE = previousProfile;
   if (previousHome === undefined) delete process.env.AOA_HOME;
   else process.env.AOA_HOME = previousHome;
+  if (previousDeploymentMode === undefined) delete process.env.AOA_DEPLOYMENT_MODE;
+  else process.env.AOA_DEPLOYMENT_MODE = previousDeploymentMode;
+  if (previousUserHome === undefined) delete process.env.HOME;
+  else process.env.HOME = previousUserHome;
 });
 
 function credentialDb() {
@@ -42,6 +48,40 @@ function credentialDb() {
 }
 
 describe("terminal-only subscription credential registration", () => {
+  it.each([
+    ["openai", ".codex", "auth.json"],
+    ["anthropic", ".claude", ".credentials.json"],
+  ] as const)("registers a local %s subscription from the canonical CLI home", async (provider, directory, file) => {
+    const userHome = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-local-credential-"));
+    process.env.AOA_DEPLOYMENT_MODE = "local_trusted";
+    process.env.AOA_INSTALL_PROFILE = "local_single_user";
+    process.env.AOA_HOME = userHome;
+    process.env.HOME = userHome;
+    const authHome = path.join(userHome, directory);
+    await fs.mkdir(authHome, { recursive: true });
+    await fs.writeFile(path.join(authHome, file), "fixture-only");
+    const scope = {
+      companyId: "company-1",
+      userId: "founder-1",
+      executionTargetId: "control-plane",
+      provider,
+    };
+    const { db, values } = credentialDb();
+
+    try {
+      await expect(markScopedSubscriptionVerified(db, scope)).resolves.toEqual(["credential-scoped"]);
+      expect(values).toHaveBeenCalledWith(expect.objectContaining({
+        companyId: "company-1",
+        ownerUserId: "founder-1",
+        executionTargetId: "control-plane",
+        provider,
+        kind: "personal_subscription",
+      }));
+    } finally {
+      await fs.rm(userHome, { recursive: true, force: true });
+    }
+  });
+
   it("registers and verifies only the exact founder/company/target/provider after scoped evidence exists", async () => {
     const aoaHome = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-terminal-credential-"));
     process.env.AOA_INSTALL_PROFILE = "remote_single_tenant";

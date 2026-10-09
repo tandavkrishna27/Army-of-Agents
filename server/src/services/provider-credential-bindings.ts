@@ -8,7 +8,11 @@ import {
   providerCredentials,
 } from "@armyofagents/db";
 import { and, eq } from "drizzle-orm";
-import { resolveScopedCliAuthHome, scopedCliAuthEnv } from "./cli-auth-topology.js";
+import {
+  resolveProviderCliAuthHome,
+  usesCanonicalLocalCliAuth,
+  scopedCliAuthEnv,
+} from "./cli-auth-topology.js";
 
 export type CliSubscriptionProvider = "openai" | "anthropic";
 
@@ -200,14 +204,17 @@ export async function resolveAgentSubscriptionEnvironment(
 
   const selected = chooseGovernedSubscriptionBinding(rows, args);
   const env = args.env ?? process.env;
-  const authHome = resolveScopedCliAuthHome({
+  const authHome = resolveProviderCliAuthHome({
     env,
     companyId: args.companyId,
     userId: selected.ownerUserId,
     provider: args.provider,
     executionTargetId: args.executionTargetId,
   });
-  if (args.verifyPath !== false) {
+  // The canonical home is explicitly operator-owned in the trusted local
+  // single-user profile and may live outside AOA_HOME on native installs.
+  // Scoped remote homes still must remain inside the AoA data root.
+  if (args.verifyPath !== false && !usesCanonicalLocalCliAuth(env)) {
     const aoaHome = path.resolve(env.AOA_HOME?.trim() || path.join(os.homedir(), ".aoa"));
     await assertSafeCredentialHome(authHome, aoaHome);
   }

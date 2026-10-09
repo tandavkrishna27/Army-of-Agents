@@ -147,3 +147,46 @@ it("resolves a verified founder-scoped subscription binding into the exact agent
     await fs.rm(aoaHome, { recursive: true, force: true });
   }
 });
+
+it.each([
+  ["openai", ".codex", "CODEX_HOME"],
+  ["anthropic", ".claude", "CLAUDE_CONFIG_DIR"],
+] as const)("resolves an approved local %s binding for an agent into the canonical CLI home", async (provider, directory, envKey) => {
+  const aoaHome = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-local-agent-credential-"));
+  const selected = {
+    ...base,
+    provider,
+    ownerUserId: "founder-1",
+    executionTargetId: "control-plane",
+    credentialCompanyId: "company-1",
+    ownerMembershipStatus: "active",
+  };
+  const query: Record<string, any> = {};
+  query.from = () => query;
+  query.innerJoin = () => query;
+  query.leftJoin = () => query;
+  query.where = () => query;
+  query.then = (resolve: (value: unknown[]) => unknown, reject?: (reason: unknown) => unknown) =>
+    Promise.resolve([selected]).then(resolve, reject);
+  const db = { select: () => query } as never;
+  const authHome = path.join(aoaHome, directory);
+  await fs.mkdir(authHome, { recursive: true });
+
+  try {
+    const env = await resolveAgentSubscriptionEnvironment(db, {
+      companyId: "company-1",
+      agentId: "crew-agent-1",
+      provider,
+      executionTargetId: "control-plane",
+      env: {
+        AOA_HOME: aoaHome,
+        HOME: aoaHome,
+        AOA_DEPLOYMENT_MODE: "local_trusted",
+        AOA_INSTALL_PROFILE: "local_single_user",
+      },
+    });
+    expect(env[envKey]).toBe(authHome);
+  } finally {
+    await fs.rm(aoaHome, { recursive: true, force: true });
+  }
+});

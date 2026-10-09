@@ -54,6 +54,7 @@ vi.mock("@armyofagents/db", () => {
     agentWakeupRequests: t("agent_wakeup_requests"),
     agents: t("agents"),
     internalAgentConfig: t("internal_agent_config"),
+    companies: t("companies"),
   };
 });
 // All roles active so the autonomy gate passes and we reach the brake region.

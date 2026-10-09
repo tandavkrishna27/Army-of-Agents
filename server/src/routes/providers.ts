@@ -187,7 +187,7 @@ import {
   providerSubscriptionCapability,
   resolveCliAuthTopology,
   dockerClaudeLoginCommands,
-  resolveScopedCliAuthHome,
+  resolveProviderCliAuthHome,
   scopedCliAuthEnv,
 } from "../services/cli-auth-topology.js";
 import { verifyAndBindCommanderSubscriptionCredential } from "../services/provider-credentials.js";
@@ -1244,7 +1244,7 @@ export function providerRoutes(db: Db): Router {
         const executionTargetId =
           process.env.AOA_EXECUTION_TARGET_ID?.trim() || "control-plane";
         const loginProvider = providerId as CommanderLoginProvider;
-        const authHome = resolveScopedCliAuthHome({
+        const authHome = resolveProviderCliAuthHome({
           executionTargetId,
           companyId,
           userId: founderUserId,

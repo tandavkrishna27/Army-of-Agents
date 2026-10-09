@@ -68,6 +68,13 @@ describe("AOA Docker data layout and CLI compatibility", () => {
     expect(entrypoint).toContain("unsupported AOA data-layout version");
   });
 
+  it("repairs canonical provider-home ownership for local single-user Docker", () => {
+    const entrypoint = read("scripts/docker-entrypoint.sh");
+    expect(entrypoint).toContain('if [ "${AOA_INSTALL_PROFILE:-}" = "local_single_user" ]; then');
+    expect(entrypoint).toContain('"$AOA_HOME/.codex"');
+    expect(entrypoint).toContain('"$AOA_HOME/.claude"');
+  });
+
   it("pins the two authentication-critical CLI versions", () => {
     const dockerfile = read("Dockerfile");
     expect(dockerfile).toContain("ARG CODEX_CLI_VERSION=");

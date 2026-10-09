@@ -87,7 +87,7 @@ function isPassedCheck(c: VerifyCheck): boolean {
  */
 function authHintFrom(checks: VerifyCheck[]): string | null {
   const blob = checks.map((c) => `${c.message ?? ""} ${c.detail ?? ""}`).join(" ");
-  if (/revoked|401|unauthor|authentication_error|not logged in|please log in/i.test(blob)) {
+  if (/expired|revoked/i.test(blob)) {
     return "Your CLI sign-in has expired or been revoked. Sign in again below, or run the CLI once in a terminal and sign in there.";
   }
   return null;
@@ -101,19 +101,6 @@ function authHintFrom(checks: VerifyCheck[]): string | null {
  */
 function expiredAuthMessage(checks: VerifyCheck[]): string | null {
   return checks.find((c) => c.code?.includes("auth_expired"))?.message ?? null;
-}
-
-/**
- * Older probes sometimes returned an entire stream-json event as `detail`.
- * Keep those dumps out of the DOM entirely: collapsing them is not enough for
- * screenshots, accessibility trees, or copy-all diagnostics. Current adapters
- * return a short, redacted human-readable detail instead.
- */
-function technicalDetailFor(check: VerifyCheck): string | null {
-  const detail = check.detail?.trim();
-  if (!detail) return null;
-  if (/^[{\[]/.test(detail) || /"(?:session_id|type|subtype)"\s*:/.test(detail)) return null;
-  return detail;
 }
 
 const PROVIDER_LABEL: Record<CommanderProvider, string> = { anthropic: "Claude", openai: "Codex" };
@@ -583,7 +570,6 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
             {checks.map((c, i) => {
               const passed = isPassedCheck(c);
               const failed = isFailedCheck(c);
-              const technicalDetail = technicalDetailFor(c);
               // Three states, not two: info passes, error fails, and warn is a
               // real problem the founder must act on (that is how a recoverable
               // auth failure arrives) — so it must never render as a tick.
@@ -600,16 +586,6 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
                   <span className={passed ? "min-w-0 text-dim" : "min-w-0 text-destructive"}>
                     {c.message ?? c.code}
                     {!passed && c.hint && <span className="mt-0.5 block text-dim">{c.hint}</span>}
-                    {!passed && technicalDetail && (
-                      <details className="mt-1 text-dim">
-                        <summary className="cursor-pointer select-none text-[11px] font-medium text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
-                          Technical details
-                        </summary>
-                        <pre className="mt-1 whitespace-pre-wrap break-words rounded-md border border-border bg-field p-2 font-mono text-[10px] leading-relaxed [overflow-wrap:anywhere]">
-                          {technicalDetail}
-                        </pre>
-                      </details>
-                    )}
                   </span>
                 </li>
               );

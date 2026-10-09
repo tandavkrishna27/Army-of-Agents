@@ -20,9 +20,11 @@ import {
 } from "./commander-login.js";
 import {
   assertProviderLoginUrl,
+  resolveCommanderLoginAuthHome,
   prepareScopedCliAuthHome,
   resolveCliAuthTopology,
   scopedCliAuthEnv,
+  usesCanonicalLocalCliAuth,
 } from "./cli-auth-topology.js";
 import { loadConfig } from "../config.js";
 import { assertSubscriptionAllowed } from "./provider-connections.js";
@@ -230,6 +232,15 @@ export function buildCommanderLoginService(db: Db): CommanderLoginService {
     store: drizzleChallengeStore(db),
     resolveAuthHome: (provider, env, scope) => {
       requireLoginRunner(provider);
+      if (usesCanonicalLocalCliAuth(env)) {
+        return resolveCommanderLoginAuthHome({
+          env,
+          executionTargetId: scope.executionTargetId,
+          companyId: scope.companyId,
+          userId: scope.userId,
+          provider,
+        });
+      }
       return prepareScopedCliAuthHome({
         env,
         executionTargetId: scope.executionTargetId,

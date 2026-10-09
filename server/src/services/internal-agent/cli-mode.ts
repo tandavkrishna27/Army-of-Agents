@@ -251,19 +251,26 @@ export interface McpBridgeSpec {
  * the claude-shaped {mcpServers:{aoa:...}} envelope.
  *
  * In dev mode (tsx, no compiled output) getBridgeEntrypoint returns a .ts
- * file. Plain `node` cannot execute TypeScript, so we use `tsx` as the
- * runner. In production the .js is used with plain node (unchanged behavior).
+ * file. In production it returns a compiled .js file, but the Docker workspace
+ * package exports still resolve to TypeScript sources, so the child process
+ * must preload tsx in either mode.
  */
 export function buildMcpBridgeSpec(params: McpConfigParams): McpBridgeSpec {
   const isTsBridge = params.bridgeEntrypoint.endsWith(".ts");
-  const tsxCliPath = isTsBridge
-    ? join(dirname(require.resolve("tsx/package.json")), "dist", "cli.mjs")
-    : null;
+  const tsxPackageDir = dirname(require.resolve("tsx/package.json"));
+  const tsxCliPath = join(tsxPackageDir, "dist", "cli.mjs");
+  const tsxLoaderPath = join(tsxPackageDir, "dist", "loader.mjs");
   return {
     command: isTsBridge ? process.execPath : "node",
     args: isTsBridge && tsxCliPath
       ? [tsxCliPath, params.bridgeEntrypoint]
-      : [params.bridgeEntrypoint],
+      // Docker launches the main server with tsx's loader because workspace
+      // package exports resolve to their TypeScript source. The MCP bridge is
+      // a child of the provider CLI, so it does not inherit that main-process
+      // `node --import` argument. Load tsx explicitly for the compiled bridge
+      // too; otherwise node follows workspace exports to `.ts` files and the
+      // provider silently receives no AoA tools when the bridge exits early.
+      : ["--import", tsxLoaderPath, params.bridgeEntrypoint],
     env: {
       // The bridge owns stdout for JSON-RPC frames. Force its pino logger to
       // stderr (see middleware/logger.ts) so a stray log (e.g. the embeddings
