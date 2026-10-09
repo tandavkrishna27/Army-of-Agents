@@ -5368,7 +5368,7 @@ export function heartbeatService(db: Db) {
             });
           }
         }
-        await recoveryService(db).handleCompletedRun(finalizedRun.id).catch((err) => {
+        await recoveryService(db, { enqueueWakeup }).handleCompletedRun(finalizedRun.id).catch((err) => {
           logger.warn({ err, runId: finalizedRun.id }, "recovery handleCompletedRun failed");
         });
         await releaseIssueExecutionAndPromote(finalizedRun);
