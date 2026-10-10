@@ -120,7 +120,8 @@ export function costRoutes(db: Db) {
       details: { budgetMonthlyCents: req.body.budgetMonthlyCents },
     });
 
-    res.json(company);
+    const { agentExecutionSetupState: _internal, ...publicCompany } = company;
+    res.json(publicCompany);
   });
 
   router.patch("/agents/:agentId/budgets", validate(updateBudgetSchema), async (req, res) => {

@@ -43,6 +43,7 @@ describe("companyService issue prefix allocation", () => {
 
     const company = await companyService(db as never).create({
       name: "E2E Test Company",
+      agentExecutionSetupState: "ready",
     } as never);
 
     expect(company.issuePrefix).toBe("EETA");
@@ -51,6 +52,9 @@ describe("companyService issue prefix allocation", () => {
     }));
     expect(values).toHaveBeenNthCalledWith(2, expect.objectContaining({
       issuePrefix: "EETA",
+    }));
+    expect(values).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      agentExecutionSetupState: "pending",
     }));
   });
 });

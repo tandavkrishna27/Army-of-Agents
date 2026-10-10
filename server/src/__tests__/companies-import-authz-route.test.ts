@@ -122,6 +122,7 @@ function bundle(
   agents: unknown[] = [],
 ) {
   return {
+    ...(target.mode === "new_company" ? { operationId: crypto.randomUUID() } : {}),
     source: {
       type: "inline",
       manifest: {
@@ -219,6 +220,15 @@ describe("POST /import — new_company org placement (H3)", () => {
     vi.clearAllMocks();
     setDeploymentMode("cloud_auth");
     wireImportBundle("created");
+  });
+
+  it("rejects an omitted operationId at the API boundary without calling the service", async () => {
+    const body = bundle({ mode: "new_company", newCompanyName: "New Co" });
+    delete body.operationId;
+    const res = await request(makeApp({})).post("/api/companies/import").send(body);
+    expect(res.status).toBe(400);
+    expect(importBundle).not.toHaveBeenCalled();
+    expect(canOrg).not.toHaveBeenCalled();
   });
 
   it("lands in the actor's single org (auto-pick) and passes it to importBundle", async () => {

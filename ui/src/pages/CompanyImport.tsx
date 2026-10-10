@@ -165,6 +165,10 @@ export function CompanyImport({
     };
   };
 
+  // Retain the ID across failed requests, including a lost success response.
+  // A changed bundle/options/destination represents a different import intent.
+  const importIntent = useRef<{ request: string; id: string; storageKey: string } | null>(null);
+
   const previewMutation = useMutation({
     mutationFn: async () => {
       const request = buildRequest();
@@ -185,7 +189,23 @@ export function CompanyImport({
   });
 
   const importMutation = useMutation({
-    mutationFn: () => companyPortabilityApi.importBundle(buildRequest()),
+    mutationFn: async () => {
+      const request = buildRequest();
+      const identity = JSON.stringify(request);
+      if (importIntent.current?.request !== identity) {
+        // Store only a digest and caller ID, so response-loss recovery survives
+        // page reload without putting bundle content or env values in storage.
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(identity));
+        const storageKey = `aoa:company-import:${Array.from(new Uint8Array(digest),
+          (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
+        const saved = sessionStorage.getItem(storageKey);
+        const id = saved && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(saved)
+          ? saved : crypto.randomUUID();
+        sessionStorage.setItem(storageKey, id);
+        importIntent.current = { request: identity, id, storageKey };
+      }
+      return companyPortabilityApi.importBundle({ ...request, operationId: importIntent.current.id });
+    },
     onSuccess: async (data) => {
       setImportResult(data);
       await reloadCompanies();
@@ -194,6 +214,7 @@ export function CompanyImport({
         queryFn: () => companiesApi.list(),
       });
       const match = fresh.find((c) => c.id === data.company.id);
+      if (importIntent.current) sessionStorage.removeItem(importIntent.current.storageKey);
       if (match?.issuePrefix) {
         navigate(`/${match.issuePrefix}/home`);
       } else {

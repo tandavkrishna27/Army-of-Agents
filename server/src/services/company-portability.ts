@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { and, eq, gte, isNull, lte } from "drizzle-orm";
+import { createHash, randomUUID } from "node:crypto";
+import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import type { Db } from "@armyofagents/db";
 import {
   budgetPolicies,
@@ -44,13 +45,13 @@ import type {
   ImportWarning,
 } from "@armyofagents/shared";
 import {
+  DEFAULT_ORGANIZATION_ID,
   deriveProjectUrlKey,
   normalizeAgentUrlKey,
   normalizeProjectUrlKey,
   portabilityManifestSchema,
 } from "@armyofagents/shared";
-import { notFound, unprocessable } from "../errors.js";
-import { accessService } from "./access.js";
+import { badRequest, conflict, HttpError, notFound, unprocessable } from "../errors.js";
 import { agentService } from "./agents.js";
 import { companyService } from "./companies.js";
 import { companySkillService, normalizeSkillKey } from "./company-skills.js";
@@ -59,6 +60,21 @@ import { issueService } from "./issues.js";
 import { executePinnedRequest, validateAndResolveFetchUrl } from "./outbound-url-guard.js";
 import { projectService } from "./projects.js";
 import { routineService } from "./routines.js";
+import { claimCompanyImport } from "./company-import-operations.js";
+
+// Canonicalize object keys only; array order is part of the bundle identity.
+// Only the digest is journaled, never the request or source plaintext.
+function importFingerprint(value: unknown): string {
+  function canonical(input: unknown): unknown {
+    if (Array.isArray(input)) return input.map(canonical);
+    if (input && typeof input === "object") {
+      return Object.fromEntries(Object.entries(input).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+        .filter(([, v]) => v !== undefined).map(([k, v]) => [k, canonical(v)]));
+    }
+    return input;
+  }
+  return createHash("sha256").update(JSON.stringify(canonical(value))).digest("hex");
+}
 
 const DEFAULT_INCLUDE: CompanyPortabilityInclude = {
   company: true,
@@ -1035,11 +1051,6 @@ async function readAgentInstructions(agent: AgentLike): Promise<{ body: string; 
 export function companyPortabilityService(db: Db) {
   const companies = companyService(db);
   const agents = agentService(db);
-  // P3: the former `access` service handle held ONLY the now-removed
-  // `ensureRealOperator` call — company + founder membership are now written
-  // atomically inside `companies.createWithOperator`, which takes a tx-bound
-  // `accessService` factory directly. `accessService` stays imported for that
-  // factory below.
   const projects = projectService(db);
   const issues = issueService(db);
   const skills = companySkillService(db);
@@ -2142,15 +2153,29 @@ export function companyPortabilityService(db: Db) {
     authorize?: (context: ImportAuthorizationContext) => Promise<void>,
     opts?: { organizationId?: string | null },
   ): Promise<CompanyPortabilityImportResult> {
-    const plan = await buildPreview(input);
+    if (input.target.mode === "new_company" && !input.operationId) {
+      throw badRequest("New company imports require a caller-generated operationId; reuse it for retries.");
+    }
+    let plan: Awaited<ReturnType<typeof buildPreview>>;
+    try {
+      plan = await buildPreview(input);
+    } catch (err) {
+      if (input.target.mode === "new_company") {
+        throw unprocessable("Import source could not be prepared; correct the bundle before retrying.");
+      }
+      throw err;
+    }
     if (plan.preview.errors.length > 0) {
-      throw unprocessable(`Import preview has errors: ${plan.preview.errors.join("; ")}`);
+      throw unprocessable(input.target.mode === "new_company"
+        ? "Import preview has errors; correct the bundle before retrying."
+        : `Import preview has errors: ${plan.preview.errors.join("; ")}`);
     }
     await authorize?.(getImportAuthorizationContext(plan));
 
     const sourceManifest = plan.source.manifest;
     const warnings = [...plan.preview.warnings];
     const include = plan.include;
+    let operation: Awaited<ReturnType<typeof claimCompanyImport>> | undefined;
 
     let targetCompany: { id: string; name: string } | null = null;
     let companyAction: "created" | "updated" | "unchanged" = "unchanged";
@@ -2195,7 +2220,18 @@ export function companyPortabilityService(db: Db) {
       // (company owner membership + founder role + org owner membership) also
       // guarantees a real human founder for the agent-restoration parenting
       // below. Replaces the old bare "board" company-only membership.
-      const created = await companies.createWithOperator({
+      operation = await claimCompanyImport(db, {
+        operationId: input.operationId!,
+        actorUserId: actorUserId ?? null,
+        fingerprint: importFingerprint({
+          version: 1, include, collisionStrategy: plan.collisionStrategy,
+          agents: plan.selectedAgents.map((agent) => agent.slug),
+          overwriteCustomizedSkillKeys: [...new Set(input.overwriteCustomizedSkillKeys ?? [])].sort(),
+          companyName, organizationId: opts?.organizationId ?? DEFAULT_ORGANIZATION_ID,
+          sourceIdentity: input.source.type === "inline" ? "inline" : input.source,
+          manifest: sourceManifest, files: plan.source.files,
+        }),
+        company: {
         name: companyName,
         description: include.company ? (sourceManifest.company?.description ?? null) : null,
         brandColor: include.company ? (sourceManifest.company?.brandColor ?? null) : null,
@@ -2212,8 +2248,9 @@ export function companyPortabilityService(db: Db) {
         // route (mirrors POST /). undefined -> createWithOperator falls back to
         // the DEFAULT sentinel (self-hosted single-tenant), unchanged.
         organizationId: opts?.organizationId ?? undefined,
-      }, { requestedByUserId: actorUserId ?? null }, actorUserId, (tx) => accessService(tx));
-      targetCompany = created.company;
+        },
+      });
+      targetCompany = operation.company;
       companyAction = "created";
     } else {
       targetCompany = await companies.getById(input.target.companyId);
@@ -2242,6 +2279,123 @@ export function companyPortabilityService(db: Db) {
     }
 
     if (!targetCompany) throw notFound("Target company not found");
+
+    // The fingerprint freezes iteration order; positional keys cannot leak
+    // source slugs or secret-bearing names into the operation journal.
+    const ordinals = new Map<string, number>();
+    let activeAgentCheckpointKey: string | null = null;
+    let activeProjectCheckpointKey: string | null = null;
+    let activeIssueCheckpointKey: string | null = null;
+    let activeRoutineCheckpointKey: string | null = null;
+    let activeTriggerCheckpointKey: string | null = null;
+    function nextKey(section: string) {
+      const ordinal = ordinals.get(section) ?? 0;
+      ordinals.set(section, ordinal + 1);
+      return `${section}:${ordinal}`;
+    }
+    async function recordSkipped(key: string) {
+      if (!operation) return;
+      await operation.checkpoint(key, async () => [{ id: null, action: "skipped" }]);
+    }
+    async function importRow<T extends { id: string } | null>(
+      key: string,
+      effect: (tx: Db) => Promise<T>,
+      load: (id: string) => Promise<NonNullable<T> | null>,
+    ): Promise<T> {
+      if (!operation) return effect(db);
+      let written: T | undefined;
+      const saved = await operation.checkpoint(key, async (tx) => {
+        written = await effect(tx);
+        return [{ id: written?.id ?? null, action: written ? "created" : "skipped" }];
+      });
+      if (written !== undefined) return written;
+      if (!saved[0]?.id) return null as T;
+      const restored = await load(saved[0].id);
+      if (!restored || ("companyId" in restored && restored.companyId !== targetCompany!.id)) throw conflict("Imported item is missing", {
+        code: "import_conflict", companyId: targetCompany!.id, operationId: operation.operationId,
+      });
+      return restored as T;
+    }
+    async function validateTargets(table: string, saved: { id: string | null }[]) {
+      if (!operation || saved.length === 0) return;
+      const ids = saved.map((item) => item.id).filter((id): id is string => id !== null);
+      if (ids.length !== saved.length) throw conflict("Import checkpoint is invalid", {
+        code: "import_conflict", companyId: targetCompany!.id, operationId: operation.operationId,
+      });
+      const rows = await db.execute(sql`select id from ${sql.identifier(table)}
+        where company_id = ${targetCompany!.id} and id in (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})`);
+      if (rows.length !== new Set(ids).size) throw conflict("Imported item is missing", {
+        code: "import_conflict", companyId: targetCompany!.id, operationId: operation.operationId,
+      });
+    }
+    async function importEffect(key: string, effect: (tx: Db) => Promise<unknown>, table?: string) {
+      if (!operation) { await effect(db); return; }
+      const saved = await operation.checkpoint(key, async (tx) => {
+        const affectedIds = await effect(tx);
+        // The DB effect and its explicit affected-row IDs commit atomically.
+        // Falling back to every company row would make unrelated data a replay dependency.
+        const ids = Array.isArray(affectedIds) ? affectedIds : [];
+        return ids.flatMap((item) => typeof item === "string" ? [{ id: item, action: "created" as const }] : []);
+      });
+      if (table) await validateTargets(table, saved);
+    }
+    const baseAgents = agentService(db);
+    const agents = {
+      ...baseAgents,
+      create: (...args: Parameters<typeof baseAgents.create>) => importRow(
+        activeAgentCheckpointKey ?? nextKey("agents"), (tx) => agentService(tx).create(...args), baseAgents.getById),
+      update: (...args: Parameters<typeof baseAgents.update>) => importRow(
+        `agent-links:${args[0]}:${"skillKeys" in args[1] ? "skills" : "parent"}`,
+        (tx) => agentService(tx).update(...args), baseAgents.getById),
+      backfillHumanAtTop: (companyId: string) => importEffect("human-at-top",
+        (tx) => agentService(tx).backfillHumanAtTop(companyId)),
+    };
+    const baseProjects = projectService(db);
+    const projects = {
+      ...baseProjects,
+      create: (...args: Parameters<typeof baseProjects.create>) => importRow(
+        activeProjectCheckpointKey ?? nextKey("projects"), (tx) => projectService(tx).create(...args), baseProjects.getById),
+      update: (...args: Parameters<typeof baseProjects.update>) => importRow(
+        activeProjectCheckpointKey ? `${activeProjectCheckpointKey}:update` : nextKey("project-updates"),
+        (tx) => projectService(tx).update(...args), baseProjects.getById),
+    };
+    const baseIssues = issueService(db);
+    const issues = {
+      ...baseIssues,
+      create: (...args: Parameters<typeof baseIssues.create>) => importRow(
+        activeIssueCheckpointKey ?? nextKey("issues"), (tx) => issueService(tx).create(...args), baseIssues.getById),
+    };
+    const baseRoutines = routineService(db);
+    const routines = {
+      ...baseRoutines,
+      create: (...args: Parameters<typeof baseRoutines.create>) => importRow(
+        activeRoutineCheckpointKey ?? nextKey("routines"), (tx) => routineService(tx).create(...args), baseRoutines.getDetail),
+      update: (...args: Parameters<typeof baseRoutines.update>) => importRow(
+        activeRoutineCheckpointKey ? `${activeRoutineCheckpointKey}:update` : nextKey("routine-updates"),
+        (tx) => routineService(tx).update(...args), baseRoutines.getDetail),
+      // Local encrypted secret + trigger + positional identity commit together.
+      // Secret material never enters the checkpoint, result, or diagnostics.
+      createTrigger: async (...args: Parameters<typeof baseRoutines.createTrigger>) => {
+        if (!operation) { await baseRoutines.createTrigger(...args); return; }
+        const saved = await operation.checkpoint(activeTriggerCheckpointKey ?? nextKey("triggers"), async (tx) => {
+          const { trigger } = await routineService(tx).createTrigger(...args);
+          return [{ id: trigger.id, action: "created" }];
+        });
+        await validateTargets("routine_triggers", saved);
+        // Webhook encryption, secret versions and the trigger join the outer
+        // checkpoint transaction. Verify the secret is still usable on replay.
+        const missing = await db.execute(sql`select t.id from routine_triggers t
+          left join company_secrets s on s.id = t.secret_id and s.company_id = t.company_id
+          left join company_secret_versions v on v.secret_id = s.id and v.version = s.latest_version
+          where t.id = ${saved[0].id} and t.kind = 'webhook'
+            and (s.id is null or s.deleted_at is not null or v.id is null)`);
+        if (missing.length) throw conflict("Imported trigger secret is missing", {
+          code: "import_conflict", companyId: targetCompany!.id, operationId: operation.operationId,
+        });
+      },
+    };
+
+    try {
 
     // D2/H2: NO ensureRealOperator here. Operator provisioning is a NEW-company
     // concern only and now happens in the new_company branch above (seeding the
@@ -2274,7 +2428,9 @@ export function companyPortabilityService(db: Db) {
       for (const planAgent of plan.preview.plan.agentPlans) {
         const manifestAgent = plan.selectedAgents.find((agent) => agent.slug === planAgent.slug);
         if (!manifestAgent) continue;
+        activeAgentCheckpointKey = `agents:${plan.selectedAgents.findIndex((agent) => agent.slug === planAgent.slug)}`;
         if (planAgent.action === "skip") {
+          await recordSkipped(activeAgentCheckpointKey);
           resultAgents.push({
             slug: planAgent.slug,
             id: planAgent.existingAgentId,
@@ -2369,6 +2525,7 @@ export function companyPortabilityService(db: Db) {
         });
       }
 
+      activeAgentCheckpointKey = null;
       // Apply reporting links once all imported agent ids are available.
       for (const manifestAgent of plan.selectedAgents) {
         const agentId = importedSlugToAgentId.get(manifestAgent.slug);
@@ -2386,7 +2543,8 @@ export function companyPortabilityService(db: Db) {
               parentId: mParentIdRef,
               reportsTo: null,
             });
-          } catch {
+          } catch (err) {
+            if (operation) throw err;
             warnings.push({
               kind: "link_failed",
               message: `Could not assign user parent ${mParentIdRef} for imported agent ${manifestAgent.slug}.`,
@@ -2406,7 +2564,8 @@ export function companyPortabilityService(db: Db) {
             parentType: "agent",
             parentId: managerId,
           });
-        } catch {
+        } catch (err) {
+          if (operation) throw err;
           warnings.push({
             kind: "link_failed",
             message: `Could not assign manager ${managerSlug} for imported agent ${manifestAgent.slug}.`,
@@ -2436,7 +2595,9 @@ export function companyPortabilityService(db: Db) {
 
         const type: "department" | "project" = manifestProject.type === "project" ? "project" : "department";
 
+        activeProjectCheckpointKey = `projects:${plan.selectedProjects.findIndex((project) => project.slug === planProject.slug)}`;
         if (planProject.action === "skip") {
+          await recordSkipped(activeProjectCheckpointKey);
           if (planProject.existingProjectId) {
             importedSlugToProjectId.set(planProject.slug, planProject.existingProjectId);
           }
@@ -2525,6 +2686,7 @@ export function companyPortabilityService(db: Db) {
           reason: planProject.reason,
         });
       }
+      activeProjectCheckpointKey = null;
     }
 
     const resultIssues: CompanyPortabilityImportResult["issues"] = [];
@@ -2536,8 +2698,10 @@ export function companyPortabilityService(db: Db) {
       }
       let labelWarningEmitted = false;
 
-      for (const manifestIssue of plan.selectedIssues) {
+      for (const [issueIndex, manifestIssue] of plan.selectedIssues.entries()) {
+        activeIssueCheckpointKey = `issues:${issueIndex}`;
         if (manifestIssue.recurring) {
+          await recordSkipped(activeIssueCheckpointKey);
           warnings.push({
             kind: "deprecated_field",
             message: `Issue "${manifestIssue.slug}" is marked recurring; recurring tasks are imported by the routines port (E.1.4) and were skipped here.`,
@@ -2660,6 +2824,7 @@ export function companyPortabilityService(db: Db) {
           reason: null,
         });
       }
+      activeIssueCheckpointKey = null;
     }
 
     const resultSkills: CompanyPortabilityImportResult["skills"] = [];
@@ -2756,11 +2921,36 @@ export function companyPortabilityService(db: Db) {
 
         for (const group of groups) {
           if (group.entries.length === 0) continue;
-          const outcome = await skills.upsertImportedSkills(
-            targetCompany.id,
-            group.entries.map(({ imported }) => imported),
-            group.policy,
-          );
+          const upsert = (tx: Db) => companySkillService(tx).upsertImportedSkills(
+            targetCompany!.id, group.entries.map(({ imported }) => imported), group.policy);
+          let outcome: Awaited<ReturnType<typeof upsert>>;
+          if (operation) {
+            let justWritten: Awaited<ReturnType<typeof upsert>> | undefined;
+            const saved = await operation.checkpoint(nextKey("skills"), async (tx) => {
+              const written = await upsert(tx);
+              justWritten = written;
+              return group.entries.map(({ imported }) => {
+                const row = written.skills.find((skill) => skill.key === imported.key);
+                const refused = written.refused.find((skill) => skill.key === imported.key);
+                return { id: row?.id ?? refused?.skillId ?? null,
+                  action: row ? "created" as const : "skipped" as const };
+              });
+            });
+            const rows = justWritten ? justWritten.skills : await skills.listFull(targetCompany.id);
+            const written = saved.filter((item) => item.action !== "skipped");
+            if (!justWritten && saved.some((item, index) => item.id && !rows.some((row) =>
+              row.id === item.id && row.key === group.entries[index].imported.key))) {
+              throw conflict("Imported skill is missing", { code: "import_conflict",
+                companyId: targetCompany.id, operationId: operation.operationId });
+            }
+            outcome = justWritten ?? { skills: rows.filter((row) => written.some((item) => item.id === row.id)),
+              refused: saved.flatMap((item, index) => item.action === "skipped" && item.id
+                ? [{ key: group.entries[index].imported.key, skillId: item.id,
+                  slug: group.entries[index].imported.slug, name: group.entries[index].imported.name,
+                  reason: "customized" as const }] : []) };
+          } else {
+            outcome = await upsert(db);
+          }
           const writtenByKey = new Map(outcome.skills.map((skill) => [skill.key, skill]));
           const refusedByKey = new Map(outcome.refused.map((refused) => [refused.key, refused]));
 
@@ -2820,7 +3010,8 @@ export function companyPortabilityService(db: Db) {
         const mappedKeys = sourceKeys.map((key) => skillKeyMap.get(key) ?? key);
         try {
           await agents.update(agentId, { skillKeys: mappedKeys } as Record<string, unknown>);
-        } catch {
+        } catch (err) {
+          if (operation) throw err;
           warnings.push({
             kind: "link_failed",
             message: `Could not set skillKeys for imported agent ${manifestAgent.slug}.`,
@@ -2849,7 +3040,11 @@ export function companyPortabilityService(db: Db) {
       for (const planRoutine of plan.preview.plan.routinePlans) {
         const manifestRoutine = plan.selectedRoutines.find((r) => r.slug === planRoutine.slug);
         if (!manifestRoutine) continue;
+        const routineIndex = plan.selectedRoutines.findIndex((routine) => routine.slug === planRoutine.slug);
+        activeRoutineCheckpointKey = `routines:${routineIndex}`;
+        activeTriggerCheckpointKey = null;
         if (planRoutine.action === "skip") {
+          await recordSkipped(activeRoutineCheckpointKey);
           resultRoutines.push({
             slug: planRoutine.slug,
             id: planRoutine.existingRoutineId,
@@ -2862,6 +3057,7 @@ export function companyPortabilityService(db: Db) {
 
         const projectId = routineProjectSlugToId.get(manifestRoutine.projectSlug) ?? null;
         if (!projectId) {
+          await recordSkipped(activeRoutineCheckpointKey);
           warnings.push({
             kind: "skipped_update",
             message: `Routine "${manifestRoutine.slug}" references project slug "${manifestRoutine.projectSlug}", but that project was not found; skipping.`,
@@ -2878,6 +3074,7 @@ export function companyPortabilityService(db: Db) {
 
         const assigneeAgentId = routineAgentSlugToId.get(manifestRoutine.assigneeAgentSlug) ?? null;
         if (!assigneeAgentId) {
+          await recordSkipped(activeRoutineCheckpointKey);
           warnings.push({
             kind: "skipped_update",
             message: `Routine "${manifestRoutine.slug}" references agent slug "${manifestRoutine.assigneeAgentSlug}", but that agent was not found; skipping.`,
@@ -2925,6 +3122,16 @@ export function companyPortabilityService(db: Db) {
             routinePatch as Parameters<typeof routines.create>[1],
             actor,
           );
+          if (!created) {
+            resultRoutines.push({
+              slug: planRoutine.slug,
+              id: null,
+              action: "skipped",
+              title: planRoutine.plannedTitle,
+              reason: "Routine was skipped by an earlier import attempt.",
+            });
+            continue;
+          }
           routineId = created.id;
           action = "created";
         }
@@ -2944,7 +3151,8 @@ export function companyPortabilityService(db: Db) {
           continue;
         }
 
-        for (const trigger of manifestRoutine.triggers) {
+        for (const [triggerIndex, trigger] of manifestRoutine.triggers.entries()) {
+          activeTriggerCheckpointKey = `triggers:${routineIndex}:${triggerIndex}`;
           try {
             if (trigger.kind === "schedule") {
               await routines.createTrigger(
@@ -2981,6 +3189,7 @@ export function companyPortabilityService(db: Db) {
               );
             }
           } catch (err) {
+            if (operation) throw err;
             warnings.push({
               kind: "link_failed",
               message: `Failed to create ${trigger.kind} trigger for routine "${manifestRoutine.slug}": ${(err as Error).message}`,
@@ -2996,10 +3205,13 @@ export function companyPortabilityService(db: Db) {
           reason: planRoutine.reason,
         });
       }
+      activeRoutineCheckpointKey = null;
+      activeTriggerCheckpointKey = null;
     }
 
     if (include.internalAgentConfig && sourceManifest.internalAgentConfig) {
-      const cfg = sourceManifest.internalAgentConfig;
+      await importEffect("internalAgentConfig", async (db) => {
+      const cfg = sourceManifest.internalAgentConfig!;
       const existingRows = (await db
         .select()
         .from(internalAgentConfig)
@@ -3023,21 +3235,36 @@ export function companyPortabilityService(db: Db) {
         metadata: cfg.metadata ?? {},
       };
       if (existingRows.length > 0) {
-        await db
+        const updated = await db
           .update(internalAgentConfig)
           .set(values)
-          .where(eq(internalAgentConfig.companyId, targetCompany.id));
+          .where(eq(internalAgentConfig.companyId, targetCompany.id))
+          .returning({ id: internalAgentConfig.id });
+        return updated.map((row) => row.id);
       } else {
-        await db.insert(internalAgentConfig).values({
+        const inserted = await db.insert(internalAgentConfig).values({
           companyId: targetCompany.id,
           ...values,
-        });
+        }).returning({ id: internalAgentConfig.id });
+        return inserted.map((row) => row.id);
       }
+      }, "internal_agent_config");
     }
 
     if (include.budgetPolicies && Array.isArray(sourceManifest.budgetPolicies)) {
+      // Reconstruct source-derived warnings on every replay, outside effects.
+      for (const policy of sourceManifest.budgetPolicies!) {
+        const slug = policy.scopeAgentSlug ?? null;
+        if (policy.scopeType === "agent" && (!slug ||
+          !(importedSlugToAgentId.has(slug) || existingSlugToAgentId.has(slug)))) {
+          warnings.push({ kind: "link_failed",
+            message: `Skipped budget policy "${policy.slug}": agent slug "${slug ?? "<missing>"}" not found in target company.` });
+        }
+      }
+      await importEffect("budgetPolicies", async (db) => {
+      const affectedIds: string[] = [];
       const budgetCollisionStrategy = plan.collisionStrategy;
-      for (const policy of sourceManifest.budgetPolicies) {
+      for (const policy of sourceManifest.budgetPolicies!) {
         let scopeId: string;
         if (policy.scopeType === "agent") {
           const slug = policy.scopeAgentSlug ?? null;
@@ -3045,10 +3272,6 @@ export function companyPortabilityService(db: Db) {
             ? (importedSlugToAgentId.get(slug) ?? existingSlugToAgentId.get(slug) ?? null)
             : null;
           if (!resolved) {
-            warnings.push({
-              kind: "link_failed",
-              message: `Skipped budget policy "${policy.slug}": agent slug "${slug ?? "<missing>"}" not found in target company.`,
-            });
             continue;
           }
           scopeId = resolved;
@@ -3076,7 +3299,7 @@ export function companyPortabilityService(db: Db) {
           if (budgetCollisionStrategy === "replace") {
             const existingId = typeof collision.id === "string" ? collision.id : null;
             if (existingId) {
-              await db
+              const updated = await db
                 .update(budgetPolicies)
                 .set({
                   scopeType: policy.scopeType,
@@ -3090,13 +3313,15 @@ export function companyPortabilityService(db: Db) {
                   isActive: policy.isActive,
                   updatedByUserId: actorUserId ?? null,
                 })
-                .where(eq(budgetPolicies.id, existingId));
+                .where(eq(budgetPolicies.id, existingId))
+                .returning({ id: budgetPolicies.id });
+              affectedIds.push(...updated.map((row) => row.id));
             }
             continue;
           }
         }
 
-        await db.insert(budgetPolicies).values({
+        const inserted = await db.insert(budgetPolicies).values({
           companyId: targetCompany.id,
           scopeType: policy.scopeType,
           scopeId,
@@ -3109,8 +3334,11 @@ export function companyPortabilityService(db: Db) {
           isActive: policy.isActive,
           createdByUserId: actorUserId ?? null,
           updatedByUserId: actorUserId ?? null,
-        });
+        }).returning({ id: budgetPolicies.id });
+        affectedIds.push(...inserted.map((row) => row.id));
       }
+      return affectedIds;
+      }, "budget_policies");
     }
 
     // Cost events import must run BEFORE finance events — finance events may
@@ -3149,8 +3377,9 @@ export function companyPortabilityService(db: Db) {
 
       const pendingInserts: Record<string, unknown>[] = [];
       const pendingSlugs: string[] = [];
+      const pendingSourceIndexes: number[] = [];
       let linkFailedAgentWarned = false;
-      for (const event of manifestCostEvents) {
+      for (const [sourceIndex, event] of manifestCostEvents.entries()) {
         const agentId = event.agentSlug
           ? (importedSlugToAgentId.get(event.agentSlug) ?? existingSlugToAgentId.get(event.agentSlug) ?? null)
           : null;
@@ -3188,21 +3417,43 @@ export function companyPortabilityService(db: Db) {
           occurredAt,
         });
         pendingSlugs.push(event.slug);
+        pendingSourceIndexes.push(sourceIndex);
       }
 
-      for (let i = 0; i < pendingInserts.length; i += COST_EVENT_INSERT_BATCH_SIZE) {
-        const batch = pendingInserts.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
-        const batchSlugs = pendingSlugs.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
-        if (batch.length === 0) continue;
-        const returned = (await db
-          .insert(costEvents)
-          .values(batch as never)
-          .returning({ id: costEvents.id })) as { id: string }[];
-        for (let j = 0; j < returned.length && j < batchSlugs.length; j++) {
-          const slug = batchSlugs[j];
-          const newId = returned[j]?.id;
-          if (typeof slug === "string" && typeof newId === "string") {
-            costEventSlugToNewId.set(slug, newId);
+      if (operation) {
+        for (let sourceStart = 0; sourceStart < manifestCostEvents.length; sourceStart += COST_EVENT_INSERT_BATCH_SIZE) {
+          const sourceEnd = Math.min(sourceStart + COST_EVENT_INSERT_BATCH_SIZE, manifestCostEvents.length);
+          const eligible = pendingSourceIndexes.flatMap((sourceIndex, pendingIndex) =>
+            sourceIndex >= sourceStart && sourceIndex < sourceEnd ? [{ sourceIndex, pendingIndex }] : []);
+          const saved = await operation.checkpoint(`cost-events:${sourceStart}`, async (tx) => {
+            const values = eligible.map(({ pendingIndex }) => ({ ...pendingInserts[pendingIndex]!, id: randomUUID() }));
+            if (values.length) await tx.insert(costEvents).values(values as never);
+            const bySourceIndex = new Map(eligible.map(({ sourceIndex }, index) => [sourceIndex, values[index]!.id as string]));
+            return Array.from({ length: sourceEnd - sourceStart }, (_, offset) => {
+              const id = bySourceIndex.get(sourceStart + offset) ?? null;
+              return { id, action: id ? "created" as const : "skipped" as const };
+            });
+          });
+          const created = saved.filter((item) => item.id !== null);
+          await validateTargets("cost_events", created);
+          for (let sourceIndex = sourceStart; sourceIndex < sourceEnd; sourceIndex++) {
+            const savedItem = saved[sourceIndex - sourceStart];
+            const pendingIndex = pendingSourceIndexes.indexOf(sourceIndex);
+            if (savedItem?.id && pendingIndex >= 0) {
+              costEventSlugToNewId.set(pendingSlugs[pendingIndex]!, savedItem.id);
+            }
+          }
+        }
+      } else {
+        for (let i = 0; i < pendingInserts.length; i += COST_EVENT_INSERT_BATCH_SIZE) {
+          const batch = pendingInserts.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
+          const batchSlugs = pendingSlugs.slice(i, i + COST_EVENT_INSERT_BATCH_SIZE);
+          if (batch.length === 0) continue;
+          const returned = await db.insert(costEvents).values(batch as never).returning({ id: costEvents.id });
+          for (let j = 0; j < returned.length && j < batchSlugs.length; j++) {
+            const slug = batchSlugs[j];
+            const newId = returned[j]?.id;
+            if (typeof slug === "string" && typeof newId === "string") costEventSlugToNewId.set(slug, newId);
           }
         }
       }
@@ -3310,13 +3561,15 @@ export function companyPortabilityService(db: Db) {
       for (let i = 0; i < pendingInserts.length; i += FINANCE_EVENT_INSERT_BATCH_SIZE) {
         const batch = pendingInserts.slice(i, i + FINANCE_EVENT_INSERT_BATCH_SIZE);
         if (batch.length === 0) continue;
-        await db.insert(financeEvents).values(batch as never);
+        await importEffect(`finance-events:${i}`, (tx) => tx.insert(financeEvents).values(batch as never)
+          .returning({ id: financeEvents.id }).then((rows) => rows.map((row) => row.id)), "finance_events");
       }
     }
 
     if (include.quotaWindows === true && Array.isArray(sourceManifest.quotaWindows)) {
-      const manifestQuotaWindows = sourceManifest.quotaWindows;
-      let importedAny = false;
+      await importEffect("quotaWindows", async (db) => {
+      const affectedIds: string[] = [];
+      const manifestQuotaWindows = sourceManifest.quotaWindows!;
       for (const qw of manifestQuotaWindows) {
         const existing = (await db
           .select()
@@ -3334,7 +3587,7 @@ export function companyPortabilityService(db: Db) {
         const lastUpdatedAt = new Date(qw.lastUpdatedAt);
         const resetAt = qw.resetAt ? new Date(qw.resetAt) : null;
         if (existing.length > 0 && typeof existing[0]?.id === "string") {
-          await db
+          const updated = await db
             .update(providerQuotaWindows)
             .set({
               label: qw.label,
@@ -3345,9 +3598,11 @@ export function companyPortabilityService(db: Db) {
               resetAt,
               lastUpdatedAt,
             })
-            .where(eq(providerQuotaWindows.id, existing[0]!.id));
+            .where(eq(providerQuotaWindows.id, existing[0]!.id))
+            .returning({ id: providerQuotaWindows.id });
+          affectedIds.push(...updated.map((row) => row.id));
         } else {
-          await db.insert(providerQuotaWindows).values({
+          const inserted = await db.insert(providerQuotaWindows).values({
             companyId: targetCompany.id,
             provider: qw.provider,
             model: qw.model,
@@ -3359,11 +3614,13 @@ export function companyPortabilityService(db: Db) {
             valueLabel: qw.valueLabel,
             resetAt,
             lastUpdatedAt,
-          } as never);
+          } as never).returning({ id: providerQuotaWindows.id });
+          affectedIds.push(...inserted.map((row) => row.id));
         }
-        importedAny = true;
       }
-      if (importedAny) {
+      return affectedIds;
+      }, "provider_quota_windows");
+      if (sourceManifest.quotaWindows.length > 0) {
         warnings.push({
           kind: "deprecated_field",
           section: "quotaWindows",
@@ -3373,7 +3630,9 @@ export function companyPortabilityService(db: Db) {
     }
 
     if (include.workflowTemplates === true && Array.isArray(sourceManifest.workflowTemplates)) {
-      const manifestWorkflowTemplates = sourceManifest.workflowTemplates;
+      await importEffect("workflowTemplates", async (db) => {
+      const affectedIds: string[] = [];
+      const manifestWorkflowTemplates = sourceManifest.workflowTemplates!;
       const existingRows = (await db
         .select()
         .from(workflowTemplates)
@@ -3405,6 +3664,9 @@ export function companyPortabilityService(db: Db) {
             const existingId = typeof collision.id === "string" ? collision.id : null;
             const authorizedTemplateIds = plan.replaceWorkflowTemplateIdsBySlug.get(bundleSlug);
             if (!existingId || !authorizedTemplateIds?.has(existingId)) {
+              if (operation) throw conflict("Import target changed", {
+                code: "import_conflict", companyId: targetCompany.id, operationId: operation.operationId,
+              });
               warnings.push({
                 kind: "skipped_update",
                 section: "workflowTemplates",
@@ -3412,7 +3674,7 @@ export function companyPortabilityService(db: Db) {
               });
               continue;
             }
-            await db
+            const updated = await db
               .update(workflowTemplates)
               .set({
                 name: tpl.name,
@@ -3428,7 +3690,9 @@ export function companyPortabilityService(db: Db) {
               .where(and(
                 eq(workflowTemplates.id, existingId),
                 eq(workflowTemplates.companyId, targetCompany.id),
-              ));
+              ))
+              .returning({ id: workflowTemplates.id });
+            affectedIds.push(...updated.map((row) => row.id));
             continue;
           }
           // rename: derive a unique name + slug
@@ -3441,7 +3705,7 @@ export function companyPortabilityService(db: Db) {
             candidateSlug = synthesizeWorkflowTemplateSlug(candidateName);
           }
           usedSlugs.add(candidateSlug);
-          await db.insert(workflowTemplates).values({
+          const inserted = await db.insert(workflowTemplates).values({
             companyId: targetCompany.id,
             name: candidateName,
             description: tpl.description ?? null,
@@ -3452,12 +3716,13 @@ export function companyPortabilityService(db: Db) {
             instantiationCount: 0,
             lastInstantiatedAt: null,
             createdBy: actorUserId ?? "importer",
-          } as never);
+          } as never).returning({ id: workflowTemplates.id });
+          affectedIds.push(...inserted.map((row) => row.id));
           continue;
         }
 
         usedSlugs.add(bundleSlug);
-        await db.insert(workflowTemplates).values({
+        const inserted = await db.insert(workflowTemplates).values({
           companyId: targetCompany.id,
           name: tpl.name,
           description: tpl.description ?? null,
@@ -3468,8 +3733,11 @@ export function companyPortabilityService(db: Db) {
           instantiationCount: 0,
           lastInstantiatedAt: null,
           createdBy: actorUserId ?? "importer",
-        } as never);
+        } as never).returning({ id: workflowTemplates.id });
+        affectedIds.push(...inserted.map((row) => row.id));
       }
+      return affectedIds;
+      }, "workflow_templates");
     }
 
     const envSecretRequirements: CompanyPortabilityManifest["requiredSecrets"] = [];
@@ -3536,7 +3804,9 @@ export function companyPortabilityService(db: Db) {
       });
     }
 
+    await operation?.complete();
     return {
+      ...(operation ? { operation: { id: operation.operationId, status: "completed" as const } } : {}),
       company: {
         id: targetCompany.id,
         name: targetCompany.name,
@@ -3550,6 +3820,15 @@ export function companyPortabilityService(db: Db) {
       requiredSecrets: mergedRequiredSecrets,
       warnings,
     };
+    } catch (err) {
+      if (operation) {
+        const failure = await operation.fail();
+        if (err instanceof HttpError && err.status === 409 &&
+          ["import_conflict", "import_busy"].includes((err.details as { code?: string })?.code ?? "")) throw err;
+        throw failure;
+      }
+      throw err;
+    }
   }
 
   return {

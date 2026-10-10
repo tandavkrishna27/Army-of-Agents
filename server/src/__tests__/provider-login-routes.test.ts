@@ -23,6 +23,8 @@
  *      invalidation on `/key`.
  */
 import express from "express";
+import os from "node:os";
+import path from "node:path";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { drizzleOperatorStubs, makeTableProxy } from "./helpers/drizzle-mock.js";
@@ -356,6 +358,20 @@ describe("provider login routes", () => {
     expect(mockLoginService.startChallenge).not.toHaveBeenCalled();
   });
 
+  it("returns both scoped Docker Compose alternatives instead of generic Claude login", async () => {
+    vi.stubEnv("AOA_INSTALL_PROFILE", "remote_single_tenant");
+    vi.stubEnv("AOA_CLAUDE_PASTE_AUTH", "true");
+    vi.stubEnv("AOA_HOME", "/aoa");
+    const res = await request(makeApp()).post(startUrl("anthropic")).send({});
+    expect(res.status).toBe(400);
+    expect(res.body.manualCommand).toBeUndefined();
+    expect(res.body.terminalCommands).toHaveLength(2);
+    expect(res.body.terminalCommands[0].command).toContain("CLAUDE_CONFIG_DIR=");
+    expect(res.body.terminalCommands[1].command).toContain("-f docker-compose.quickstart.yml");
+    expect(res.body.terminalCommands[1].command).toContain("aoa claude auth login");
+    expect(res.body.error).toMatch(/Compose stack in use/i);
+  });
+
   it("400s start for a provider with no login at all", async () => {
     const res = await request(makeApp()).post(startUrl("pi")).send({});
     expect(res.status).toBe(400);
@@ -588,6 +604,9 @@ describe("provider login routes", () => {
   /* invariant 4 — re-probe on completion */
 
   it("re-probes on completion so the card reflects reality", async () => {
+    vi.stubEnv("AOA_INSTALL_PROFILE", "local_single_user");
+    vi.stubEnv("AOA_DEPLOYMENT_MODE", "local_trusted");
+    vi.stubEnv("HOME", path.join(os.tmpdir(), "aoa-provider-login-home"));
     mockLoginService.getStatus.mockResolvedValueOnce({ status: "completed", loginUrl: null });
     const res = await request(makeApp()).get(statusUrl("openai", "ch-1"));
     expect(res.status).toBe(200);
@@ -597,8 +616,8 @@ describe("provider login routes", () => {
       expect.objectContaining({
         config: expect.objectContaining({
           env: expect.objectContaining({
-            HOME: expect.any(String),
-            CODEX_HOME: expect.any(String),
+            HOME: path.dirname(path.join(os.tmpdir(), "aoa-provider-login-home", ".codex")),
+            CODEX_HOME: path.join(os.tmpdir(), "aoa-provider-login-home", ".codex"),
           }),
         }),
       }),

@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Db } from "@armyofagents/db";
 import { activityLog, agentWakeupRequests, heartbeatRuns, issueComments, issues } from "@armyofagents/db";
 
@@ -7,12 +7,31 @@ import {
   decideSuccessfulRunHandoff,
 } from "./successful-run-handoff.js";
 
+type RecoveryWakeupOptions = {
+  source: "automation";
+  triggerDetail: "system";
+  reason: "finish_successful_run_handoff";
+  payload: Record<string, unknown>;
+  idempotencyKey: string;
+  requestedByActorType: "system";
+  requestedByActorId: "recovery";
+  contextSnapshot: Record<string, unknown>;
+  beforeIssueWakeCommit: (
+    tx: Db,
+    continuation: { id: string | null; wakeupRequestId: string | null },
+  ) => Promise<void>;
+};
+
+type RecoveryDependencies = {
+  enqueueWakeup: (agentId: string, options: RecoveryWakeupOptions) => Promise<unknown>;
+};
+
 function readIssueId(snapshot: Record<string, unknown> | null | undefined) {
   const value = snapshot?.issueId ?? snapshot?.taskId;
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-export function recoveryService(db: Db) {
+export function recoveryService(db: Db, deps: RecoveryDependencies) {
   return {
     async handleCompletedRun(runId: string) {
       const run = await db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, runId)).then((rows) => rows[0] ?? null);
@@ -35,7 +54,7 @@ export function recoveryService(db: Db) {
             and(
               eq(agentWakeupRequests.companyId, run.companyId),
               eq(agentWakeupRequests.reason, "finish_successful_run_handoff"),
-              eq(agentWakeupRequests.idempotencyKey, `finish_successful_run_handoff:${issueId}:${run.id}:1`),
+              sql`${agentWakeupRequests.payload} ->> 'issueId' = ${issueId}`,
             ),
           )
           .then((rows) => rows.length)
@@ -64,54 +83,63 @@ export function recoveryService(db: Db) {
       });
       if (decision.action !== "queue_handoff") return decision;
 
-      await db.transaction(async (tx) => {
-        const [wake] = await tx
-          .insert(agentWakeupRequests)
-          .values({
-            companyId: decision.companyId,
-            agentId: decision.agentId,
-            source: "automation",
-            triggerDetail: "recovery.successful_run_handoff",
-            reason: "finish_successful_run_handoff",
-            payload: decision.payload,
-            status: "queued",
-            idempotencyKey: decision.idempotencyKey,
-          })
-          .onConflictDoNothing()
-          .returning();
-
-        if (!wake) return;
-
-        const notice = buildSuccessfulRunHandoffNotice({
-          runId: decision.sourceRunId,
-          agentId: decision.agentId,
-          reason: decision.reason,
-        });
-        await tx.insert(issueComments).values({
-          companyId: decision.companyId,
+      let recoveryNoticeWritten = false;
+      await deps.enqueueWakeup(decision.agentId, {
+        source: "automation",
+        triggerDetail: "system",
+        reason: "finish_successful_run_handoff",
+        payload: decision.payload,
+        idempotencyKey: decision.idempotencyKey,
+        requestedByActorType: "system",
+        requestedByActorId: "recovery",
+        contextSnapshot: {
           issueId: decision.issueId,
-          authorType: notice.authorType,
-          presentation: notice.presentation,
-          metadata: notice.metadata,
-          body: notice.body,
-        });
-        await tx
-          .update(issues)
-          .set({ updatedAt: new Date() })
-          .where(and(eq(issues.id, decision.issueId), eq(issues.companyId, decision.companyId)));
-        await tx.insert(activityLog).values({
-          companyId: decision.companyId,
-          actorType: "system",
-          actorId: "system",
-          action: "issue.successful_run_handoff_queued",
-          entityType: "issue",
-          entityId: decision.issueId,
-          agentId: decision.agentId,
-          runId: decision.sourceRunId,
-          details: { wakeupRequestId: wake.id, reason: decision.reason },
-        });
+          taskId: decision.issueId,
+          sourceRunId: decision.sourceRunId,
+          wakeReason: decision.payload.wakeReason,
+          reason: decision.reason,
+        },
+        // Heartbeat creates the request + org-agent run and claims the task
+        // under the same transaction. Keep the founder-visible recovery notice
+        // atomic with that durable run, rather than inserting a bare AoA-only
+        // wakeup row that no org-agent scheduler can consume.
+        beforeIssueWakeCommit: async (tx, continuation) => {
+          if (!continuation.wakeupRequestId) return;
+          const notice = buildSuccessfulRunHandoffNotice({
+            runId: decision.sourceRunId,
+            agentId: decision.agentId,
+            reason: decision.reason,
+          });
+          await tx.insert(issueComments).values({
+            companyId: decision.companyId,
+            issueId: decision.issueId,
+            authorType: notice.authorType,
+            presentation: notice.presentation,
+            metadata: notice.metadata,
+            body: notice.body,
+          });
+          await tx.insert(activityLog).values({
+            companyId: decision.companyId,
+            actorType: "system",
+            actorId: "system",
+            action: "issue.successful_run_handoff_queued",
+            entityType: "issue",
+            entityId: decision.issueId,
+            agentId: decision.agentId,
+            runId: decision.sourceRunId,
+            details: {
+              wakeupRequestId: continuation.wakeupRequestId,
+              recoveryRunId: continuation.id,
+              reason: decision.reason,
+            },
+          });
+          recoveryNoticeWritten = true;
+        },
       });
 
+      if (!recoveryNoticeWritten) {
+        return { action: "none" as const, reason: "handoff_not_enqueued" as const };
+      }
       return decision;
     },
   };

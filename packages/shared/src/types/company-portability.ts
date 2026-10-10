@@ -462,9 +462,13 @@ export interface CompanyPortabilityPreviewResult {
   errors: string[];
 }
 
-export interface CompanyPortabilityImportRequest extends CompanyPortabilityPreviewRequest {}
+export interface CompanyPortabilityImportRequest extends CompanyPortabilityPreviewRequest {
+  /** Required for new_company. Generate before sending and retain across retries. */
+  operationId?: string;
+}
 
 export interface CompanyPortabilityImportResult {
+  operation?: { id: string; status: "completed" };
   company: {
     id: string;
     name: string;

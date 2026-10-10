@@ -38,6 +38,8 @@ const saveKeyMock = vi.fn();
 const startLoginMock = vi.fn();
 const loginStatusMock = vi.fn();
 const cancelLoginMock = vi.fn();
+const capabilitiesMock = vi.fn();
+const commanderVerifyMock = vi.fn();
 
 vi.mock("@/api/providers", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/api/providers")>();
@@ -53,6 +55,10 @@ vi.mock("@/api/providers", async (importOriginal) => {
     },
   };
 });
+vi.mock("@/api/commander-auth", () => ({
+  getCommanderAuthCapabilities: (...args: unknown[]) => capabilitiesMock(...args),
+  verifyCommanderSetup: (...args: unknown[]) => commanderVerifyMock(...args),
+}));
 
 const COMPANY_ID = "company-1";
 const useCompanyMock = vi.fn(() => ({ selectedCompanyId: COMPANY_ID as string | null }));
@@ -139,6 +145,22 @@ function renderSection() {
   );
 }
 
+function mockScopedDockerClaudeAuth(enabled = true) {
+  capabilitiesMock.mockResolvedValue({
+    topology: { installProfile: "remote_single_tenant" },
+    providers: {
+      anthropic: {
+        enabled,
+        reason: enabled ? null : "Scoped Claude sign-in is disabled for this installation.",
+        terminalCommands: [
+          { mode: "standard", command: "docker compose exec --user node server claude auth login" },
+          { mode: "quickstart", command: "docker compose -f docker-compose.quickstart.yml exec --user node aoa claude auth login" },
+        ],
+      },
+    },
+  });
+}
+
 /** Wait for the first cached render. */
 async function renderAndSettle(rows: ProviderStatusRow[]) {
   listMock.mockResolvedValue({ providers: rows });
@@ -163,6 +185,16 @@ beforeEach(() => {
   testMock.mockResolvedValue(PROBE_OK);
   saveKeyMock.mockResolvedValue({ ok: true, secretId: "s1", reprobed: [], invalidated: [] });
   cancelLoginMock.mockResolvedValue({ ok: true });
+  capabilitiesMock.mockResolvedValue({
+    topology: { installProfile: "local_single_user" },
+    providers: {
+      anthropic: {
+        enabled: true,
+        reason: null,
+      },
+    },
+  });
+  commanderVerifyMock.mockResolvedValue({ outcome: "verified", result: { adapterType: "claude_local", checks: [] } });
   // jsdom implements neither.
   Element.prototype.scrollIntoView = vi.fn();
 });
@@ -219,6 +251,134 @@ describe("ProvidersSection cached rendering", () => {
     );
     await select("openai");
     expect((screen.getByTestId("provider-key-input") as HTMLInputElement).value).toBe("");
+  });
+
+  it("loads founder-scoped Docker auth capabilities and renders both explicit stack commands", async () => {
+    mockScopedDockerClaudeAuth();
+    await renderAndSettle([row("anthropic", { companyDefault: scope({ outcome: "needs_auth" }) })]);
+    expect(capabilitiesMock).toHaveBeenCalledWith({ companyId: COMPANY_ID });
+    await screen.findByText("Standard Compose");
+    await screen.findByText("Quickstart Compose");
+    const card = screen.getByTestId("provider-login-section");
+    expect(card.textContent).toMatch(/choose the command matching the Compose stack/i);
+    expect(card.textContent).toMatch(/scoped to this company.*founder.*execution target/i);
+    const commands = Array.from(card.querySelectorAll("button")).map((button) => button.textContent);
+    expect(commands).toContain("docker compose exec --user node server claude auth login");
+    expect(commands).toContain("docker compose -f docker-compose.quickstart.yml exec --user node aoa claude auth login");
+    expect(commands).not.toContain("claude auth login");
+  });
+
+  it("uses Commander verification instead of the generic Test probe for scoped Claude subscriptions", async () => {
+    mockScopedDockerClaudeAuth();
+    commanderVerifyMock.mockResolvedValueOnce({
+      outcome: "verified",
+      subscriptionBound: true,
+      result: { adapterType: "claude_local", checks: [] },
+    });
+    await renderAndSettle([needsAuthRow("anthropic")]);
+    await select("anthropic");
+
+    expect(screen.getByTestId("provider-verify-commander").textContent).toMatch(/verify.*commander/i);
+    expect(screen.queryByTestId("provider-test")).toBeNull();
+    fireEvent.click(screen.getByTestId("provider-verify-commander"));
+
+    await waitFor(() => expect(commanderVerifyMock).toHaveBeenCalledWith({ companyId: COMPANY_ID }));
+    expect(testMock).not.toHaveBeenCalled();
+    expect((await screen.findByTestId("provider-commander-verified")).textContent).toMatch(/verified and bound to commander/i);
+  });
+
+  it("does not claim a Claude subscription was bound when Commander verified with an API key", async () => {
+    mockScopedDockerClaudeAuth();
+    commanderVerifyMock.mockResolvedValueOnce({
+      outcome: "verified",
+      subscriptionBound: false,
+      result: { adapterType: "claude_local", checks: [] },
+    });
+    await renderAndSettle([needsAuthRow("anthropic")]);
+    await select("anthropic");
+    fireEvent.click(screen.getByTestId("provider-verify-commander"));
+
+    expect((await screen.findByTestId("provider-error")).textContent).toMatch(/Claude API key.*no Claude subscription.*bound/i);
+    expect(screen.queryByTestId("provider-commander-verified")).toBeNull();
+    expect(testMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the safe Commander verification diagnostic when the scoped credential is not ready", async () => {
+    mockScopedDockerClaudeAuth();
+    commanderVerifyMock.mockRejectedValueOnce(new ApiError("Request failed: 422", 422, {
+      outcome: "needs_auth",
+      result: { checks: [{ level: "error", message: "Claude is not signed in for this workspace yet." }] },
+    }));
+    await renderAndSettle([needsAuthRow("anthropic")]);
+    await select("anthropic");
+    fireEvent.click(screen.getByTestId("provider-verify-commander"));
+
+    expect((await screen.findByTestId("provider-error")).textContent).toMatch(/not signed in for this workspace/i);
+    expect(screen.getByTestId("provider-error").textContent).not.toMatch(/request failed: 422/i);
+    expect(testMock).not.toHaveBeenCalled();
+  });
+
+  it("does not claim Claude verification when Commander is configured for Codex", async () => {
+    mockScopedDockerClaudeAuth();
+    commanderVerifyMock.mockResolvedValueOnce({
+      outcome: "verified",
+      result: { adapterType: "codex_local", checks: [] },
+    });
+    await renderAndSettle([needsAuthRow("anthropic")]);
+    await select("anthropic");
+    fireEvent.click(screen.getByTestId("provider-verify-commander"));
+
+    expect((await screen.findByTestId("provider-error")).textContent).toMatch(/Commander.*Codex.*switch.*Claude/i);
+    expect(screen.queryByTestId("provider-commander-verified")).toBeNull();
+    expect(testMock).not.toHaveBeenCalled();
+  });
+
+  it("Test all skips scoped Claude subscription checks but still tests other providers", async () => {
+    mockScopedDockerClaudeAuth();
+    await renderAndSettle([needsAuthRow("anthropic"), row("openai")]);
+    fireEvent.click(screen.getByTestId("providers-test-all"));
+
+    await waitFor(() => expect(testMock).toHaveBeenCalledTimes(1));
+    expect(testMock.mock.calls[0]?.[1]).toBe("openai");
+    expect(commanderVerifyMock).not.toHaveBeenCalled();
+  });
+
+  it("does not auto-refresh an in-use stale scoped Claude subscription", async () => {
+    mockScopedDockerClaudeAuth();
+    await renderAndSettle([row("anthropic", {
+      companyDefault: scope({ outcome: "needs_auth", testedAt: STALE }),
+      agents: [agentScope("Researcher")],
+    })]);
+    await act(async () => { await Promise.resolve(); });
+    expect(testMock).not.toHaveBeenCalled();
+    expect(commanderVerifyMock).not.toHaveBeenCalled();
+  });
+
+  it("does not offer Commander verification or generic Test when scoped Claude auth is disabled", async () => {
+    mockScopedDockerClaudeAuth(false);
+    await renderAndSettle([needsAuthRow("anthropic")]);
+    await select("anthropic");
+
+    expect(screen.queryByTestId("provider-verify-commander")).toBeNull();
+    expect(screen.queryByTestId("provider-test")).toBeNull();
+    expect(screen.getByTestId("provider-test-unavailable").textContent).toMatch(/disabled for this installation/i);
+    fireEvent.click(screen.getByTestId("providers-test-all"));
+    await act(async () => { await Promise.resolve(); });
+    expect(testMock).not.toHaveBeenCalled();
+    expect(commanderVerifyMock).not.toHaveBeenCalled();
+  });
+
+  it("preserves the generic Test path for a configured Claude BYOK key", async () => {
+    mockScopedDockerClaudeAuth();
+    const byokRow = needsAuthRow("anthropic");
+    byokRow.existingKey = { ...byokRow.existingKey, configured: true, source: "provider" };
+    listMock.mockResolvedValue({ providers: [byokRow] });
+    await renderAndSettle([byokRow]);
+    await select("anthropic");
+    await waitFor(() => expect(screen.getByTestId("provider-test")).toBeTruthy());
+    fireEvent.click(screen.getByTestId("provider-test"));
+    await waitFor(() => expect(testMock).toHaveBeenCalledTimes(1));
+    expect(commanderVerifyMock).not.toHaveBeenCalled();
   });
 
   it("refetches the list even when a Test FAILS (stale Ready must not persist)", async () => {

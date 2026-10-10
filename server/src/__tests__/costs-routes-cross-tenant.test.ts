@@ -97,12 +97,14 @@ describe("PATCH /companies/:companyId/budgets cross-tenant", () => {
     mockCompanyService.update.mockResolvedValue({
       id: "company-A",
       budgetMonthlyCents: 100000,
+      agentExecutionSetupState: "pending",
     });
     mockBudgetService.upsertPolicy.mockResolvedValue({});
     const res = await request(makeApp(companyAActor))
       .patch("/api/companies/company-A/budgets")
       .send({ budgetMonthlyCents: 100000 });
     expect(res.status).toBe(200);
+    expect(res.body).not.toHaveProperty("agentExecutionSetupState");
     expect(mockCompanyService.update).toHaveBeenCalledWith("company-A", {
       budgetMonthlyCents: 100000,
     });

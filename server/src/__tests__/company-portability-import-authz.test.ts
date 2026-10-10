@@ -11,6 +11,7 @@
  *    agent imports on founder/team_lead.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import "./helpers/mock-company-import-operations.js";
 
 const createMock = vi.hoisted(() =>
   vi.fn(async (input: { name: string; organizationId?: string | null }) => ({
@@ -120,6 +121,7 @@ describe("importBundle authorization + operator scoping (D2)", () => {
     await svc.importBundle(
       {
         source: { type: "inline" as const, manifest: manifestWithAgent(), files },
+        operationId: crypto.randomUUID(),
         target: { mode: "new_company" as const, newCompanyName: "Imported Co" },
         include: { company: true, agents: true },
       } as never,

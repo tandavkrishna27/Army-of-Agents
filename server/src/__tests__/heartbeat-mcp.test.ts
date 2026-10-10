@@ -102,7 +102,11 @@ describe("heartbeat MCP delivery", () => {
     expect(delivery.config).toEqual({ args: ["--existing"] });
     expect(delivery.mcpBridge).toMatchObject({
       command: "node",
-      args: ["C:/aoa/mcp-bridge.js"],
+      args: [
+        "--import",
+        expect.stringMatching(/tsx[\\/]+dist[\\/]+loader\.mjs$/),
+        "C:/aoa/mcp-bridge.js",
+      ],
       env: {
         AOA_SESSION_COMPANY_ID: "company-1",
         AOA_ACTOR_TYPE: "agent",

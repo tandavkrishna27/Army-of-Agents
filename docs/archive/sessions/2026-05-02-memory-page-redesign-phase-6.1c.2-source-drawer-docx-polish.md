@@ -383,7 +383,7 @@ interface SourceTextDrawerProps {
  *
  * v1: shows the source filename + mimeType and a button to open the full
  * asset viewer in the explorer (preserves user's current item context for
- * back-button). Future v2 (Slice C.3): inline render the originating
+ * back-button). A later slice may inline-render the originating
  * passage with character-offset highlight from memory_extractions.
  */
 export function SourceTextDrawer({

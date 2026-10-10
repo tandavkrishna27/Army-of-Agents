@@ -1,15 +1,159 @@
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import fs from "node:fs/promises";
+import os from "node:os";
+import { describe, expect, it, vi } from "vitest";
 import {
   assertProviderLoginUrl,
   providerSubscriptionCapability,
+  resolveProviderCliAuthHome,
+  resolveCommanderLoginAuthHome,
   resolveCliAuthTopology,
   resolveScopedCliAuthHome,
   detectProviderCli,
   resolveProviderCliCommand,
+  dockerClaudeLoginCommand,
+  dockerClaudeLoginCommands,
+  inspectScopedClaudeCredential,
 } from "../services/cli-auth-topology.js";
 
 describe("CLI authentication topology", () => {
+  it.each([
+    ["openai", ".codex"],
+    ["anthropic", ".claude"],
+  ] as const)("resolves %s to the same canonical local home used by its CLI", (provider, directory) => {
+    const env = {
+      AOA_INSTALL_PROFILE: "local_single_user",
+      AOA_DEPLOYMENT_MODE: "local_trusted",
+      HOME: "/aoa",
+      AOA_HOME: "/aoa",
+    };
+    expect(resolveProviderCliAuthHome({
+      provider,
+      env,
+      executionTargetId: "target-1",
+      companyId: "company-1",
+      userId: "user-1",
+    })).toBe(path.join(path.resolve("/aoa"), directory));
+  });
+
+  it("keeps remote-single-tenant provider homes scoped to target, company, and owner", () => {
+    const args = {
+      provider: "openai" as const,
+      env: { AOA_INSTALL_PROFILE: "remote_single_tenant", AOA_HOME: "/aoa" },
+      executionTargetId: "target-1",
+      companyId: "company-1",
+      userId: "user-1",
+    };
+    expect(resolveProviderCliAuthHome(args)).toBe(resolveScopedCliAuthHome(args));
+  });
+
+  it("uses the canonical provider home for local single-user login", () => {
+    const env = { AOA_INSTALL_PROFILE: "local_single_user", AOA_DEPLOYMENT_MODE: "local_trusted", HOME: "/aoa" };
+    expect(resolveCommanderLoginAuthHome({ provider: "openai", env })).toBe(path.join(path.resolve("/aoa"), ".codex"));
+    expect(resolveCommanderLoginAuthHome({ provider: "anthropic", env })).toBe(path.join(path.resolve("/aoa"), ".claude"));
+  });
+
+  it("keeps company/user-scoped homes outside local single-user", () => {
+    const scope = { provider: "openai" as const, env: { AOA_INSTALL_PROFILE: "hosted_multi_tenant", AOA_DEPLOYMENT_MODE: "authenticated", AOA_HOME: "/aoa", HOME: "/aoa" }, executionTargetId: "control-plane", companyId: "c1", userId: "u1" };
+    expect(resolveCommanderLoginAuthHome(scope)).toBe(resolveScopedCliAuthHome(scope));
+  });
+
+  it.each([
+    ["hosted_multi_tenant", "false", false],
+    ["hosted_multi_tenant", "true", false],
+    ["remote_single_tenant", "false", false],
+    ["remote_single_tenant", "true", true],
+  ] as const)("allows Claude subscription only for dedicated opt-in (%s, %s)", (profile, flag, allowed) => {
+    const env = { AOA_INSTALL_PROFILE: profile, AOA_CLAUDE_PASTE_AUTH: flag };
+    const topology = resolveCliAuthTopology({ env, deploymentMode: "authenticated", deploymentExposure: "public" });
+    expect(providerSubscriptionCapability("anthropic", topology, env).enabled).toBe(allowed);
+  });
+
+  it("gives Docker Compose a node-user terminal command pinned to the login/verify home", () => {
+    const scope = { env: { AOA_HOME: "/aoa" }, executionTargetId: "control-plane", companyId: "company-1", userId: "founder-1", provider: "anthropic" as const };
+    const home = resolveScopedCliAuthHome(scope);
+    const dockerHome = home.replace(/^.*[\\/]aoa/, "/aoa").replaceAll("\\", "/");
+    const command = dockerClaudeLoginCommand(scope);
+    expect(command).toContain("docker compose exec --user node");
+    expect(command).toContain(`CLAUDE_CONFIG_DIR='${dockerHome}'`);
+    expect(command).toContain(`HOME='${path.posix.dirname(dockerHome)}'`);
+    expect(command).toContain("server claude auth login");
+    expect(command).not.toContain("~/.claude");
+  });
+
+  it("returns explicit commands for standard and quickstart Compose layouts", () => {
+    const scope = { env: { AOA_HOME: "/aoa" }, executionTargetId: "control-plane", companyId: "company-1", userId: "founder-1", provider: "anthropic" as const };
+    const commands = dockerClaudeLoginCommands(scope);
+    expect(commands).toHaveLength(2);
+    expect(commands?.[0]).toMatchObject({ mode: "standard" });
+    expect(commands?.[0]?.command).toContain(" server claude auth login");
+    expect(commands?.[0]?.command).not.toContain("docker-compose.quickstart.yml");
+    expect(commands?.[1]).toMatchObject({ mode: "quickstart" });
+    expect(commands?.[1]?.command).toContain("-f docker-compose.quickstart.yml");
+    expect(commands?.[1]?.command).toContain(" aoa claude auth login");
+    expect(commands?.[1]?.command).toContain("CLAUDE_CONFIG_DIR='");
+  });
+
+  it.skipIf(process.platform !== "linux")("reports an unreadable scoped credential with an allowlisted permission code", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-claude-inspect-"));
+    try {
+      const credential = path.join(root, ".credentials.json");
+      await fs.writeFile(credential, "fixture-secret");
+      // Exercise the real descriptor-relative Linux open path rather than
+      // mocking fs.promises.open (which does not intercept the secure opener
+      // consistently across Node's ESM/CJS module surfaces).
+      await fs.chmod(credential, 0);
+      const result = await inspectScopedClaudeCredential(root);
+      expect(result).toMatchObject({ code: "claude_credentials_permission_denied", recoverable: true });
+      expect(JSON.stringify(result)).not.toContain("fixture-secret");
+      expect(JSON.stringify(result)).not.toContain(root);
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it.skipIf(process.platform !== "linux")("rejects a credential home reached through an ancestor symlink", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-claude-ancestor-link-"));
+    try {
+      const realHome = path.join(root, "real", "scope");
+      const linkParent = path.join(root, "linked-parent");
+      await fs.mkdir(realHome, { recursive: true });
+      await fs.writeFile(path.join(realHome, ".credentials.json"), "fixture");
+      await fs.symlink(path.join(root, "real"), linkParent, "dir");
+      const result = await inspectScopedClaudeCredential(path.join(linkParent, "scope"));
+      expect(result.code).toBe("claude_credentials_unsafe_path");
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it.skipIf(process.platform !== "linux")("keeps inspection pinned when the scoped home is replaced after path validation", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-claude-path-swap-"));
+    const authHome = path.join(root, "scope");
+    const displacedHome = path.join(root, "scope-original");
+    const attackerHome = path.join(root, "attacker");
+    await fs.mkdir(authHome);
+    await fs.mkdir(attackerHome);
+    await fs.writeFile(path.join(authHome, ".credentials.json"), "fixture");
+    const originalOpen = fs.open.bind(fs);
+    let swapped = false;
+    const opened = vi.spyOn(fs, "open").mockImplementation(async (candidate, flags, mode) => {
+      if (!swapped && String(candidate).endsWith("/.credentials.json")) {
+        swapped = true;
+        await fs.rename(authHome, displacedHome);
+        await fs.symlink(attackerHome, authHome, "dir");
+      }
+      return originalOpen(candidate, flags, mode);
+    });
+    try {
+      const result = await inspectScopedClaudeCredential(authHome);
+      expect(swapped).toBe(true);
+      expect(result.code).toBe("claude_credentials_ready");
+    } finally {
+      opened.mockRestore();
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
   it("fails closed to hosted multi-tenant for authenticated deployments without an operator profile", () => {
     const topology = resolveCliAuthTopology({
       env: {},

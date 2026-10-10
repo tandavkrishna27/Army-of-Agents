@@ -1,4 +1,4 @@
-# Commander Cockpit V2 Plan
+# Commander Cockpit Plan
 
 ## Decision
 
@@ -14,7 +14,7 @@ States such as "needs me", "blocked", "due today", "watching", and "owned by me"
 
 ## Interaction Scope
 
-V2 makes Cockpit items feel operable, not just visible:
+This work makes Cockpit items feel operable, not just visible:
 
 - Repeatedly selecting the same entity dedupes the chip instead of creating duplicate chips or duplicate prompt text.
 - Clicking a chip opens the real referenced entity, using the right-side Viewer for task/artifact refs and route fallback for other entity types.

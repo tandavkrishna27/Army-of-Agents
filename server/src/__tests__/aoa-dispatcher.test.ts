@@ -54,6 +54,7 @@ vi.mock("@armyofagents/db", () => {
     // Plan 3 Task 4/8: dispatcher now queries internalAgentConfig for
     // autonomyLevel + crewPaused before each wakeup run.
     internalAgentConfig: t("internal_agent_config"),
+    companies: t("companies"),
   };
 });
 // Mock the Plan-3 gate modules so existing dispatcher tests don't need to
@@ -141,15 +142,17 @@ import { runAoaDispatch } from "../services/internal-agent/aoa-agents/dispatcher
 function makeSeqDb(selectQueue: unknown[][]) {
   let si = 0;
   const sets: any[] = [];
+  const whereArgs: unknown[] = [];
   const db: any = {
     _sets: sets,
+    _whereArgs: whereArgs,
     select: () => {
       const n = si++;
       const c: any = {};
       c.from = () => c;
       c.innerJoin = () => c;
       c.leftJoin = () => c;
-      c.where = () => c;
+      c.where = (arg: unknown) => { whereArgs.push(arg); return c; };
       c.limit = () => c;
       c.then = (resolve: (v: unknown[]) => unknown) =>
         Promise.resolve(selectQueue[n] ?? []).then(resolve);
@@ -173,7 +176,23 @@ const entryReset = (s: any) =>
 const entryFailReclaim = (s: any) =>
   s.extractionStatus === "failed" && s.sourceInfo !== undefined;
 
+function hasReadyCompanyGate(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  if ("eq" in value && Array.isArray((value as { eq?: unknown }).eq)) {
+    const [column, expected] = (value as { eq: unknown[] }).eq;
+    if (typeof column === "symbol" && column.description === "companies.agentExecutionSetupState" && expected === "ready") return true;
+  }
+  return Object.values(value).some(hasReadyCompanyGate);
+}
+
 describe("runAoaDispatch — generalized #99 dispatcher", () => {
+  it("only selects extraction work and crew wakeups for companies whose setup is ready", async () => {
+    const db = makeSeqDb([[], [], []]);
+    await runAoaDispatch(db, { limiterMax: 1, staleMs: 600_000 });
+    expect(hasReadyCompanyGate(db._whereArgs[1])).toBe(true);
+    expect(hasReadyCompanyGate(db._whereArgs[2])).toBe(true);
+  });
+
   // Phase 1 (Task C1): the autonomous Scribe outbox drain is OFF by default
   // in production — Memory Keeper (phase=done sweep) and Adjutant own
   // extraction via tool calls. These tests pin the legacy autonomous-drain

@@ -1,10 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { drizzleOperatorStubs, makeTableProxy } from "./helpers/drizzle-mock.js";
+
+vi.mock("drizzle-orm", () => drizzleOperatorStubs());
+vi.mock("@armyofagents/db", () => ({
+  agentProviderCredentialBindings: makeTableProxy("agent_provider_credential_bindings"),
+  companyMemberships: makeTableProxy("company_memberships"),
+  providerCredentials: makeTableProxy("provider_credentials"),
+}));
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import {
   ProviderCredentialBindingError,
   chooseGovernedSubscriptionBinding,
   mayUseLegacySubscriptionHome,
   resolveAgentSubscriptionEnvironment,
 } from "../services/provider-credential-bindings.js";
+import { resolveScopedCliAuthHome } from "../services/cli-auth-topology.js";
 
 describe("resolveAgentSubscriptionEnvironment multi_tenant chokepoint (BUG A residual fix)", () => {
   it("fails closed BEFORE any DB read when trustBoundary is multi_tenant", async () => {
@@ -92,4 +104,89 @@ describe("governed provider credential binding", () => {
     expect(mayUseLegacySubscriptionHome(revoked, false)).toBe(false);
     expect(mayUseLegacySubscriptionHome(new Error("database unavailable"), false)).toBe(false);
   });
+});
+
+it("resolves a verified founder-scoped subscription binding into the exact agent CLI home", async () => {
+  const aoaHome = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-agent-credential-resolution-"));
+  const selected = {
+    ...base,
+    provider: "anthropic",
+    ownerUserId: "founder-1",
+    executionTargetId: "target-1",
+    credentialCompanyId: "company-1",
+    ownerMembershipStatus: "active",
+  };
+  const query: Record<string, any> = {};
+  query.from = () => query;
+  query.innerJoin = () => query;
+  query.leftJoin = () => query;
+  query.where = () => query;
+  query.then = (resolve: (value: unknown[]) => unknown, reject?: (reason: unknown) => unknown) =>
+    Promise.resolve([selected]).then(resolve, reject);
+  const db = { select: () => query } as never;
+  const authHome = resolveScopedCliAuthHome({
+    env: { AOA_HOME: aoaHome },
+    companyId: "company-1",
+    userId: "founder-1",
+    provider: "anthropic",
+    executionTargetId: "target-1",
+  });
+  await fs.mkdir(authHome, { recursive: true });
+
+  try {
+    const env = await resolveAgentSubscriptionEnvironment(db, {
+      companyId: "company-1",
+      agentId: "commander-1",
+      provider: "anthropic",
+      executionTargetId: "target-1",
+      env: { AOA_HOME: aoaHome },
+    });
+    expect(env.CLAUDE_CONFIG_DIR).toBe(authHome);
+    expect(env.CLAUDE_CONFIG_DIR).not.toContain(".claude");
+  } finally {
+    await fs.rm(aoaHome, { recursive: true, force: true });
+  }
+});
+
+it.each([
+  ["openai", ".codex", "CODEX_HOME"],
+  ["anthropic", ".claude", "CLAUDE_CONFIG_DIR"],
+] as const)("resolves an approved local %s binding for an agent into the canonical CLI home", async (provider, directory, envKey) => {
+  const aoaHome = await fs.mkdtemp(path.join(os.tmpdir(), "aoa-local-agent-credential-"));
+  const selected = {
+    ...base,
+    provider,
+    ownerUserId: "founder-1",
+    executionTargetId: "control-plane",
+    credentialCompanyId: "company-1",
+    ownerMembershipStatus: "active",
+  };
+  const query: Record<string, any> = {};
+  query.from = () => query;
+  query.innerJoin = () => query;
+  query.leftJoin = () => query;
+  query.where = () => query;
+  query.then = (resolve: (value: unknown[]) => unknown, reject?: (reason: unknown) => unknown) =>
+    Promise.resolve([selected]).then(resolve, reject);
+  const db = { select: () => query } as never;
+  const authHome = path.join(aoaHome, directory);
+  await fs.mkdir(authHome, { recursive: true });
+
+  try {
+    const env = await resolveAgentSubscriptionEnvironment(db, {
+      companyId: "company-1",
+      agentId: "crew-agent-1",
+      provider,
+      executionTargetId: "control-plane",
+      env: {
+        AOA_HOME: aoaHome,
+        HOME: aoaHome,
+        AOA_DEPLOYMENT_MODE: "local_trusted",
+        AOA_INSTALL_PROFILE: "local_single_user",
+      },
+    });
+    expect(env[envKey]).toBe(authHome);
+  } finally {
+    await fs.rm(aoaHome, { recursive: true, force: true });
+  }
 });

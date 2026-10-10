@@ -412,13 +412,32 @@ describe("ProviderReadinessCard — login affordance", () => {
     expect(screen.getByTestId("provider-manual-login").textContent).toContain("claude auth login");
   });
 
-  it("describes the sign-in SCOPE as host-shared without claiming you are signed in", () => {
+  it("uses explicit scoped Docker Compose commands and never shows generic Claude login", () => {
+    renderCard(row("anthropic", { companyDefault: scope({ outcome: "needs_auth" }) }), {
+      manualLoginCommands: [
+        { label: "Standard Compose", command: "docker compose exec --user node server claude auth login" },
+        { label: "Quickstart Compose", command: "docker compose -f docker-compose.quickstart.yml exec --user node aoa claude auth login" },
+      ],
+      suppressCatalogLoginCommand: true,
+      manualLoginScope: "company_user_target",
+    });
+    const login = screen.getByTestId("provider-manual-login").textContent ?? "";
+    expect(login).toContain("Standard Compose");
+    expect(login).toContain("Quickstart Compose");
+    const copyButtons = Array.from(screen.getByTestId("provider-manual-login").querySelectorAll("button"));
+    expect(copyButtons.map((button) => button.textContent)).toContain(
+      "docker compose exec --user node server claude auth login",
+    );
+    expect(copyButtons.map((button) => button.textContent)).not.toContain("claude auth login");
+    expect(screen.getByTestId("provider-login-section").textContent).toMatch(/company.*founder.*execution target/i);
+  });
+
+  it("describes interactive sign-in as company/user/target scoped without claiming you are signed in", () => {
     renderCard(row("openai", { companyDefault: scope({ outcome: "needs_auth" }) }), {
       onStartLogin: vi.fn(),
     });
     const text = screen.getByTestId("provider-login-section").textContent ?? "";
-    expect(text).toMatch(/applies to this whole machine/i);
-    expect(text).toMatch(/every company on this host/i);
+    expect(text).toMatch(/scoped to this company.*founder.*execution target/i);
     // The bug this replaces: a present-tense claim of being signed in, rendered
     // under a badge that says you are not, next to a button asking you to sign in.
     expect(text).not.toMatch(/signed in on this machine/i);

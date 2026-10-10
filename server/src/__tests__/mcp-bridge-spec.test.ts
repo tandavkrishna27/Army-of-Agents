@@ -22,7 +22,7 @@ describe("buildMcpBridgeSpec", () => {
     toolAllowlist: ["submit_extracted_items"],
   } as const;
 
-  it("produces the neutral {command,args,env} inner spec", () => {
+  it("loads the production bridge with tsx so workspace TypeScript imports resolve", () => {
     // Mirror cli-mode.ts's exact conditional-omission for DATABASE_URL so the
     // assertion is robust to its presence/absence in the test environment.
     const expectedEnv: Record<string, string> = {
@@ -52,11 +52,12 @@ describe("buildMcpBridgeSpec", () => {
         : {}),
     };
 
-    expect(buildMcpBridgeSpec(params)).toEqual({
-      command: "node",
-      args: ["/b.js"],
-      env: expectedEnv,
-    });
+    const spec = buildMcpBridgeSpec(params);
+    expect(spec.command).toBe("node");
+    expect(spec.args[0]).toBe("--import");
+    expect(spec.args[1].replace(/\\/g, "/")).toMatch(/\/tsx\/dist\/loader\.mjs$/);
+    expect(spec.args[2]).toBe("/b.js");
+    expect(spec.env).toEqual(expectedEnv);
   });
 
   it("omits AOA_AGENT_KIND / AOA_TOOL_ALLOWLIST when not provided (matches cli-mode conditionals)", () => {
@@ -68,7 +69,9 @@ describe("buildMcpBridgeSpec", () => {
       bridgeEntrypoint: "/b.js",
     });
     expect(spec.command).toBe("node");
-    expect(spec.args).toEqual(["/b.js"]);
+    expect(spec.args[0]).toBe("--import");
+    expect(spec.args[1].replace(/\\/g, "/")).toMatch(/\/tsx\/dist\/loader\.mjs$/);
+    expect(spec.args[2]).toBe("/b.js");
     expect(spec.env.AOA_SESSION_ENABLED_CAPABILITIES).toBe("");
     expect("AOA_AGENT_KIND" in spec.env).toBe(false);
     expect("AOA_TOOL_ALLOWLIST" in spec.env).toBe(false);

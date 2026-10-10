@@ -10,7 +10,7 @@
 
 **Locked decisions:**
 
-1. **Each polish task = its own PR** (where there is a PR). Same rule as the v2 plan. Polish 1A/1B/1C are PRs; 1D is a batch of `gh issue create` calls — no PR.
+1. **Each polish task = its own PR** (where there is a PR). Same rule as the revised plan. Polish 1A/1B/1C are PRs; 1D is a batch of `gh issue create` calls — no PR.
 2. **Phase 2's spike (2A) is a hard gate.** If `pnpm dev` does NOT boot cleanly on Windows after Task 4, the controller decides whether to (a) extend Phase 1 with a 1B-fix-Windows-dev task, or (b) defer Phase 2 to a follow-up plan. Subagents do NOT decide this.
 3. **Halt criteria are MANDATORY, same v2 design.** Each task has explicit 🛑 triggers; subagents stop and report. Plan-level decisions are controller-only.
 4. **Maintainer-only items (B1, B2 from previous review) stay outside this plan.** They are GitHub repo Settings actions; the user does them. Plan documents them.
@@ -32,7 +32,7 @@
 
 ## Controller-Only Decisions
 
-When a subagent reports back, the **controller** decides — same as v2 plan. Subagents implement; controllers steer.
+When a subagent reports back, the **controller** decides — same as the revised plan. Subagents implement; controllers steer.
 
 **Controller decides:**
 - Whether to halt at any halt criterion
@@ -90,7 +90,7 @@ Expected: only untracked `.claire/` and `.claude/worktree-archive/` (or fully em
 
 **Halt criteria (subagent stops + reports):**
 
-- 🛑 `AGENTS.md §7` does not exist or has been renumbered (the v2 plan's pre-history added a §7) — STOP, report the actual structure. Controller decides which section to update.
+- 🛑 `AGENTS.md §7` does not exist or has been renumbered (the revised plan's pre-history added a §7) — STOP, report the actual structure. Controller decides which section to update.
 - 🛑 The existing `AGENTS.md` content uses a markdown style this update would break (e.g., headings differ from this task's pattern) — match the local pattern, report deviations.
 
 **Files:**
@@ -162,7 +162,7 @@ same PR. The bot path (chore/refresh-lockfile branch) remains
 documented as the recommended workflow, but the inline path now
 exists as a valid alternative for dep-adding PRs.
 
-Reviewer flagged this gap during the v2 plan retrospective.
+Reviewer flagged this gap during the plan retrospective.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -334,7 +334,7 @@ Add an early-return guard so the log + signal only happen when the
 process is still being tracked. Cosmetic log accuracy fix, no
 functional change.
 
-Reviewer flagged this during the v2 plan retrospective.
+Reviewer flagged this during the plan retrospective.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -980,7 +980,7 @@ The controller decides whether to file a new bug, revert PR #102, or extend Phas
 
 ## Self-Review Checklist
 
-- [x] **Spec coverage:** All 6 reviewer recommendations from the v2 plan retrospective are addressed:
+- [x] **Spec coverage:** All 6 reviewer recommendations from the plan retrospective are addressed:
   - Bypass surface in policy gate → Task 1A (docs)
   - `migrations` not in branch protection → flagged as maintainer-only B1
   - Verify all 4 required checks → flagged as maintainer-only B2

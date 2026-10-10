@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { webcrypto } from "node:crypto";
 import type { ReactElement } from "react";
 import { screen, waitFor, cleanup, fireEvent, render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -189,12 +190,15 @@ function renderWithQueryClient(ui: ReactElement, queryClient: QueryClient) {
 describe("CompanyImport page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal("crypto", webcrypto);
+    sessionStorage.clear();
     healthGetMock.mockResolvedValue({ deploymentMode: "local_trusted" });
     organizationsListMock.mockResolvedValue([]);
   });
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
   });
 
   it("renders heading and upload prompt", () => {
@@ -569,5 +573,41 @@ describe("CompanyImport page", () => {
     await uploadBundle(user, makeValidBundle());
     fireEvent.click(await screen.findByRole("button", { name: /preview/i }));
     await screen.findByText(/Server error/);
+  });
+
+  it("reuses its caller operation ID after response loss and changes it for a changed import intent", async () => {
+    const user = userEvent.setup();
+    previewImport.mockResolvedValue(makePreviewResult());
+    importBundle.mockRejectedValue(new Error("Synthetic lost response"));
+    renderWithProviders(<CompanyImport />);
+    await uploadBundle(user, makeValidBundle());
+    fireEvent.click(await screen.findByRole("button", { name: /preview/i }));
+    const importBtn = await screen.findByRole("button", { name: /^import$/i });
+    await waitFor(() => expect(importBtn).not.toBeDisabled());
+    fireEvent.click(importBtn);
+    await screen.findByText(/Synthetic lost response/);
+    const first = importBundle.mock.calls[0][0];
+    expect(first.operationId).toMatch(/^[0-9a-f-]{36}$/);
+    await waitFor(() => expect(importBtn).not.toBeDisabled());
+    fireEvent.click(importBtn);
+    await waitFor(() => expect(importBundle).toHaveBeenCalledTimes(2));
+    expect(importBundle.mock.calls[1][0]).toEqual(first);
+    expect(sessionStorage.getItem(sessionStorage.key(0)!)).toBe(first.operationId);
+    cleanup();
+    renderWithProviders(<CompanyImport />);
+    await uploadBundle(user, makeValidBundle());
+    fireEvent.click(await screen.findByRole("button", { name: /preview/i }));
+    const resumedImportBtn = await screen.findByRole("button", { name: /^import$/i });
+    await waitFor(() => expect(resumedImportBtn).not.toBeDisabled());
+    fireEvent.click(resumedImportBtn);
+    await waitFor(() => expect(importBundle).toHaveBeenCalledTimes(3));
+    expect(importBundle.mock.calls[2][0]).toEqual(first);
+    await waitFor(() => expect(resumedImportBtn).not.toBeDisabled());
+    await user.selectOptions(await screen.findByLabelText(/collision strategy/i), "skip");
+    fireEvent.click(await screen.findByRole("button", { name: /preview/i }));
+    await waitFor(() => expect(resumedImportBtn).not.toBeDisabled());
+    fireEvent.click(resumedImportBtn);
+    await waitFor(() => expect(importBundle).toHaveBeenCalledTimes(4));
+    expect(importBundle.mock.calls[3][0].operationId).not.toBe(first.operationId);
   });
 });

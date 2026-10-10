@@ -3,6 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
+import { managedCatalogSkillDir } from "../services/marketplace-install/skill-bundle-materializer.js";
+import { managedMarketplaceSkillsRoot } from "../services/marketplace-install/managed-skills-root.js";
 
 const root = path.resolve(import.meta.dirname, "../../..");
 const read = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
@@ -23,14 +25,54 @@ describe("AOA Docker data layout and CLI compatibility", () => {
     expect(compose).toContain("AOA_CODEX_DEVICE_AUTH:");
     expect(compose).toContain("AOA_CLAUDE_PASTE_AUTH:");
     expect(compose).toContain(
-      "AOA_MARKETPLACE_SKILLS_WRITE_ROOT: ${AOA_MARKETPLACE_SKILLS_WRITE_ROOT:-legacy}",
+      "AOA_MARKETPLACE_SKILLS_WRITE_ROOT: ${AOA_MARKETPLACE_SKILLS_WRITE_ROOT:-persistent}",
     );
+  });
+
+  it("creates and reads a managed bundle under an isolated persistent data-volume root", () => {
+    const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "aoa-marketplace-volume-"));
+    const previousHome = process.env.AOA_HOME;
+    const previousSelector = process.env.AOA_MARKETPLACE_SKILLS_WRITE_ROOT;
+
+    try {
+      process.env.AOA_HOME = tempHome;
+      process.env.AOA_MARKETPLACE_SKILLS_WRITE_ROOT = "persistent";
+
+      const bundleDir = managedCatalogSkillDir("company-1", "research", "1.0.0");
+      const markdown = "# Persistent managed skill\n";
+      fs.mkdirSync(bundleDir, { recursive: true });
+      fs.writeFileSync(path.join(bundleDir, "SKILL.md"), markdown);
+
+      expect(managedMarketplaceSkillsRoot()).toBe(
+        path.join(tempHome, "instances", "default", "marketplace-skills"),
+      );
+      expect(path.relative(path.resolve(tempHome), path.resolve(bundleDir))).toBe(
+        path.join("instances", "default", "marketplace-skills", "company-1", "research", "1.0.0"),
+      );
+      expect(fs.readFileSync(path.join(bundleDir, "SKILL.md"), "utf8")).toBe(markdown);
+      expect(path.resolve(bundleDir)).not.toBe(
+        path.join(process.cwd(), ".aoa", "marketplace-skills", "company-1", "research", "1.0.0"),
+      );
+    } finally {
+      if (previousHome === undefined) delete process.env.AOA_HOME;
+      else process.env.AOA_HOME = previousHome;
+      if (previousSelector === undefined) delete process.env.AOA_MARKETPLACE_SKILLS_WRITE_ROOT;
+      else process.env.AOA_MARKETPLACE_SKILLS_WRITE_ROOT = previousSelector;
+      fs.rmSync(tempHome, { recursive: true, force: true });
+    }
   });
 
   it("records a data-layout sentinel", () => {
     const entrypoint = read("scripts/docker-entrypoint.sh");
     expect(entrypoint).toContain(".aoa-data-layout-version");
     expect(entrypoint).toContain("unsupported AOA data-layout version");
+  });
+
+  it("repairs canonical provider-home ownership for local single-user Docker", () => {
+    const entrypoint = read("scripts/docker-entrypoint.sh");
+    expect(entrypoint).toContain('if [ "${AOA_INSTALL_PROFILE:-}" = "local_single_user" ]; then');
+    expect(entrypoint).toContain('"$AOA_HOME/.codex"');
+    expect(entrypoint).toContain('"$AOA_HOME/.claude"');
   });
 
   it("pins the two authentication-critical CLI versions", () => {
@@ -53,7 +95,10 @@ describe("AOA Docker data layout and CLI compatibility", () => {
         [path.join(root, "scripts/deploy/write-compose-env.mjs"), outputPath],
         {
           env: {
-            ...process.env,
+            PATH: process.env.PATH,
+            SystemRoot: process.env.SystemRoot,
+            TEMP: process.env.TEMP,
+            TMP: process.env.TMP,
             AOA_POSTGRES_PASSWORD: "postgres-test-secret",
             BETTER_AUTH_SECRET: "better-auth-test-secret",
             AOA_AGENT_JWT_SECRET: "agent-jwt-test-secret",
@@ -70,7 +115,7 @@ describe("AOA Docker data layout and CLI compatibility", () => {
       expect(generated).toContain('AOA_EXECUTION_TARGET_ID="hetzner-qa"');
       expect(generated).toContain('AOA_SCOPED_CLI_AUTH="true"');
       expect(generated).toContain(
-        'AOA_MARKETPLACE_SKILLS_WRITE_ROOT="legacy"',
+        'AOA_MARKETPLACE_SKILLS_WRITE_ROOT="persistent"',
       );
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });

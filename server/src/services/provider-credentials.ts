@@ -8,7 +8,12 @@ import {
   providerCredentials,
 } from "@armyofagents/db";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import { resolveCliAuthTopology, resolveScopedCliAuthHome } from "./cli-auth-topology.js";
+import {
+  isScopedClaudeCredentialEvidenceFor,
+  resolveCliAuthTopology,
+  resolveProviderCliAuthHome,
+  type OpenedScopedClaudeCredential,
+} from "./cli-auth-topology.js";
 import { logActivity } from "./activity-log.js";
 import { loadConfig } from "../config.js";
 import { unprocessable } from "../errors.js";
@@ -23,7 +28,7 @@ type ScopedSubscriptionCredential = {
 function resolveCredentialHome(
   args: ScopedSubscriptionCredential & { env?: NodeJS.ProcessEnv },
 ): string {
-  return resolveScopedCliAuthHome({
+  return resolveProviderCliAuthHome({
     env: args.env,
     executionTargetId: args.executionTargetId,
     companyId: args.companyId,
@@ -35,6 +40,7 @@ function resolveCredentialHome(
 export async function markScopedSubscriptionVerified(
   db: Db,
   args: ScopedSubscriptionCredential,
+  evidence?: OpenedScopedClaudeCredential,
 ): Promise<string[]> {
   // Fail closed on a shared multi-tenant host: never PROMOTE a personal_subscription
   // credential to verified. This is the verify-path member of the "every mint/verify
@@ -59,8 +65,31 @@ export async function markScopedSubscriptionVerified(
     args.provider === "openai" ? "auth.json" : ".credentials.json",
   );
   // Do not follow a credential-file symlink out of the scoped auth home.
-  const stat = await fs.lstat(credentialFile).catch(() => null);
-  if (!stat?.isFile() || stat.isSymbolicLink()) return [];
+  if (evidence) {
+    if (args.provider !== "anthropic" || !isScopedClaudeCredentialEvidenceFor(evidence, authHome)) {
+      return [];
+    }
+  } else {
+    const stat = await fs.lstat(credentialFile).catch(() => null);
+    if (!stat?.isFile() || stat.isSymbolicLink()) return [];
+  }
+  // A terminal sign-in writes the provider file directly and therefore has no
+  // login-service evidence callback to create its pending row. Commander Verify
+  // is founder-gated and supplies this exact company/user/target/provider scope;
+  // only after finding a regular scoped credential do we register it. The
+  // conflict target mirrors the login path, and never resets an existing state.
+  await db
+    .insert(providerCredentials)
+    .values({
+      companyId: args.companyId,
+      provider: args.provider,
+      ownerUserId: args.userId,
+      executionTargetId: args.executionTargetId,
+      kind: "personal_subscription",
+      state: "pending",
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
   const now = new Date();
   const rows = await db
     .update(providerCredentials)
@@ -86,11 +115,18 @@ export async function markScopedSubscriptionVerified(
  */
 export async function verifyAndBindCommanderSubscriptionCredential(
   db: Db,
-  args: ScopedSubscriptionCredential & { actorUserId: string },
+  args: ScopedSubscriptionCredential & {
+    actorUserId: string;
+    scopedCredentialEvidence?: OpenedScopedClaudeCredential;
+  },
 ): Promise<{ credentialIds: string[]; bindingIds: string[] }> {
   return db.transaction(async (tx) => {
     const txDb = tx as unknown as Db;
-    const credentialIds = await markScopedSubscriptionVerified(txDb, args);
+    const credentialIds = await markScopedSubscriptionVerified(
+      txDb,
+      args,
+      args.scopedCredentialEvidence,
+    );
     if (credentialIds.length === 0) return { credentialIds, bindingIds: [] };
 
     const [commander] = await txDb

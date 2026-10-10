@@ -346,6 +346,17 @@ export interface ProviderReadinessCardProps {
   error?: unknown;
   /** Test seam; defaults to sniffing `navigator`. */
   platform?: InstallPlatform;
+  /** Scoped/manual commands supplied by an authenticated server capability. */
+  manualLoginCommands?: Array<{ label: string; command: string }>;
+  manualLoginUnavailableText?: string;
+  /** Prevent catalog-wide fallback when this surface knows it is in Docker. */
+  suppressCatalogLoginCommand?: boolean;
+  /** Scope of the command shown below the login affordance. */
+  manualLoginScope?: "host" | "company_user_target";
+  /** Use the founder-gated Commander verify+bind flow instead of generic provider readiness. */
+  onVerifyCommanderSubscription?(): Promise<void>;
+  /** Hide generic Test while the installation auth profile is unresolved. */
+  testUnavailableText?: string;
 }
 
 function normalizeBusy(busy: boolean | ProviderCardBusy | undefined): Required<ProviderCardBusy> {
@@ -365,10 +376,17 @@ export function ProviderReadinessCard({
   busy = false,
   error = null,
   platform,
+  manualLoginCommands,
+  manualLoginUnavailableText,
+  suppressCatalogLoginCommand = false,
+  manualLoginScope,
+  onVerifyCommanderSubscription,
+  testUnavailableText,
 }: ProviderReadinessCardProps) {
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<unknown>(null);
+  const [commanderSubscriptionVerified, setCommanderSubscriptionVerified] = useState(false);
   const { descriptor, companyDefault } = row;
   const { outcome, failingAgents, unverifiableAgents, uncheckedAgents, canClaimReady } =
     deriveCardStatus(row);
@@ -393,13 +411,20 @@ export function ProviderReadinessCard({
     otherwise show "Needs sign-in" with no remediation whatsoever. The catalog
     now carries `codex login` for exactly that fallback.
   */
-  const manualCommand = descriptor.credential.manualLoginCommand;
+  const manualCommand = suppressCatalogLoginCommand
+    ? null
+    : descriptor.credential.manualLoginCommand;
+  const loginCommands = manualLoginCommands ?? (manualCommand
+    ? [{ label: "Terminal", command: manualCommand }]
+    : []);
+  const loginScope = manualLoginScope ?? (onStartLogin ? "company_user_target" : "host");
   /*
     Don't offer sign-in on a card that is already verified — a green Claude card
     telling the founder to "sign in from a terminal, then run the check again" is
     instructing them to fix something that isn't broken.
   */
-  const showLoginSection = outcome !== "verified" && (canSignIn || Boolean(manualCommand));
+  const showLoginSection = outcome !== "verified" &&
+    (canSignIn || loginCommands.length > 0 || Boolean(manualLoginUnavailableText));
 
   /*
     The probe's REASONS. Without these a `failed` card is a verdict with no
@@ -423,6 +448,16 @@ export function ProviderReadinessCard({
       setSaveError(e);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const verifyCommanderSubscription = async () => {
+    setCommanderSubscriptionVerified(false);
+    try {
+      await onVerifyCommanderSubscription?.();
+      setCommanderSubscriptionVerified(true);
+    } catch {
+      // The parent passes the safe route error back through `error`.
     }
   };
 
@@ -693,15 +728,30 @@ export function ProviderReadinessCard({
               the card is never a dead end.
             */
             <>
-              <p className="text-xs text-muted-foreground">
-                Sign in from a terminal, then run the check again:
-              </p>
-              <span data-testid="provider-manual-login">
-                <CopyText
-                  text={manualCommand ?? ""}
-                  className="block break-all font-mono text-[11px] text-left"
-                />
-              </span>
+              {loginCommands.length > 0 ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    {loginCommands.length > 1
+                      ? "From the repository directory, choose the command matching the Compose stack you started, then run the check again:"
+                      : "Sign in from a terminal, then run the check again:"}
+                  </p>
+                  <div data-testid="provider-manual-login" className="space-y-2">
+                    {loginCommands.map(({ label, command }) => (
+                      <div key={`${label}:${command}`}>
+                        {loginCommands.length > 1 && <p className="mb-1 text-[11px] font-medium">{label}</p>}
+                        <CopyText
+                          text={command}
+                          className="block break-all font-mono text-[11px] text-left"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground" data-testid="provider-login-unavailable">
+                  {manualLoginUnavailableText}
+                </p>
+              )}
             </>
           )}
           {/*
@@ -710,7 +760,9 @@ export function ProviderReadinessCard({
             of being signed in, rendered inches beneath a badge saying you are not.
           */}
           <p className="text-[11px] text-muted-foreground">
-            Signing in here applies to this whole machine — every company on this host shares it.
+            {loginScope === "company_user_target"
+              ? "This sign-in is scoped to this company, your founder account, and the selected execution target; agents need an approved credential binding to use it."
+              : "This terminal sign-in uses the machine's CLI login and may be shared by workloads on this host."}
           </p>
         </div>
       )}
@@ -747,15 +799,41 @@ export function ProviderReadinessCard({
         </p>
       )}
 
-      <Button
-        type="button"
-        size="sm"
-        data-testid="provider-test"
-        disabled={busyFlags.test}
-        onClick={onTest}
-      >
-        {busyFlags.test ? "Checking…" : "Test"}
-      </Button>
+      {onVerifyCommanderSubscription ? (
+        <div className="space-y-2" data-testid="provider-commander-verification">
+          <p className="text-xs text-muted-foreground">
+            Validate the founder-scoped Claude session and bind it to Commander. The status above is the separate provider-default readiness check.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            data-testid="provider-verify-commander"
+            disabled={busyFlags.test}
+            onClick={() => void verifyCommanderSubscription()}
+          >
+            {busyFlags.test ? "Verifying…" : "Verify Claude sign-in for Commander"}
+          </Button>
+          {commanderSubscriptionVerified && (
+            <p role="status" data-testid="provider-commander-verified" className="text-xs text-emerald-600">
+              Claude subscription verified and bound to Commander.
+            </p>
+          )}
+        </div>
+      ) : testUnavailableText ? (
+        <p className="text-xs text-muted-foreground" data-testid="provider-test-unavailable">
+          {testUnavailableText}
+        </p>
+      ) : (
+        <Button
+          type="button"
+          size="sm"
+          data-testid="provider-test"
+          disabled={busyFlags.test}
+          onClick={onTest}
+        >
+          {busyFlags.test ? "Checking…" : "Test"}
+        </Button>
+      )}
     </div>
   );
 }

@@ -1,4 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("drizzle-orm", () => ({
+  eq: vi.fn((left: unknown, right: unknown) => ({ op: "eq", left, right })),
+}));
+
+vi.mock("@armyofagents/db", () => ({
+  internalAgentConfig: new Proxy({} as Record<string, unknown>, {
+    get: (_target, property) => String(property),
+  }),
+}));
 
 import {
   DEFAULT_MAX_SUCCESSFUL_RUN_HANDOFF_ATTEMPTS,

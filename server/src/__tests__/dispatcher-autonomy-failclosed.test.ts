@@ -65,6 +65,7 @@ vi.mock("@armyofagents/db", () => {
     agentWakeupRequests: t("agent_wakeup_requests"),
     agents: t("agents"),
     internalAgentConfig: t("internal_agent_config"),
+    companies: t("companies"),
   };
 });
 // Kill-switch + cost-caps mocked to always pass: autonomy is the gate under

@@ -9,6 +9,9 @@ import {
   providerSubscriptionCapability,
   resolveCliAuthTopology,
   detectProviderCli,
+  dockerClaudeLoginCommands,
+  inspectScopedClaudeCredential,
+  resolveScopedCliAuthHome,
 } from "../services/cli-auth-topology.js";
 
 /**
@@ -33,7 +36,7 @@ export function commanderLoginRoutes(db: Db): Router {
     return true;
   }
 
-  async function capabilities() {
+  async function capabilities(companyId: string, userId: string) {
     const config = loadConfig();
     const topology = resolveCliAuthTopology({
       deploymentMode: config.deploymentMode,
@@ -68,7 +71,23 @@ export function commanderLoginRoutes(db: Db): Router {
           reason: `Installed ${provider === "openai" ? "Codex" : "Claude"} version ${detected.cliVersion ?? "unknown"} is outside the versions supported by this AOA adapter. Upgrade or downgrade the CLI, then retry.`,
         };
       }
-      return { ...policy, ...detected };
+      const terminalCommands =
+        provider === "anthropic" && policy.enabled && topology.installProfile === "remote_single_tenant"
+          ? dockerClaudeLoginCommands({
+              env: process.env,
+              executionTargetId: process.env.AOA_EXECUTION_TARGET_ID ?? "control-plane",
+              companyId,
+              userId,
+              provider,
+            })
+          : null;
+      return {
+        ...policy,
+        ...detected,
+        ...(terminalCommands
+          ? { terminalCommands, terminalCommand: terminalCommands[0]?.command }
+          : {}),
+      };
     };
     return {
       topology,
@@ -85,7 +104,7 @@ export function commanderLoginRoutes(db: Db): Router {
       const companyId = req.params.companyId as string;
       if (!(await gate(req, res, companyId))) return;
       try {
-        res.json(await capabilities());
+        res.json(await capabilities(companyId, req.actor.userId!));
       } catch (error) {
         res.status(503).json({
           code: "invalid_cli_auth_topology",
@@ -108,7 +127,7 @@ export function commanderLoginRoutes(db: Db): Router {
       }
 
       try {
-        const capability = (await capabilities()).providers[provider];
+        const capability = (await capabilities(companyId, req.actor.userId!)).providers[provider];
         if (!capability.enabled) {
           res.status(403).json({
             code: "subscription_auth_disabled",
@@ -116,6 +135,19 @@ export function commanderLoginRoutes(db: Db): Router {
             capability,
           });
           return;
+        }
+        if (provider === "anthropic" && process.env.AOA_INSTALL_PROFILE === "remote_single_tenant") {
+          const authHome = resolveScopedCliAuthHome({
+            executionTargetId: process.env.AOA_EXECUTION_TARGET_ID ?? "control-plane",
+            companyId,
+            userId: req.actor.userId!,
+            provider,
+          });
+          const diagnostic = await inspectScopedClaudeCredential(authHome);
+          if (diagnostic.code === "claude_credentials_permission_denied" || diagnostic.code === "claude_credentials_unsafe_path") {
+            res.status(422).json({ code: diagnostic.code, error: diagnostic.message, recoverable: diagnostic.recoverable });
+            return;
+          }
         }
         const { challengeId, loginUrl, userCode, expiresAt } = await service.startChallenge({
           companyId,
@@ -131,6 +163,14 @@ export function commanderLoginRoutes(db: Db): Router {
           expiresAt,
         });
       } catch (err) {
+        if (["EACCES", "EPERM"].includes((err as NodeJS.ErrnoException).code ?? "")) {
+          res.status(422).json({
+            code: "claude_credentials_permission_denied",
+            error: "AoA cannot write this workspace's scoped Claude auth home. Ask the installation owner to grant the node service user access, then retry sign-in.",
+            recoverable: true,
+          });
+          return;
+        }
         if (err instanceof LoginChallengeConflictError) {
           res.status(409).json({ error: err.message });
           return;

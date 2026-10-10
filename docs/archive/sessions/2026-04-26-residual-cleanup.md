@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close every test failure, drift item, and spawned-followup that the Upstream → AoA rename branch (`Porting1.1`) intentionally left for a follow-up branch, so the next release ships with a fully green test suite and no known correctness gaps from the rename.
+**Goal:** Close every test failure, drift item, and spawned-followup that the AoA naming cleanup branch (`Porting1.1`) intentionally left for a follow-up branch, so the next release ships with a fully green test suite and no known correctness gaps from the rename.
 
 **Architecture:** One sequential branch (`cleanup/2026-04-26`) off `Porting1.1`, organized as twelve independent task units. Tasks are ordered cheapest-and-most-isolated-first so each can ship as its own commit. Tasks 2–3 introduce a shared drizzle-orm mock helper that the rest of the server tests reuse — every later task that imports from `@armyofagents/db` should switch to that helper. Phase 6 (Hermes wire fields) stays deferred and gets a documented decision lock instead of code.
 
@@ -641,7 +641,7 @@ git commit -m "test(ui): per-test cleanup for ProjectDetail* suites"
 
 ## Task 8: Followup #1 — env-compat unit tests
 
-**Why:** `server/src/env-compat.ts` mirrors `UPSTREAM_*` → `AOA_*` at module load with a "don't clobber" rule and exposes `readAoaEnv` with fallback. There are no tests pinning that contract — if a future refactor flips the precedence, every Upstream-era operator's env file silently breaks. The `loving-taussig-d53441` worktree already has a draft test (`server/src/__tests__/env-compat-mirror.test.ts`); bring it into `Porting1.1` cleanup.
+**Why:** `server/src/env-compat.ts` mirrors legacy environment variables to `AOA_*` at module load with a "don't clobber" rule and exposes `readAoaEnv` with fallback. There are no tests pinning that contract — if a future refactor flips the precedence, an existing operator's env file could silently break. The `loving-taussig-d53441` worktree already has a draft test (`server/src/__tests__/env-compat-mirror.test.ts`); bring it into `Porting1.1` cleanup.
 
 **Files:**
 - Create: `server/src/__tests__/env-compat-mirror.test.ts`
@@ -1075,7 +1075,7 @@ Add at the end of the file:
 ## Decision #92 — Defer Phase 6 Hermes wire-field rename to upstream coordination
 
 **Status:** Deferred (locked 2026-04-26)
-**Context:** The Upstream → AoA rename plan (`docs/superpowers/plans/2026-04-25-upstream-to-aoa-rename.md`) defined Phase 6 as renaming `upstream*` fields in the Hermes adapter wire protocol. Hermes is owned by an external project; renaming our send-side without coordinating their receive-side breaks the integration.
+**Context:** The AoA naming cleanup plan defined a phase for renaming legacy fields in the Hermes adapter wire protocol. Hermes is an external integration; renaming our send-side without coordinating their receive-side breaks the integration.
 
 **Decision:** Phase 6 stays deferred until either (a) the Hermes maintainer confirms readiness for a coordinated rename, or (b) a Hermes adapter v2 ships with both names accepted (one-release migration window).
 
@@ -1144,7 +1144,7 @@ gh pr create --base Porting1.1 --head cleanup/2026-04-26 \
   --body "$(cat <<'EOF'
 ## Summary
 
-Closes the residual cleanup items from the Upstream → AoA rename branch.
+Closes the residual cleanup items from the AoA naming cleanup branch.
 
 ## What's in
 

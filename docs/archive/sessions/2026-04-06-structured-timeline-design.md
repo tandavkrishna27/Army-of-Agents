@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-06
 **Scope:** Workspace timeline only (WorkspaceTimeline component)
-**Approach:** Build new rendering layer on existing AoA transcript infrastructure, inspired by AoA's RunTranscriptView + vibe-kanban's aggregation
+**Approach:** Build a new rendering layer on AoA's transcript infrastructure, with a dedicated aggregation pass.
 
 ---
 
@@ -40,13 +40,13 @@ Replace the raw `<pre>` dump in RunBlock with structured, department-aware rende
 | groupCommandBlocks() | Same file | Port as-is |
 | groupToolBlocks() | Same file | Port as-is |
 
-**NOT porting:** The rendering components from RunTranscriptView (we build new ones). NOT porting from vibe-kanban (architecture too different — Rust backend, NormalizedEntry, execution processes).
+**NOT porting:** Build new rendering components rather than reusing the existing RunTranscriptView components.
 
 ## What Gets Built New
 
-1. Aggregation pass 2 (consecutive same-category grouping, inspired by vibe-kanban)
+1. Aggregation pass 2 (consecutive same-category grouping)
 2. Entry classification system (department-aware tool categorization)
-3. Rendering components (pills, cards, messages — matching vibe-kanban visual style)
+3. Rendering components (pills, cards, and messages following AoA's design system)
 4. Integration into RunBlock/TimelineAgentMessage
 
 ---
@@ -254,7 +254,7 @@ Operates on TranscriptEntry[] → TranscriptBlock[]:
 - system entries parsed for activity lifecycle (started/completed)
 - After merging: groupCommandBlocks() groups consecutive command tools, groupToolBlocks() groups consecutive non-command tools
 
-### Pass 2: aggregateBlocks() (new, inspired by vibe-kanban)
+### Pass 2: aggregateBlocks() (new grouping pass)
 
 Operates on TranscriptBlock[] → (TranscriptBlock | AggregatedGroup)[]:
 
@@ -316,7 +316,7 @@ Internal flow:
 ### TranscriptToolPill (most common component)
 
 Visual spec:
-- Full-width row, not inline — matches vibe-kanban screenshot style
+- Full-width row, not inline — keeps transcript events easy to scan.
 - Height: 40px (h-10), vertically centered content
 - Background: bg-muted/30 resting, bg-muted/50 on hover
 - Rounded: rounded-lg

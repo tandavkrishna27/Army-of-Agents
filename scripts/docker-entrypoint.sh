@@ -145,6 +145,18 @@ else
             chown node:node "$target"
         fi
     done
+
+    # In local single-user Docker, provider subscription auth lives in the
+    # canonical homes consumed by verification and agent runs. Repair only the
+    # home directories themselves (never recurse into credential contents),
+    # and reject symlinked homes so chown cannot escape the mounted data root.
+    if [ "${AOA_INSTALL_PROFILE:-}" = "local_single_user" ]; then
+        for target in "$AOA_HOME/.codex" "$AOA_HOME/.claude"; do
+            if [ -d "$target" ] && [ ! -L "$target" ]; then
+                chown node:node "$target"
+            fi
+        done
+    fi
 fi
 
 exec gosu node "$@"

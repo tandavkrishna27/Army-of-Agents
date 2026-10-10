@@ -38,6 +38,26 @@ type VerifyBody = {
   result?: { status?: string; checks?: VerifyCheck[] };
 };
 
+const SAFE_CLAUDE_AUTH_ERRORS: Record<string, string> = {
+  claude_credentials_permission_denied:
+    "AoA cannot read this workspace's Claude credential. Ask the installation owner to grant the node service user access, then try sign-in again.",
+  claude_credentials_unsafe_path:
+    "The scoped Claude credential path is unsafe. Ask the installation owner to inspect it before signing in again.",
+};
+
+function safeVerifyCheck(check: VerifyCheck): VerifyCheck {
+  const safe = check.code ? SAFE_CLAUDE_AUTH_ERRORS[check.code] : undefined;
+  return safe ? { code: check.code, level: "error", message: safe, hint: "Choose Check again after access is fixed." } : check;
+}
+
+function signInError(error: unknown): string {
+  if (error instanceof ApiError && error.body && typeof error.body === "object") {
+    const code = (error.body as { code?: unknown }).code;
+    if (typeof code === "string" && SAFE_CLAUDE_AUTH_ERRORS[code]) return SAFE_CLAUDE_AUTH_ERRORS[code];
+  }
+  return error instanceof Error ? error.message : "Could not start sign-in.";
+}
+
 /**
  * The verify probe returns several checks — working directory, command
  * resolvable, auth mode, then a live "hello" probe. Showing only `checks[0]`
@@ -67,7 +87,7 @@ function isPassedCheck(c: VerifyCheck): boolean {
  */
 function authHintFrom(checks: VerifyCheck[]): string | null {
   const blob = checks.map((c) => `${c.message ?? ""} ${c.detail ?? ""}`).join(" ");
-  if (/revoked|401|unauthor|authentication_error|not logged in|please log in/i.test(blob)) {
+  if (/expired|revoked/i.test(blob)) {
     return "Your CLI sign-in has expired or been revoked. Sign in again below, or run the CLI once in a terminal and sign in there.";
   }
   return null;
@@ -81,19 +101,6 @@ function authHintFrom(checks: VerifyCheck[]): string | null {
  */
 function expiredAuthMessage(checks: VerifyCheck[]): string | null {
   return checks.find((c) => c.code?.includes("auth_expired"))?.message ?? null;
-}
-
-/**
- * Older probes sometimes returned an entire stream-json event as `detail`.
- * Keep those dumps out of the DOM entirely: collapsing them is not enough for
- * screenshots, accessibility trees, or copy-all diagnostics. Current adapters
- * return a short, redacted human-readable detail instead.
- */
-function technicalDetailFor(check: VerifyCheck): string | null {
-  const detail = check.detail?.trim();
-  if (!detail) return null;
-  if (/^[{\[]/.test(detail) || /"(?:session_id|type|subtype)"\s*:/.test(detail)) return null;
-  return detail;
 }
 
 const PROVIDER_LABEL: Record<CommanderProvider, string> = { anthropic: "Claude", openai: "Codex" };
@@ -154,6 +161,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [capability, setCapability] = useState<CommanderAuthCapability | null>(null);
   const [topologyLabel, setTopologyLabel] = useState<string | null>(null);
+  const [installProfile, setInstallProfile] = useState<string | null>(null);
   const [topologyPlatform, setTopologyPlatform] = useState<string | null>(null);
   const [login, setLogin] = useState<{
     challengeId: string;
@@ -229,6 +237,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
         if (!alive) return;
         setCapability(result.providers[provider]);
         setTopologyPlatform(result.topology.platform);
+        setInstallProfile(result.topology.installProfile);
         setTopologyLabel(
           `${result.topology.platform} · ${result.topology.installProfile.replaceAll("_", " ")}`,
         );
@@ -321,7 +330,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
       setAuthError(null);
       try {
         const res = await api.post<VerifyBody>(`/companies/${companyId}/internal-agent/verify`, {});
-        const list = res.result?.checks ?? [];
+        const list = (res.result?.checks ?? []).map(safeVerifyCheck);
         const nextOutcome = res.outcome ?? "verified";
         setOutcome(nextOutcome);
         setChecks(list);
@@ -341,7 +350,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
         return nextOutcome;
       } catch (e) {
         const body = e instanceof ApiError ? (e.body as VerifyBody | null) : null;
-        const list = body?.result?.checks ?? [];
+        const list = (body?.result?.checks ?? []).map(safeVerifyCheck);
         const nextOutcome = body?.outcome ?? "failed";
         setOutcome(nextOutcome);
         setChecks(list);
@@ -403,7 +412,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
       pollRef.current = setInterval(() => void pollLogin(challengeId), 2500);
       void pollLogin(challengeId); // poll once immediately, don't wait a full interval
     } catch (e) {
-      setAuthError(e instanceof Error ? e.message : "Could not start sign-in.");
+      setAuthError(signInError(e));
     } finally {
       setAuthBusy(false);
     }
@@ -515,6 +524,15 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
   };
 
   const providerLabel = provider ? PROVIDER_LABEL[provider] : "your CLI";
+  const terminalCommands =
+    capability?.enabled && provider
+      ? installProfile === "remote_single_tenant"
+        ? capability.terminalCommands?.map(({ mode, command }) => ({
+            label: mode === "standard" ? "Standard Compose" : "Quickstart Compose",
+            command,
+          })) ?? (capability.terminalCommand ? [{ label: "Docker Compose", command: capability.terminalCommand }] : [])
+        : [{ label: "CLI", command: PROVIDER_CLI_LOGIN_COMMAND[provider] }]
+      : [];
 
   return (
     <StepShell>
@@ -552,7 +570,6 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
             {checks.map((c, i) => {
               const passed = isPassedCheck(c);
               const failed = isFailedCheck(c);
-              const technicalDetail = technicalDetailFor(c);
               // Three states, not two: info passes, error fails, and warn is a
               // real problem the founder must act on (that is how a recoverable
               // auth failure arrives) — so it must never render as a tick.
@@ -569,16 +586,6 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
                   <span className={passed ? "min-w-0 text-dim" : "min-w-0 text-destructive"}>
                     {c.message ?? c.code}
                     {!passed && c.hint && <span className="mt-0.5 block text-dim">{c.hint}</span>}
-                    {!passed && technicalDetail && (
-                      <details className="mt-1 text-dim">
-                        <summary className="cursor-pointer select-none text-[11px] font-medium text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
-                          Technical details
-                        </summary>
-                        <pre className="mt-1 whitespace-pre-wrap break-words rounded-md border border-border bg-field p-2 font-mono text-[10px] leading-relaxed [overflow-wrap:anywhere]">
-                          {technicalDetail}
-                        </pre>
-                      </details>
-                    )}
                   </span>
                 </li>
               );
@@ -747,22 +754,28 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
             {/* WS3 — CLI auto-detect: the fallback for BOTH providers when the
                 in-app bridge above can't run (server restarted, spawn failed,
                 or the founder just prefers a terminal). */}
-            <div className="flex items-center gap-2 text-very-dim">
+            {terminalCommands.length > 0 && <div className="flex items-center gap-2 text-very-dim">
               <span className="h-px flex-1 bg-border" />
               or
               <span className="h-px flex-1 bg-border" />
-            </div>
-            {cliPolling ? (
+            </div>}
+            {terminalCommands.length > 0 && (cliPolling ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <LoadingDots state="loading" />
                   <p>
-                    Run{" "}
-                    <code className="rounded bg-field px-1 py-0.5">
-                      {provider ? PROVIDER_CLI_LOGIN_COMMAND[provider] : "the CLI's sign-in command"}
-                    </code>{" "}
-                    in a terminal — we'll detect it automatically and continue.
+                    {terminalCommands.length > 1
+                      ? "From the repository directory, run the command matching the Compose stack you started; we'll detect sign-in and continue."
+                      : "Run the command in a terminal — we'll detect sign-in and continue."}
                   </p>
+                </div>
+                <div className="space-y-2">
+                  {terminalCommands.map(({ label, command }) => (
+                    <p key={label} className="text-xs">
+                      <span className="font-medium">{label}: </span>
+                      <code className="break-all rounded bg-field px-1 py-0.5">{command}</code>
+                    </p>
+                  ))}
                 </div>
                 <Button type="button" variant="ghost" className="w-full" onClick={clearCliPoll}>
                   Cancel
@@ -778,7 +791,7 @@ export function VerifyStep({ ctx, onComplete }: StepProps) {
               >
                 I'll sign in myself in the CLI
               </Button>
-            )}
+            ))}
 
             {authError && <p className="text-destructive">{authError}</p>}
           </div>

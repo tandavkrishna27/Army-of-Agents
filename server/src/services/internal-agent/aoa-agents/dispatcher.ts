@@ -12,6 +12,7 @@ import {
   agentWakeupRequests,
   agents,
   internalAgentConfig,
+  companies,
   issues,
   workQuestions,
 } from "@armyofagents/db";
@@ -538,6 +539,7 @@ export async function runAoaDispatch(db: Db, opts: DispatchOptions): Promise<voi
     .select({ id: discussionEntries.id, companyId: discussions.companyId })
     .from(discussionEntries)
     .innerJoin(discussions, eq(discussions.id, discussionEntries.discussionId))
+    .innerJoin(companies, eq(companies.id, discussions.companyId))
     // P1-T7 defense-in-depth: never feed a scope_proposal entry to the LLM
     // extractor. Proposals carry their approval lifecycle in proposalStatus and
     // are inserted extractionStatus="skipped" so this filter is normally moot,
@@ -546,6 +548,7 @@ export async function runAoaDispatch(db: Db, opts: DispatchOptions): Promise<voi
     // have its approval state clobbered (pending -> processing -> completed).
     .where(
       and(
+        eq(companies.agentExecutionSetupState, "ready"),
         eq(discussionEntries.extractionStatus, "pending"),
         notInArray(discussionEntries.inputType, ["scope_proposal"]),
       ),
@@ -578,8 +581,10 @@ export async function runAoaDispatch(db: Db, opts: DispatchOptions): Promise<voi
     })
     .from(agentWakeupRequests)
     .innerJoin(agents, eq(agents.id, agentWakeupRequests.agentId))
+    .innerJoin(companies, eq(companies.id, agentWakeupRequests.companyId))
     .where(
       and(
+        eq(companies.agentExecutionSetupState, "ready"),
         or(
           eq(agentWakeupRequests.status, "queued"),
           and(

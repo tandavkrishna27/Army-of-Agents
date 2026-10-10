@@ -23,6 +23,10 @@ export type CommanderAuthCapability = {
   cliInstalled?: boolean;
   cliVersion?: string | null;
   cliVersionSupported?: boolean;
+  /** Explicit founder-scoped command variants; choose the Compose stack in use. */
+  terminalCommands?: Array<{ mode: "standard" | "quickstart"; command: string }>;
+  /** First command retained for older clients; new UI should show all variants. */
+  terminalCommand?: string;
 };
 
 export function getCommanderAuthCapabilities(args: {
@@ -38,6 +42,18 @@ export function getCommanderAuthCapabilities(args: {
   providers: Record<CommanderProvider, CommanderAuthCapability>;
 }> {
   return api.get(`/companies/${args.companyId}/internal-agent/commander-login/capabilities`);
+}
+
+export type CommanderVerifyResult = {
+  outcome: "verified" | "needs_auth" | "not_installed" | "failed";
+  /** True only when a founder-scoped subscription credential was registered and bound. */
+  subscriptionBound?: boolean;
+  result?: { adapterType?: string; status?: string; checks?: Array<{ code?: string; level?: string; message?: string; hint?: string }> };
+};
+
+/** Run the same founder-gated probe and credential binding used by onboarding Verify. */
+export function verifyCommanderSetup(args: { companyId: string }): Promise<CommanderVerifyResult> {
+  return api.post(`/companies/${args.companyId}/internal-agent/verify`, {});
 }
 
 export function saveCommanderKey(args: {

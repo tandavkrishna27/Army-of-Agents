@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
+import fsp, { type FileHandle } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { execFile as nodeExecFile } from "node:child_process";
@@ -181,6 +182,261 @@ export function resolveScopedCliAuthHome(args: ScopedCliAuthHomeArgs): string {
     opaqueSegment(args.userId),
     args.provider,
   );
+}
+
+export function usesCanonicalLocalCliAuth(env: NodeJS.ProcessEnv): boolean {
+  return (
+    (env.AOA_DEPLOYMENT_MODE?.trim() || "local_trusted") === "local_trusted" &&
+    env.AOA_INSTALL_PROFILE === "local_single_user"
+  );
+}
+
+/** Resolve the one CLI home used by login, verification, credential binding, and agent runs. */
+export function resolveProviderCliAuthHome(args: ScopedCliAuthHomeArgs): string {
+  const env = args.env ?? process.env;
+  if (usesCanonicalLocalCliAuth(env)) {
+    const home = path.resolve(env.HOME?.trim() || os.homedir());
+    return path.join(home, args.provider === "openai" ? ".codex" : ".claude");
+  }
+  return resolveScopedCliAuthHome({ ...args, env });
+}
+
+/** Backward-compatible name for the Commander login call site. */
+export function resolveCommanderLoginAuthHome(args: ScopedCliAuthHomeArgs): string {
+  return resolveProviderCliAuthHome(args);
+}
+
+/** Docker Compose's terminal fallback uses the same opaque scope as login and verify. */
+export function dockerClaudeLoginCommand(args: ScopedCliAuthHomeArgs): string | null {
+  if (args.provider !== "anthropic") return null;
+  const root = args.env?.AOA_HOME?.trim() || "/aoa";
+  // The command is copyable in both POSIX shells and PowerShell. A configured
+  // path containing shell metacharacters needs the in-app flow instead.
+  if (!/^\/[A-Za-z0-9_./-]+$/.test(root)) return null;
+  const home = path.posix.join(
+    root,
+    "execution-targets",
+    opaqueSegment(args.executionTargetId?.trim() || "control-plane"),
+    "auth",
+    opaqueSegment(args.companyId),
+    opaqueSegment(args.userId),
+    "anthropic",
+  );
+  return `docker compose exec --user node -e HOME='${path.posix.dirname(home)}' -e CLAUDE_CONFIG_DIR='${home}' server claude auth login`;
+}
+
+export function dockerClaudeLoginCommands(
+  args: ScopedCliAuthHomeArgs,
+): Array<{ mode: "standard" | "quickstart"; command: string }> | null {
+  const standard = dockerClaudeLoginCommand(args);
+  if (!standard) return null;
+  const root = args.env?.AOA_HOME?.trim() || "/aoa";
+  if (!/^\/[A-Za-z0-9_./-]+$/.test(root)) return null;
+  const scopedHome = path.posix.join(
+    root,
+    "execution-targets",
+    opaqueSegment(args.executionTargetId?.trim() || "control-plane"),
+    "auth",
+    opaqueSegment(args.companyId),
+    opaqueSegment(args.userId),
+    "anthropic",
+  );
+  // The command is intentionally mode-specific: Compose service names and file
+  // selection cannot be inferred reliably from inside the server container.
+  // Tell founders to run the one matching the stack they started, from the
+  // repository directory, rather than silently targeting another project.
+  return [
+    { mode: "standard", command: standard },
+    {
+      mode: "quickstart",
+      command: `docker compose -f docker-compose.quickstart.yml exec --user node -e HOME='${path.posix.dirname(scopedHome)}' -e CLAUDE_CONFIG_DIR='${scopedHome}' aoa claude auth login`,
+    },
+  ];
+}
+
+export type ScopedClaudeCredentialStatus = {
+  code: "claude_credentials_ready" | "claude_credentials_missing" | "claude_credentials_permission_denied" | "claude_credentials_unsafe_path";
+  message: string;
+  recoverable: boolean;
+};
+
+export type OpenedScopedClaudeCredential = {
+  diagnostic: ScopedClaudeCredentialStatus;
+  /** Linux /proc fd path is anchored to the opened directory and survives renames. */
+  configDir: string | null;
+  close(): Promise<void>;
+};
+const openedCredentialEvidence = new WeakMap<object, { authHome: string; active: boolean }>();
+
+export function isScopedClaudeCredentialEvidenceFor(
+  value: OpenedScopedClaudeCredential | undefined,
+  authHome: string,
+): value is OpenedScopedClaudeCredential {
+  const evidence = value ? openedCredentialEvidence.get(value) : undefined;
+  return Boolean(evidence?.active && evidence.authHome === path.resolve(authHome));
+}
+
+const DIRECTORY_FLAGS = fs.constants.O_RDONLY | (fs.constants.O_DIRECTORY ?? 0);
+const NO_FOLLOW_FLAGS = fs.constants.O_NOFOLLOW ?? 0;
+
+function linuxProcFdPath(fd: number): string {
+  return `/proc/${process.pid}/fd/${fd}`;
+}
+
+function scopedCredentialDiagnostic(code: ScopedClaudeCredentialStatus["code"]): ScopedClaudeCredentialStatus {
+  switch (code) {
+    case "claude_credentials_missing":
+      return { code, message: "Claude is not signed in for this workspace yet.", recoverable: true };
+    case "claude_credentials_permission_denied":
+      return {
+        code,
+        message: "AoA cannot read this workspace's Claude credential. Ask the installation owner to grant the node service user access to the scoped credential, then try sign-in again.",
+        recoverable: true,
+      };
+    case "claude_credentials_unsafe_path":
+      return {
+        code,
+        message: "The scoped Claude credential path is unsafe. Ask the installation owner to inspect it before signing in again.",
+        recoverable: false,
+      };
+    default:
+      return { code, message: "Claude is not signed in for this workspace yet.", recoverable: true };
+  }
+}
+
+function classifyCredentialPathError(error: unknown): ScopedClaudeCredentialStatus["code"] {
+  const code = (error as NodeJS.ErrnoException).code;
+  if (code === "ENOENT") return "claude_credentials_missing";
+  if (code === "EACCES" || code === "EPERM") return "claude_credentials_permission_denied";
+  return "claude_credentials_unsafe_path";
+}
+
+/**
+ * Open each Linux path component from a pinned root directory descriptor.
+ * Opening `/proc/self/fd/<parent>/<child>` is Linux's descriptor-relative
+ * equivalent here: every component is opened with O_NOFOLLOW, and each next
+ * lookup is rooted at the already-open parent inode, not a re-resolved path.
+ */
+async function openLinuxDirectoryChain(authHome: string): Promise<FileHandle> {
+  const absolute = path.resolve(authHome);
+  if (!absolute.startsWith(path.sep)) throw new Error("scoped auth home must be absolute");
+  const components = absolute.split(path.sep).filter(Boolean);
+  let directory = await fsp.open(path.sep, DIRECTORY_FLAGS);
+  try {
+    for (const component of components) {
+      const next = await fsp.open(
+        `${linuxProcFdPath(directory.fd)}/${component}`,
+        DIRECTORY_FLAGS | NO_FOLLOW_FLAGS,
+      );
+      await directory.close();
+      directory = next;
+    }
+    return directory;
+  } catch (error) {
+    await directory.close().catch(() => undefined);
+    throw error;
+  }
+}
+
+/** Open and validate only the founder's exact scoped Claude credential. */
+export async function openScopedClaudeCredential(
+  authHome: string,
+): Promise<OpenedScopedClaudeCredential> {
+  let directory: FileHandle | null = null;
+  try {
+    if (process.platform === "linux") {
+      directory = await openLinuxDirectoryChain(authHome);
+      const credential = await fsp.open(
+        `${linuxProcFdPath(directory.fd)}/.credentials.json`,
+        fs.constants.O_RDONLY | NO_FOLLOW_FLAGS,
+      );
+      try {
+        if (!(await credential.stat()).isFile()) {
+          await directory.close();
+          return {
+            diagnostic: scopedCredentialDiagnostic("claude_credentials_unsafe_path"),
+            configDir: null,
+            close: async () => {},
+          };
+        }
+      } finally {
+        await credential.close();
+      }
+      const pinnedConfigDir = linuxProcFdPath(directory.fd);
+      const opened: OpenedScopedClaudeCredential = {
+        diagnostic: {
+          code: "claude_credentials_ready",
+          message: "Scoped Claude credential is readable.",
+          recoverable: false,
+        },
+        configDir: pinnedConfigDir,
+        close: async () => {
+          await directory?.close();
+          directory = null;
+          const evidence = openedCredentialEvidence.get(opened);
+          if (evidence) evidence.active = false;
+        },
+      };
+      openedCredentialEvidence.set(opened, { authHome: path.resolve(authHome), active: true });
+      return opened;
+    }
+
+    // Docker uses Linux. Keep native development supported while checking every
+    // component on other platforms; no global Claude home is inspected.
+    const absolute = path.resolve(authHome);
+    const parsed = path.parse(absolute);
+    let current = parsed.root;
+    for (const component of absolute.slice(parsed.root.length).split(path.sep).filter(Boolean)) {
+      current = path.join(current, component);
+      const stat = await fsp.lstat(current);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) {
+        return {
+          diagnostic: scopedCredentialDiagnostic("claude_credentials_unsafe_path"),
+          configDir: null,
+          close: async () => {},
+        };
+      }
+    }
+    const credentialPath = path.join(absolute, ".credentials.json");
+    const credentialStat = await fsp.lstat(credentialPath);
+    if (credentialStat.isSymbolicLink() || !credentialStat.isFile()) {
+      return {
+        diagnostic: scopedCredentialDiagnostic("claude_credentials_unsafe_path"),
+        configDir: null,
+        close: async () => {},
+      };
+    }
+    const credential = await fsp.open(credentialPath, fs.constants.O_RDONLY | NO_FOLLOW_FLAGS);
+    await credential.close();
+    const opened: OpenedScopedClaudeCredential = {
+      diagnostic: {
+        code: "claude_credentials_ready",
+        message: "Scoped Claude credential is readable.",
+        recoverable: false,
+      },
+      configDir: absolute,
+      close: async () => {
+        const evidence = openedCredentialEvidence.get(opened);
+        if (evidence) evidence.active = false;
+      },
+    };
+    openedCredentialEvidence.set(opened, { authHome: path.resolve(authHome), active: true });
+    return opened;
+  } catch (error) {
+    if (directory) await directory.close().catch(() => undefined);
+    return {
+      diagnostic: scopedCredentialDiagnostic(classifyCredentialPathError(error)),
+      configDir: null,
+      close: async () => {},
+    };
+  }
+}
+
+/** Inspect only the founder's scoped file, returning allowlisted diagnostics. */
+export async function inspectScopedClaudeCredential(authHome: string): Promise<ScopedClaudeCredentialStatus> {
+  const opened = await openScopedClaudeCredential(authHome);
+  await opened.close();
+  return opened.diagnostic;
 }
 
 function readDirectoryWithoutSymlink(candidate: string, recursive = false): fs.Stats {

@@ -23,6 +23,7 @@ import {
   probeReadinessInSandbox,
 } from "../services/sandbox-readiness-probe.js";
 import { mapCloudProviderKeyError } from "../services/internal-agent/require-cloud-provider-key.js";
+import { openScopedClaudeCredential, resolveScopedCliAuthHome } from "../services/cli-auth-topology.js";
 
 /**
  * Commander verify (Stage C / C7-C8, revA R14). Drives the SAME adapter
@@ -62,7 +63,35 @@ export function commanderVerifyRoutes(db: Db): Router {
       return;
     }
 
+    let openedClaudeCredential: Awaited<ReturnType<typeof openScopedClaudeCredential>> | null = null;
+    let subscriptionBound = false;
     try {
+      const scopedClaudeSubscriptionProbe =
+        adapterType === "claude_local" &&
+        process.env.AOA_INSTALL_PROFILE === "remote_single_tenant" &&
+        !commanderProbeUsesApiKey(probeConfig, adapterType);
+      if (scopedClaudeSubscriptionProbe) {
+        const authHome = resolveScopedCliAuthHome({
+          executionTargetId: process.env.AOA_EXECUTION_TARGET_ID ?? "control-plane",
+          companyId,
+          userId: actor.userId,
+          provider: "anthropic",
+        });
+        openedClaudeCredential = await openScopedClaudeCredential(authHome);
+        if (openedClaudeCredential.diagnostic.code !== "claude_credentials_ready") {
+          const diagnostic = openedClaudeCredential.diagnostic;
+          res.status(422).json({
+            outcome: diagnostic.code === "claude_credentials_missing" ? "needs_auth" : "failed",
+            result: {
+              adapterType,
+              status: "fail",
+              checks: [{ code: diagnostic.code, level: "error", message: diagnostic.message, hint: "Complete sign-in in this workspace, then choose Check again." }],
+              testedAt: new Date().toISOString(),
+            },
+          });
+          return;
+        }
+      }
       // D1 (cloud isolation): Commander Verify drives the SAME adapter probe,
       // which spawns a REAL `claude --print` / `codex exec` generation. This sink
       // has NO execution target — it always runs on the local, unsandboxed
@@ -140,7 +169,17 @@ export function commanderVerifyRoutes(db: Db): Router {
         });
         return;
       }
-      const result = await adapter.testEnvironment({ companyId, adapterType, config: probeConfig });
+      const scopedProbeConfig = openedClaudeCredential?.configDir
+        ? {
+            ...probeConfig,
+            env: {
+              ...((probeConfig.env as Record<string, unknown> | undefined) ?? {}),
+              HOME: openedClaudeCredential.configDir,
+              CLAUDE_CONFIG_DIR: openedClaudeCredential.configDir,
+            },
+          }
+        : probeConfig;
+      const result = await adapter.testEnvironment({ companyId, adapterType, config: scopedProbeConfig });
       // Probe output is CLI-controlled and may echo keys or tokens. The generic
       // agent-test and Providers paths already redact this boundary; Commander
       // Verify must do the same before returning details to onboarding.
@@ -153,17 +192,44 @@ export function commanderVerifyRoutes(db: Db): Router {
       ) {
         const provider = adapterType === "codex_local" ? "openai" : "anthropic";
         const executionTargetId = process.env.AOA_EXECUTION_TARGET_ID?.trim() || "control-plane";
-        await verifyAndBindCommanderSubscriptionCredential(db, {
+        const transition = await verifyAndBindCommanderSubscriptionCredential(db, {
           companyId,
           userId: actor.userId,
           actorUserId: actor.userId,
           provider,
           executionTargetId,
+          ...(openedClaudeCredential
+            ? { scopedCredentialEvidence: openedClaudeCredential }
+            : {}),
         });
+        if (transition.credentialIds.length === 0 || transition.bindingIds.length === 0) {
+          res.status(422).json({
+            outcome: "failed",
+            result: {
+              ...safeResult,
+              status: "fail",
+              checks: [
+                ...safeResult.checks,
+                {
+                  code: "subscription_credential_unbound",
+                  level: "error",
+                  message:
+                    "The scoped subscription sign-in could not be registered and bound to Commander. Confirm sign-in in this company, then check again.",
+                },
+              ],
+            },
+          });
+          return;
+        }
+        subscriptionBound = true;
       }
-      res.status(classified.outcome === "verified" ? 200 : 422).json(classified);
+      res.status(classified.outcome === "verified" ? 200 : 422).json({
+        ...classified,
+        subscriptionBound,
+      });
     } finally {
       releaseProbeSlot();
+      await openedClaudeCredential?.close();
     }
   });
 

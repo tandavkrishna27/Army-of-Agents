@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -299,6 +299,125 @@ describe("provisionClaudeConfigHome", () => {
     await expect(provisionClaudeConfigHome({ sourceConfigHome, targetDir })).rejects.toBeInstanceOf(
       ClaudeCredentialsMissingError,
     );
+  });
+
+  it("reports an unreadable scoped credential as a safe permission error", async () => {
+    const root = await makeRoot("permission");
+    const sourceConfigHome = await seedOperatorConfigHome(root);
+    const targetDir = path.join(root, "per-run");
+    const credential = path.join(sourceConfigHome, CLAUDE_CREDENTIAL_FILE_NAME);
+    const originalOpen = fs.open.bind(fs);
+    const denied = Object.assign(new Error("EACCES: /private/fixture-token"), { code: "EACCES" });
+    const opened = vi.spyOn(fs, "open").mockImplementation(async (candidate, flags, mode) => {
+      if (String(candidate).endsWith(CLAUDE_CREDENTIAL_FILE_NAME)) throw denied;
+      return originalOpen(candidate, flags, mode);
+    });
+    try {
+      const error = await provisionClaudeConfigHome({ sourceConfigHome, targetDir }).catch((e) => e);
+      expect(error.code).toBe("claude_credentials_permission_denied");
+      expect(error.message).not.toContain("/private/fixture-token");
+      expect(error.message).not.toContain(credential);
+      expect(error.message).toMatch(/permission|access/i);
+      await expect(fs.stat(targetDir)).rejects.toThrow();
+    } finally {
+      opened.mockRestore();
+    }
+  });
+
+  it("reports a denied per-run target as a safe permission error", async () => {
+    const root = await makeRoot("target-permission");
+    const sourceConfigHome = await seedOperatorConfigHome(root);
+    const targetDir = path.join(root, "per-run");
+    const originalMkdir = fs.mkdir.bind(fs);
+    const denied = Object.assign(new Error("EACCES: /private/fixture-token"), { code: "EACCES" });
+    const mkdir = vi.spyOn(fs, "mkdir").mockImplementation(async (candidate, options) => {
+      if (String(candidate) === targetDir) throw denied;
+      return originalMkdir(candidate, options);
+    });
+    try {
+      const error = await provisionClaudeConfigHome({ sourceConfigHome, targetDir }).catch((e) => e);
+      expect(error.code).toBe("claude_credentials_permission_denied");
+      expect(error.message).not.toContain("/private/fixture-token");
+    } finally {
+      mkdir.mockRestore();
+    }
+  });
+
+  it.each(["ENOSPC", "EMFILE"])("reports %s as an operational resource failure, not an unsafe path", async (code) => {
+    const root = await makeRoot(`resource-${code.toLowerCase()}`);
+    const sourceConfigHome = await seedOperatorConfigHome(root);
+    const targetDir = path.join(root, "per-run");
+    const originalOpen = fs.open.bind(fs);
+    const exhausted = Object.assign(new Error(`${code}: fixture-secret`), { code });
+    const opened = vi.spyOn(fs, "open").mockImplementation(async (candidate, flags, mode) => {
+      if (String(candidate).endsWith(CLAUDE_CREDENTIAL_FILE_NAME)) throw exhausted;
+      return originalOpen(candidate, flags, mode);
+    });
+    try {
+      const error = await provisionClaudeConfigHome({ sourceConfigHome, targetDir }).catch((e) => e);
+      expect(error.code).toBe("claude_credentials_resource_error");
+      expect(error.message).toMatch(/resource|disk|file descriptor|retry/i);
+      expect(error.message).not.toContain("fixture-secret");
+      expect(error.message).not.toContain(sourceConfigHome);
+    } finally {
+      opened.mockRestore();
+    }
+  });
+
+  it.skipIf(process.platform === "win32")("refuses a symlinked credential rather than copying its neighboring target", async () => {
+    const root = await makeRoot("credential-link");
+    const sourceConfigHome = await seedOperatorConfigHome(root, { withCredential: false });
+    const neighbor = path.join(root, "neighbor-secret");
+    await fs.writeFile(neighbor, CREDENTIAL_BODY);
+    await fs.symlink(neighbor, path.join(sourceConfigHome, CLAUDE_CREDENTIAL_FILE_NAME));
+    const targetDir = path.join(root, "per-run");
+
+    const error = await provisionClaudeConfigHome({ sourceConfigHome, targetDir }).catch((e) => e);
+    expect(error.code).toBe("claude_credentials_unsafe_path");
+    expect(error.message).not.toContain(neighbor);
+    await expect(fs.stat(targetDir)).rejects.toThrow();
+    expect(await fs.readFile(neighbor, "utf8")).toBe(CREDENTIAL_BODY);
+  });
+
+  it("refuses a symlinked source ancestor", async () => {
+    const root = await makeRoot("ancestor-link");
+    const actual = await seedOperatorConfigHome(root);
+    const linked = path.join(root, "linked-home");
+    await fs.symlink(actual, linked, "junction");
+    const targetDir = path.join(root, "per-run");
+
+    const error = await provisionClaudeConfigHome({ sourceConfigHome: linked, targetDir }).catch((e) => e);
+    expect(error.code).toBe("claude_credentials_unsafe_path");
+    await expect(fs.stat(targetDir)).rejects.toThrow();
+  });
+
+  it("refuses a credential filename that escapes its source home", async () => {
+    const root = await makeRoot("escaped-name");
+    const sourceConfigHome = await seedOperatorConfigHome(root, { withCredential: false });
+    const neighbor = path.join(root, "neighbor-secret");
+    await fs.writeFile(neighbor, CREDENTIAL_BODY);
+    const targetDir = path.join(root, "per-run");
+
+    const error = await provisionClaudeConfigHome({
+      sourceConfigHome,
+      targetDir,
+      credentialFileName: "../neighbor-secret",
+    }).catch((e) => e);
+    expect(error.code).toBe("claude_credentials_unsafe_path");
+    await expect(fs.stat(targetDir)).rejects.toThrow();
+  });
+
+  it.skipIf(process.platform === "win32")("refuses a symlinked target directory", async () => {
+    const root = await makeRoot("target-link");
+    const sourceConfigHome = await seedOperatorConfigHome(root);
+    const neighbor = path.join(root, "neighbor");
+    await fs.mkdir(neighbor);
+    const targetDir = path.join(root, "per-run");
+    await fs.symlink(neighbor, targetDir, "dir");
+
+    const error = await provisionClaudeConfigHome({ sourceConfigHome, targetDir }).catch((e) => e);
+    expect(error.code).toBe("claude_credentials_unsafe_path");
+    await expect(fs.readdir(neighbor)).resolves.toEqual([]);
   });
 
   /**

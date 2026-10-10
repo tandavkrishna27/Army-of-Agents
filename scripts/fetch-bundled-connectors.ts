@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
  * other catalog).
  */
 const CDN_URL = process.env.AOA_CONNECTORS_CDN_URL
-  ?? "https://raw.githubusercontent.com/meteoritelabs/aoa-marketplace-cdn/main/connectors.json";
+  ?? "https://raw.githubusercontent.com/tandavkrishna27/aoa-marketplace-cdn/main/connectors.json";
 const OUTPUT_PATH = join(import.meta.dirname, "..", "ui", "src", "aoa-connectors-snapshot.json");
 
 async function main() {
