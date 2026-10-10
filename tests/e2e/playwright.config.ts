@@ -149,6 +149,9 @@ export default defineConfig({
   testIgnore: [
     "**/commander-cockpit-authenticated.spec.ts",
     "**/commander-lifecycle/**/*.live.spec.ts",
+    // Runs once before the frozen marketplace fixture is pinned in CI; it
+    // needs the complete build-time catalog and is selected by its own config.
+    "**/company-default-crew-provisioning.spec.ts",
   ],
   timeout: 60_000,
   // Retry up to twice on CI to absorb transient React refetch/remount churn that

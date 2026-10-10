@@ -388,14 +388,6 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Pin marketplace catalog fixture for stable e2e
-        # `pnpm build` ran prebuild → fetched the live CDN catalog, which
-        # evolves independently of this repo. Override with a frozen fixture
-        # so e2e assertions don't depend on whichever items are currently on
-        # the CDN. Server reads the snapshot lazily on first /api/marketplace
-        # request, so overwriting before `Run e2e tests` is sufficient.
-        run: cp tests/e2e/fixtures/marketplace-catalog.json ui/src/aoa-marketplace-snapshot.json
-
       - name: Install Playwright
         run: |
           # OS libraries for chromium (apt). Always works on the runner.
@@ -425,6 +417,18 @@ jobs:
             "secrets": { "provider": "local_encrypted", "strictMode": false }
           }
           CONF
+
+      - name: Verify default crew provisioning against bundled catalog
+        if: matrix.shard == 1
+        # Run once against the full catalog produced by `pnpm build`, before
+        # the stable fixture is copied over it for the broad sharded suite.
+        run: pnpm exec playwright test --config=tests/e2e/playwright.crew-provisioning.config.ts
+
+      - name: Pin marketplace catalog fixture for stable e2e
+        # The generated catalog can evolve independently of this repo. Keep
+        # broad E2E assertions deterministic after the dedicated full-catalog
+        # default-crew provisioning check has completed on shard 1.
+        run: cp tests/e2e/fixtures/marketplace-catalog.json ui/src/aoa-marketplace-snapshot.json
 
       - name: Run e2e tests shard ${{ matrix.shard }}/4
         env:
